@@ -2980,18 +2980,28 @@ export default function chatRequestHelpers({
       questionIndex,
       answer,
       elapsedMs,
-      practice
+      practice,
+      rehunt
     }: {
       playId: number;
       questionIndex: number;
       answer: number | boolean[] | string;
       elapsedMs?: number;
       practice?: boolean;
+      // A re-hunt's answer (playId is the re-hunt's own id).
+      rehunt?: boolean;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/vocabulary/battle/answer`,
-          { playId, questionIndex, answer, elapsedMs, ...(practice ? { practice: true } : {}) },
+          {
+            playId,
+            questionIndex,
+            answer,
+            elapsedMs,
+            ...(practice ? { practice: true } : {}),
+            ...(rehunt ? { rehunt: true } : {})
+          },
           auth()
         );
         return data;
@@ -3025,11 +3035,26 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // Re-hunt: battle an escaped word again, a day after it ran away (a
+    // daily battle; full loot on a catch, once per word; the server enforces
+    // all of it).
+    async startWordRehunt(wordId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/battle/start`,
+          { wordId, rehunt: true },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadWordBattleDen({
       section,
       cursor
     }: {
-      section: 'waiting' | 'beaten';
+      section: 'escaped' | 'waiting' | 'beaten';
       cursor?: number | null;
     }) {
       try {
@@ -3044,14 +3069,16 @@ export default function chatRequestHelpers({
     },
     async loadWordBattleAudio({
       playId,
-      kind
+      kind,
+      rehunt
     }: {
       playId: number;
       kind: 'word' | 'sentence';
+      rehunt?: boolean;
     }) {
       try {
         const { data } = await request.get(
-          `${URL}/chat/vocabulary/battle/${playId}/audio?kind=${kind}`,
+          `${URL}/chat/vocabulary/battle/${playId}/audio?kind=${kind}${rehunt ? '&rehunt=1' : ''}`,
           { ...auth(), responseType: 'blob' }
         );
         return data as Blob;

@@ -27,6 +27,8 @@ export default function Definition({
   const [wordModalShown, setWordModalShown] = useState(false);
   // A word battle hands its definitions over here when it ends.
   const [unlocked, setUnlocked] = useState<Record<string, any> | null>(null);
+  // A re-hunt opened from the RAN AWAY card hides the definitions meanwhile.
+  const [hunting, setHunting] = useState(false);
   const wordObj = useMemo(
     () =>
       // A form-of word (running) unlocks its lemma's (run) definitions.
@@ -82,7 +84,7 @@ export default function Definition({
         ...style
       }}
     >
-      <BattleTrophy wordObj={wordObj} />
+      <BattleTrophy wordObj={wordObj} onHuntingChange={setHunting} onUnlocked={setUnlocked} />
       {editButtonShown && (
         <div style={{ position: 'absolute', top: 0, right: 0 }}>
           <Button
@@ -105,6 +107,7 @@ export default function Definition({
           </Button>
         </div>
       )}
+      <div style={hunting ? { visibility: 'hidden' } : undefined} aria-hidden={hunting || undefined}>
       {filteredPosOrder.length === 0 ? (
         <div
           className={css`
@@ -187,6 +190,7 @@ export default function Definition({
         })
       )}
       <BattleExamples examples={wordObj.examples} />
+      </div>
       {wordModalShown && (
         <WordModal
           key={wordObj.content}

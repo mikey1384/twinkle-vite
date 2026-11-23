@@ -6,6 +6,7 @@ import MonsterSprite, { MonsterPose } from '~/components/WordMonster/MonsterSpri
 import { useAppContext, useChatContext } from '~/contexts';
 import BattleScreen, { BattleApi, BattleState } from './BattleScreen';
 import { resetTimeLabel } from './lines';
+import RanAwayCard from './RanAwayCard';
 import { nextWakeStage, readingMs, WAKE_JOLT_MS, WakeStage, wakeLine } from './wake';
 
 const PIXEL_FONT = "'Press Start 2P', monospace";
@@ -406,18 +407,37 @@ export default function WordBattleGate({
 }
 
 // "Collection pride": the monster stays on the word after its battle, beaten
-// (with a crown of stars) or the one that ran away.
-export function BattleTrophy({ wordObj }: { wordObj: any }) {
+// (with a crown of stars) or the one that ran away, which can be re-hunted a
+// day later (RanAwayCard; the parent hides the definitions while hunting).
+export function BattleTrophy({
+  wordObj,
+  onHuntingChange,
+  onUnlocked
+}: {
+  wordObj: any;
+  onHuntingChange?: (hunting: boolean) => void;
+  onUnlocked?: (unlocked: Record<string, any>) => void;
+}) {
   const status = wordObj?.battle?.status;
   if (status !== 'won' && status !== 'lost') return null;
   const word = String(wordObj?.battle?.word || wordObj?.content || '');
   const level = Math.max(1, Math.min(5, Number(wordObj?.battle?.wordLevel || wordObj?.wordLevel) || 3));
-  const won = status === 'won';
+  if (status === 'lost') {
+    return (
+      <RanAwayCard
+        wordId={wordIdOf(wordObj)}
+        word={word}
+        level={level}
+        onHuntingChange={onHuntingChange}
+        onUnlocked={onUnlocked}
+      />
+    );
+  }
   return (
     <div className={trophyCls}>
       <MonsterSprite word={word} level={level} scale={1} />
-      <span className={trophyLabelCls} style={{ color: won ? '#2f8f4e' : '#8a6d2f' }}>
-        {won ? 'DEFEATED' : 'RAN AWAY'}
+      <span className={trophyLabelCls} style={{ color: '#2f8f4e' }}>
+        DEFEATED
       </span>
       <span className={trophyStarsCls}>{'★'.repeat(level)}</span>
     </div>

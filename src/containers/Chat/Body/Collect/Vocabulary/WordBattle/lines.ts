@@ -103,3 +103,28 @@ export function ranAwayLines(word: string) {
   const W = word.toUpperCase();
   return [`${W} ran away...`, pick(['...but it left its meaning behind.', '...dropping its meaning on the way out.'], word)];
 }
+
+// Re-hunt (Mikey 11-23): a monster that ran away, found again a day later.
+// The battle tests what the member kept, so the lines never repeat the
+// meaning.
+export function rehuntLines(word: string) {
+  const W = word.toUpperCase();
+  return [
+    `You tracked down ${W}!`,
+    pick(['It remembers you. Do you remember it?', 'It ran once. Not this time.'], word)
+  ];
+}
+
+export function rehuntEscapeLines(word: string) {
+  const W = word.toUpperCase();
+  return [`${W} slipped away again...`, 'It will be back in a day. Keep its meaning in mind!'];
+}
+
+// "Back in 5h" for a re-hunt that isn't open yet: worked out once when the
+// card renders (no ticking timer).
+export function backInLabel(readyAt?: number, nowMs = Date.now()) {
+  if (!readyAt) return '';
+  const left = Math.max(0, readyAt - nowMs);
+  if (left < 60 * 60 * 1000) return `${Math.max(1, Math.ceil(left / 60000))}m`;
+  return `${Math.ceil(left / (60 * 60 * 1000))}h`;
+}

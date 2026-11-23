@@ -6,12 +6,13 @@ import MonsterSprite from '~/components/WordMonster/MonsterSprite';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import BattleScreen, { BattleApi, BattleState } from '../WordBattle/BattleScreen';
-import { resetTimeLabel } from '../WordBattle/lines';
+import { backInLabel, resetTimeLabel } from '../WordBattle/lines';
 import WordModal from '../WordModal';
 
 const PIXEL_FONT = "'Press Start 2P', monospace";
 
-type Section = 'waiting' | 'beaten';
+type Section = 'escaped' | 'waiting' | 'beaten';
+type BattleMode = 'battle' | 'practice' | 'rehunt';
 
 interface DenItem {
   wordId: number;
@@ -19,6 +20,9 @@ interface DenItem {
   wordLevel: number;
   at: number;
   active?: boolean;
+  // Escaped only: when its re-hunt opens (ms) and whether it is open now.
+  readyAt?: number;
+  ready?: boolean;
 }
 
 interface SectionState {
@@ -30,8 +34,11 @@ interface SectionState {
 
 const emptySection: SectionState = { items: [], nextCursor: null, loading: false, loaded: false };
 
-// The Monster Den (Mikey 11-23): the member's captured monsters (Waiting) and
-// every word they have beaten (Beaten). A waiting monster is battled with
+// The Monster Den (Mikey 11-23): the monsters that ran away (Escaped, first:
+// they matter most for review), the member's captured monsters (Waiting) and
+// every word they have beaten (Beaten). An escaped monster can be re-hunted a
+// day after it ran away, for full loot on a catch (once per word); before
+// then a tap opens its meaning to study. A waiting monster is battled with
 // full loot while today's battles last; a beaten one can be rematched for
 // practice (no loot, no daily battle; the server enforces it). Counts and
 // battles left come from the server; nothing here is guessed.
@@ -39,10 +46,14 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
   const loadWordBattleDen = useAppContext((v) => v.requestHelpers.loadWordBattleDen);
   const loadWordBattle = useAppContext((v) => v.requestHelpers.loadWordBattle);
   const startWordBattle = useAppContext((v) => v.requestHelpers.startWordBattle);
+  const startWordRehunt = useAppContext((v) => v.requestHelpers.startWordRehunt);
   const answerWordBattle = useAppContext((v) => v.requestHelpers.answerWordBattle);
   const loadWordBattleAudio = useAppContext((v) => v.requestHelpers.loadWordBattleAudio);
   const onUnlockWordDefinitions = useChatContext((v) => v.actions.onUnlockWordDefinitions);
   const [header, setHeader] = useState<{
+    escaped: number;
+    escapedReady: number;
+    rehuntAvailable: boolean;
     waiting: number;
     beaten: number;
     battlesLeft: number | null;
@@ -51,11 +62,12 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
     denAvailable: boolean;
   } | null>(null);
   const [sections, setSections] = useState<Record<Section, SectionState>>({
+    escaped: emptySection,
     waiting: emptySection,
     beaten: emptySection
   });
   const [failed, setFailed] = useState(false);
-  const [battle, setBattle] = useState<{ state: BattleState; practice: boolean } | null>(null);
+  const [battle, setBattle] = useState<{ state: BattleState; mode: BattleMode } | null>(null);
   const [notice, setNotice] = useState<string>('');
   const [meaningWord, setMeaningWord] = useState<string | null>(null);
 
@@ -66,6 +78,9 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
         const data = await loadWordBattleDen({ section, cursor });
         if (!cursor && data?.counts) {
           setHeader({
+            escaped: 0,
+            escapedReady: 0,
+            rehuntAvailable: false,
             ...data.counts,
             battlesLeft: data.battlesLeft ?? null,
             battleLimit: data.battleLimit,
@@ -91,6 +106,7 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
   );
 
   const refresh = useCallback(() => {
+    void loadSection('escaped');
     void loadSection('waiting');
     void loadSection('beaten');
   }, [loadSection]);
@@ -119,6 +135,25 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
       loadAudio: (args) => loadWordBattleAudio(args)
     }),
     [answerWordBattle, loadWordBattleAudio, startWordBattle]
+  );
+  const rehuntApi: BattleApi = useMemo(
+    () => ({
+      start: async (id) => {
+        try {
+          return await startWordRehunt(id);
+        } catch (error: any) {
+          if (error?.message === 'daily_limit') {
+            setBattle(null);
+            setHeader((prev) => (prev ? { ...prev, battlesLeft: 0 } : prev));
+            setNotice("Today's battles are used up. The hunt goes on tomorrow.");
+          }
+          throw error;
+        }
+      },
+      answer: (args) => answerWordBattle({ ...args, rehunt: true }),
+      loadAudio: (args) => loadWordBattleAudio({ ...args, rehunt: true })
+    }),
+    [answerWordBattle, loadWordBattleAudio, startWordRehunt]
   );
   const rematchApi: BattleApi = useMemo(
     () => ({
@@ -156,7 +191,37 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
         return;
       }
       if (state?.status === 'ready' || state?.status === 'active') {
-        setBattle({ state, practice: false });
+        setBattle({ state, mode: 'battle' });
+      }
+    } catch (error) {
+      console.error(error);
+      setNotice('The Den door is stuck. Try again in a moment.');
+    }
+  }
+
+  // An escaped monster: re-hunt it once it is back (a daily battle); before
+  // then, or past today's battles, its meaning opens to study.
+  async function handleEscapedTap(item: DenItem) {
+    setNotice('');
+    const open = item.active || item.ready;
+    if (open && (item.active || !outOfBattles)) {
+      setBattle({
+        mode: 'rehunt',
+        state: { status: 'ready', wordId: item.wordId, word: item.word, wordLevel: item.wordLevel }
+      });
+      return;
+    }
+    if (open) {
+      setNotice(
+        `Today's battles are used up! ${item.word.toUpperCase()} can be re-hunted after ${resetTimeLabel(header?.resetAt)}.`
+      );
+    }
+    try {
+      // Its meaning (already shown when it ran away), with the RAN AWAY card.
+      const state: BattleState = await loadWordBattle(item.wordId);
+      if (state?.unlocked) {
+        onUnlockWordDefinitions(state.unlocked);
+        setMeaningWord(String(state.unlocked.content || item.word));
       }
     } catch (error) {
       console.error(error);
@@ -167,13 +232,13 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
   function handleBeatenTap(item: DenItem) {
     setNotice('');
     setBattle({
-      practice: true,
+      mode: 'practice',
       state: { status: 'ready', wordId: item.wordId, word: item.word, wordLevel: item.wordLevel }
     });
   }
 
   function handleBattleClosed(finished?: BattleState) {
-    const wasPractice = battle?.practice;
+    const wasPractice = battle?.mode === 'practice';
     setBattle(null);
     if (!wasPractice && finished?.unlocked) {
       onUnlockWordDefinitions(finished.unlocked);
@@ -190,6 +255,10 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
           <div className={statsCls} aria-live="polite">
             {header ? (
               <>
+                <span>
+                  <b>{header.escaped.toLocaleString()}</b> escaped
+                </span>
+                <span className={dotCls}>·</span>
                 <span>
                   <b>{header.waiting.toLocaleString()}</b> waiting
                 </span>
@@ -223,6 +292,22 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
           <div className={emptyCls}>The Den door is stuck. Try again in a moment.</div>
         )}
 
+        <DenSection
+          title="ESCAPED"
+          hint={
+            header?.rehuntAvailable === false
+              ? 'They ran away. Tap one to study its meaning.'
+              : header?.escapedReady
+                ? `${header.escapedReady.toLocaleString()} back for a re-hunt: catch one for full loot.`
+                : 'They ran away. A day later each one is back for a re-hunt with full loot.'
+          }
+          state={sections.escaped}
+          empty="No escapes. A monster that beats you hides here until you re-hunt it."
+          escaped
+          resting={outOfBattles}
+          onTap={handleEscapedTap}
+          onMore={() => loadSection('escaped', sections.escaped.nextCursor)}
+        />
         <DenSection
           title="WAITING"
           hint={
@@ -262,12 +347,17 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
           showCloseButton={false}
           xpActivity
           onClose={() => handleBattleClosed()}
-          aria-label={`${battle.practice ? 'Rematch' : 'Battle'} ${battle.state.word}`}
+          aria-label={`${
+            battle.mode === 'practice' ? 'Rematch' : battle.mode === 'rehunt' ? 'Re-hunt' : 'Battle'
+          } ${battle.state.word}`}
         >
           <BattleScreen
             initial={battle.state}
-            api={battle.practice ? rematchApi : realApi}
-            practice={battle.practice}
+            api={
+              battle.mode === 'practice' ? rematchApi : battle.mode === 'rehunt' ? rehuntApi : realApi
+            }
+            practice={battle.mode === 'practice'}
+            rehunt={battle.mode === 'rehunt'}
             onClose={() => handleBattleClosed()}
             onFinished={(finished) => handleBattleClosed(finished)}
           />
@@ -284,6 +374,7 @@ function DenSection({
   state,
   empty,
   beaten,
+  escaped,
   resting,
   onTap,
   onMore
@@ -293,6 +384,7 @@ function DenSection({
   state: SectionState;
   empty: string;
   beaten?: boolean;
+  escaped?: boolean;
   resting?: boolean;
   onTap: (item: DenItem) => void;
   onMore: () => void;
@@ -307,29 +399,66 @@ function DenSection({
         <div className={emptyCls}>{empty}</div>
       ) : (
         <div className={gridCls}>
-          {state.items.map((item) => (
-            <button
-              key={item.wordId}
-              type="button"
-              className={cx(tileCls, beaten && tileBeatenCls, resting && !item.active && tileRestingCls)}
-              onClick={() => onTap(item)}
-              aria-label={`${beaten ? 'Rematch' : 'Battle'} ${item.word}`}
-            >
-              <span className={tileSpriteCls}>
-                <MonsterSprite
-                  word={item.word}
-                  level={item.wordLevel}
-                  scale={2}
-                  pose={resting && !item.active ? 'sleep' : 'idle'}
-                  still={beaten}
-                />
-                {item.active && <span className={tileBadgeCls}>!</span>}
-                {beaten && <span className={tileCrownCls}>★</span>}
-              </span>
-              <span className={tileWordCls}>{item.word}</span>
-              <span className={tileStarsCls}>{'★'.repeat(item.wordLevel)}</span>
-            </button>
-          ))}
+          {state.items.map((item) => {
+            // Escaped tiles are drawn once (no timers): ready ones awake,
+            // the rest peeking out of hiding with when they're back.
+            const huntOpen = escaped && (item.active || item.ready);
+            const escapedLine = !escaped
+              ? null
+              : item.active
+                ? 'BACK TO IT ▶'
+                : item.ready
+                  ? resting
+                    ? 'TOMORROW'
+                    : 'RE-HUNT ▶'
+                  : item.readyAt
+                    ? `Back in ${backInLabel(item.readyAt)}`
+                    : 'ESCAPED';
+            return (
+              <button
+                key={item.wordId}
+                type="button"
+                className={cx(
+                  tileCls,
+                  beaten && tileBeatenCls,
+                  escaped && tileEscapedCls,
+                  huntOpen && !(resting && !item.active) && tileHuntCls,
+                  !escaped && resting && !item.active && tileRestingCls
+                )}
+                onClick={() => onTap(item)}
+                aria-label={`${
+                  beaten ? 'Rematch' : escaped ? (huntOpen ? 'Re-hunt' : 'Study') : 'Battle'
+                } ${item.word}`}
+              >
+                <span className={tileSpriteCls}>
+                  <MonsterSprite
+                    word={item.word}
+                    level={item.wordLevel}
+                    scale={2}
+                    pose={
+                      escaped
+                        ? huntOpen
+                          ? 'idle'
+                          : 'peek'
+                        : resting && !item.active
+                          ? 'sleep'
+                          : 'idle'
+                    }
+                    still={beaten || escaped}
+                  />
+                  {item.active && <span className={tileBadgeCls}>!</span>}
+                  {beaten && <span className={tileCrownCls}>★</span>}
+                </span>
+                <span className={tileWordCls}>{item.word}</span>
+                <span className={tileStarsCls}>{'★'.repeat(item.wordLevel)}</span>
+                {escapedLine && (
+                  <span className={cx(tileHuntLineCls, huntOpen && tileHuntLineOpenCls)}>
+                    {escapedLine}
+                  </span>
+                )}
+              </button>
+            );
+          })}
           {!state.loaded &&
             Array.from({ length: 6 }).map((_, i) => <div key={i} className={tileGhostCls} />)}
         </div>
@@ -473,6 +602,30 @@ const tileBeatenCls = css`
   &:hover {
     border-color: #7bd88f;
   }
+`;
+
+const tileEscapedCls = css`
+  background: #241a14;
+  border-color: #4a3424;
+  &:hover {
+    border-color: #ffb36b;
+  }
+`;
+
+const tileHuntCls = css`
+  border-color: #ffd34d;
+`;
+
+const tileHuntLineCls = css`
+  font-family: ${PIXEL_FONT};
+  font-size: 8px;
+  line-height: 1.4;
+  color: #c9a98c;
+  white-space: nowrap;
+`;
+
+const tileHuntLineOpenCls = css`
+  color: #ffd34d;
 `;
 
 const tileRestingCls = css`
