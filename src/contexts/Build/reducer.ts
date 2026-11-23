@@ -1603,8 +1603,12 @@ export function applyBuildRunStreamUpdate(
     status: nextStatus,
     assistantStatusSteps: nextAssistantStatusSteps,
     // Only queue updates carry it; the socket handler clears it on any other.
+    // Once the run has run events it has started; a late queue update (from
+    // another worker process, or one read just before the claim) is ignored.
     queue: Object.prototype.hasOwnProperty.call(buildRun || {}, 'queue')
-      ? normalizeBuildRunQueueState(buildRun?.queue)
+      ? currentRun.runEvents?.length
+        ? null
+        : normalizeBuildRunQueueState(buildRun?.queue)
       : currentRun.queue ?? null,
     userMessage: currentRun.userMessage
       ? {
@@ -1923,6 +1927,8 @@ export default function BuildReducer(
           currentRun.assistantStatusSteps,
           nextStatus
         ),
+        // A local status (e.g. "Stopping..." after Cancel) ends the card.
+        queue: null,
         updatedAt: Date.now()
       });
     }
@@ -2065,6 +2071,8 @@ export default function BuildReducer(
       return upsertBuildRun(state, buildId, {
         ...currentRun,
         runEvents: nextRunEvents,
+        // A run event means the run started: the queue card gives way.
+        queue: null,
         error: lifecycleErrorMessage || currentRun.error,
         updatedAt: resolveBuildRunUpdatedAt(action.buildRun?.updatedAt)
       });

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {
+import BuildReducer, {
   applyBuildRunStreamUpdate,
   normalizeBuildRunQueueState
 } from '../src/contexts/Build/reducer';
@@ -107,4 +107,41 @@ test('a reload restores the place in line from the resume snapshot', () => {
     normalizeBuildResumeRunState({ requestId: 'run-1', buildId: 1 }).queue,
     null
   );
+});
+
+test('queued → working: once the run has events, a late queue update cannot bring the card back', () => {
+  const queue = { position: 1, ahead: 1, etaMinutes: null };
+  const started = { ...createRun(), queue, runEvents: [{ id: 'e1', kind: 'status', message: 'Reading' }] };
+  const late = applyBuildRunStreamUpdate(started, {
+    status: "You're next in line: another build is finishing",
+    assistantStatusSteps: ["You're next in line: another build is finishing"],
+    queue
+  });
+  assert.equal(late.queue, null);
+});
+
+test('the first run event and a local Stopping status both end the queued state', () => {
+  const queue = { position: 2, ahead: 2, etaMinutes: { low: 3, high: 6 } };
+  const state = {
+    buildsById: {},
+    buildRuns: { '1': { ...createRun(), queue } },
+    buildRunRequestMap: { 'run-1': 1 },
+    buildWorkspaces: {},
+    buildWorkspaceUi: {},
+    forumInvalidationVersions: {}
+  } as any;
+  const afterEvent = BuildReducer(state, {
+    type: 'APPEND_BUILD_RUN_EVENT',
+    buildRun: {
+      buildId: 1,
+      requestId: 'run-1',
+      event: { id: 'e1', kind: 'status', phase: null, message: 'Reading', createdAt: 1 }
+    }
+  } as any);
+  assert.equal(afterEvent.buildRuns['1'].queue, null);
+  const afterStop = BuildReducer(state, {
+    type: 'UPDATE_BUILD_RUN_STATUS',
+    buildRun: { buildId: 1, requestId: 'run-1', status: 'Stopping...' }
+  } as any);
+  assert.equal(afterStop.buildRuns['1'].queue, null);
 });
