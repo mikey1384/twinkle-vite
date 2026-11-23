@@ -8,6 +8,7 @@ import React, {
   useSyncExternalStore
 } from 'react';
 import ChessTarget from '../ChessTarget';
+import { loadAskStarters } from '~/containers/App/QuickAsk/askSuggestions';
 import AiEnergyCard from '~/components/AiEnergyCard';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -724,9 +725,9 @@ export default function MessageInput({
     // starters are for a member's own Zero/Ciel chat, never a crew chat
     if (!agentSuggestionsEnabled || isCrewChannel) return;
     let cancelled = false;
-    Promise.resolve(loadWebsiteAgentStarters?.())
-      .then((ideas) => {
-        if (!cancelled && Array.isArray(ideas)) setStarterIdeas(ideas);
+    loadAskStarters(loadWebsiteAgentStarters, Number(myId || 0))
+      .then(({ ideas }) => {
+        if (!cancelled) setStarterIdeas(ideas);
       })
       .catch(() => {});
     return () => {

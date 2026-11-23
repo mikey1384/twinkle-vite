@@ -22,6 +22,11 @@ import { WEBSITE_AGENT_UI_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 import { EnergyChip, useDraggableWindow } from '../AssistantDock/frame';
 import { askIdeasFor } from '../AssistantDock/askIdeas';
 import {
+  useAskStarters,
+  useAskSuggestions,
+  type AskSuggestion
+} from './askSuggestions';
+import {
   getAssistantWindowView,
   openAssistantDock,
   setAssistantWindowView,
@@ -54,7 +59,7 @@ const WINDOW_WIDTH = 360;
 const appear = keyframes`from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; }`;
 const rise = keyframes`from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; }`;
 const QUICK_IDEAS = [
-  'What does “curious” mean?',
+  'What does “brilliant” mean?',
   'How do I say “배고파” in English?',
   'Is “I am agree” correct?'
 ];
@@ -151,7 +156,14 @@ export default function QuickAskWindow({
       !!turn.reply.messageId &&
       turn.save !== 'saved'
   );
-  const ideas = context ? askIdeasFor(context) : QUICK_IDEAS;
+  // with an item attached, the questions for that kind of item; otherwise
+  // chips about this page and what they did lately (askSuggestions.ts)
+  const { activity } = useAskStarters();
+  const pageSuggestions = useAskSuggestions({ activity, fallback: QUICK_IDEAS });
+  const suggestions: AskSuggestion[] = context
+    ? askIdeasFor(context).map((idea) => ({ text: idea }))
+    : pageSuggestions;
+  const ideas = suggestions.map((suggestion) => suggestion.text);
 
   useEffect(() => {
     void recordQuickAskOpen?.();
@@ -542,7 +554,10 @@ export default function QuickAskWindow({
           <AgentSuggestions
             ideas={ideas}
             onPick={(idea) => {
-              void handleSend(idea);
+              const picked = suggestions.find(
+                (suggestion) => suggestion.text === idea
+              );
+              void handleSend(idea, picked?.context ?? undefined);
             }}
           />
         )}

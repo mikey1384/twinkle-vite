@@ -12,13 +12,21 @@ export default function zeroRequestHelpers({
   handleError
 }: RequestHelpers) {
   return {
+    // ideas for the boxes, plus the member's own recent activity for chips
+    // that point at it (askSuggestions.ts)
     async loadWebsiteAgentStarters() {
       try {
         const { data } = await request.get(
           `${URL}/zero/website-agent/starters`,
           auth()
         );
-        return Array.isArray(data?.ideas) ? data.ideas : [];
+        return {
+          ideas: Array.isArray(data?.ideas) ? data.ideas : [],
+          activity:
+            data?.activity && typeof data.activity === 'object'
+              ? data.activity
+              : {}
+        };
       } catch (error) {
         return handleError(error);
       }

@@ -15,9 +15,15 @@ import {
   getHomeAskPrefill,
   openAssistantDock,
   setHomeAskAssistant,
-  subscribeHomeAskPrefill
+  subscribeHomeAskPrefill,
+  type AssistantAskContext
 } from '~/containers/App/AssistantDock/dockState';
 import AssistantModeBar from '~/containers/App/QuickAsk/AssistantModeBar';
+import {
+  loadAskStarters,
+  useAskSuggestions,
+  type AskActivity
+} from '~/containers/App/QuickAsk/askSuggestions';
 import { useAssistantMode } from '~/containers/App/QuickAsk/assistantMode';
 import { closeQuickAsk, openQuickAsk } from '~/containers/App/QuickAsk/state';
 
@@ -51,6 +57,9 @@ export default function AssistantQuickAsk({
     readCachedStarters(userId)
   );
   const [starterLoaded, setStarterLoaded] = useState(false);
+  // what the member did lately: chips may point at it (askSuggestions.ts)
+  const [activity, setActivity] = useState<AskActivity>({});
+  const suggestions = useAskSuggestions({ activity, fallback: starterIdeas });
   const [text, setText] = useState('');
   // Temporary (Quick Ask) or Saved (the main chat): the member's one
   // account-wide choice, switchable right here.
@@ -78,11 +87,11 @@ export default function AssistantQuickAsk({
   useEffect(() => {
     let cancelled = false;
     setStarterIdeas(readCachedStarters(userId));
-    Promise.resolve(loadWebsiteAgentStarters?.())
-      .then((ideas) => {
+    loadAskStarters(loadWebsiteAgentStarters, Number(userId || 0))
+      .then(({ ideas, activity: nextActivity }) => {
         if (cancelled) return;
         setStarterLoaded(true);
-        if (!Array.isArray(ideas)) return;
+        setActivity(nextActivity);
         writeCachedStarters(userId, ideas);
         setStarterIdeas((current) =>
           current.length === ideas.length &&
@@ -106,17 +115,17 @@ export default function AssistantQuickAsk({
     return () => setHomeAskAssistant(null);
   }, [assistantName]);
 
-  async function handleSend(idea?: string) {
+  async function handleSend(idea?: string, context?: AssistantAskContext | null) {
     if (mode === 'temporary') {
       const question = (idea ?? text).trim();
       if (!question) return;
       setText('');
       closeAssistantDock();
-      openQuickAsk({ agent: assistantName, question });
+      openQuickAsk({ agent: assistantName, question, context: context || null });
       return;
     }
     closeQuickAsk();
-    if (!(await send(idea ?? text))) return;
+    if (!(await send(idea ?? text, context))) return;
     setText('');
     openAssistantDock(assistantName, undefined, 0);
   }
@@ -250,10 +259,15 @@ export default function AssistantQuickAsk({
         `}
       >
         <AgentSuggestions
-          ideas={starterIdeas}
+          ideas={suggestions.map((suggestion) => suggestion.text)}
           loading={!starterLoaded}
           hidden={!!text.trim() || sending || replying}
-          onPick={(idea) => handleSend(idea)}
+          onPick={(idea) =>
+            handleSend(
+              idea,
+              suggestions.find((suggestion) => suggestion.text === idea)?.context
+            )
+          }
         />
       </div>
     </div>
