@@ -22,7 +22,8 @@ function setup({
       singles.push(item);
       return { id: item.contentId, via: 'single' };
     },
-    isRouteMissing: (error: any) => error?.status === 404,
+    batchPauseMs: (error: any) =>
+      error?.status === 404 ? 10 * 60 * 1000 : error?.status === 503 ? 30_000 : 0,
     now: () => clock,
     setTimer: (callback) => {
       const timer = { callback, cleared: false };
@@ -177,4 +178,25 @@ test('not found and empty answers pass through as the per-card request returns t
   const loads = [card(1), card(2)].map(batcher.load);
   fire();
   assert.deepEqual(await Promise.all(loads), [{ notFound: true }, null]);
+});
+
+test('a busy API is left alone for a while, then batching resumes', async () => {
+  let busy = true;
+  const { batcher, batches, singles, fire, tick } = setup({
+    batch: async (items) => {
+      if (busy) throw { status: 503 };
+      return items.map((item) => ({ id: item.contentId, via: 'batch' }));
+    }
+  });
+  const first = [card(1), card(2)].map(batcher.load);
+  fire();
+  await Promise.all(first);
+  await Promise.all([card(3), card(4)].map(batcher.load));
+  assert.equal(batches.length, 1);
+  assert.equal(singles.length, 4);
+  busy = false;
+  tick(30_000);
+  const later = [card(5), card(6)].map(batcher.load);
+  fire();
+  assert.equal((await Promise.all(later))[0].via, 'batch');
 });

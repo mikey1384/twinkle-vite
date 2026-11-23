@@ -13,9 +13,6 @@
 export const CONTENT_BATCH_WINDOW_MS = 30;
 // The API refuses more than 30 items (CONTENT_BATCH_MAX_ITEMS).
 export const CONTENT_BATCH_MAX_ITEMS = 30;
-// After the route was found missing, ask again this much later: the API and
-// the website deploy separately.
-export const CONTENT_BATCH_UNSUPPORTED_RETRY_MS = 10 * 60 * 1000;
 
 export interface ContentBatchItem {
   contentId: number;
@@ -36,10 +33,9 @@ interface Pending<T> {
 export function createContentBatcher<T>({
   sendBatch,
   loadSingle,
-  isRouteMissing,
+  batchPauseMs,
   windowMs = CONTENT_BATCH_WINDOW_MS,
   maxItems = CONTENT_BATCH_MAX_ITEMS,
-  unsupportedRetryMs = CONTENT_BATCH_UNSUPPORTED_RETRY_MS,
   now = () => Date.now(),
   setTimer = (callback, ms) => setTimeout(callback, ms),
   clearTimer = (handle) => clearTimeout(handle as any)
@@ -48,23 +44,23 @@ export function createContentBatcher<T>({
   sendBatch: (items: ContentBatchItem[]) => Promise<unknown[]>;
   // The per-card request.
   loadSingle: (item: ContentBatchItem) => Promise<T>;
-  // True when the error says the API has no batch route (an older API).
-  isRouteMissing: (error: unknown) => boolean;
+  // How long to stop batching after this failure: an API without the route
+  // yet, or one that said it is busy. 0 keeps batching.
+  batchPauseMs: (error: unknown) => number;
   windowMs?: number;
   maxItems?: number;
-  unsupportedRetryMs?: number;
   now?: () => number;
   setTimer?: (callback: () => void, ms: number) => unknown;
   clearTimer?: (handle: unknown) => void;
 }) {
   let queue = new Map<string, Pending<T>>();
   let timer: unknown = null;
-  let unsupportedUntil = 0;
+  let pausedUntil = 0;
 
   return { load };
 
   function load(item: ContentBatchItem): Promise<T> {
-    if (now() < unsupportedUntil) return loadSingle(item);
+    if (now() < pausedUntil) return loadSingle(item);
     return new Promise<T>((resolve, reject) => {
       const key = `${item.contentType}:${item.contentId}:${item.rootType || ''}`;
       const pending = queue.get(key);
@@ -106,7 +102,8 @@ export function createContentBatcher<T>({
         });
       },
       (error) => {
-        if (isRouteMissing(error)) unsupportedUntil = now() + unsupportedRetryMs;
+        const pauseMs = batchPauseMs(error);
+        if (pauseMs > 0) pausedUntil = now() + pauseMs;
         settleSingly(batch);
       }
     );
