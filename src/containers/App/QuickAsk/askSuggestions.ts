@@ -88,6 +88,8 @@ export function useAskSuggestions({
   const lastChatMessage = useChatContext((v) => {
     if (!pathname.startsWith('/chat')) return '';
     const channel = v.state.channelsObj?.[Number(v.state.selectedChannelId || 0)];
+    // a Bridge Builder crew's talk is other children's, never sent along
+    if (Number(channel?.settings?.meetupCrewId) > 0) return '';
     const lastId = channel?.messageIds?.[0];
     const message = lastId ? channel?.messagesObj?.[lastId] : null;
     return typeof message?.content === 'string' ? message.content : '';

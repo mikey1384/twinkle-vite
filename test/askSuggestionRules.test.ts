@@ -55,6 +55,7 @@ test('chat, apps and profiles get their own chips; another member’s profile sa
   assert.equal(buildAskSuggestions({ pathname: '/build/55' })[0].text, 'Help me improve this app');
   const own = texts(buildAskSuggestions({ pathname: '/users/Mina', myUsername: 'mina' }));
   assert.ok(own.includes('Help me make my profile look cool'));
+  assert.doesNotThrow(() => buildAskSuggestions({ pathname: '/users/%E0%A4', myUsername: 'mina' }));
   const other = buildAskSuggestions({ pathname: '/users/ken', myUsername: 'mina' });
   assert.ok(other.every((chip) => !chip.context && !/ken/i.test(chip.text)));
 });

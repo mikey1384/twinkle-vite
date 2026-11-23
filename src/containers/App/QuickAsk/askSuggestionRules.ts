@@ -22,7 +22,6 @@ const quote = (word: string) => `“${word}”`;
 // Pure, so the rules can be read (and tested) in one place.
 export function buildAskSuggestions({
   pathname,
-  search = '',
   activity = {},
   chatType = null,
   lastChatMessage = '',
@@ -134,9 +133,15 @@ export function buildAskSuggestions({
     });
   } else if (pathname.startsWith('/arena')) {
     if (arenaContext) add('Explain my last result', arenaContext);
-    add(search.includes('battle=') ? 'Help me with this question' : 'How does the Arena work?');
+    add('How does the Arena work?');
   } else if (/^\/users\/[^/]+/.test(pathname)) {
-    const username = decodeURIComponent(pathname.split('/')[2] || '');
+    const segment = pathname.split('/')[2] || '';
+    let username = segment;
+    try {
+      username = decodeURIComponent(segment);
+    } catch {
+      // a malformed escape stays as typed
+    }
     if (myUsername && username.toLowerCase() === myUsername.toLowerCase()) {
       add('Help me make my profile look cool');
       add('How do I get more XP?');
