@@ -7,9 +7,9 @@ import { useChatContext, useKeyContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { isWebsiteAgentEnabledFor } from '~/constants/defaultValues';
 import {
-  openAssistantDock,
   type AssistantAskContext
 } from '~/containers/App/AssistantDock/dockState';
+import { summonAssistant } from '~/containers/App/QuickAsk/assistantMode';
 import { useUserAssistant } from '~/helpers/assistantVoice';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 
@@ -69,7 +69,7 @@ export default function AskAgentButton({
         uppercase={false}
         onClick={() => {
           onClick?.();
-          openAssistantDock(assistant, context);
+          summonAssistant(assistant, context);
         }}
         aria-label={text}
       >

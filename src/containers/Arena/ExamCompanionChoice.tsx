@@ -2,7 +2,7 @@ import React from 'react';
 import { css, cx } from '@emotion/css';
 import AssistantFace from '~/components/AssistantFace';
 import { useChatContext } from '~/contexts';
-import { openAssistantDock } from '~/containers/App/AssistantDock/dockState';
+import { summonAssistant } from '~/containers/App/QuickAsk/assistantMode';
 import type { ArenaBattle, ArenaCompanion } from './types';
 import { ARENA } from './theme';
 
@@ -34,13 +34,13 @@ export default function ExamCompanionChoice({ value, onChange, solo, disabled = 
   </section>;
 }
 
-// Opens the existing floating conversation after the server has started the
-// sitting. Nothing is sent automatically and no parallel chat is created.
+// Opens the floating conversation (saved or temporary, the member's choice)
+// after the server has started the sitting. Nothing is sent automatically and no parallel chat is created.
 export function openArenaCompanion(data: ArenaBattle) {
   const companion = data.battle.companion;
   if (!companion || companion === 'solo' || data.battle.mastery?.solo || data.battle.status !== 'open') return;
   const first = data.items[0];
-  openAssistantDock(companion, first ? {
+  summonAssistant(companion, first ? {
     kind: 'arenaBattleItem', id: data.battle.id, no: first.no,
     label: `${data.battle.exam.nameEn} · question ${first.display || first.no}`,
     path: `/arena?mode=arena&battle=${data.battle.id}`

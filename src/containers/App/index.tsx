@@ -41,6 +41,8 @@ import {
 import WebsiteAgentSpotlight from './WebsiteAgentSpotlight';
 import { resetAssistantDock } from './AssistantDock/dockState';
 import { resetAssistantConversations } from './AssistantDock/conversationStore';
+import QuickAskHost from './QuickAsk/Host';
+import { closeQuickAsk } from './QuickAsk/state';
 import {
   aiVoiceSession,
   endAiVoiceCall,
@@ -769,6 +771,7 @@ export default function App() {
       resetVoiceDeliveries();
       resetAssistantDock();
       resetAssistantConversations();
+      closeQuickAsk();
     };
   }, [userId]);
 
@@ -1821,6 +1824,7 @@ export default function App() {
             <AssistantDock />
           </Suspense>
         )}
+        {!!userId && !sessionAccessBlocked && <QuickAskHost key={userId} />}
         {isAdmin && shouldShowAdminTelemetryWindow && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <AdminTelemetryWindow

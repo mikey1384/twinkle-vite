@@ -930,6 +930,7 @@ registerMethods('user', [
   'updateImageGenerationSettings',
   'updateGrammarblesSettings',
   'updateHomeAssistant',
+  'updateAssistantMode',
   'updateSocialSettings',
   'updateImageEditorSettings',
   'confirmPassword',
@@ -1132,6 +1133,9 @@ registerMethods('zero', [
   'splitSubtitles',
   'mergeSubtitles',
   'mergeVideoWithSubtitles',
+  'streamQuickAsk',
+  'recordQuickAskOpen',
+  'saveQuickAskTurn',
   'textToSpeech'
 ]);
 

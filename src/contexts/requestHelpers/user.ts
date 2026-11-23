@@ -205,6 +205,20 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // How Zero and Ciel open everywhere: 'saved' (main chat) or 'temporary'
+    // (Quick Ask). Kept on the account, so it follows every device.
+    async updateAssistantMode(mode: 'saved' | 'temporary') {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/settings/assistant-mode`,
+          { mode },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     // "Don't let people walk up while I play" (meet people in apps).
     async updateSocialSettings({ walkups }: { walkups: boolean }) {
       try {
