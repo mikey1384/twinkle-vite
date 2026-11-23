@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
+import useSizedImage from '~/helpers/hooks/useSizedImage';
 
 const frameClass = css`
   position: relative;
@@ -91,6 +92,10 @@ export default function PreviewFrame({
   useEffect(() => {
     setThumbnailFailed(false);
   }, [normalizedThumbnailUrl]);
+  const sizedImage = useSizedImage({
+    src: normalizedThumbnailUrl,
+    onError: () => setThumbnailFailed(true)
+  });
 
   return (
     <div className={cx(frameClass, className)} aria-label={ariaLabel}>
@@ -100,11 +105,7 @@ export default function PreviewFrame({
         <span />
       </div>
       {thumbnailShown ? (
-        <img
-          src={normalizedThumbnailUrl}
-          alt={alt}
-          onError={() => setThumbnailFailed(true)}
-        />
+        <img alt={alt} loading="lazy" decoding="async" {...sizedImage} />
       ) : (
         <div className={fallbackClass}>
           <Icon icon="laptop-code" />

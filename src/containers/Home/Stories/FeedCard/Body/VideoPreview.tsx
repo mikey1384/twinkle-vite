@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Icon from '~/components/Icon';
 import { useKeyContext } from '~/contexts';
@@ -21,7 +27,7 @@ export default function VideoPreview({
   const rewardLevel = Number(content?.rewardLevel || 0);
   const channelName = String(content?.ytChannelName || '').trim();
   const description = String(content?.description || '').trim();
-  const thumbUrl = useBestYouTubeThumb(videoCode);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   // Mirrors XPVideoPlayer's per-minute reward math so the figure matches the
   // watch page exactly (rate scales with the viewer's reward boost level;
@@ -46,9 +52,10 @@ export default function VideoPreview({
   const copyClass = isTarget
     ? 'home-feed-card__target-copy'
     : 'home-feed-card__video-copy';
+  const thumbUrl = useBestYouTubeThumb(videoCode, wrapperRef, thumbClass);
 
   return (
-    <div className={wrapperClass}>
+    <div className={wrapperClass} ref={wrapperRef}>
       <VideoThumbImage
         className={thumbClass}
         rewardLevel={rewardLevel}
@@ -103,15 +110,44 @@ export default function VideoPreview({
 // which serve a gray placeholder with a 200), so a plain Image() probe is a
 // reliable "use it only if it loads" gate. VideoThumbImage paints the src as a
 // background-image (no onError), so the fallback has to live here.
-function useBestYouTubeThumb(videoCode: string) {
+//
+// maxresdefault decodes to about 3.7 MB, 16 times mqdefault, so it is asked
+// for only when the tile needs more than mqdefault can give: the tile is
+// filled (background-size: cover), so a 16:9 picture must span the tile's
+// width or its height times 16/9, in device pixels.
+const MQ_DEFAULT_ENOUGH_DEVICE_PX = 400;
+function useBestYouTubeThumb(
+  videoCode: string,
+  wrapperRef: React.RefObject<HTMLDivElement | null>,
+  thumbClass: string
+) {
   const defaultUrl = videoCode
     ? `https://img.youtube.com/vi/${videoCode}/mqdefault.jpg`
     : '';
   const [src, setSrc] = useState(defaultUrl);
+  const [needsHighRes, setNeedsHighRes] = useState(false);
+
+  useLayoutEffect(() => {
+    const thumb = wrapperRef.current?.getElementsByClassName(thumbClass)[0];
+    if (!thumb) return;
+    const measure = () => {
+      const rect = thumb.getBoundingClientRect();
+      const devicePx =
+        Math.max(rect.width, (rect.height * 16) / 9) *
+        (window.devicePixelRatio || 1);
+      // Never drop back once the crisper picture was needed (e.g. rotation).
+      if (devicePx > MQ_DEFAULT_ENOUGH_DEVICE_PX) setNeedsHighRes(true);
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(thumb);
+    return () => observer.disconnect();
+  }, [thumbClass, wrapperRef]);
 
   useEffect(() => {
     setSrc(defaultUrl);
-    if (!videoCode) return;
+    if (!videoCode || !needsHighRes) return;
 
     let active = true;
     const highResUrl = `https://img.youtube.com/vi/${videoCode}/maxresdefault.jpg`;
@@ -128,7 +164,7 @@ function useBestYouTubeThumb(videoCode: string) {
       probe.onerror = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoCode]);
+  }, [videoCode, needsHighRes]);
 
   return src;
 }
