@@ -101,7 +101,20 @@ export default function MonsterDen({ style }: { style?: React.CSSProperties }) {
 
   const realApi: BattleApi = useMemo(
     () => ({
-      start: (id) => startWordBattle(id),
+      start: async (id) => {
+        try {
+          return await startWordBattle(id);
+        } catch (error: any) {
+          // Today's battles ran out since the Den loaded (handleError
+          // rejects with the server's code as `message`).
+          if (error?.message === 'daily_limit') {
+            setBattle(null);
+            setHeader((prev) => (prev ? { ...prev, battlesLeft: 0 } : prev));
+            setNotice("Today's battles are used up. Your monsters are back tomorrow.");
+          }
+          throw error;
+        }
+      },
       answer: (args) => answerWordBattle(args),
       loadAudio: (args) => loadWordBattleAudio(args)
     }),

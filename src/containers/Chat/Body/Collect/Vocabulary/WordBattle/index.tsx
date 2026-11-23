@@ -128,8 +128,9 @@ export default function WordBattleGate({
           return await startWordBattle(id, seenForm);
         } catch (error: any) {
           // Today's battles ran out since the gate loaded: back to the gate,
-          // which now offers Capture or Just read it.
-          if (error?.response?.data?.error === 'daily_limit') {
+          // which now offers Capture or Just read it. (handleError rejects
+          // with the server's error code as `message`.)
+          if (error?.message === 'daily_limit') {
             setOpen(false);
             setState((prev) => (prev ? { ...prev, battlesLeft: 0 } : prev));
           }
