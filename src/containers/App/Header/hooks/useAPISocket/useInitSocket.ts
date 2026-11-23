@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useReducer, useRef } from 'react';
-import { socket } from '~/constants/sockets/api';
+import { socket, socketKeepalive } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import {
   GENERAL_CHAT_ID,
@@ -279,7 +279,7 @@ export default function useInitSocket({
   const loadChatRetryTimerRef = useRef<number | null>(null);
   const loadChatRetryCountRef = useRef(0);
   const loadChatRetryRecoveryIdRef = useRef<string | null>(null);
-  const heartbeatTimerRef = useRef<number | null>(null);
+  const heartbeatStopRef = useRef<(() => void) | null>(null);
   const serverDisconnectReconnectTimerRef = useRef<number | null>(null);
   const featuredSubjectsRefreshTimerRef = useRef<number | null>(null);
   const plannedServerHandoffAtRef = useRef(0);
@@ -315,21 +315,25 @@ export default function useInitSocket({
   const COLD_RESUME_MS = 5 * 60 * 1000;
 
   function stopUserHeartbeat() {
-    if (!heartbeatTimerRef.current) return;
-    clearInterval(heartbeatTimerRef.current);
-    heartbeatTimerRef.current = null;
+    if (!heartbeatStopRef.current) return;
+    heartbeatStopRef.current();
+    heartbeatStopRef.current = null;
   }
 
   function startUserHeartbeat() {
     if (
-      heartbeatTimerRef.current ||
+      heartbeatStopRef.current ||
       !socket.connected ||
       !userIdRef.current ||
       document.visibilityState !== 'visible'
     ) {
       return;
     }
-    heartbeatTimerRef.current = window.setInterval(() => {
+    // The heartbeat rides the server's transport ping (socketKeepalive), so it
+    // leaves in the same radio wake as the ping answer instead of on a timer
+    // of its own. The server pauses presence after 60 s of silence; a beat
+    // every 25 s keeps two in that window.
+    heartbeatStopRef.current = socketKeepalive.subscribe(() => {
       // Visibility events are the primary owner, but re-check at the boundary
       // in case mobile WebKit suspended event delivery while changing state.
       // The heartbeat is presence metadata only; transport ping/pong remains
@@ -343,7 +347,7 @@ export default function useInitSocket({
         return;
       }
       socket.emit('user_heartbeat');
-    }, 15000);
+    });
   }
 
   function stopSocketAuthRecovery() {

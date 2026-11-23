@@ -141,7 +141,7 @@ test('passive presence heartbeat only runs while the page is visible', () => {
   );
   assert.match(
     heartbeatSource,
-    /window\.setInterval\([\s\S]*?document\.visibilityState !== 'visible'[\s\S]*?stopUserHeartbeat\(\)[\s\S]*?socket\.emit\('user_heartbeat'\)/
+    /socketKeepalive\.subscribe\([\s\S]*?document\.visibilityState !== 'visible'[\s\S]*?stopUserHeartbeat\(\)[\s\S]*?socket\.emit\('user_heartbeat'\)/
   );
   assert.match(
     visibilitySource,

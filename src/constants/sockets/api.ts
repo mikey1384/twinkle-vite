@@ -5,6 +5,7 @@ import { browserReportsOffline } from '~/helpers/browserNetwork';
 import { clientVersion } from '~/constants/defaultValues';
 import { getPresenceContinuityBindMetadata } from '~/helpers/presenceContinuity';
 import { isLuminePreviewCaptureContext } from '~/helpers/luminePreviewCapture';
+import { createSocketKeepalive } from '~/helpers/socketKeepalive';
 
 function buildSocketAuthPayload() {
   const token = getStoredItem('token');
@@ -48,3 +49,27 @@ export const socket = io(URL as string, {
     callback(buildSocketAuthPayload());
   }
 });
+
+// The page's one periodic beat (helpers/socketKeepalive.ts): the server's
+// transport ping. Small periodic work subscribes to it so a phone's radio
+// wakes once per beat, and two missed beats on a visible page close the dead
+// transport so Socket.IO's own bounded reconnect takes over.
+export const socketKeepalive = createSocketKeepalive({
+  onDeadLink() {
+    try {
+      socket.io.engine?.close();
+    } catch {
+      // The Manager owns the transport; a close that throws leaves it as is.
+    }
+  }
+});
+
+socket.on('connect', socketKeepalive.connected);
+socket.on('disconnect', socketKeepalive.disconnected);
+socket.io.on('ping', socketKeepalive.ping);
+if (typeof document !== 'undefined') {
+  socketKeepalive.visibilityChanged(document.visibilityState === 'visible');
+  document.addEventListener('visibilitychange', () => {
+    socketKeepalive.visibilityChanged(document.visibilityState === 'visible');
+  });
+}
