@@ -116,3 +116,54 @@ export function createSocketKeepalive({
     onDeadLink();
   }
 }
+
+// Socket.IO's `socket.connect()` is not a no-op during a handshake. While the
+// Manager is open and the namespace CONNECT packet is still unanswered, it
+// sends CONNECT again; the server then admits the same page twice, the client
+// gets two `connect` events, and every bind and chat load behind them runs
+// twice. On a fast link that window is a few milliseconds. On a slow one
+// (measured 11-23 at 260 ms round trip) the page's own `pageshow` and `focus`
+// handlers land inside it on every load: one page sent 4 CONNECTs and 4 binds
+// on a single transport. A socket that is active (subscribed to its Manager),
+// not connected, with the Manager open, has exactly one CONNECT pending.
+export function isNamespaceConnectPending(socket: {
+  connected: boolean;
+  active: boolean;
+  io: unknown;
+}) {
+  return (
+    !socket.connected &&
+    socket.active &&
+    (socket.io as { _readyState?: string })?._readyState === 'open'
+  );
+}
+
+// Every caller that "makes sure the socket is connected" (resume, focus,
+// pageshow, online, the session recovery probe) calls socket.connect(). The
+// guard lives on the socket itself so none of them, present or future, can
+// repeat a CONNECT that is already on its way.
+export function guardSocketConnect<
+  T extends { connected: boolean; active: boolean; io: unknown; connect: () => T }
+>(socket: T) {
+  const connect = socket.connect.bind(socket);
+  socket.connect = function guardedConnect() {
+    if (isNamespaceConnectPending(socket)) return socket;
+    return connect();
+  };
+  return socket;
+}
+
+// True from the first transport attempt until the namespace is connected:
+// nothing has been lost that a reconnect would have to repair.
+export function isSocketHandshakeInFlight(socket: {
+  connected: boolean;
+  active: boolean;
+  io: unknown;
+}) {
+  const state = (socket.io as { _readyState?: string })?._readyState;
+  return (
+    !socket.connected &&
+    socket.active &&
+    (state === 'opening' || state === 'open')
+  );
+}

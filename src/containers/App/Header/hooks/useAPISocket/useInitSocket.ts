@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useReducer, useRef } from 'react';
 import { socket, socketKeepalive } from '~/constants/sockets/api';
+import { isSocketHandshakeInFlight } from '~/helpers/socketKeepalive';
 import { useNavigate } from 'react-router-dom';
 import {
   GENERAL_CHAT_ID,
@@ -790,7 +791,16 @@ export default function useInitSocket({
       // A resume can observe the disconnected transport before Socket.IO's
       // disconnect callback has run. Preserve the same canonical-resync
       // invariant instead of treating the next connect as a clean cold bind.
-      markSocketTransportGap();
+      // A page whose first handshake is still on its way has lost nothing: on
+      // a slow link `pageshow` and `focus` arrive before that first connect,
+      // and calling it a gap made every such load read chat from the writer
+      // and reread the session.
+      if (
+        lastTransportSocketIdRef.current ||
+        !isSocketHandshakeInFlight(socket)
+      ) {
+        markSocketTransportGap();
+      }
       emitAdminTelemetry({
         message: 'Socket disconnected on resume - attempting reconnect'
       });

@@ -5,7 +5,10 @@ import { browserReportsOffline } from '~/helpers/browserNetwork';
 import { clientVersion } from '~/constants/defaultValues';
 import { getPresenceContinuityBindMetadata } from '~/helpers/presenceContinuity';
 import { isLuminePreviewCaptureContext } from '~/helpers/luminePreviewCapture';
-import { createSocketKeepalive } from '~/helpers/socketKeepalive';
+import {
+  createSocketKeepalive,
+  guardSocketConnect
+} from '~/helpers/socketKeepalive';
 
 function buildSocketAuthPayload() {
   const token = getStoredItem('token');
@@ -64,9 +67,14 @@ export const socketKeepalive = createSocketKeepalive({
   }
 });
 
-socket.on('connect', socketKeepalive.connected);
-socket.on('disconnect', socketKeepalive.disconnected);
+// The transport, not the namespace, is what pings: a transport that opened
+// but never answered the namespace CONNECT is watched too.
+socket.io.on('open', socketKeepalive.connected);
+socket.io.on('close', socketKeepalive.disconnected);
 socket.io.on('ping', socketKeepalive.ping);
+
+// No caller can repeat a namespace CONNECT that is already on its way.
+guardSocketConnect(socket);
 if (typeof document !== 'undefined') {
   socketKeepalive.visibilityChanged(document.visibilityState === 'visible');
   document.addEventListener('visibilitychange', () => {
