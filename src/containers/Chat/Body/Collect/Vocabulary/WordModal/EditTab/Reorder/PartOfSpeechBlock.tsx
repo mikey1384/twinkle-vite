@@ -17,7 +17,7 @@ export default function PartOfSpeechBlock({
   style?: React.CSSProperties;
 }) {
   const filteredDefIds = useMemo(
-    () => defIds.filter((id) => !deletedDefIds.includes(id)),
+    () => (defIds || []).filter((id) => !deletedDefIds.includes(id)),
     [defIds, deletedDefIds]
   );
   return defIds?.length > 0 ? (

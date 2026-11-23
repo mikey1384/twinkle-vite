@@ -32,13 +32,13 @@ export default function Reorder({
             style={{ marginBottom: '1.5rem' }}
             type={pos}
             deletedDefIds={deletedDefIds}
-            defIds={editedDefinitionOrder[pos]}
+            defIds={editedDefinitionOrder?.[pos]}
             posObject={posObj[pos]}
             onListItemMove={(params) =>
               handleDefinitionsMove({
                 ...params,
                 setIds: onSetEditedDefinitionOrder,
-                ids: editedDefinitionOrder[pos],
+                ids: editedDefinitionOrder?.[pos],
                 pos
               })
             }

@@ -67,7 +67,7 @@ export default function PartOfSpeechBlock({
                     : ''
                 }}
               >
-                {posObject[id].title}
+                {posObject?.[id]?.title}
               </section>
               <Icon icon="trash-alt" style={{ marginLeft: '2rem' }} />
             </nav>
