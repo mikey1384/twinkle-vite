@@ -927,6 +927,7 @@ registerMethods('user', [
   'updateImageGenerationSettings',
   'updateGrammarblesSettings',
   'updateHomeAssistant',
+  'updateAssistantMode',
   'updateSocialSettings',
   'updateImageEditorSettings',
   'confirmPassword',

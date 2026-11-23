@@ -34,7 +34,7 @@ import {
   AI_VOICE_RESUME_MICROPHONE
 } from '~/helpers/aiVoiceCall';
 import { useWebsiteAgentOverlayActive } from '../WebsiteAgentSpotlight';
-import { EnergyBattery, useDraggableWindow } from './frame';
+import { EnergyChip, useDraggableWindow } from './frame';
 import AssistantReplyView, {
   AssistantReplyNotice
 } from './AssistantReplyView';
@@ -64,6 +64,9 @@ import {
   type AssistantAskContext
 } from './dockState';
 import useAssistantConversation from './useAssistantConversation';
+import AssistantModeBar from '../QuickAsk/AssistantModeBar';
+import { useAssistantMode } from '../QuickAsk/assistantMode';
+import { openQuickAsk } from '../QuickAsk/state';
 
 const WINDOW_WIDTH = 360;
 const appear = keyframes`from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; }`;
@@ -175,6 +178,9 @@ export function DockWindow({
   const { reply, replying, sending, send, sendPhoto, sendError } =
     useAssistantConversation({ assistantName: assistant, channelId, topicId });
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
+  const { saveMode } = useAssistantMode();
+  const [modeSwitching, setModeSwitching] = useState(false);
+  const [modeError, setModeError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   // A photo to send with the next message (the window's photo button).
@@ -428,7 +434,9 @@ export function DockWindow({
             {status}
           </span>
         </button>
-        <EnergyBattery width={14} margin=".7rem .4rem" />
+        <div className={css`display: flex; align-items: center;`}>
+          <EnergyChip />
+        </div>
         <div
           data-no-drag=""
           className={css`
@@ -467,6 +475,17 @@ export function DockWindow({
           </button>
         </div>
       </div>
+      <AssistantModeBar
+        assistant={assistant}
+        mode="saved"
+        busy={modeSwitching || active}
+        onChange={handleSwitchToTemporary}
+      />
+      {modeError && (
+        <div role="alert" className={noticeClass}>
+          {modeError}
+        </div>
+      )}
       <div
         data-no-drag=""
         className={css`
@@ -925,6 +944,23 @@ export function DockWindow({
       if (getAssistantDraft(assistant, topicId) === text)
         setAssistantDraft(assistant, topicId, '');
       consumeAssistantAskContext(assistant, topicId, sentContext);
+    }
+  }
+  // Saved -> Temporary: the account's choice changes and this box becomes a
+  // fresh temporary conversation, keeping what they pressed Ask on.
+  async function handleSwitchToTemporary() {
+    if (modeSwitching || active) return;
+    setModeSwitching(true);
+    setModeError('');
+    try {
+      const sentContext = askContext;
+      if (!(await saveMode('temporary'))) throw new Error('mode');
+      closeAssistantDock();
+      openQuickAsk({ agent: assistant, context: sentContext });
+    } catch {
+      setModeError('Couldn’t switch to Temporary. Try again.');
+    } finally {
+      setModeSwitching(false);
     }
   }
   function handleText() {

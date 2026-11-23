@@ -1,37 +1,56 @@
-// Whether the Quick Ask window (a temporary chat with Zero for small
-// questions, kept out of the member's main chat) is open. Its conversation
-// lives only inside the window, so closing it, a reload or an account change
-// ends it; Save to chat keeps one answer.
-let open = false;
+import type { AssistantAskContext } from '../AssistantDock/dockState';
+
+// Whether the Quick Ask window (Zero or Ciel in temporary mode: small
+// questions, kept out of the member's main chat) is open, and with what.
+// Its conversation lives only inside the window, so closing it, a reload or
+// an account change ends it; Save to chat keeps one answer.
+export interface QuickAskRequest {
+  agent: 'Zero' | 'Ciel';
+  // what the member pressed Ask on, sent with the first question
+  context: AssistantAskContext | null;
+  // a question typed elsewhere (the Home box), sent as soon as it opens
+  question: string;
+  nonce: number;
+}
+let request: QuickAskRequest | null = null;
 const listeners = new Set<() => void>();
 const focusListeners = new Set<() => void>();
 
-function set(next: boolean) {
-  if (open === next) return;
-  open = next;
+function notify() {
   listeners.forEach((listener) => listener());
 }
 
-// Opening again while it is open puts the cursor back in its box.
-export function openQuickAsk() {
-  if (open) {
+// Opening it again for the same assistant with nothing new puts the cursor
+// back in its box; anything else starts a fresh temporary conversation.
+export function openQuickAsk({
+  agent = 'Zero',
+  context = null,
+  question = ''
+}: {
+  agent?: 'Zero' | 'Ciel';
+  context?: AssistantAskContext | null;
+  question?: string;
+} = {}) {
+  if (request && request.agent === agent && !context && !question) {
     focusListeners.forEach((listener) => listener());
     return;
   }
-  set(true);
+  request = { agent, context, question, nonce: Date.now() + Math.random() };
+  notify();
 }
 
 export function closeQuickAsk() {
-  set(false);
+  if (!request) return;
+  request = null;
+  notify();
 }
 
-export function toggleQuickAsk() {
-  if (open) closeQuickAsk();
-  else openQuickAsk();
+export function getQuickAskRequest() {
+  return request;
 }
 
 export function getQuickAskOpen() {
-  return open;
+  return !!request;
 }
 
 export function subscribeQuickAsk(listener: () => void) {

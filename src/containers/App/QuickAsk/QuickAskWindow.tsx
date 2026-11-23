@@ -7,6 +7,8 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import {
   CHAT_ID_BASE_NUMBER,
+  CIEL_PFP_URL,
+  CIEL_TWINKLE_ID,
   ZERO_PFP_URL,
   ZERO_TWINKLE_ID
 } from '~/constants/defaultValues';
@@ -18,6 +20,15 @@ import RichText from '~/components/Texts/RichText';
 import AgentSuggestions from '~/containers/Chat/Body/MessagesContainer/MessageInput/AgentSuggestions';
 import { WEBSITE_AGENT_UI_ATTRIBUTE } from '~/helpers/websiteAgentPage';
 import { EnergyChip, useDraggableWindow } from '../AssistantDock/frame';
+import { askIdeasFor } from '../AssistantDock/askIdeas';
+import {
+  getAssistantWindowView,
+  openAssistantDock,
+  setAssistantWindowView,
+  type AssistantAskContext
+} from '../AssistantDock/dockState';
+import AssistantModeBar from './AssistantModeBar';
+import { useAssistantMode } from './assistantMode';
 import AssistantReplyView from '../AssistantDock/AssistantReplyView';
 import {
   EMPTY_ASSISTANT_REPLY,
@@ -26,15 +37,18 @@ import {
 import {
   closeQuickAsk,
   quickAskShortcutLabel,
-  subscribeQuickAskFocus
+  subscribeQuickAskFocus,
+  type QuickAskRequest
 } from './state';
 
-// Quick Ask: a short chat with Zero for small questions, kept out of the
-// member's main chat so it stays easy to scroll (twinkle-api
-// helpers/ai/quickAsk.ts). The conversation lives only in this window's
-// state; closing it, a reload or signing out ends it. Save to chat keeps one
-// answer in their chat with Zero. The server keeps its usual safety record,
-// so the copy never promises secrecy.
+// Zero or Ciel in temporary mode (Quick Ask): small questions kept out of
+// the member's main chat so it stays easy to scroll (twinkle-api
+// helpers/ai/quickAsk.ts). It is the same floating box as the saved chat
+// (same place on screen), with the Temporary / Saved switch in its header.
+// The conversation lives only in this window's state; closing it, a reload
+// or signing out ends it. Save to chat keeps one answer in their chat with
+// that assistant. The server keeps its usual safety record, so the copy
+// never promises secrecy.
 
 const WINDOW_WIDTH = 360;
 const appear = keyframes`from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; }`;
@@ -44,8 +58,6 @@ const QUICK_IDEAS = [
   'How do I say “배고파” in English?',
   'Is “I am agree” correct?'
 ];
-export const QUICK_ASK_NOTE =
-  'Keeps your main chat tidy; not saved to your history.';
 
 type SaveState = 'saving' | 'saved' | 'error';
 
@@ -55,9 +67,16 @@ interface Turn {
   reply: AssistantReply;
   save?: SaveState;
   savedChannelId?: number;
+  // the item they pressed Ask on, shown above this question
+  contextLabel?: string;
 }
 
-export default function QuickAskWindow() {
+export default function QuickAskWindow({
+  request
+}: {
+  request: QuickAskRequest;
+}) {
+  const agent = request.agent;
   const streamQuickAsk = useAppContext(
     (v) => v.requestHelpers.streamQuickAsk
   );
@@ -68,26 +87,47 @@ export default function QuickAskWindow() {
     (v) => v.requestHelpers.saveQuickAskTurn
   );
   const onReceiveMessage = useChatContext((v) => v.actions.onReceiveMessage);
-  const zeroChannelId = useChatContext((v) => Number(v.state.zeroChannelId || 0));
-  // Saved messages join the Zero chat on screen only when it is already
-  // loaded; otherwise the chat loads them itself when opened.
-  const zeroChatLoaded = useChatContext(
-    (v) => !!v.state.channelsObj?.[Number(v.state.zeroChannelId || 0)]?.messageIds
+  const agentChannelId = useChatContext((v) =>
+    Number(
+      (agent === 'Ciel' ? v.state.cielChannelId : v.state.zeroChannelId) || 0
+    )
   );
+  // Saved messages join that chat on screen only when it is already loaded;
+  // otherwise the chat loads them itself when opened.
+  const agentChatLoaded = useChatContext(
+    (v) =>
+      !!v.state.channelsObj?.[
+        Number(
+          (agent === 'Ciel' ? v.state.cielChannelId : v.state.zeroChannelId) ||
+            0
+        )
+      ]?.messageIds
+  );
+  const { saveMode } = useAssistantMode();
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const navigate = useNavigate();
   const [phone] = useState(() => isMobile(navigator));
-  const { position, viewport, windowRef, handleStart } = useDraggableWindow({
-    x: Math.max(
-      8,
-      window.innerWidth -
-        Math.min(WINDOW_WIDTH * uiScale(), window.innerWidth - 16) -
-        24
-    ),
-    y: 84 * uiScale()
-  });
+  // the same spot as the saved chat's window: one box, two modes
+  const { position, viewport, windowRef, handleStart } = useDraggableWindow(
+    getAssistantWindowView().position || {
+      x: Math.max(
+        8,
+        window.innerWidth -
+          Math.min(WINDOW_WIDTH * uiScale(), window.innerWidth - 16) -
+          8
+      ),
+      y: 70 * uiScale()
+    }
+  );
   const [turns, setTurns] = useState<Turn[]>([]);
+  const [context, setContext] = useState<AssistantAskContext | null>(
+    request.context
+  );
+  // Switching to Saved with answers here: offer to keep them first.
+  const [carryOver, setCarryOver] = useState(false);
+  const [switching, setSwitching] = useState(false);
+  const [switchError, setSwitchError] = useState('');
   const [text, setText] = useState('');
   const [sessionError, setSessionError] = useState('');
   const sessionKeyRef = useRef('');
@@ -98,12 +138,23 @@ export default function QuickAskWindow() {
   const followBottom = useRef(true);
   const last = turns[turns.length - 1];
   const replying = !!last && !last.reply.done;
+  const unsavedTurns = turns.filter(
+    (turn) =>
+      turn.reply.done &&
+      !!turn.reply.text &&
+      !turn.reply.error &&
+      !turn.reply.notice &&
+      !!turn.reply.messageId &&
+      turn.save !== 'saved'
+  );
+  const ideas = context ? askIdeasFor(context) : QUICK_IDEAS;
 
   useEffect(() => {
     void recordQuickAskOpen?.();
     inputRef.current?.focus();
     const timer = window.setTimeout(() => inputRef.current?.focus(), 50);
     const stopFocus = subscribeQuickAskFocus(() => inputRef.current?.focus());
+    if (request.question.trim()) void handleSend(request.question);
     return () => {
       window.clearTimeout(timer);
       stopFocus();
@@ -116,13 +167,16 @@ export default function QuickAskWindow() {
     const node = scrollRef.current;
     if (node && followBottom.current) node.scrollTop = node.scrollHeight;
   }, [turns]);
+  useEffect(() => {
+    if (!phone) setAssistantWindowView({ position });
+  }, [phone, position]);
 
   return createPortal(
     <div
       {...{ [WEBSITE_AGENT_UI_ATTRIBUTE]: '' }}
       ref={windowRef}
       role="dialog"
-      aria-label="Quick Ask Zero"
+      aria-label={`Quick Ask ${agent}`}
       onPointerDown={phone ? undefined : handleStart}
       onKeyDown={(event) => {
         // Escape closes only an idle, empty window, so a stray key never
@@ -195,7 +249,7 @@ export default function QuickAskWindow() {
             padding-left: 0.8rem;
           `}
         >
-          <AssistantFace assistant="Zero" size={phone ? '4.4rem' : '5rem'} />
+          <AssistantFace assistant={agent} size={phone ? '4.4rem' : '5rem'} />
         </div>
         <div
           className={css`
@@ -215,8 +269,7 @@ export default function QuickAskWindow() {
               color: ${Color.logoBlue()};
             `}
           >
-            <Icon icon="bolt" style={{ marginRight: '.5rem' }} />
-            Quick Ask
+            {agent}
           </span>
           <span
             aria-live="polite"
@@ -228,7 +281,13 @@ export default function QuickAskWindow() {
               white-space: nowrap;
             `}
           >
-            {replying ? 'Zero is answering…' : 'For small questions'}
+            {replying ? (
+              `${agent} is answering…`
+            ) : (
+              <>
+                <Icon icon="bolt" /> Quick Ask
+              </>
+            )}
           </span>
         </div>
         <div className={css`display: flex; align-items: center;`}>
@@ -257,24 +316,57 @@ export default function QuickAskWindow() {
           <Icon icon="times" />
         </button>
       </div>
-      <div
-        role="note"
-        className={css`
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          padding: 0.55rem 1rem;
-          font-size: 1.15rem;
-          color: #4c5767;
-          background: #edf1f6;
-          border-top: 1px solid var(--ui-border);
-          border-bottom: 1px solid var(--ui-border);
-          flex-shrink: 0;
-        `}
-      >
-        <Icon icon="clock" />
-        <span>{QUICK_ASK_NOTE}</span>
-      </div>
+      <AssistantModeBar
+        assistant={agent}
+        mode="temporary"
+        busy={switching}
+        onChange={() => {
+          if (unsavedTurns.length) setCarryOver(true);
+          else void handleSwitchToSaved(false);
+        }}
+      />
+      {(carryOver || switchError) && (
+        <div role="alert" data-no-drag="" className={carryClass}>
+          {switchError || (
+            <>
+              <span>
+                Switch to Saved. Keep{' '}
+                {unsavedTurns.length === 1
+                  ? 'this answer'
+                  : `these ${unsavedTurns.length} answers`}{' '}
+                in your chat with {agent}?
+              </span>
+              <span className={carryButtonsClass}>
+                <button
+                  type="button"
+                  className={saveButtonClass}
+                  disabled={switching}
+                  onClick={() => handleSwitchToSaved(true)}
+                >
+                  {switching ? <Icon icon="spinner" spin /> : <Icon icon="thumbtack" />}{' '}
+                  Save {unsavedTurns.length === 1 ? 'it' : 'them'} to chat
+                </button>
+                <button
+                  type="button"
+                  className={linkClass}
+                  disabled={switching}
+                  onClick={() => handleSwitchToSaved(false)}
+                >
+                  Switch without saving
+                </button>
+                <button
+                  type="button"
+                  className={linkClass}
+                  disabled={switching}
+                  onClick={() => setCarryOver(false)}
+                >
+                  Stay
+                </button>
+              </span>
+            </>
+          )}
+        </div>
+      )}
       <div
         data-no-drag=""
         className={css`
@@ -320,7 +412,10 @@ export default function QuickAskWindow() {
                   }
                 `}
               >
-                <div className={speakerClass}>You</div>
+                <div className={speakerClass}>
+                  You
+                  {turn.contextLabel ? ` · about ${turn.contextLabel}` : ''}
+                </div>
                 <RichText
                   contentType="chat"
                   contentId={`quick-ask-question-${turn.key}`}
@@ -329,10 +424,10 @@ export default function QuickAskWindow() {
                   {turn.question}
                 </RichText>
                 <div className={speakerClass} style={{ marginTop: '.7rem' }}>
-                  Zero
+                  {agent}
                 </div>
                 <AssistantReplyView
-                  assistant="Zero"
+                  assistant={agent}
                   reply={turn.reply}
                   channelId={0}
                   contentKey={`quick-ask-${turn.key}`}
@@ -348,7 +443,7 @@ export default function QuickAskWindow() {
                     <div className={saveRowClass}>
                       {turn.save === 'saved' ? (
                         <span role="status">
-                          <Icon icon="check" /> Saved to your chat with Zero
+                          <Icon icon="check" /> Saved to your chat with {agent}
                           {turn.savedChannelId ? (
                             <>
                               {' · '}
@@ -411,11 +506,35 @@ export default function QuickAskWindow() {
         )}
         {turns.length === 0 && !text.trim() && (
           <AgentSuggestions
-            ideas={QUICK_IDEAS}
+            ideas={ideas}
             onPick={(idea) => {
               void handleSend(idea);
             }}
           />
+        )}
+        {context && (
+          <div className={contextClass}>
+            <Icon icon="paperclip" />
+            <span
+              className={css`
+                flex: 1;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              `}
+            >
+              About {context.label}
+            </span>
+            <button
+              type="button"
+              aria-label="Don’t attach this"
+              className={linkClass}
+              onClick={() => setContext(null)}
+            >
+              <Icon icon="times" />
+            </button>
+          </div>
         )}
         <form
           onSubmit={(event) => {
@@ -433,13 +552,15 @@ export default function QuickAskWindow() {
             value={text}
             onChange={(event) => setText(event.target.value)}
             placeholder={
-              turns.length
-                ? 'Ask a follow-up'
-                : phone
-                  ? 'Ask Zero a quick question'
-                  : `Ask Zero a quick question (${quickAskShortcutLabel()})`
+              context
+                ? `Ask ${agent} about this`
+                : turns.length
+                  ? 'Ask a follow-up'
+                  : phone
+                    ? `Ask ${agent} a quick question`
+                    : `Ask ${agent} a quick question (${quickAskShortcutLabel()})`
             }
-            aria-label="Ask Zero a quick question"
+            aria-label={`Ask ${agent} a quick question`}
             maxLength={2000}
             enterKeyHint="send"
             className={css`
@@ -463,7 +584,7 @@ export default function QuickAskWindow() {
           <button
             type="submit"
             aria-busy={replying}
-            disabled={!text.trim() || replying || !!sessionError}
+            disabled={(!text.trim() && !context) || replying || !!sessionError}
             className={css`
               border: none;
               border-radius: 9px;
@@ -489,8 +610,11 @@ export default function QuickAskWindow() {
 
   async function handleSend(content?: string) {
     const question = (content ?? text).trim();
-    if (!question || replying || sessionError) return;
+    const sentContext = context;
+    if ((!question && !sentContext) || replying || sessionError) return;
     const key = ++turnKeyRef.current;
+    // the item rides with this question only; follow-ups still see it
+    setContext(null);
     const controller = new AbortController();
     abortRef.current = controller;
     followBottom.current = true;
@@ -500,6 +624,7 @@ export default function QuickAskWindow() {
       {
         key,
         question,
+        contextLabel: sentContext?.label,
         reply: { ...EMPTY_ASSISTANT_REPLY, suggestions: null, status: 'thinking' }
       }
     ]);
@@ -513,8 +638,10 @@ export default function QuickAskWindow() {
       );
     try {
       const done: any = await streamQuickAsk({
+        agent,
         sessionKey: sessionKeyRef.current,
         message: question,
+        askedAbout: sentContext,
         signal: controller.signal,
         onEvent: (event: any) => {
           if (event.type === 'session') {
@@ -547,11 +674,12 @@ export default function QuickAskWindow() {
         setSessionError(error.message);
         setTurns((current) => current.filter((turn) => turn.key !== key));
         setText(question);
+        setContext(sentContext);
         return;
       }
       update(() => ({
         done: true,
-        error: error?.message || 'Zero couldn’t answer just now. Try again.'
+        error: error?.message || `${agent} couldn’t answer just now. Try again.`
       }));
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
@@ -560,7 +688,7 @@ export default function QuickAskWindow() {
 
   async function handleSave(turn: Turn) {
     const turnId = Number(turn.reply.messageId);
-    if (!turnId || turn.save === 'saving' || turn.save === 'saved') return;
+    if (!turnId || turn.save === 'saving' || turn.save === 'saved') return true;
     const setSave = (patch: Partial<Turn>) =>
       setTurns((current) =>
         current.map((item) => (item.key === turn.key ? { ...item, ...patch } : item))
@@ -569,15 +697,20 @@ export default function QuickAskWindow() {
     try {
       const result = await saveQuickAskTurn(turnId);
       const channelId = Number(result?.channelId || 0);
-      // The server's own rows, added to the Zero chat only if it is loaded.
-      if (channelId && channelId === zeroChannelId && zeroChatLoaded) {
+      const agentUserId = Number(agent === 'Ciel' ? CIEL_TWINKLE_ID : ZERO_TWINKLE_ID);
+      // The server's own rows, added to that chat only if it is loaded.
+      if (channelId && channelId === agentChannelId && agentChatLoaded) {
         for (const message of result?.messages || []) {
-          const fromZero = Number(message.userId) === Number(ZERO_TWINKLE_ID);
+          const fromAgent = Number(message.userId) === agentUserId;
           onReceiveMessage({
             message: {
               ...message,
-              username: fromZero ? 'Zero' : username,
-              profilePicUrl: fromZero ? ZERO_PFP_URL : profilePicUrl
+              username: fromAgent ? agent : username,
+              profilePicUrl: fromAgent
+                ? agent === 'Ciel'
+                  ? CIEL_PFP_URL
+                  : ZERO_PFP_URL
+                : profilePicUrl
             },
             pageVisible: true,
             usingChat: false,
@@ -587,8 +720,35 @@ export default function QuickAskWindow() {
         }
       }
       setSave({ save: 'saved', savedChannelId: channelId });
+      return true;
     } catch {
       setSave({ save: 'error' });
+      return false;
+    }
+  }
+
+  // Temporary -> Saved: the account's choice changes, this box becomes the
+  // saved chat; with keep=true the answers here are saved first, one by one.
+  async function handleSwitchToSaved(keep: boolean) {
+    if (switching) return;
+    setSwitching(true);
+    setSwitchError('');
+    try {
+      if (keep) {
+        for (const turn of unsavedTurns) {
+          if (!(await handleSave(turn))) {
+            setSwitchError('Couldn’t save every answer. Try again, or save them one by one.');
+            return;
+          }
+        }
+      }
+      if (!(await saveMode('saved'))) throw new Error('mode');
+      closeQuickAsk();
+      openAssistantDock(agent, context);
+    } catch {
+      setSwitchError('Couldn’t switch to Saved. Try again.');
+    } finally {
+      setSwitching(false);
     }
   }
 
@@ -645,4 +805,33 @@ const linkClass = css`
   font-size: inherit;
   text-decoration: underline;
   cursor: pointer;
+`;
+const carryClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 1.2rem;
+  line-height: 1.45;
+  color: #3d4a5c;
+  background: #fff8e6;
+  border-bottom: 1px solid var(--ui-border);
+  flex-shrink: 0;
+`;
+const carryButtonsClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
+`;
+const contextClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  background: ${Color.logoBlue(0.08)};
+  font-size: 1.25rem;
+  color: ${Color.darkerGray()};
+  flex-shrink: 0;
 `;

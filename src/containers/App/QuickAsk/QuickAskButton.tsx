@@ -4,7 +4,14 @@ import { Color } from '~/constants/css';
 import { useKeyContext, useViewContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import AssistantFace from '~/components/AssistantFace';
+import { getHomeCallAssistant } from '~/helpers/aiVoiceCall';
 import { openQuickAsk, quickAskShortcutLabel } from './state';
+
+// The member's own Zero or Ciel (the Home chooser, kept on the account and
+// copied to this device), Zero when they never picked.
+export function getHomeAgent(userId: number | null): 'Zero' | 'Ciel' {
+  return getHomeCallAssistant(userId) || 'Zero';
+}
 
 // The way into Quick Ask: a small button in the desktop header (or Ctrl+K /
 // ⌘K, see Host.tsx) and a row in the phone menu. Hidden when Zero isn't
@@ -20,13 +27,15 @@ export function useQuickAskAvailable() {
 
 export function QuickAskHeaderButton() {
   const available = useQuickAskAvailable();
+  const userId = useKeyContext((v) => v.myState.userId);
   if (!available) return null;
+  const agent = getHomeAgent(userId);
   return (
     <button
       type="button"
-      onClick={openQuickAsk}
-      title={`Quick Ask Zero (${quickAskShortcutLabel()}): small questions, kept out of your main chat`}
-      aria-label="Quick Ask Zero"
+      onClick={() => openQuickAsk({ agent })}
+      title={`Quick Ask ${agent} (${quickAskShortcutLabel()}): small questions, kept out of your main chat`}
+      aria-label={`Quick Ask ${agent}`}
       className={css`
         display: flex;
         align-items: center;
@@ -60,7 +69,7 @@ export function QuickAskHeaderButton() {
         }
       `}
     >
-      <AssistantFace assistant="Zero" size="2.4rem" />
+      <AssistantFace assistant={agent} size="2.4rem" />
       <Icon icon="bolt" />
       <span className="quick-ask-label">Quick Ask</span>
     </button>
@@ -69,13 +78,15 @@ export function QuickAskHeaderButton() {
 
 export function QuickAskMenuRow({ onOpen }: { onOpen: () => void }) {
   const available = useQuickAskAvailable();
+  const userId = useKeyContext((v) => v.myState.userId);
   if (!available) return null;
+  const agent = getHomeAgent(userId);
   return (
     <button
       type="button"
       onClick={() => {
         onOpen();
-        openQuickAsk();
+        openQuickAsk({ agent });
       }}
       className={css`
         display: flex;
@@ -92,7 +103,7 @@ export function QuickAskMenuRow({ onOpen }: { onOpen: () => void }) {
         cursor: pointer;
       `}
     >
-      <AssistantFace assistant="Zero" size="3.6rem" />
+      <AssistantFace assistant={agent} size="3.6rem" />
       <span
         className={css`
           display: flex;
@@ -109,7 +120,7 @@ export function QuickAskMenuRow({ onOpen }: { onOpen: () => void }) {
           `}
         >
           <Icon icon="bolt" style={{ marginRight: '.5rem' }} />
-          Quick Ask Zero
+          Quick Ask {agent}
         </span>
         <span
           className={css`

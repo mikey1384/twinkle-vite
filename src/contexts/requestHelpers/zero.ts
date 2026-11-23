@@ -192,13 +192,18 @@ export default function zeroRequestHelpers({
     // member's chat history (twinkle-api helpers/ai/quickAsk.ts). The reply
     // streams as NDJSON in the Build runtime AI stream's frames.
     async streamQuickAsk({
+      agent,
       sessionKey,
       message,
+      askedAbout,
       signal,
       onEvent
     }: {
+      agent?: 'Zero' | 'Ciel';
       sessionKey?: string;
       message: string;
+      // what the member pressed Ask on (the server re-reads it as them)
+      askedAbout?: Record<string, any> | null;
       signal?: AbortSignal;
       onEvent?: (event: BuildRuntimeAiStreamEvent & Record<string, any>) => void;
     }) {
@@ -211,7 +216,12 @@ export default function zeroRequestHelpers({
       const response = await fetch(`${URL}/zero/quick-ask/stream`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ sessionKey: sessionKey || undefined, message }),
+        body: JSON.stringify({
+          agent: agent || 'Zero',
+          sessionKey: sessionKey || undefined,
+          message,
+          ...(askedAbout ? { askedAbout } : {})
+        }),
         signal
       });
       if (!response.ok) {

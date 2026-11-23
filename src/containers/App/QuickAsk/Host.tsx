@@ -1,9 +1,11 @@
 import React, { Suspense, useEffect, useSyncExternalStore } from 'react';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { isMobile } from '~/helpers';
-import { useQuickAskAvailable } from './QuickAskButton';
+import { useKeyContext } from '~/contexts';
+import { getHomeAgent, useQuickAskAvailable } from './QuickAskButton';
+import { useAssistantModeSync } from './assistantMode';
 import {
-  getQuickAskOpen,
+  getQuickAskRequest,
   isQuickAskShortcut,
   openQuickAsk,
   subscribeQuickAsk
@@ -16,8 +18,10 @@ const QuickAskWindow = lazyWithRetry(loadWindow);
 // computer, and the window itself (its code is fetched while the page is
 // idle, so the first open is instant too).
 export default function QuickAskHost() {
-  const open = useSyncExternalStore(subscribeQuickAsk, getQuickAskOpen);
+  const request = useSyncExternalStore(subscribeQuickAsk, getQuickAskRequest);
   const available = useQuickAskAvailable();
+  const userId = useKeyContext((v) => v.myState.userId);
+  useAssistantModeSync();
 
   useEffect(() => {
     if (!available || isMobile(navigator)) return;
@@ -35,16 +39,16 @@ export default function QuickAskHost() {
       if (target?.isContentEditable) return;
       if (document.querySelector('[aria-modal="true"]')) return;
       event.preventDefault();
-      openQuickAsk();
+      openQuickAsk({ agent: getHomeAgent(userId) });
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [available]);
+  }, [available, userId]);
 
-  if (!open || !available) return null;
+  if (!request || !available) return null;
   return (
     <Suspense fallback={null}>
-      <QuickAskWindow />
+      <QuickAskWindow key={request.nonce} request={request} />
     </Suspense>
   );
 }

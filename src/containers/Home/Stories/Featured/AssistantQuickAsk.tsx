@@ -11,11 +11,15 @@ import {
   writeCachedStarters
 } from '~/containers/Chat/Body/MessagesContainer/MessageInput/agentStartersCache';
 import {
+  closeAssistantDock,
   getHomeAskPrefill,
   openAssistantDock,
   setHomeAskAssistant,
   subscribeHomeAskPrefill
 } from '~/containers/App/AssistantDock/dockState';
+import AssistantModeBar from '~/containers/App/QuickAsk/AssistantModeBar';
+import { useAssistantMode } from '~/containers/App/QuickAsk/assistantMode';
+import { closeQuickAsk, openQuickAsk } from '~/containers/App/QuickAsk/state';
 
 // Talk to the Zero or Ciel chosen beside the call button without leaving
 // Home. It is the same chat room as the chat page. The reply shows in their
@@ -48,6 +52,10 @@ export default function AssistantQuickAsk({
   );
   const [starterLoaded, setStarterLoaded] = useState(false);
   const [text, setText] = useState('');
+  // Temporary (Quick Ask) or Saved (the main chat): the member's one
+  // account-wide choice, switchable right here.
+  const { mode, saveMode } = useAssistantMode();
+  const [modeSwitching, setModeSwitching] = useState(false);
   const [focused, setFocused] = useState(false);
   const engaged = focused || !!text.trim() || sending;
 
@@ -98,6 +106,15 @@ export default function AssistantQuickAsk({
   }, [assistantName]);
 
   async function handleSend(idea?: string) {
+    if (mode === 'temporary') {
+      const question = (idea ?? text).trim();
+      if (!question) return;
+      setText('');
+      closeAssistantDock();
+      openQuickAsk({ agent: assistantName, question });
+      return;
+    }
+    closeQuickAsk();
     if (!(await send(idea ?? text))) return;
     setText('');
     openAssistantDock(assistantName, undefined, 0);
@@ -141,7 +158,11 @@ export default function AssistantQuickAsk({
           onChange={(event) => setText(event.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder={`Ask ${assistantName} anything, or to do something for you`}
+          placeholder={
+            mode === 'temporary'
+              ? `Ask ${assistantName} a quick question`
+              : `Ask ${assistantName} anything, or to do something for you`
+          }
           aria-label={`Message ${assistantName}`}
           maxLength={2000}
           className={css`
@@ -183,6 +204,29 @@ export default function AssistantQuickAsk({
           )}
         </button>
       </form>
+      <div
+        className={css`
+          margin-top: 0.5rem;
+          padding: 0 0.4rem;
+        `}
+      >
+        <AssistantModeBar
+          assistant={assistantName}
+          mode={mode}
+          variant="inline"
+          busy={modeSwitching}
+          onChange={async (next) => {
+            setModeSwitching(true);
+            try {
+              await saveMode(next);
+            } catch {
+              // the switch shows the account's value either way
+            } finally {
+              setModeSwitching(false);
+            }
+          }}
+        />
+      </div>
       {/* The row keeps its height from the first paint (faint stand-ins until
           the ideas arrive, hidden while typing or replying) so nothing below
           moves under a finger. */}
