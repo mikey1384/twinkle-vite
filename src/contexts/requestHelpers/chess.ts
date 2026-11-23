@@ -99,10 +99,12 @@ export default function chessRequestHelpers({
     async submitChessAttempt({
       attemptId,
       solved,
+      userMoves,
       selectedLevel
     }: {
       attemptId: number | null;
       solved: boolean;
+      userMoves?: string[];
       selectedLevel?: number;
     }) {
       try {
@@ -111,6 +113,7 @@ export default function chessRequestHelpers({
           {
             attemptId,
             solved,
+            userMoves,
             selectedLevel
           },
           auth()
@@ -137,15 +140,17 @@ export default function chessRequestHelpers({
     // New helper: record result only without fetching next puzzle
     async recordChessAttemptResult({
       attemptId,
-      solved
+      solved,
+      userMoves
     }: {
       attemptId: number | null;
       solved: boolean;
+      userMoves?: string[];
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/game/chess/attempt/result`,
-          { attemptId, solved },
+          { attemptId, solved, userMoves },
           auth()
         );
         trackEvent('chess_puzzle_complete', { solved: Boolean(solved) });
@@ -207,11 +212,13 @@ export default function chessRequestHelpers({
     async submitTimeAttackAttempt({
       runId,
       puzzleId,
-      solved
+      solved,
+      userMoves
     }: {
       runId: number;
       puzzleId: string;
       solved: boolean;
+      userMoves?: string[];
     }) {
       try {
         const requestStartedAt = getMonotonicTime();
@@ -221,6 +228,7 @@ export default function chessRequestHelpers({
             runId,
             puzzleId,
             solved,
+            userMoves,
             protocolVersion: PROMOTION_TIME_ATTACK_PROTOCOL_VERSION
           },
           auth()

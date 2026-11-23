@@ -152,8 +152,8 @@ export default function QuizSection({
             <SectionHeader
               title="Timed Vocabulary Quiz"
               description={`Questions: ${quiz?.questionCount ?? 1} | Time: ${
-                quiz?.timeLimitSec ?? 0
-              }s total`}
+                quiz?.timeLimitSec ?? 30
+              }s per question`}
               tone="rose"
             />
           </div>

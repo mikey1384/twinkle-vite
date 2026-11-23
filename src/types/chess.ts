@@ -68,6 +68,9 @@ export interface LichessPuzzle {
 
 export interface PuzzleResult {
   solved: boolean;
+  // The member's moves (UCI) in order; the server replays them to verify a
+  // solve instead of trusting `solved`.
+  userMoves?: string[];
 }
 
 export interface MoveResult {
