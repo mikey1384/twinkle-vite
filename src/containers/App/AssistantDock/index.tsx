@@ -253,15 +253,26 @@ export function DockWindow({
   // header): this box follows, as a fresh temporary conversation keeping
   // what they pressed Ask on. A live voice call stays until it ends.
   const prevAssistantModeRef = useRef(assistantMode);
+  // a switch made during a voice call waits for the call to end
+  const pendingTemporaryRef = useRef(false);
   useEffect(() => {
     const changed = prevAssistantModeRef.current !== assistantMode;
     prevAssistantModeRef.current = assistantMode;
-    if (!changed || assistantMode !== 'temporary') return;
-    if (selfModeSwitchRef.current || active) return;
+    if (assistantMode !== 'temporary') {
+      pendingTemporaryRef.current = false;
+      return;
+    }
+    if (!changed && !pendingTemporaryRef.current) return;
+    if (selfModeSwitchRef.current) return;
+    if (active) {
+      pendingTemporaryRef.current = true;
+      return;
+    }
+    pendingTemporaryRef.current = false;
     closeAssistantDock();
     openQuickAsk({ agent: assistant, context: askContext });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assistantMode]);
+  }, [assistantMode, active]);
   useEffect(() => {
     setVoiceQueued(false);
     setContextError('');

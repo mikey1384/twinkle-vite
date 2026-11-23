@@ -176,8 +176,7 @@ export default function QuickAskWindow({
   }, [phone, position]);
   // The switch flipped to Saved somewhere else (the Home box, another tab):
   // offer to keep these answers, or become the saved chat right away.
-  // Only a change counts: the header button and Ctrl+K open a temporary
-  // chat on purpose even when the account's choice is Saved.
+  // Only a change counts (this box opens only in Temporary mode).
   const prevModeRef = useRef(mode);
   useEffect(() => {
     const changed = prevModeRef.current !== mode;
