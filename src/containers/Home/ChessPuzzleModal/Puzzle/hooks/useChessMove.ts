@@ -474,7 +474,8 @@ export function useChessMove({
         try {
           promoResp = await submitTimeAttackAttempt({
             runId: runIdRef.current,
-            solved: true
+            solved: true,
+            userMoves: newMoveHistory.map((entry) => entry.uci)
           });
         } catch (error) {
           console.error('Failed to submit promotion attempt:', error);

@@ -1075,10 +1075,13 @@ export default function Puzzle({
 
   async function submitTimeAttackAttempt({
     runId,
-    solved
+    solved,
+    userMoves
   }: {
     runId: number | null;
     solved: boolean;
+    // The member's moves (UCI); the server replays them to verify a solve.
+    userMoves?: string[];
   }) {
     if (runId == null) return {} as any;
     const puzzleId = puzzle?.id;
@@ -1088,7 +1091,8 @@ export default function Puzzle({
     const resp = await submitTimeAttackAttemptApi({
       runId,
       puzzleId,
-      solved
+      solved,
+      userMoves
     });
     if (
       resp?.deadlineAt &&

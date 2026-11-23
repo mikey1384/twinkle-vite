@@ -212,11 +212,13 @@ export default function chessRequestHelpers({
     async submitTimeAttackAttempt({
       runId,
       puzzleId,
-      solved
+      solved,
+      userMoves
     }: {
       runId: number;
       puzzleId: string;
       solved: boolean;
+      userMoves?: string[];
     }) {
       try {
         const requestStartedAt = getMonotonicTime();
@@ -226,6 +228,7 @@ export default function chessRequestHelpers({
             runId,
             puzzleId,
             solved,
+            userMoves,
             protocolVersion: PROMOTION_TIME_ATTACK_PROTOCOL_VERSION
           },
           auth()
