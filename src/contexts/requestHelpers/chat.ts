@@ -2924,6 +2924,28 @@ export default function chatRequestHelpers({
     },
     // Word battles (twinkle-api helpers/wordBattle): the gate in front of an
     // unplayed word's definition. The server keeps the answer key.
+    // The word battle for a Wordle answer: a General Chat result card
+    // (messageId) or the member's own finished Wordle today (channelId).
+    // { status: 'finish_first' } carries nothing about the word.
+    async loadWordleBattle({
+      messageId,
+      channelId
+    }: {
+      messageId?: number;
+      channelId?: number;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/wordle/battle?${
+            messageId ? `messageId=${messageId}` : `channelId=${channelId}`
+          }`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadWordBattle(wordId: number) {
       try {
         const { data } = await request.get(

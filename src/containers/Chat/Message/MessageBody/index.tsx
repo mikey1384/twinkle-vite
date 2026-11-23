@@ -903,6 +903,7 @@ function MessageBody({
         myId={myId}
         userId={userId}
         username={appliedUsername}
+        messageId={messageId}
         wordleResult={wordleResult}
         timeStamp={timeStamp}
       />

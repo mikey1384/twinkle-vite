@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import AttemptResult from './AttemptResult';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { borderRadius, Color } from '~/constants/css';
+import { WordleBonus } from '~/containers/Chat/Body/Collect/Vocabulary/WordBattle/Wordle';
 
 const wordLevelObj: Record<string, any> = {
   1: {
@@ -41,6 +42,7 @@ const wordLevelObj: Record<string, any> = {
 
 export default function OverviewModal({
   attemptState,
+  channelId,
   isGameOver,
   isSolved,
   numGuesses,
@@ -50,6 +52,7 @@ export default function OverviewModal({
   onHide
 }: {
   attemptState: any;
+  channelId?: number;
   isGameOver: boolean;
   isSolved: boolean;
   numGuesses: number;
@@ -130,6 +133,11 @@ export default function OverviewModal({
               numGuesses={numGuesses}
               attemptState={attemptState}
             />
+          )}
+          {/* The win stays a celebration; the word's monster is an optional
+              bonus below it (also after a miss: a second chance at the word). */}
+          {isGameOver && !!channelId && (
+            <WordleBonus channelId={channelId} isSolved={isSolved} />
           )}
           <StatBar
             style={{ marginTop: isGameOver ? '3.5rem' : 0 }}
