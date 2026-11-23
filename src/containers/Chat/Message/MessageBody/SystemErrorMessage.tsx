@@ -12,7 +12,7 @@ export default function SystemErrorMessage({
   aiName = 'the AI assistant'
 }: {
   error?: string;
-  errorType?: 'moderation' | 'general' | 'declined';
+  errorType?: 'moderation' | 'general' | 'declined' | 'output_limit';
   canDelete?: boolean;
   onDelete?: () => void;
   aiName?: string;
@@ -26,6 +26,9 @@ export default function SystemErrorMessage({
     );
   }
   const isModeration = errorType === 'moderation';
+  // Every attempt used its whole reply allowance thinking and wrote nothing:
+  // the request was too long or complex for one reply.
+  const isOutputLimit = errorType === 'output_limit';
   const getColors = () => {
     // Moderation errors use neutral gray - not associated with any AI
     if (isModeration) {
@@ -111,7 +114,9 @@ export default function SystemErrorMessage({
       >
         {isModeration
           ? "This message couldn't be processed"
-          : `Oops, there seems to have been an error while talking with ${aiName}`}
+          : isOutputLimit
+            ? `This request was too long for ${aiName} to finish in one reply`
+            : `Oops, there seems to have been an error while talking with ${aiName}`}
       </div>
       <div
         style={{
@@ -122,7 +127,9 @@ export default function SystemErrorMessage({
       >
         {isModeration
           ? 'Please try rephrasing your question differently'
-          : `Try sending ${aiName === 'Zero' ? 'him' : aiName === 'Ciel' ? 'her' : 'them'} another message and if this keeps happening tell mikey`}
+          : isOutputLimit
+            ? 'Try sending it in smaller parts'
+            : `Try sending ${aiName === 'Zero' ? 'him' : aiName === 'Ciel' ? 'her' : 'them'} another message and if this keeps happening tell mikey`}
       </div>
     </div>
   );

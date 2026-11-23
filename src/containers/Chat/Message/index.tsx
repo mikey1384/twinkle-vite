@@ -98,7 +98,7 @@ function Message({
     timeStamp?: number;
     settings?: {
       hasError?: boolean;
-      errorType?: 'moderation' | 'general' | 'declined';
+      errorType?: 'moderation' | 'general' | 'declined' | 'output_limit';
       saveFailed?: boolean;
       saveFailedReason?: string;
       aiGenerationStatus?: string;
