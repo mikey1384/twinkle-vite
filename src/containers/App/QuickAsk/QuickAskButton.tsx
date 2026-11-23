@@ -5,7 +5,9 @@ import { useKeyContext, useViewContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import AssistantFace from '~/components/AssistantFace';
 import { getHomeCallAssistant } from '~/helpers/aiVoiceCall';
-import { openQuickAsk, quickAskShortcutLabel } from './state';
+import { quickAskShortcutLabel } from './state';
+import { summonAssistant, useAssistantMode } from './assistantMode';
+import { assistantModeLabel } from './AssistantModeBar';
 
 // The member's own Zero or Ciel (the Home chooser, kept on the account and
 // copied to this device), Zero when they never picked.
@@ -25,16 +27,21 @@ export function useQuickAskAvailable() {
   return !!userId && !aiChatBanned && !aiFeaturesDisabled;
 }
 
+// Like every other way to call Zero or Ciel, these follow the member's one
+// Temporary / Saved choice (summonAssistant), so the box that opens always
+// matches the switch on the Home box (Mikey 11-23: "shouldnt these two
+// align").
 export function QuickAskHeaderButton() {
   const available = useQuickAskAvailable();
   const userId = useKeyContext((v) => v.myState.userId);
+  const { mode } = useAssistantMode();
   if (!available) return null;
   const agent = getHomeAgent(userId);
   return (
     <button
       type="button"
-      onClick={() => openQuickAsk({ agent })}
-      title={`Quick Ask ${agent} (${quickAskShortcutLabel()}): small questions, kept out of your main chat`}
+      onClick={() => summonAssistant(agent)}
+      title={`Quick Ask ${agent} (${quickAskShortcutLabel()}): ${assistantModeLabel(mode, agent)}`}
       aria-label={`Quick Ask ${agent}`}
       className={css`
         display: flex;
@@ -79,6 +86,7 @@ export function QuickAskHeaderButton() {
 export function QuickAskMenuRow({ onOpen }: { onOpen: () => void }) {
   const available = useQuickAskAvailable();
   const userId = useKeyContext((v) => v.myState.userId);
+  const { mode } = useAssistantMode();
   if (!available) return null;
   const agent = getHomeAgent(userId);
   return (
@@ -86,7 +94,7 @@ export function QuickAskMenuRow({ onOpen }: { onOpen: () => void }) {
       type="button"
       onClick={() => {
         onOpen();
-        openQuickAsk({ agent });
+        summonAssistant(agent);
       }}
       className={css`
         display: flex;
@@ -129,7 +137,7 @@ export function QuickAskMenuRow({ onOpen }: { onOpen: () => void }) {
             color: ${Color.darkGray()};
           `}
         >
-          Small questions, kept out of your main chat
+          {assistantModeLabel(mode, agent)}
         </span>
       </span>
     </button>
