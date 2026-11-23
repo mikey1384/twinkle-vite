@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import useSizedImage from '~/helpers/hooks/useSizedImage';
 import {
   LINK_PREVIEW_FALLBACK_IMAGE,
   resolveLinkPreviewImageSrc
@@ -47,16 +48,23 @@ export default function LinkPreviewImage({
     setImageSrc(getLinkPreviewImageSrc(src, appliedFallbackSrc));
   }, [appliedFallbackSrc, src]);
 
+  // App covers have smaller copies; the one that fits is used (the original
+  // stays as the fallback).
+  const sizedImage = useSizedImage({
+    src: imageSrc,
+    fit: 'cover',
+    onError: handleImageLoadError
+  });
+
   return (
     <img
       {...props}
       alt={alt}
-      src={imageSrc}
+      {...sizedImage}
       style={{
         ...style,
         ...(imageSrc === appliedFallbackSrc ? { objectFit: 'contain' } : {})
       }}
-      onError={handleImageLoadError}
     />
   );
 
