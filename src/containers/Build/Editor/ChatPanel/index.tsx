@@ -175,6 +175,7 @@ export default function ChatPanel({
   generating,
   generatingStatus,
   assistantStatusSteps,
+  runQueue = null,
   requestId,
   agentContext,
   lifecycle,
@@ -930,6 +931,8 @@ export default function ChatPanel({
                 generating={generating}
                 generatingStatus={generatingStatus}
                 assistantStatusSteps={assistantStatusSteps}
+                runQueue={generating ? runQueue : null}
+                onStopGeneration={onStopGeneration}
                 currentActivity={currentActivity}
                 statusStepEntries={statusStepEntries}
                 runtimeDebugSnapshot={runtimeDebugSnapshot}

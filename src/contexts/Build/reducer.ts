@@ -94,6 +94,31 @@ export interface BuildLiveRunDeferredRequest {
   stopRequestId?: string | null;
 }
 
+// A request waiting for a free Lumine slot behind someone else's build:
+// counts only (socket/build/queueStatus.ts in the API).
+export interface BuildLiveRunQueueState {
+  position: number;
+  ahead: number;
+  etaMinutes: { low: number; high: number } | null;
+}
+
+export function normalizeBuildRunQueueState(
+  value: unknown
+): BuildLiveRunQueueState | null {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Record<string, any>;
+  const position = Math.floor(Number(raw.position));
+  const ahead = Math.floor(Number(raw.ahead));
+  if (!(position >= 1) || !(ahead >= 1)) return null;
+  const low = Math.floor(Number(raw.etaMinutes?.low));
+  const high = Math.floor(Number(raw.etaMinutes?.high));
+  return {
+    position,
+    ahead,
+    etaMinutes: low >= 1 && high > low ? { low, high } : null
+  };
+}
+
 export interface BuildLiveRunState {
   buildId: number;
   requestId: string;
@@ -123,6 +148,7 @@ export interface BuildLiveRunState {
   runtimeExplorationPlan?: any | null;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
   requestLimits?: any | null;
+  queue?: BuildLiveRunQueueState | null;
   updatedAt: number;
 }
 
@@ -280,10 +306,12 @@ export interface BuildLiveRunStreamUpdatePayload {
   runtimeExplorationPlan?: any | null;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
   requestLimits?: any | null;
+  queue?: BuildLiveRunQueueState | null;
 }
 
 export interface BuildLiveRunRunningSnapshotPayload {
   status?: string | null;
+  queue?: BuildLiveRunQueueState | null;
   assistantStatusSteps?: string[];
   agentContext?: Record<string, any> | null;
   lifecycle?: Record<string, any> | null;
@@ -1574,6 +1602,14 @@ export function applyBuildRunStreamUpdate(
     error: null,
     status: nextStatus,
     assistantStatusSteps: nextAssistantStatusSteps,
+    // Only queue updates carry it; the socket handler clears it on any other.
+    // Once the run has run events it has started; a late queue update (from
+    // another worker process, or one read just before the claim) is ignored.
+    queue: Object.prototype.hasOwnProperty.call(buildRun || {}, 'queue')
+      ? currentRun.runEvents?.length
+        ? null
+        : normalizeBuildRunQueueState(buildRun?.queue)
+      : currentRun.queue ?? null,
     userMessage: currentRun.userMessage
       ? {
           ...currentRun.userMessage,
@@ -1891,6 +1927,8 @@ export default function BuildReducer(
           currentRun.assistantStatusSteps,
           nextStatus
         ),
+        // A local status (e.g. "Stopping..." after Cancel) ends the card.
+        queue: null,
         updatedAt: Date.now()
       });
     }
@@ -1938,6 +1976,7 @@ export default function BuildReducer(
           runningSnapshot.assistantStatusSteps,
           nextStatus
         ),
+        queue: normalizeBuildRunQueueState(runningSnapshot.queue),
         agentContext: Object.prototype.hasOwnProperty.call(
           runningSnapshot,
           'agentContext'
@@ -2032,6 +2071,8 @@ export default function BuildReducer(
       return upsertBuildRun(state, buildId, {
         ...currentRun,
         runEvents: nextRunEvents,
+        // A run event means the run started: the queue card gives way.
+        queue: null,
         error: lifecycleErrorMessage || currentRun.error,
         updatedAt: resolveBuildRunUpdatedAt(action.buildRun?.updatedAt)
       });
@@ -2049,6 +2090,7 @@ export default function BuildReducer(
       const nextRun = {
         ...currentRun,
         generating: false,
+        queue: null,
         terminalState: 'complete' as const,
         stopReason: null,
         interruptionReason:
@@ -2266,6 +2308,7 @@ export default function BuildReducer(
           [key]: {
             ...currentRun,
             generating: false,
+            queue: null,
             terminalState: 'error' as const,
             stopReason: null,
             interruptionReason: null,
@@ -2350,6 +2393,7 @@ export default function BuildReducer(
           [key]: {
             ...currentRun,
             generating: false,
+            queue: null,
             terminalState: 'stopped' as const,
             stopReason,
             interruptionReason: null,

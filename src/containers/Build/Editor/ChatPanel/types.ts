@@ -228,6 +228,13 @@ export interface BuildCurrentActivity {
   message: string;
 }
 
+// A request waiting for a free Lumine slot: counts only, never who is ahead.
+export interface BuildRunQueue {
+  position: number;
+  ahead: number;
+  etaMinutes: { low: number; high: number } | null;
+}
+
 export interface BuildStatusStepEntry {
   status: string;
   thoughtContent: string;
@@ -394,6 +401,8 @@ export interface ChatPanelProps {
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
+  // Set while the request waits behind someone else's build.
+  runQueue?: BuildRunQueue | null;
   requestId?: string | null;
   agentContext?: Record<string, any> | null;
   lifecycle?: Record<string, any> | null;

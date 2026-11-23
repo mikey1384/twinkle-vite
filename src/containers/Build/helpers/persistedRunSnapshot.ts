@@ -970,6 +970,7 @@ export function hydrateBuildRunFromPersistedSnapshot({
         runningSnapshot: {
           status: runningSnapshot.status,
           assistantStatusSteps: runningSnapshot.assistantStatusSteps,
+          queue: runningSnapshot.queue,
           agentContext: runningSnapshot.agentContext,
           lifecycle: runningSnapshot.lifecycle,
           usageMetrics: runningSnapshot.usageMetrics,

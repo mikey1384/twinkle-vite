@@ -2013,6 +2013,7 @@ export default function BuildEditor({
     generating: currentBuildRunView.generating,
     generatingStatus: currentBuildRunView.status,
     assistantStatusSteps: currentBuildRunView.assistantStatusSteps,
+    runQueue: currentBuildRunView.queue,
     requestId: currentBuildRunView.requestId,
     agentContext: currentBuildRunView.agentContext,
     lifecycle: currentBuildRunView.lifecycle,
