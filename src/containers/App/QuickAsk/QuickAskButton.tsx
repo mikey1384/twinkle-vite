@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { borderRadius, Color } from '~/constants/css';
 import { useKeyContext, useViewContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import AssistantFace from '~/components/AssistantFace';
@@ -92,12 +92,13 @@ export function QuickAskMenuRow({ onOpen }: { onOpen: () => void }) {
         display: flex;
         align-items: center;
         gap: 1rem;
-        width: 100%;
-        margin-top: 1rem;
-        padding: 1rem 1.2rem;
-        border: none;
-        border-top: 1px solid var(--ui-border);
-        border-bottom: 1px solid var(--ui-border);
+        // An inset card shaped like the menu rows below it (HomeMenuItems
+        // nav), not full-width rules across the drawer (Mikey 11-23).
+        width: calc(100% - 2rem);
+        margin: 1rem 1rem 0;
+        padding: 1rem 1.5rem;
+        border: 1px solid var(--ui-border);
+        border-radius: ${borderRadius};
         background: #fff;
         text-align: left;
         cursor: pointer;
