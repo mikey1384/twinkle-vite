@@ -320,7 +320,8 @@ export function useChessMove({
       },
       expectedMove,
       fen: fenBeforeMove,
-      engineBestMove: evaluatePosition
+      engineBestMove: evaluatePosition,
+      withEngineSuggestion: !inTimeAttack
     });
 
     if (
@@ -439,7 +440,9 @@ export function useChessMove({
 
     const newSolutionIndex =
       puzzleState.solutionIndex + (wasTransposition ? 2 : 1);
-    const isLastMove = newSolutionIndex >= puzzle.moves.length;
+    // Checkmate ends the puzzle wherever it comes, as on the server.
+    const isLastMove =
+      newSolutionIndex >= puzzle.moves.length || moveAnalysis.mate === 0;
 
     onPuzzleStateUpdate((prev) => ({
       ...prev,

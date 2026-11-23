@@ -24,7 +24,8 @@ export async function validateMoveWithAnalysis({
   userMove,
   expectedMove,
   fen,
-  engineBestMove
+  engineBestMove,
+  withEngineSuggestion = true
 }: {
   userMove: { from: string; to: string; promotion?: string };
   expectedMove: string;
@@ -41,6 +42,8 @@ export async function validateMoveWithAnalysis({
     mate?: number;
     error?: string;
   }>;
+  // Time attack skips it, so a wrong move gets feedback at once.
+  withEngineSuggestion?: boolean;
 }): Promise<{
   isCorrect: boolean;
   userMove: string;
@@ -93,37 +96,13 @@ export async function validateMoveWithAnalysis({
     };
   }
 
-  const beforeResult = await engineBestMove(fen, 15, 5000);
-  if (
-    beforeResult.success &&
-    beforeResult.mate !== undefined &&
-    beforeResult.mate > 0
-  ) {
-    const afterResult = await engineBestMove(game.fen(), 15, 5000);
-    if (afterResult.success) {
-      const afterMateRaw = afterResult.mate;
-
-      if (
-        afterMateRaw !== undefined &&
-        afterMateRaw < 0 &&
-        Math.abs(afterMateRaw) <= beforeResult.mate
-      ) {
-        analysisLog.push(
-          `✓ Mate line continues: ${beforeResult.mate} → ${Math.abs(
-            afterMateRaw
-          )} moves`
-        );
-        return {
-          isCorrect: true,
-          userMove: userMoveStr,
-          expectedMove,
-          engineSuggestion: beforeResult.move,
-          mate: Math.abs(afterMateRaw),
-          analysisLog
-        };
-      }
-    }
-  }
+  // The API accepts exactly two kinds of member move (chess-verify.ts in
+  // twinkle-api): the solution's move, or one that delivers checkmate. The
+  // client must not accept more, or a solve shown here is refused there.
+  // The engine is asked only for the analysis suggestion, never to accept.
+  const beforeResult = withEngineSuggestion
+    ? await engineBestMove(fen, 15, 5000)
+    : null;
 
   analysisLog.push(
     '✗ Move is incorrect - neither expected move nor leads to checkmate'
