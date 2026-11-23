@@ -32,6 +32,7 @@ export default function MonsterSprite({
   scale,
   className,
   label,
+  still,
   onDefeatEnd
 }: {
   word: string;
@@ -41,6 +42,9 @@ export default function MonsterSprite({
   className?: string;
   // Spoken name; a sleeping monster's word is not announced yet.
   label?: string;
+  // Drawn once, no bob or blink (a big grid of them, like the Monster Den's
+  // Beaten section, would otherwise run a timer per monster).
+  still?: boolean;
   onDefeatEnd?: () => void;
 }) {
   const monster = useMemo(() => generateMonster(word, level), [word, level]);
@@ -52,14 +56,14 @@ export default function MonsterSprite({
   const px = scale || monster.suggestedScale;
 
   useEffect(() => {
-    if (pose === 'defeat' || pose === 'gone') return;
+    if (still || pose === 'defeat' || pose === 'gone') return;
     // Sleep breathes slower than the idle bob.
     const id = window.setInterval(
       () => setTick((t) => t + 1),
       SLEEPY_POSES.includes(pose) ? 900 : 420
     );
     return () => window.clearInterval(id);
-  }, [pose]);
+  }, [pose, still]);
 
   useEffect(() => {
     if (pose !== 'defeat') {

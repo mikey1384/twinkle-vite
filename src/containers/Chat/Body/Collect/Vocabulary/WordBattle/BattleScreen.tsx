@@ -14,7 +14,9 @@ import {
   encounterLines,
   hitLine,
   missLine,
-  ranAwayLines
+  practiceWinLine,
+  ranAwayLines,
+  rematchLines
 } from './lines';
 
 const PIXEL_FONT = "'Press Start 2P', monospace";
@@ -46,6 +48,7 @@ export interface BattleState {
     | 'lost'
     | 'discovered'
     | 'quizzed'
+    | 'read'
     | 'off'
     | 'unavailable';
   playId?: number;
@@ -68,6 +71,14 @@ export interface BattleState {
     spelling?: string;
   };
   stale?: boolean;
+  // Monster Den: a rematch (practice, never pays), the identity pool's
+  // battles left today (null: unknown), when they reset (ms), and whether
+  // the word waits in the member's Den (null: no Den yet).
+  practice?: boolean;
+  battlesLeft?: number | null;
+  battleLimit?: number;
+  resetAt?: number;
+  captured?: boolean | null;
 }
 
 export interface BattleApi {
@@ -108,12 +119,15 @@ export default function BattleScreen({
   api,
   onFinished,
   onClose,
+  practice = false,
   speed = 1
 }: {
   initial: BattleState;
   api: BattleApi;
   onFinished: (finished: BattleState) => void;
   onClose?: () => void;
+  // A Monster Den rematch: the same battle, practice only (no loot reel).
+  practice?: boolean;
   // tests and previews run the typed lines faster
   speed?: number;
 }) {
@@ -176,7 +190,14 @@ export default function BattleScreen({
 
   const finish = useCallback(
     async (state: BattleState) => {
-      if (state.status === 'won') {
+      if (state.status === 'won' && practice) {
+        setPose('defeat');
+        playBattleSound('defeat');
+        await say(defeatLines(word)[0], 700);
+        await say(practiceWinLine(word), 600);
+        setFinished(state);
+        setPhase('done');
+      } else if (state.status === 'won') {
         setPose('defeat');
         playBattleSound('defeat');
         const [defeated, dropped] = defeatLines(word);
@@ -198,7 +219,7 @@ export default function BattleScreen({
         setPhase('done');
       }
     },
-    [say, word]
+    [practice, say, word]
   );
 
   const askQuestion = useCallback(
@@ -251,7 +272,8 @@ export default function BattleScreen({
           setTimeout(() => mounted.current && setShake(false), 500);
         }
         if (!state.servedAgoMs) {
-          for (const text of encounterLines(word, level)) await say(text, 450);
+          const opening = practice ? rematchLines(word) : encounterLines(word, level);
+          for (const text of opening) await say(text, 450);
         }
         if (state.question) await askQuestion(state.question, state.servedAgoMs || 0);
       } catch (error: any) {
@@ -408,7 +430,10 @@ export default function BattleScreen({
           </div>
           <div className={plateCls}>
             <span className={plateNameCls}>{word.toUpperCase()}</span>
-            <span className={plateLevelCls}>{level >= 5 ? 'BOSS' : `Lv${level}`}</span>
+            <span className={plateLevelCls}>
+              {level >= 5 ? 'BOSS' : `Lv${level}`}
+              {practice ? ' · REMATCH' : ''}
+            </span>
           </div>
           {onClose && (
             <button type="button" className={closeCls} onClick={onClose} aria-label="Close">
@@ -541,7 +566,8 @@ export default function BattleScreen({
         </div>
       )}
 
-      {finished &&
+      {!practice &&
+        finished &&
         ((finished.status === 'won' && (phase === 'loot' || phase === 'done')) ||
           (finished.status === 'lost' && phase === 'done' && lootSummary.basePoints > 0)) && (
           <LootWindow
@@ -554,7 +580,7 @@ export default function BattleScreen({
       {phase === 'done' && finished && (
         <div className={doneRowCls}>
           <button type="button" className={doneButtonCls} onClick={() => onFinished(finished)}>
-            See what it means ▶
+            {practice ? 'Done ▶' : 'See what it means ▶'}
           </button>
         </div>
       )}

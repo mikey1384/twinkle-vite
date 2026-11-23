@@ -2935,11 +2935,17 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async startWordBattle(wordId: number, seenForm?: string) {
+    // practice: a Monster Den rematch of a beaten word (no loot, no daily
+    // battle; the server enforces it).
+    async startWordBattle(wordId: number, seenForm?: string, practice?: boolean) {
       try {
         const { data } = await request.post(
           `${URL}/chat/vocabulary/battle/start`,
-          { wordId, ...(seenForm ? { seenForm } : {}) },
+          {
+            wordId,
+            ...(seenForm ? { seenForm } : {}),
+            ...(practice ? { practice: true } : {})
+          },
           auth()
         );
         return data;
@@ -2951,17 +2957,62 @@ export default function chatRequestHelpers({
       playId,
       questionIndex,
       answer,
-      elapsedMs
+      elapsedMs,
+      practice
     }: {
       playId: number;
       questionIndex: number;
       answer: number | boolean[] | string;
       elapsedMs?: number;
+      practice?: boolean;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/vocabulary/battle/answer`,
-          { playId, questionIndex, answer, elapsedMs },
+          { playId, questionIndex, answer, elapsedMs, ...(practice ? { practice: true } : {}) },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Monster Den: capture a word (it waits locked in the Den).
+    async captureWordBattle(wordId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/battle/capture`,
+          { wordId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Monster Den: "Just read it" once today's battles are used up.
+    async readWordBattle(wordId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/battle/read`,
+          { wordId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadWordBattleDen({
+      section,
+      cursor
+    }: {
+      section: 'waiting' | 'beaten';
+      cursor?: number | null;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/vocabulary/battle/den?section=${section}${cursor ? `&cursor=${cursor}` : ''}`,
           auth()
         );
         return data;
