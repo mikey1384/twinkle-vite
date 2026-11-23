@@ -1503,7 +1503,9 @@ function PreviewCommentBuildMedia({
 }) {
   const loadingRef = useRef<string | null>(null);
   const contentState = useContentState({ contentId, contentType: 'build' });
-  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const loadContent = useAppContext(
+    (v) => v.requestHelpers.loadFeedContent
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
@@ -1573,7 +1575,9 @@ function PreviewCommentSubjectMedia({
 }) {
   const loadingRef = useRef<string | null>(null);
   const contentState = useContentState({ contentId, contentType: 'subject' });
-  const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
+  const loadContent = useAppContext(
+    (v) => v.requestHelpers.loadFeedContent
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);

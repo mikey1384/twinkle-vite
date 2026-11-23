@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import zero from '~/assets/zero.png';
+import zero from '~/assets/zero-small.png';
 import zeroBuilder from '~/assets/zero-builder.png';
 import Icon from '~/components/Icon';
 import { ZERO_TWINKLE_ID, ZERO_PFP_URL } from '~/constants/defaultValues';

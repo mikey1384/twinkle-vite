@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';
-import zeroFace from '~/assets/zero.png';
-import cielFace from '~/assets/ciel.png';
+import zeroFace from '~/assets/zero-small.png';
+import cielFace from '~/assets/ciel-small.png';
 import type { HomeCallAssistant } from '~/helpers/aiVoiceCall';
 
 export default function CallPartnerChooser({

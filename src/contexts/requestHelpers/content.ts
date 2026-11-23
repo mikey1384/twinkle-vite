@@ -27,14 +27,83 @@ import {
   withFeedRowsObservedAt
 } from '~/helpers/liveComments';
 import { invalidateFeaturedSubjectsRequests } from '~/helpers/featuredSubjects';
+import {
+  createContentBatcher,
+  type ContentBatchItem
+} from '~/helpers/contentBatch';
 
 const HOME_FEED_LOAD_MORE_TOTAL_TIMEOUT_MS = 60000;
+// As long as one per-card request gets before its first retry.
+const FEED_CONTENT_BATCH_TIMEOUT_MS = 15000;
+
+// How long to stop batching after a failed batch. An API without the route
+// (the API and the website deploy separately) is asked again in ten minutes.
+// A busy API that refused the batch (429/503) is left alone for as long as it
+// asked, so the cards' own requests are not joined by more batches.
+function batchPauseMs(error: any) {
+  const status = Number(error?.response?.status);
+  if (status === 404) return 10 * 60 * 1000;
+  if (status === 429 || status === 503) {
+    const retryAfter = Number(error?.response?.headers?.['retry-after']);
+    return Math.min(
+      120_000,
+      Math.max(30_000, Number.isFinite(retryAfter) ? retryAfter * 1000 : 0)
+    );
+  }
+  return 0;
+}
 
 export default function contentRequestHelpers({
   auth,
   handleError
 }: RequestHelpers) {
-  return {
+  // Home feed cards that ask within one short window share a single request
+  // (helpers/contentBatch.ts). Each answer is what loadContent would return.
+  // Not for pinned comments: the batch has no isPinnedComment.
+  const feedContentBatcher = createContentBatcher<any>({
+    loadSingle: (item: ContentBatchItem) => helpers.loadContent(item),
+    sendBatch: (items: ContentBatchItem[]) =>
+      helpers.loadFeedContentBatch(items),
+    batchPauseMs
+  });
+
+  const helpers = {
+    async loadFeedContent(item: ContentBatchItem) {
+      return feedContentBatcher.load({
+        contentId: item.contentId,
+        contentType: item.contentType,
+        ...(item.rootType ? { rootType: item.rootType } : {})
+      });
+    },
+    // The one request behind loadFeedContent. It rejects on any failure: the
+    // batcher then asks for each card with loadContent, which has the
+    // retries and error handling. No retry and a short deadline here, so a
+    // stalled link reaches that fallback instead of leaving cards waiting.
+    async loadFeedContentBatch(items: ContentBatchItem[]) {
+      const requestStartedAt = getLiveObservedAt();
+      const { data } = await request.post(
+        `${URL}/content/batch`,
+        { items },
+        {
+          ...auth(),
+          meta: {
+            channel: 'ui',
+            maxRetries: 0,
+            enforceTimeout: true,
+            allowExtendedTimeout: false,
+            totalTimeoutMs: FEED_CONTENT_BATCH_TIMEOUT_MS
+          }
+        }
+      );
+      if (!Array.isArray(data?.results)) return [];
+      return data.results.map((result: any, index: number) =>
+        items[index]?.contentType === 'comment' &&
+        result &&
+        result.error !== true
+          ? { ...result, requestStartedAt }
+          : result
+      );
+    },
     async loadAssetHandoffPreview(proposalId: string): Promise<Blob> {
       const { data } = await request.get(
         `${URL}/content/assets/proposals/${encodeURIComponent(proposalId)}/image`,
@@ -4167,4 +4236,5 @@ export default function contentRequestHelpers({
       }
     }
   };
+  return helpers;
 }

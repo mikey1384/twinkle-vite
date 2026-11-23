@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import ciel from '~/assets/ciel.png';
+import ciel from '~/assets/ciel-small.png';
 import cielBuilder from '~/assets/ciel-builder.png';
 import Icon from '~/components/Icon';
 import { CIEL_TWINKLE_ID, CIEL_PFP_URL } from '~/constants/defaultValues';

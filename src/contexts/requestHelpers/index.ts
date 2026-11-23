@@ -378,6 +378,8 @@ registerMethods('content', [
   'loadComments',
   'loadCommentsByPoster',
   'loadContent',
+  'loadFeedContent',
+  'loadFeedContentBatch',
   'loadContinueWatching',
   'loadFeaturedPlaylists',
   'loadFeaturedSubjects',
