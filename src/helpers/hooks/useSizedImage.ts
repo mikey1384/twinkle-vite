@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { getSizedImageSrcSet } from '~/helpers/sizedImages';
 
 // Props for an <img> that shows a stored image which has smaller copies (see
@@ -22,16 +22,16 @@ export default function useSizedImage({
   fit?: 'contain' | 'cover';
   onError?: (event: React.SyntheticEvent<HTMLImageElement>) => void;
 }) {
-  const imgRef = useRef<HTMLImageElement | null>(null);
+  // A callback ref, so measuring re-runs when the <img> mounts later (e.g.
+  // after a failed earlier picture had replaced it with a fallback).
+  const [img, imgRef] = useState<HTMLImageElement | null>(null);
   const srcSet = getSizedImageSrcSet(src);
   const [failedSrcSet, setFailedSrcSet] = useState('');
   const [sizes, setSizes] = useState('');
   const useCopies = Boolean(srcSet) && failedSrcSet !== srcSet;
 
   useLayoutEffect(() => {
-    if (!useCopies) return;
-    const img = imgRef.current;
-    if (!img) return;
+    if (!useCopies || !img) return;
     const measure = () => {
       const rect = img.getBoundingClientRect();
       const needed =
@@ -44,7 +44,7 @@ export default function useSizedImage({
     const observer = new ResizeObserver(measure);
     observer.observe(img);
     return () => observer.disconnect();
-  }, [fit, useCopies]);
+  }, [fit, img, useCopies]);
 
   const handleError = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>) => {
