@@ -1,19 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import MonsterSprite, { MonsterPose } from '~/components/WordMonster/MonsterSprite';
 import { backdropUri, HEART, HEART_EMPTY, SCROLL, SPEAKER } from './art';
 import { playBattleSound } from './battleSfx';
-import LootReel from './LootReel';
-import Icon from '~/components/Icon';
-import { badgeStyle } from '~/components/WordMasterBadges';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import LootWindow from './LootWindow';
+import { ServerLoot, summarizeLoot } from './loot';
 import { useAppContext, useKeyContext } from '~/contexts';
 import {
   COMMAND_NAMES,
   QuestionType,
   commandLine,
   defeatLines,
-  dropLine,
   encounterLines,
   hitLine,
   missLine,
@@ -36,16 +33,9 @@ export interface BattleQuestion {
   revealDelayMs: number;
 }
 
-export interface BattleLoot {
-  kind: 'none' | 'xp' | 'energy_recharge' | 'black_ai_card';
-  amount?: number;
-  quality?: string;
-  // What the win paid, and the member's totals after it (from the server).
-  // points: the Word Master points the win added to the boards.
-  reward?: { xp: number; coins: number; points?: number };
-  xp?: number;
-  coins?: number;
-}
+// What a finished battle paid (loot.ts): base Word Master points for playing,
+// XP and Coins on a win, and every drop the win rolled.
+export type BattleLoot = ServerLoot;
 
 export interface BattleState {
   status:
@@ -150,7 +140,6 @@ export default function BattleScreen({
   const [remainingMs, setRemainingMs] = useState(0);
   const [burst, setBurst] = useState<string | null>(null);
   const [finished, setFinished] = useState<BattleState | null>(null);
-  const [dropText, setDropText] = useState('');
   const [errorText, setErrorText] = useState('');
   const mounted = useRef(true);
   const playIdRef = useRef<number>(initial.playId || 0);
@@ -194,7 +183,7 @@ export default function BattleScreen({
         await say(defeated, 700);
         setPhase('loot');
         await say(dropped, 300);
-        // the reel calls onLanded; dropText follows
+        // the loot window calls handleRevealed once every slot is open
         setFinished(state);
       } else if (state.status === 'lost') {
         setRanAway(true);
@@ -387,16 +376,16 @@ export default function BattleScreen({
     void submit(spellInput);
   }
 
-  const handleLanded = useCallback(() => {
+  const lootSummary = useMemo(() => summarizeLoot(finished?.loot), [finished]);
+  const handleRevealed = useCallback(() => {
     if (!finished) return;
-    const loot = finished.loot || { kind: 'none' };
-    setDropText(dropLine(loot));
+    const loot = finished.loot;
     // The member's XP and Coins after the win, as the server counted them.
     const newState: Record<string, number> = {};
-    if (typeof loot.xp === 'number') newState.twinkleXP = loot.xp;
-    if (typeof loot.coins === 'number') newState.twinkleCoins = loot.coins;
+    if (typeof loot?.xp === 'number') newState.twinkleXP = loot.xp;
+    if (typeof loot?.coins === 'number') newState.twinkleCoins = loot.coins;
     if (userId && Object.keys(newState).length) onSetUserState({ userId, newState });
-    setPhase('done');
+    if (finished.status === 'won') setPhase('done');
   }, [finished, onSetUserState, userId]);
 
   const shortChoices =
@@ -552,15 +541,15 @@ export default function BattleScreen({
         </div>
       )}
 
-      {(phase === 'loot' || (phase === 'done' && finished?.status === 'won')) && finished && (
-        <div className={lootCls}>
-          <LootReel kind={finished.loot?.kind || 'none'} onLanded={handleLanded} />
-          {dropText && <div className={dropTextCls}>{dropText}</div>}
-          {dropText && finished.loot?.reward && (
-            <RewardChips reward={finished.loot.reward} />
-          )}
-        </div>
-      )}
+      {finished &&
+        ((finished.status === 'won' && (phase === 'loot' || phase === 'done')) ||
+          (finished.status === 'lost' && phase === 'done' && lootSummary.basePoints > 0)) && (
+          <LootWindow
+            summary={lootSummary}
+            won={finished.status === 'won'}
+            onRevealed={handleRevealed}
+          />
+        )}
 
       {phase === 'done' && finished && (
         <div className={doneRowCls}>
@@ -574,35 +563,6 @@ export default function BattleScreen({
           <button type="button" className={doneButtonCls} onClick={onClose}>
             Close
           </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// What every win pays, in the Word Master feed's chips: pink pts, green XP,
-// gold Coins.
-function RewardChips({ reward }: { reward: NonNullable<BattleLoot['reward']> }) {
-  const points = Number(reward.points || 0);
-  return (
-    <div className={rewardChipsCls} data-testid="battle-reward-chips">
-      {points > 0 && (
-        <div className={badgeStyle('passionFruit', 0.85)}>
-          <span className="label">
-            {addCommasToNumber(points)} {points === 1 ? 'pt' : 'pts'}
-          </span>
-        </div>
-      )}
-      {reward.xp > 0 && (
-        <div className={badgeStyle('limeGreen', 0.85)}>
-          <Icon icon={['far', 'star']} />
-          <span className="label">{addCommasToNumber(reward.xp)} XP</span>
-        </div>
-      )}
-      {reward.coins > 0 && (
-        <div className={badgeStyle('gold', 0.85)}>
-          <Icon icon="coins" />
-          <span className="label">{addCommasToNumber(reward.coins)}</span>
         </div>
       )}
     </div>
@@ -1070,34 +1030,8 @@ const castCls = css`
   }
 `;
 
-const lootCls = css`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  background: #0f0b1a;
-  border: 3px solid #ffffff;
-  box-shadow: 0 0 0 3px #0f0b1a, inset 0 0 0 3px #2c2442;
-`;
 
-const dropTextCls = css`
-  font-family: ${PIXEL_FONT};
-  font-size: 12px;
-  line-height: 1.7;
-  text-align: center;
-  color: #ffd34d;
-  @media (max-width: 480px) {
-    font-size: 10px;
-  }
-`;
 
-const rewardChipsCls = css`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-`;
 
 const doneRowCls = css`
   display: flex;
