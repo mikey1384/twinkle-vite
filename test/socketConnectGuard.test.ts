@@ -44,6 +44,37 @@ test('the guarded socket sends one CONNECT however often connect() is called bef
   assert.equal(isSocketHandshakeInFlight(socket), true);
 });
 
+test('a CONNECT unanswered for ten seconds may be sent again', () => {
+  const { socket, connects } = openSocket();
+  let clock = 1_000;
+  guardSocketConnect(socket, () => clock);
+  socket.connect();
+  clock += 9_999;
+  socket.connect();
+  assert.equal(connects(), 1);
+  clock += 1;
+  socket.connect();
+  assert.equal(connects(), 2);
+  socket.connect();
+  assert.equal(connects(), 2, 'the repeat starts a new ten-second wait');
+});
+
+test('a CONNECT the Manager sent itself when the transport opened is not repeated', () => {
+  const { socket, manager, connects } = openSocket();
+  manager._readyState = 'opening';
+  let clock = 50_000;
+  guardSocketConnect(socket, () => clock);
+  // The library subscribes the socket to its Manager; the transport opens.
+  manager.open = () => manager;
+  socket.connect();
+  manager._readyState = 'open';
+  manager.emitReserved('open');
+  assert.equal(connects(), 1);
+  clock += 500;
+  socket.connect();
+  assert.equal(connects(), 1);
+});
+
 test('the guard still connects a socket that is not in a handshake', () => {
   const { socket, manager, connects } = openSocket();
   guardSocketConnect(socket);

@@ -142,12 +142,36 @@ export function isNamespaceConnectPending(socket: {
 // pageshow, online, the session recovery probe) calls socket.connect(). The
 // guard lives on the socket itself so none of them, present or future, can
 // repeat a CONNECT that is already on its way.
+//
+// A CONNECT that has gone unanswered for CONNECT_RESEND_AFTER_MS may be sent
+// again: the server answers a CONNECT in well under a second, so by then the
+// repeat is a recovery attempt, not the duplicate this guard exists to stop.
+export const CONNECT_RESEND_AFTER_MS = 10_000;
+
 export function guardSocketConnect<
-  T extends { connected: boolean; active: boolean; io: unknown; connect: () => T }
->(socket: T) {
+  T extends {
+    connected: boolean;
+    active: boolean;
+    io: unknown;
+    connect: () => T;
+  }
+>(socket: T, now: () => number = () => Date.now()) {
   const connect = socket.connect.bind(socket);
+  let connectSentAt = 0;
+  // The Manager sends the CONNECT itself when its transport opens.
+  (
+    socket.io as { on?: (event: string, listener: () => void) => void }
+  ).on?.('open', () => {
+    connectSentAt = now();
+  });
   socket.connect = function guardedConnect() {
-    if (isNamespaceConnectPending(socket)) return socket;
+    if (
+      isNamespaceConnectPending(socket) &&
+      now() - connectSentAt < CONNECT_RESEND_AFTER_MS
+    ) {
+      return socket;
+    }
+    connectSentAt = now();
     return connect();
   };
   return socket;
