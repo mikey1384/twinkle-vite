@@ -24,6 +24,8 @@ export default function WordModal({
   const wordsObj = useChatContext((v) => v.state.wordsObj);
   const onEditWord = useChatContext((v) => v.actions.onEditWord);
   const [selectedTab, setSelectedTab] = useState('dictionary');
+  // A re-hunt opened from the RAN AWAY card hides the definitions meanwhile.
+  const [hunting, setHunting] = useState(false);
   const wordObj = useMemo(() => {
     return wordsObj[word] || {};
   }, [word, wordsObj]);
@@ -159,7 +161,10 @@ export default function WordModal({
         )}
         {selectedTab === 'dictionary' && !isBattleLocked(wordObj) && (
           <DictionaryTab
-            header={<BattleTrophy wordObj={{ ...wordObj, content: word }} />}
+            header={
+              <BattleTrophy wordObj={{ ...wordObj, content: word }} onHuntingChange={setHunting} />
+            }
+            concealed={hunting}
             footerNote={<BattleExamples examples={wordObj.examples} />}
             deletedDefIds={deletedDefIds}
             definitionOrder={editedDefinitionOrder}

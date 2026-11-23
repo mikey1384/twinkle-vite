@@ -16,6 +16,8 @@ import {
   missLine,
   practiceWinLine,
   ranAwayLines,
+  rehuntEscapeLines,
+  rehuntLines,
   rematchLines
 } from './lines';
 
@@ -79,6 +81,21 @@ export interface BattleState {
   battleLimit?: number;
   resetAt?: number;
   captured?: boolean | null;
+  // Re-hunt: a re-hunt battle's own states carry rehunt: true (and, after
+  // another escape, when the next one opens). A lost word's state carries
+  // escape: when its re-hunt opens, or that one is under way.
+  rehunt?: boolean;
+  rehuntReadyAt?: number;
+  escape?: RehuntEscape;
+}
+
+export interface RehuntEscape {
+  ready: boolean;
+  readyAt: number;
+  active: boolean;
+  battlesLeft: number | null;
+  battleLimit: number;
+  resetAt: number;
 }
 
 export interface BattleApi {
@@ -120,6 +137,7 @@ export default function BattleScreen({
   onFinished,
   onClose,
   practice = false,
+  rehunt = false,
   speed = 1
 }: {
   initial: BattleState;
@@ -128,6 +146,8 @@ export default function BattleScreen({
   onClose?: () => void;
   // A Monster Den rematch: the same battle, practice only (no loot reel).
   practice?: boolean;
+  // A re-hunt of a monster that ran away: its own lines; loot as a battle.
+  rehunt?: boolean;
   // tests and previews run the typed lines faster
   speed?: number;
 }) {
@@ -209,7 +229,7 @@ export default function BattleScreen({
       } else if (state.status === 'lost') {
         setRanAway(true);
         playBattleSound('ranAway');
-        const [ran, left] = ranAwayLines(word);
+        const [ran, left] = rehunt ? rehuntEscapeLines(word) : ranAwayLines(word);
         await say(ran, 500);
         await say(left, 600);
         setFinished(state);
@@ -219,7 +239,7 @@ export default function BattleScreen({
         setPhase('done');
       }
     },
-    [practice, say, word]
+    [practice, rehunt, say, word]
   );
 
   const askQuestion = useCallback(
@@ -272,7 +292,11 @@ export default function BattleScreen({
           setTimeout(() => mounted.current && setShake(false), 500);
         }
         if (!state.servedAgoMs) {
-          const opening = practice ? rematchLines(word) : encounterLines(word, level);
+          const opening = practice
+            ? rematchLines(word)
+            : rehunt
+              ? rehuntLines(word)
+              : encounterLines(word, level);
           for (const text of opening) await say(text, 450);
         }
         if (state.question) await askQuestion(state.question, state.servedAgoMs || 0);
@@ -432,7 +456,7 @@ export default function BattleScreen({
             <span className={plateNameCls}>{word.toUpperCase()}</span>
             <span className={plateLevelCls}>
               {level >= 5 ? 'BOSS' : `Lv${level}`}
-              {practice ? ' · REMATCH' : ''}
+              {practice ? ' · REMATCH' : rehunt ? ' · RE-HUNT' : ''}
             </span>
           </div>
           {onClose && (

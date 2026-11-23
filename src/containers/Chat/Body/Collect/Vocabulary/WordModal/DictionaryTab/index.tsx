@@ -17,10 +17,14 @@ export default function DictionaryTab({
   word,
   onWordMasterBreak,
   header,
-  footerNote
+  footerNote,
+  concealed = false
 }: {
   header?: React.ReactNode;
   footerNote?: React.ReactNode;
+  // A re-hunt is open over this word: its definitions stay out of sight
+  // (space kept) until it ends.
+  concealed?: boolean;
   deletedDefIds: number[];
   definitionOrder: { [key: string]: number[] };
   onHide: () => void;
@@ -59,6 +63,7 @@ export default function DictionaryTab({
           `}
         >
           {header}
+          <div style={concealed ? { visibility: 'hidden' } : undefined} aria-hidden={concealed || undefined}>
           {posOrder.map((pos, index) => {
             return (
               <PosBlock
@@ -81,6 +86,7 @@ export default function DictionaryTab({
             </div>
           )}
           {footerNote}
+          </div>
         </div>
       </main>
       <footer>
