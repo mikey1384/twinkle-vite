@@ -1,7 +1,7 @@
 import React from 'react';
-import ciel from '~/assets/ciel.png';
+import ciel from '~/assets/ciel-small.png';
 import cielBuilder from '~/assets/ciel-builder.png';
-import zero from '~/assets/zero.png';
+import zero from '~/assets/zero-small.png';
 import zeroBuilder from '~/assets/zero-builder.png';
 import ProfilePic from '~/components/ProfilePic';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
