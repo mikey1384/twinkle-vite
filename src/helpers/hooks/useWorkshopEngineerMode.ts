@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { css, keyframes } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { socketKeepalive } from '~/constants/sockets/api';
 
 type WorkshopPersona = 'zero' | 'ciel';
 
@@ -13,6 +14,8 @@ type LoadWorkshopStatus = (params: {
   persona: WorkshopPersona;
 }) => Promise<WorkshopStatus>;
 
+// Checked on the keepalive beat (25 s), so a poll leaves on the first beat at
+// least this long after the last one: every third beat, 75 s.
 const POLL_MS = 60_000;
 
 // New Workshop duty is shared across both assistants, so one stable persona
@@ -22,7 +25,8 @@ const SHARED_DUTY_STATUS_PERSONA: WorkshopPersona = 'zero';
 // Module-level store so every consumer (home buttons, chat quick access)
 // shares one poll of the Workshop duty status instead of polling per mount.
 let dutyLive = false;
-let timer: number | null = null;
+let stopPolling: (() => void) | null = null;
+let lastRefreshAt = 0;
 let subscriberCount = 0;
 let statusUserId: number | null = null;
 let fetchStatus: LoadWorkshopStatus | null = null;
@@ -40,6 +44,7 @@ async function refresh() {
   const loadStatus = fetchStatus;
   const requestUserId = statusUserId;
   if (!loadStatus || !requestUserId) return;
+  lastRefreshAt = Date.now();
 
   try {
     const status = await loadStatus({
@@ -61,20 +66,35 @@ async function refresh() {
   }
 }
 
+function refreshIfDue() {
+  if (document.visibilityState !== 'visible') return;
+  if (Date.now() - lastRefreshAt < POLL_MS) return;
+  void refresh();
+}
+
 function subscribe(listener: () => void) {
   listeners.add(listener);
   subscriberCount += 1;
   if (subscriberCount === 1) {
     void refresh();
-    timer = window.setInterval(refresh, POLL_MS);
+    // The poll rides the socket's keepalive beat, so on a phone it shares the
+    // radio wake of the transport ping instead of adding one each minute, and
+    // a hidden page does not poll at all; it catches up when it is shown.
+    const stopBeat = socketKeepalive.subscribe(refreshIfDue);
+    document.addEventListener('visibilitychange', refreshIfDue);
+    stopPolling = () => {
+      stopBeat();
+      document.removeEventListener('visibilitychange', refreshIfDue);
+    };
   }
   return () => {
     listeners.delete(listener);
     subscriberCount -= 1;
     if (subscriberCount !== 0) return;
 
-    if (timer !== null) window.clearInterval(timer);
-    timer = null;
+    stopPolling?.();
+    stopPolling = null;
+    lastRefreshAt = 0;
     fetchStatus = null;
     statusUserId = null;
     dutyLive = false;

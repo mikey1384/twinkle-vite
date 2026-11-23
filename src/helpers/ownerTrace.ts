@@ -2,7 +2,11 @@ import API_URL from '~/constants/URL';
 import { ADMIN_USER_ID, clientVersion } from '~/constants/defaultValues';
 import { userIdRef } from '~/constants/state';
 import { getStoredItem } from '~/helpers/userDataHelpers';
-import { createOwnerTraceRecorder } from '~/helpers/ownerTraceRecorder';
+import {
+  createOwnerTraceRecorder,
+  type OwnerTraceStorage
+} from '~/helpers/ownerTraceRecorder';
+import { socketKeepalive } from '~/constants/sockets/api';
 import {
   createScrollPerfMonitor,
   getScrollPerfContext
@@ -35,7 +39,35 @@ import type {
 
 const MAX_ERROR_CHARS = 200;
 
+// The session's black box (ownerTraceRecorder.ts). sessionStorage is per tab
+// and survives the reload that follows a crashed or discarded page.
+const OWNER_TRACE_BOX_KEY = 'ownerTrace:box';
+const ownerTraceBox: OwnerTraceStorage = {
+  read() {
+    try {
+      return window.sessionStorage.getItem(OWNER_TRACE_BOX_KEY);
+    } catch {
+      return null;
+    }
+  },
+  write(value) {
+    try {
+      window.sessionStorage.setItem(OWNER_TRACE_BOX_KEY, value);
+    } catch {
+      // Private mode or a full store: the trace simply has no black box.
+    }
+  },
+  clear() {
+    try {
+      window.sessionStorage.removeItem(OWNER_TRACE_BOX_KEY);
+    } catch {
+      // nothing to clear
+    }
+  }
+};
+
 const recorder = createOwnerTraceRecorder({
+  storage: typeof window === 'undefined' ? undefined : ownerTraceBox,
   isOwner: () =>
     Number.isSafeInteger(ADMIN_USER_ID) &&
     ADMIN_USER_ID > 0 &&
@@ -511,6 +543,13 @@ function installOwnerTraceListeners() {
   if (listenersInstalled || typeof window === 'undefined') return;
   listenersInstalled = true;
   requestLifecycle.snapshot();
+  if (document.visibilityState === 'hidden') recorder.noteLifecycle('hidden');
+  // Routine uploads leave with the socket's keepalive beat, sharing its radio
+  // wake on a phone; the recorder's own timer remains for a page with no
+  // socket.
+  socketKeepalive.subscribe(() => {
+    if (recorder.getBufferedCount() > 0) recorder.flush();
+  });
   installOwnerViewportTrace({
     isActive: () => recorder.isActive(),
     record: (data) => recordOwnerTrace('wake-viewport', data),
@@ -571,8 +610,15 @@ function installOwnerTraceListeners() {
     stallMonitor.stop();
     recordOwnerTrace('pagehide', { persisted: event.persisted });
     recorder.flush({ unloading: true });
+    recorder.noteLifecycle('ended');
   });
-  window.addEventListener('pageshow', () => requestLifecycle.pageShown());
+  window.addEventListener('pageshow', () => {
+    requestLifecycle.pageShown();
+    // A page restored from the back-forward cache lives on after its pagehide.
+    recorder.noteLifecycle(
+      document.visibilityState === 'hidden' ? 'hidden' : 'visible'
+    );
+  });
   document.addEventListener('visibilitychange', () => {
     requestLifecycle.visibilityChanged();
     if (document.visibilityState === 'hidden') {
@@ -595,5 +641,8 @@ function installOwnerTraceListeners() {
     if (document.visibilityState === 'hidden') {
       recorder.flush({ unloading: true });
     }
+    recorder.noteLifecycle(
+      document.visibilityState === 'hidden' ? 'hidden' : 'visible'
+    );
   });
 }

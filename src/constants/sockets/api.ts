@@ -5,6 +5,10 @@ import { browserReportsOffline } from '~/helpers/browserNetwork';
 import { clientVersion } from '~/constants/defaultValues';
 import { getPresenceContinuityBindMetadata } from '~/helpers/presenceContinuity';
 import { isLuminePreviewCaptureContext } from '~/helpers/luminePreviewCapture';
+import {
+  createSocketKeepalive,
+  guardSocketConnect
+} from '~/helpers/socketKeepalive';
 
 function buildSocketAuthPayload() {
   const token = getStoredItem('token');
@@ -48,3 +52,32 @@ export const socket = io(URL as string, {
     callback(buildSocketAuthPayload());
   }
 });
+
+// The page's one periodic beat (helpers/socketKeepalive.ts): the server's
+// transport ping. Small periodic work subscribes to it so a phone's radio
+// wakes once per beat, and two missed beats on a visible page close the dead
+// transport so Socket.IO's own bounded reconnect takes over.
+export const socketKeepalive = createSocketKeepalive({
+  onDeadLink() {
+    try {
+      socket.io.engine?.close();
+    } catch {
+      // The Manager owns the transport; a close that throws leaves it as is.
+    }
+  }
+});
+
+// The transport, not the namespace, is what pings: a transport that opened
+// but never answered the namespace CONNECT is watched too.
+socket.io.on('open', socketKeepalive.connected);
+socket.io.on('close', socketKeepalive.disconnected);
+socket.io.on('ping', socketKeepalive.ping);
+
+// No caller can repeat a namespace CONNECT that is already on its way.
+guardSocketConnect(socket);
+if (typeof document !== 'undefined') {
+  socketKeepalive.visibilityChanged(document.visibilityState === 'visible');
+  document.addEventListener('visibilitychange', () => {
+    socketKeepalive.visibilityChanged(document.visibilityState === 'visible');
+  });
+}

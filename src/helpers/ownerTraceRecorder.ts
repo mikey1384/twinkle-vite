@@ -30,13 +30,41 @@ export interface OwnerTraceRecorderOptions {
   maxEventsPerBatch?: number;
   maxBatchBytes?: number;
   maxBufferedEvents?: number;
+  // Where the session's black box is kept (the tab's sessionStorage). Without
+  // it nothing is persisted and nothing is recovered.
+  storage?: OwnerTraceStorage;
+  firstFlushDelayMs?: number;
+  persistDelayMs?: number;
 }
+
+// A page that dies (a WebKit content-process kill, a tab discarded in the
+// background) never runs pagehide, so everything since its last upload was
+// lost, and a load that died within the flush delay left no trace at all
+// (11-23: the reload that ended in Safari's "A problem repeatedly occurred"
+// lived 3 s and is known only from the API's socket log). The recorder now
+// keeps its unsent events and a few life facts in the tab's sessionStorage,
+// which survives a crash reload of the same tab. The next page in that tab
+// uploads them under the dead session's id with one `session-end` event that
+// says how it ended.
+export interface OwnerTraceStorage {
+  read: () => string | null;
+  write: (value: string) => void;
+  clear: () => void;
+}
+
+export type OwnerTraceLifecycle = 'visible' | 'hidden' | 'ended';
 
 export const OWNER_TRACE_FLUSH_DELAY_MS = 25_000;
 export const OWNER_TRACE_MAX_EVENTS_PER_BATCH = 150;
 // Below the 64KB keepalive budget a browser gives an unloading page.
 export const OWNER_TRACE_MAX_BATCH_BYTES = 48_000;
 export const OWNER_TRACE_MAX_BUFFERED_EVENTS = 600;
+// The session header goes out early so even a short-lived load is on record.
+export const OWNER_TRACE_FIRST_FLUSH_DELAY_MS = 3_000;
+export const OWNER_TRACE_PERSIST_DELAY_MS = 1_000;
+// The black box keeps the newest unsent events within these bounds.
+export const OWNER_TRACE_BOX_MAX_EVENTS = 60;
+export const OWNER_TRACE_BOX_MAX_BYTES = 24_000;
 
 export function createOwnerTraceRecorder({
   isOwner,
@@ -51,15 +79,23 @@ export function createOwnerTraceRecorder({
   flushDelayMs = OWNER_TRACE_FLUSH_DELAY_MS,
   maxEventsPerBatch = OWNER_TRACE_MAX_EVENTS_PER_BATCH,
   maxBatchBytes = OWNER_TRACE_MAX_BATCH_BYTES,
-  maxBufferedEvents = OWNER_TRACE_MAX_BUFFERED_EVENTS
+  maxBufferedEvents = OWNER_TRACE_MAX_BUFFERED_EVENTS,
+  storage,
+  firstFlushDelayMs = OWNER_TRACE_FIRST_FLUSH_DELAY_MS,
+  persistDelayMs = OWNER_TRACE_PERSIST_DELAY_MS
 }: OwnerTraceRecorderOptions) {
   let sessionId = '';
   let seq = 0;
   let buffer: OwnerTraceEvent[] = [];
   let dropped = 0;
   let timer: unknown = null;
+  let startedAt = 0;
+  let hasFlushed = false;
+  let lifecycle: OwnerTraceLifecycle = 'visible';
+  let lastPath = '';
+  let persistTimer: unknown = null;
 
-  return { record, flush, isActive, getBufferedCount };
+  return { record, flush, isActive, getBufferedCount, noteLifecycle };
 
   function isActive() {
     return isOwner();
@@ -79,7 +115,9 @@ export function createOwnerTraceRecorder({
     try {
       if (!isOwner()) return;
       if (!sessionId) {
+        recoverPreviousSession();
         sessionId = makeSessionId();
+        startedAt = now();
         onFirstActivation?.();
         push('session', getSessionHeader(), getPath());
       }
@@ -89,6 +127,7 @@ export function createOwnerTraceRecorder({
       } else {
         scheduleFlush();
       }
+      schedulePersist();
     } catch {
       // Tracing must never affect the page.
     }
@@ -116,6 +155,7 @@ export function createOwnerTraceRecorder({
       return;
     }
     seq = event.seq;
+    lastPath = event.path;
     buffer.push(event);
     if (buffer.length > maxBufferedEvents) {
       const overflow = buffer.length - maxBufferedEvents;
@@ -126,10 +166,108 @@ export function createOwnerTraceRecorder({
 
   function scheduleFlush() {
     if (timer !== null) return;
-    timer = setTimer(() => {
-      timer = null;
-      flush();
-    }, flushDelayMs);
+    timer = setTimer(
+      () => {
+        timer = null;
+        flush();
+      },
+      hasFlushed ? flushDelayMs : Math.min(firstFlushDelayMs, flushDelayMs)
+    );
+  }
+
+  // The page became visible or hidden, or is ending cleanly (pagehide). The
+  // black box is rewritten at once: the next moment may not come.
+  function noteLifecycle(state: OwnerTraceLifecycle) {
+    try {
+      if (!sessionId || !isOwner()) return;
+      lifecycle = state;
+      persist();
+    } catch {
+      // Tracing must never affect the page.
+    }
+  }
+
+  function schedulePersist() {
+    if (!storage || persistTimer !== null) return;
+    persistTimer = setTimer(() => {
+      persistTimer = null;
+      try {
+        persist();
+      } catch {
+        // Tracing must never affect the page.
+      }
+    }, persistDelayMs);
+  }
+
+  function persist() {
+    if (!storage || !sessionId) return;
+    if (!isOwner()) {
+      storage.clear();
+      return;
+    }
+    const events: OwnerTraceEvent[] = [];
+    let bytes = 0;
+    for (let i = buffer.length - 1; i >= 0; i--) {
+      if (events.length >= OWNER_TRACE_BOX_MAX_EVENTS) break;
+      const size = JSON.stringify(buffer[i]).length + 1;
+      if (bytes + size > OWNER_TRACE_BOX_MAX_BYTES) break;
+      events.unshift(buffer[i]);
+      bytes += size;
+    }
+    storage.write(
+      JSON.stringify({
+        v: 1,
+        sessionId,
+        startedAt,
+        at: now(),
+        seq,
+        lifecycle,
+        path: lastPath,
+        events
+      })
+    );
+  }
+
+  // Runs once, before this page's own session starts: uploads what the
+  // previous page in this tab could not, plus how it ended. A page that ended
+  // cleanly with nothing unsent has nothing to add.
+  function recoverPreviousSession() {
+    if (!storage) return;
+    let box: any = null;
+    try {
+      box = JSON.parse(storage.read() || 'null');
+      storage.clear();
+    } catch {
+      return;
+    }
+    if (!box || box.v !== 1 || typeof box.sessionId !== 'string') return;
+    if (!box.sessionId || box.sessionId.length > 40) return;
+    const events: OwnerTraceEvent[] = Array.isArray(box.events)
+      ? box.events.slice(-OWNER_TRACE_BOX_MAX_EVENTS)
+      : [];
+    const clean = box.lifecycle === 'ended';
+    if (clean && !events.length) return;
+    const lastAt = Number(box.at) || 0;
+    events.push({
+      seq: (Number(box.seq) || 0) + 1,
+      t: now(),
+      type: 'session-end',
+      path: typeof box.path === 'string' ? box.path : '',
+      data: {
+        // false: the page never ran pagehide (killed, crashed or discarded)
+        clean,
+        // true: it was last seen in the background, where iOS discards tabs
+        // routinely; false with clean false is a page that died in view
+        hidden: box.lifecycle === 'hidden',
+        lastAt,
+        lifeMs: Math.max(0, lastAt - (Number(box.startedAt) || lastAt)),
+        foundAfterMs: Math.max(0, now() - lastAt),
+        unsent: events.length
+      }
+    });
+    send(JSON.stringify({ sessionId: box.sessionId, events }), {
+      unloading: false
+    });
   }
 
   // Sends one batch (at most maxEventsPerBatch events and maxBatchBytes).
@@ -153,6 +291,7 @@ export function createOwnerTraceRecorder({
       // someone else.
       buffer = [];
       dropped = 0;
+      storage?.clear();
       return;
     }
     if (!buffer.length) return;
@@ -176,8 +315,11 @@ export function createOwnerTraceRecorder({
       bytes += size;
     }
     buffer = buffer.slice(events.length);
+    hasFlushed = true;
     if (buffer.length) scheduleFlush();
     send(JSON.stringify({ sessionId, events }), { unloading });
+    // What was just handed to the network is no longer the box's to resend.
+    persist();
   }
 }
 

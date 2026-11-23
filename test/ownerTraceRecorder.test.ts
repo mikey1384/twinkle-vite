@@ -76,7 +76,11 @@ test('the owner session starts with a header and flushes on the timer', () => {
   recorder.record('content-scroll', { st: 120 });
   assert.equal(activations(), 1);
   assert.equal(timers.length, 1, 'one pending flush timer, not one per event');
-  assert.equal(timers[0].ms, 25_000);
+  assert.equal(
+    timers[0].ms,
+    3_000,
+    'the first upload is early, so a short-lived load is on record'
+  );
   assert.equal(sent.length, 0);
   fireTimers();
   assert.equal(sent.length, 1);
@@ -252,4 +256,120 @@ test('routine per-scroll anchor saves return before any trace work', () => {
   );
   assert.ok(notes.length >= 4);
   assert.ok(!notes.includes('element'));
+});
+
+function boxSetup(initial: string | null = null) {
+  const box = { value: initial };
+  const sent: any[] = [];
+  const timers: { callback: () => void; ms: number; cleared: boolean }[] = [];
+  const state = { owner: true };
+  let clock = 5000;
+  let sessions = 0;
+  const recorder = createOwnerTraceRecorder({
+    isOwner: () => state.owner,
+    send: (body) => sent.push(JSON.parse(body)),
+    getPath: () => '/',
+    getSessionHeader: () => ({ version: 'test' }),
+    now: () => ++clock,
+    makeSessionId: () => `session-${++sessions}`,
+    setTimer: (callback, ms) => {
+      const timer = { callback, ms, cleared: false };
+      timers.push(timer);
+      return timer;
+    },
+    clearTimer: (handle) => {
+      (handle as { cleared: boolean }).cleared = true;
+    },
+    storage: {
+      read: () => box.value,
+      write: (value) => {
+        box.value = value;
+      },
+      clear: () => {
+        box.value = null;
+      }
+    }
+  });
+  const fire = (ms: number) => {
+    for (const timer of timers.splice(0)) {
+      if (timer.cleared) continue;
+      if (timer.ms === ms) timer.callback();
+      else timers.push(timer);
+    }
+  };
+  return { recorder, sent, box, state, timers, fire };
+}
+
+test('a page that dies before its first upload is reported by the next page in the tab', () => {
+  const first = boxSetup();
+  first.recorder.record('route', { nav: 'INIT' });
+  first.fire(1_000); // the black box is written; nothing was uploaded yet
+  assert.equal(first.sent.length, 0);
+  assert.ok(first.box.value);
+
+  // The page is killed here. The reload reads the same sessionStorage.
+  const second = boxSetup(first.box.value);
+  second.recorder.record('route', { nav: 'INIT' });
+  assert.equal(second.sent.length, 1);
+  const recovered = second.sent[0];
+  assert.equal(recovered.sessionId, 'session-1');
+  assert.deepEqual(
+    recovered.events.map((event: any) => event.type),
+    ['session', 'route', 'session-end']
+  );
+  const end = recovered.events[2];
+  assert.equal(end.seq, 3);
+  assert.equal(end.data.clean, false);
+  assert.equal(end.data.hidden, false);
+  assert.equal(end.data.unsent, 2);
+  assert.ok(end.data.lifeMs >= 0 && end.data.foundAfterMs >= 0);
+  // The new page's own session is separate and starts a fresh box.
+  second.fire(3_000);
+  assert.equal(second.sent[1].sessionId, 'session-1');
+  assert.equal(second.sent[1].events[0].type, 'session');
+  assert.equal(JSON.parse(second.box.value!).events.length, 0);
+});
+
+test('a tab discarded in the background is told apart from a page that died in view', () => {
+  const first = boxSetup();
+  first.recorder.record('route', { nav: 'INIT' });
+  first.recorder.flush({ unloading: true });
+  first.recorder.noteLifecycle('hidden');
+  const second = boxSetup(first.box.value);
+  second.recorder.record('route', { nav: 'INIT' });
+  const end = second.sent[0].events.at(-1);
+  assert.equal(end.type, 'session-end');
+  assert.equal(end.data.clean, false);
+  assert.equal(end.data.hidden, true);
+  assert.equal(end.data.unsent, 0, 'uploaded events are not sent again');
+});
+
+test('a page that ended cleanly with nothing unsent adds nothing', () => {
+  const first = boxSetup();
+  first.recorder.record('route', { nav: 'INIT' });
+  first.recorder.flush({ unloading: true });
+  first.recorder.noteLifecycle('ended');
+  const second = boxSetup(first.box.value);
+  second.recorder.record('route', { nav: 'INIT' });
+  assert.equal(second.sent.length, 0);
+});
+
+test('the black box keeps only the newest unsent events and is dropped on sign-out', () => {
+  const { recorder, box, state, fire } = boxSetup();
+  for (let i = 0; i < 100; i++) recorder.record('scroll-frame', { i });
+  fire(1_000);
+  const saved = JSON.parse(box.value!);
+  assert.equal(saved.events.length, 60);
+  assert.equal(saved.events.at(-1).data.i, 99);
+  state.owner = false;
+  recorder.flush();
+  assert.equal(box.value, null);
+});
+
+test('a damaged black box is discarded without affecting the new session', () => {
+  const { recorder, sent, fire } = boxSetup('{not json');
+  recorder.record('route', { nav: 'INIT' });
+  fire(3_000);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].events[0].type, 'session');
 });
