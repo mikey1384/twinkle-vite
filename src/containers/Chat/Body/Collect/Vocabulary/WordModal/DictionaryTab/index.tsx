@@ -71,7 +71,7 @@ export default function DictionaryTab({
                 partOfSpeech={pos}
                 contentObj={posObj[pos]}
                 deletedDefIds={deletedDefIds}
-                definitionIds={definitionOrder[pos]}
+                definitionIds={definitionOrder?.[pos]}
                 style={{ marginTop: index > 0 ? '1.5rem' : 0 }}
               />
             );

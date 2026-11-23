@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import FilterBar from '~/components/FilterBar';
@@ -11,6 +11,13 @@ import WordBattleGate, {
   isBattleLocked
 } from '../WordBattle';
 import { useChatContext } from '~/contexts';
+import {
+  buildPosObj,
+  definitionsByPos,
+  DefinitionOrder,
+  normalizeDefinitionOrder,
+  normalizePosOrder
+} from './wordShape';
 
 export default function WordModal({
   onHide,
@@ -35,77 +42,31 @@ export default function WordModal({
   }, [word, wordsObj]);
 
   const {
-    noun = [],
-    verb = [],
-    adjective = [],
-    preposition = [],
-    adverb = [],
-    pronoun = [],
-    conjunction = [],
-    interjection = [],
-    phrase = [],
-    determiner = [],
-    other = [],
-    deletedDefIds = [],
-    definitionOrder,
+    deletedDefIds: rawDeletedDefIds,
+    definitionOrder: rawDefinitionOrder,
     bonusRouletteOpen = false,
-    partOfSpeechOrder = [
-      'noun',
-      'verb',
-      'adjective',
-      'preposition',
-      'adverb',
-      'pronoun',
-      'conjunction',
-      'interjection',
-      'determiner',
-      'phrase',
-      'other'
-    ]
+    partOfSpeechOrder: rawPartOfSpeechOrder
   } = wordObj;
-  const partOfSpeeches = useMemo<Record<string, any>>(() => {
-    return {
-      noun,
-      verb,
-      adjective,
-      preposition,
-      adverb,
-      pronoun,
-      conjunction,
-      interjection,
-      determiner,
-      phrase,
-      other
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wordObj]);
-  const posObj = useMemo(() => {
-    const result: Record<string, any> = {
-      adjective: {},
-      adverb: {},
-      conjunction: {},
-      interjection: {},
-      noun: {},
-      preposition: {},
-      pronoun: {},
-      verb: {},
-      determiner: {},
-      phrase: {},
-      other: {}
-    };
-    for (const key in partOfSpeeches) {
-      for (const { id, definition } of partOfSpeeches[key]) {
-        result[key][id] = {
-          id,
-          title: definition
-        };
-      }
-    }
-    return result;
-  }, [partOfSpeeches]);
-
-  const posOrder = partOfSpeechOrder.filter(
-    (pos: any) => Object.keys(posObj[pos] || {}).length > 0
+  const deletedDefIds = useMemo<number[]>(
+    () => (Array.isArray(rawDeletedDefIds) ? rawDeletedDefIds : []),
+    [rawDeletedDefIds]
+  );
+  // Every shape read defensively (wordShape.ts): a part of speech, an order
+  // or a definition list that is missing or malformed is skipped.
+  const partOfSpeeches = useMemo(() => definitionsByPos(wordObj), [wordObj]);
+  const posObj = useMemo(() => buildPosObj(partOfSpeeches), [partOfSpeeches]);
+  // Follows the word as it changes while the modal is open (a battle's
+  // unlocked definitions arrive after the first render).
+  const definitionOrder = useMemo(
+    () => normalizeDefinitionOrder(rawDefinitionOrder, partOfSpeeches),
+    [rawDefinitionOrder, partOfSpeeches]
+  );
+  const posOrder = useMemo(
+    () =>
+      normalizePosOrder(rawPartOfSpeechOrder).filter(
+        (pos) => Object.keys(posObj[pos] || {}).length > 0
+      ),
+    [rawPartOfSpeechOrder, posObj]
   );
 
   useEffect(() => {
@@ -118,8 +79,17 @@ export default function WordModal({
     if (selectedTab === 'edit') return `Edit Definitions of "${word}"`;
     return word;
   }, [selectedTab, word]);
-  const [editedDefinitionOrder, setEditedDefinitionOrder] =
-    useState(definitionOrder);
+  // The member's reorder in the Edit tab; until then, the word's own order.
+  const [definitionOrderEdit, setDefinitionOrderEdit] =
+    useState<DefinitionOrder | null>(null);
+  const editedDefinitionOrder = definitionOrderEdit ?? definitionOrder;
+  const handleSetEditedDefinitionOrder = useCallback(
+    (next: DefinitionOrder | ((prev: DefinitionOrder) => DefinitionOrder)) =>
+      setDefinitionOrderEdit((prev) =>
+        typeof next === 'function' ? next(prev ?? definitionOrder) : next
+      ),
+    [definitionOrder]
+  );
 
   return (
     <Modal
@@ -192,7 +162,7 @@ export default function WordModal({
             onHide={onHide}
             originalPosOrder={posOrder}
             posObj={posObj}
-            onSetEditedDefinitionOrder={setEditedDefinitionOrder}
+            onSetEditedDefinitionOrder={handleSetEditedDefinitionOrder}
             word={word}
           />
         )}

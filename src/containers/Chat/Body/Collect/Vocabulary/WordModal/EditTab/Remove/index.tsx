@@ -24,7 +24,7 @@ export default function Remove({
             style={{ marginBottom: '1.5rem' }}
             type={pos}
             onListItemClick={onListItemClick}
-            defIds={editedDefinitionOrder[pos]}
+            defIds={editedDefinitionOrder?.[pos]}
             posObject={posObj[pos]}
           />
         ))}
