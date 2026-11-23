@@ -2,8 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createSocketKeepalive,
-  SOCKET_DEAD_LINK_AFTER_MS
+  SOCKET_DEAD_LINK_AFTER_MS as SILENCE_MS,
+  SOCKET_DEAD_LINK_CONFIRM_MS
 } from '../src/helpers/socketKeepalive';
+
+// Silence window plus the short confirmation wait.
+const SOCKET_DEAD_LINK_AFTER_MS = SILENCE_MS + SOCKET_DEAD_LINK_CONFIRM_MS;
 
 function setup() {
   let clock = 0;
@@ -142,4 +146,18 @@ test('a timer that fires late after a frozen page gets one more window before th
   // If instead nothing arrives for a whole window, the link is dead.
   advance(SOCKET_DEAD_LINK_AFTER_MS);
   assert.equal(dead(), 1);
+});
+
+test('a ping delivered just after the silence window saves the link', () => {
+  const { keepalive, advance, freeze, dead } = setup();
+  keepalive.connected();
+  advance(20_000);
+  // A laptop slept 42 s with no visibility event: the timer fires on wake
+  // with the missed pings still unread behind it.
+  freeze(42_000);
+  advance(0);
+  assert.equal(dead(), 0);
+  keepalive.ping();
+  advance(SOCKET_DEAD_LINK_CONFIRM_MS);
+  assert.equal(dead(), 0);
 });

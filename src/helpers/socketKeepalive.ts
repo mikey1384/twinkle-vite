@@ -17,6 +17,9 @@
 
 export const SOCKET_PING_INTERVAL_MS = 25_000;
 export const SOCKET_DEAD_LINK_AFTER_MS = 2 * SOCKET_PING_INTERVAL_MS + 10_000;
+// After the silence window, a last wait in which one delivered ping saves the
+// link (pings can sit unread behind the timer after a sleep or a stall).
+export const SOCKET_DEAD_LINK_CONFIRM_MS = 3_000;
 
 export interface SocketKeepalive {
   // The transport connected: start expecting pings.
@@ -36,12 +39,14 @@ export interface SocketKeepalive {
 export function createSocketKeepalive({
   onDeadLink,
   deadLinkAfterMs = SOCKET_DEAD_LINK_AFTER_MS,
+  confirmMs = SOCKET_DEAD_LINK_CONFIRM_MS,
   now = () => Date.now(),
   setTimer = (callback, ms) => setTimeout(callback, ms),
   clearTimer = (handle) => clearTimeout(handle as any)
 }: {
   onDeadLink: () => void;
   deadLinkAfterMs?: number;
+  confirmMs?: number;
   now?: () => number;
   setTimer?: (callback: () => void, ms: number) => unknown;
   clearTimer?: (handle: unknown) => void;
@@ -113,6 +118,15 @@ export function createSocketKeepalive({
       watch();
       return;
     }
+    // A laptop that slept, or a main thread that stalled, for less than that
+    // can still have unread pings waiting behind this timer. Give them a
+    // moment to be delivered: any ping restarts the watch and cancels this.
+    timer = setTimer(confirm, confirmMs);
+  }
+
+  function confirm() {
+    timer = null;
+    if (!isConnected || !isVisible) return;
     onDeadLink();
   }
 }
@@ -144,8 +158,9 @@ export function isNamespaceConnectPending(socket: {
 // repeat a CONNECT that is already on its way.
 //
 // A CONNECT that has gone unanswered for CONNECT_RESEND_AFTER_MS may be sent
-// again: the server answers a CONNECT in well under a second, so by then the
-// repeat is a recovery attempt, not the duplicate this guard exists to stop.
+// again, as it always could before the guard. The server answers a CONNECT in
+// well under a second, so this is the rare stuck handshake; if the first
+// answer does arrive late the page is admitted twice, the old behaviour.
 export const CONNECT_RESEND_AFTER_MS = 10_000;
 
 export function guardSocketConnect<
