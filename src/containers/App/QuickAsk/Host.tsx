@@ -3,11 +3,10 @@ import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { isMobile } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { getHomeAgent, useQuickAskAvailable } from './QuickAskButton';
-import { useAssistantModeSync } from './assistantMode';
+import { summonAssistant, useAssistantModeSync } from './assistantMode';
 import {
   getQuickAskRequest,
   isQuickAskShortcut,
-  openQuickAsk,
   subscribeQuickAsk
 } from './state';
 
@@ -39,7 +38,8 @@ export default function QuickAskHost() {
       if (target?.isContentEditable) return;
       if (document.querySelector('[aria-modal="true"]')) return;
       event.preventDefault();
-      openQuickAsk({ agent: getHomeAgent(userId) });
+      // the member's Temporary / Saved choice decides which box opens
+      summonAssistant(getHomeAgent(userId));
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);

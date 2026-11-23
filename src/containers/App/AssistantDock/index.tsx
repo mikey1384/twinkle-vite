@@ -178,7 +178,9 @@ export function DockWindow({
   const { reply, replying, sending, send, sendPhoto, sendError } =
     useAssistantConversation({ assistantName: assistant, channelId, topicId });
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
-  const { saveMode } = useAssistantMode();
+  const { mode: assistantMode, saveMode } = useAssistantMode();
+  // set while this box itself switches, so the watcher below stays out
+  const selfModeSwitchRef = useRef(false);
   const [modeSwitching, setModeSwitching] = useState(false);
   const [modeError, setModeError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -247,6 +249,30 @@ export function DockWindow({
   useEffect(() => {
     setAssistantWindowView({ position, expanded });
   }, [position, expanded]);
+  // The member switched to Temporary somewhere else (the Home box, the
+  // header): this box follows, as a fresh temporary conversation keeping
+  // what they pressed Ask on. A live voice call stays until it ends.
+  const prevAssistantModeRef = useRef(assistantMode);
+  // a switch made during a voice call waits for the call to end
+  const pendingTemporaryRef = useRef(false);
+  useEffect(() => {
+    const changed = prevAssistantModeRef.current !== assistantMode;
+    prevAssistantModeRef.current = assistantMode;
+    if (assistantMode !== 'temporary') {
+      pendingTemporaryRef.current = false;
+      return;
+    }
+    if (!changed && !pendingTemporaryRef.current) return;
+    if (selfModeSwitchRef.current) return;
+    if (active) {
+      pendingTemporaryRef.current = true;
+      return;
+    }
+    pendingTemporaryRef.current = false;
+    closeAssistantDock();
+    openQuickAsk({ agent: assistant, context: askContext });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assistantMode, active]);
   useEffect(() => {
     setVoiceQueued(false);
     setContextError('');
@@ -952,12 +978,14 @@ export function DockWindow({
     if (modeSwitching || active) return;
     setModeSwitching(true);
     setModeError('');
+    selfModeSwitchRef.current = true;
     try {
       const sentContext = askContext;
       if (!(await saveMode('temporary'))) throw new Error('mode');
       closeAssistantDock();
       openQuickAsk({ agent: assistant, context: sentContext });
     } catch {
+      selfModeSwitchRef.current = false;
       setModeError('Couldn’t switch to Temporary. Try again.');
     } finally {
       setModeSwitching(false);
