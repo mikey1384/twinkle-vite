@@ -541,6 +541,7 @@ export default function WordleModal({
           )}
         {wordleSnapshotStatus === 'ready' && overviewModalShown && (
           <OverviewModal
+            channelId={channelId}
             numGuesses={guesses.length}
             solution={solution}
             wordLevel={wordLevel}

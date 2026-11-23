@@ -15,10 +15,14 @@ import { useChatContext } from '~/contexts';
 export default function WordModal({
   onHide,
   word,
+  typedWord,
   onWordMasterBreak
 }: {
   onHide: () => void;
   word: string;
+  // The form the member saw when it differs from the word (a Wordle answer
+  // ACIDS opens "acid"): the battle's spelling bee never asks for it.
+  typedWord?: string;
   onWordMasterBreak?: (status: any) => void;
 }) {
   const wordsObj = useChatContext((v) => v.state.wordsObj);
@@ -147,7 +151,10 @@ export default function WordModal({
           <>
             <main>
               <div style={{ width: '100%', padding: '2rem' }}>
-                <WordBattleGate wordObj={{ ...wordObj, content: word }} onUnlocked={() => {}} />
+                <WordBattleGate
+                  wordObj={{ ...wordObj, content: typedWord || word }}
+                  onUnlocked={() => {}}
+                />
               </div>
             </main>
             <footer>

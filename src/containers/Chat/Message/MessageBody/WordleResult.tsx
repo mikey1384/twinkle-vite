@@ -1,6 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
+import { useChatContext } from '~/contexts';
+import {
+  WordleBattleHint,
+  WordleWordPopup
+} from '~/containers/Chat/Body/Collect/Vocabulary/WordBattle/Wordle';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useWordleLabels } from '~/helpers/hooks';
 import { getWordleBannerLevelColor } from '../../constants/wordlePresentation';
@@ -8,20 +13,31 @@ import moment from 'moment';
 import { useReplyCardPresentation } from './ReplyCardPresentation';
 
 // Its Reply and reaction row come from the shared card frame in MessageBody.
+// A saved result opens its word's battle popup (Mikey 11-23: Wordle words
+// are Word Master words); the server keeps today's answer from a member who
+// hasn't finished their own Wordle yet.
 export default function WordleResult({
   username,
   userId,
   myId,
+  messageId,
   wordleResult,
   timeStamp
 }: {
   myId: number;
   userId: number;
   username: string;
+  messageId?: number | string;
   timeStamp: number;
   wordleResult: any;
 }) {
   const inReply = useReplyCardPresentation();
+  const onSetWordleModalShown = useChatContext(
+    (v) => v.actions.onSetWordleModalShown
+  );
+  const [popupShown, setPopupShown] = useState(false);
+  const battleMessageId =
+    !inReply && typeof messageId === 'number' && messageId > 0 ? messageId : 0;
   const { isSolved, numGuesses } = wordleResult;
   const isQuickSolve = isSolved && (numGuesses === 1 || numGuesses === 2);
 
@@ -45,9 +61,34 @@ export default function WordleResult({
   );
 
   return (
+    <>
     <div
-      aria-label="Wordle result"
+      aria-label={
+        battleMessageId ? 'Wordle result: open the word battle' : 'Wordle result'
+      }
+      role={battleMessageId ? 'button' : undefined}
+      tabIndex={battleMessageId ? 0 : undefined}
+      onClick={battleMessageId ? handleOpen : undefined}
+      onKeyDown={
+        battleMessageId
+          ? (event) => {
+              if (event.target !== event.currentTarget) return;
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setPopupShown(true);
+              }
+            }
+          : undefined
+      }
       className={css`
+        cursor: ${battleMessageId ? 'pointer' : 'default'};
+        transition: box-shadow 0.15s ease;
+        ${battleMessageId
+          ? `&:hover, &:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 3px ${Color.gold(0.85)};
+        }`
+          : ''}
         container-type: inline-size;
         display: grid;
         grid-template-columns: minmax(0, 1fr);
@@ -152,6 +193,11 @@ export default function WordleResult({
             {bonusLabel}
           </p>
         )}
+        {battleMessageId > 0 && (
+          <div style={{ marginTop: '1rem' }}>
+            <WordleBattleHint />
+          </div>
+        )}
       </div>
       {!inReply && <div
         className={css`
@@ -167,5 +213,22 @@ export default function WordleResult({
         {displayedTimeStamp}
       </div>}
     </div>
+    {/* Outside the card: clicks in the popup (a portal) must not reach the
+        card's own click. */}
+    {popupShown && battleMessageId > 0 && (
+      <WordleWordPopup
+        messageId={battleMessageId}
+        onHide={() => setPopupShown(false)}
+        onPlayWordle={() => onSetWordleModalShown(true)}
+      />
+    )}
+    </>
   );
+
+  function handleOpen(event: React.MouseEvent<HTMLDivElement>) {
+    // The member's name opens their profile card, not the word.
+    const target = event.target as HTMLElement;
+    if (target.closest('[data-feed-card-interactive]')) return;
+    setPopupShown(true);
+  }
 }

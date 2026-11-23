@@ -49,6 +49,12 @@ export default function ChatActions(dispatch: Dispatch) {
     onUnlockWordDefinitions(unlocked: Record<string, any>) {
       return dispatch({ type: 'UNLOCK_WORD_DEFINITIONS', unlocked });
     },
+    // A word object the server sent for a word the member opened outside
+    // Word Master (a Wordle answer): merged like a battle's unlock, so a
+    // feed entry for the same word keeps its own ids. Locked until played.
+    onApplyServerWordObj(wordObj: Record<string, any>) {
+      return dispatch({ type: 'UNLOCK_WORD_DEFINITIONS', unlocked: wordObj });
+    },
     onApplyAIGeneratedDefinitions({
       word,
       partOfSpeechOrder,
