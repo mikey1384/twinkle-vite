@@ -12,6 +12,7 @@ import { useAppContext, useKeyContext, useChessContext } from '~/contexts';
 export interface AttemptPayload {
   attemptId: number | null;
   solved: boolean;
+  userMoves?: string[];
 }
 
 export interface AttemptResponse {
@@ -167,7 +168,8 @@ export function useChessPuzzle() {
 
   async function submitAttempt({
     attemptId,
-    solved
+    solved,
+    userMoves
   }: AttemptPayload): Promise<AttemptResponse> {
     if (cancellingRef.current) {
       throw new Error('Operation cancelled');
@@ -176,7 +178,8 @@ export function useChessPuzzle() {
     try {
       const result = await recordChessAttemptResult({
         attemptId,
-        solved
+        solved,
+        userMoves
       });
       return result;
     } catch (error) {

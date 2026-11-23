@@ -299,7 +299,8 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
     try {
       const response = await submitAttempt({
         attemptId,
-        solved: result.solved
+        solved: result.solved,
+        userMoves: result.userMoves
       });
 
       if (typeof response.newXp === 'number') {

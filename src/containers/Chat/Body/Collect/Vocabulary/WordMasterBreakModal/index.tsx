@@ -7,6 +7,9 @@ import { SuggestedOmokUser, WordMasterBreakModalProps } from './types';
 import { getBreakAccent } from './helpers/utils';
 import { useAgentScreenState } from '~/helpers/websiteAgentScreenState';
 
+// Past the API's 1.5 s submit grace (wordMasterBreaks.ts).
+const QUIZ_TIMEOUT_REFRESH_DELAY_MS = 2000;
+
 export default function WordMasterBreakModal({
   breakStatus,
   isOpen,
@@ -171,13 +174,16 @@ export default function WordMasterBreakModal({
       return;
     }
     refreshOnceRef.current = true;
-    (async () => {
+    // The server locks a timed-out question after a short grace (an answer
+    // clicked at the last second still counts), so refresh once it passed.
+    const refreshTimer = setTimeout(async () => {
       try {
         await onRefresh();
       } catch (error) {
         console.error(error);
       }
-    })();
+    }, QUIZ_TIMEOUT_REFRESH_DELAY_MS);
+    return () => clearTimeout(refreshTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRemaining, breakType, isLocked]);
 

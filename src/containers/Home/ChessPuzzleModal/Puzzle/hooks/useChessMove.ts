@@ -531,7 +531,8 @@ export function useChessMove({
       } else {
         onPuzzleResultUpdate('solved');
         await onPuzzleComplete({
-          solved: true
+          solved: true,
+          userMoves: newMoveHistory.map((entry) => entry.uci)
         });
 
         const stats = await loadChessDailyStats();
