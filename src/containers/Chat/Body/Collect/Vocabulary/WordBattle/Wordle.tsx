@@ -470,6 +470,11 @@ const catchButtonCls = css`
   font-family: ${PIXEL_FONT};
   font-size: 11px;
   padding: 11px 14px;
+  white-space: nowrap;
+  @media (max-width: 400px) {
+    font-size: 10px;
+    padding: 11px 10px;
+  }
   color: #3b2200;
   background: #ffd34d;
   border: 3px solid #ffffff;
@@ -528,11 +533,13 @@ const laterButtonCls = css`
   }
 `;
 
-// The monster peeks in from the right edge, half hidden, sliding in once.
+// The monster peeks in from the right edge (head, both eyes and most of its
+// body in view; the 128px canvas's far side stays past the edge), sliding in
+// once.
 const peekCls = css`
   position: relative;
   flex-shrink: 0;
-  width: 46px;
+  width: 92px;
   display: flex;
   align-items: flex-end;
   justify-content: flex-start;
@@ -546,7 +553,7 @@ const peekCls = css`
     }
   }
   @media (max-width: 400px) {
-    width: 40px;
+    width: 84px;
   }
   @media (prefers-reduced-motion: reduce) {
     animation: none;
