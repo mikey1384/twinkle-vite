@@ -180,7 +180,7 @@ export default function TodayQuestion({ sharedId = 0, review = false }: { shared
               : shared
                 ? q.completedVia === 'correct' ? 'Its reward is yours.' : 'You learned the idea and passed the understanding check.'
                 : q.completedVia === 'correct' ? 'Your daily reward is yours.' : 'You learned the idea and passed the understanding check.'}</p>
-            {!q.unpaid && <div className={rewardRowCls}><RewardChips xp={q.reward.xp} coins={q.reward.coins} />{q.completedVia === 'guided' && <span>No Coins on the guided route</span>}</div>}
+            {!q.unpaid && <div className={rewardRowCls}><RewardChips xp={q.reward.xp} coins={q.reward.coins} /></div>}
             <p className={mutedCls}>{shared
               ? `Try more from Home: the first ${data.paidPerDay} each day pay. Your own Today’s Challenge is separate.`
               : 'A new question unlocks at 9 AM Korea time, when one is ready.'}</p>
@@ -202,7 +202,7 @@ export default function TodayQuestion({ sharedId = 0, review = false }: { shared
           {showLesson && lesson && <div className={paperCls}>
             {!q.completedVia && <div className={learningNoteCls}><strong>Not quite — let’s work it out.</strong>{unpaidToday
               ? <p>Finish the explanation and get the understanding check right to clear it.</p>
-              : <p>Finish the explanation and get the understanding check right to clear A and earn <RewardChips xp={rewards.guidedXP} />. No Coins on this route.</p>}</div>}
+              : <p>Finish the explanation and get the understanding check right to clear A and earn <RewardChips xp={rewards.guidedXP} />.</p>}</div>}
             <span className={eyebrowCls}>{showCheck ? 'PUT THE IDEA TO WORK' : `EXPLANATION · ${lessonIndex + 1} / ${lesson.totalSteps}`}</span>
             <h2>{showCheck ? 'A quick understanding check' : step?.title}</h2>
             {showCheck && q.check ? <>
@@ -306,7 +306,7 @@ function profileLabel(data: TodayState) {
 function RewardOffer({ rewards }: { rewards: TodayState['rewards'] }) {
   return <div className={offerCls}>
     <div><span>Right first time</span><div className={rewardRowCls}><RewardChips xp={rewards.correctXP} coins={rewards.correctCoins} /></div></div>
-    <div><span>Learn it, then pass the check</span><div className={rewardRowCls}><RewardChips xp={rewards.guidedXP} /><span>No Coins</span></div></div>
+    <div><span>Learn it, then pass the check</span><div className={rewardRowCls}><RewardChips xp={rewards.guidedXP} /></div></div>
   </div>;
 }
 function Question({ prompt, value, onChange, disabled, onMediaReady }: { prompt: Prompt; value: string | number | null; onChange: (value: string | number) => void; disabled: boolean; onMediaReady?: (ready: boolean) => void }) {
