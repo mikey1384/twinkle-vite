@@ -253,3 +253,97 @@ export function EnergyBattery({
     </div>
   );
 }
+
+// The same canonical AI Energy display as EnergyBattery, laid out as a small
+// horizontal battery with its label beside it, for headers too short for the
+// upright one.
+export function EnergyChip() {
+  const aiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats?.aiUsagePolicy
+  ) as AiUsagePolicy | null;
+  const energyDisplay = getAiEnergyDisplay(aiUsagePolicy);
+  const batteryLevel = energyDisplay.percent ?? 0;
+  const energySegments = Math.max(1, aiUsagePolicy?.energySegments || 5);
+  const visualSegmentFill = (batteryLevel / 100) * energySegments;
+  return (
+    <div
+      aria-label={`AI Energy ${energyDisplay.label}`}
+      title={`AI Energy ${energyDisplay.label}`}
+      className={css`
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+        padding: 0 0.6rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #4c5767;
+        white-space: nowrap;
+      `}
+    >
+      <span
+        aria-hidden
+        className={css`
+          display: flex;
+          align-items: center;
+        `}
+      >
+        <span
+          className={css`
+            display: grid;
+            grid-template-columns: repeat(${energySegments}, 1fr);
+            gap: 2px;
+            width: calc(30 * var(--px));
+            height: calc(14 * var(--px));
+            padding: 2px;
+            border: 1.5px solid #8b97a8;
+            border-radius: 4px;
+            background: #fff;
+          `}
+        >
+          {Array.from({ length: energySegments }).map((_, index) => {
+            const fillRatio = Math.max(
+              0,
+              Math.min(1, visualSegmentFill - index)
+            );
+            return (
+              <span
+                key={index}
+                className={css`
+                  position: relative;
+                  overflow: hidden;
+                  border-radius: 1.5px;
+                  background: #e6eaf0;
+                `}
+              >
+                {fillRatio > 0 && (
+                  <span
+                    className={css`
+                      position: absolute;
+                      top: 0;
+                      bottom: 0;
+                      left: 0;
+                      width: ${fillRatio * 100}%;
+                      background: ${batteryLevel < 20 ? '#e0a030' : '#4caf50'};
+                      transition: width 0.3s ease-in-out;
+                    `}
+                  />
+                )}
+              </span>
+            );
+          })}
+        </span>
+        <span
+          className={css`
+            width: 2px;
+            height: calc(6 * var(--px));
+            margin-left: 1px;
+            border-radius: 0 1px 1px 0;
+            background: #8b97a8;
+          `}
+        />
+      </span>
+      <span>{energyDisplay.label}</span>
+    </div>
+  );
+}

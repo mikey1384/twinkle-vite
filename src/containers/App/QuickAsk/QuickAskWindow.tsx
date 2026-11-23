@@ -17,7 +17,7 @@ import AssistantFace from '~/components/AssistantFace';
 import RichText from '~/components/Texts/RichText';
 import AgentSuggestions from '~/containers/Chat/Body/MessagesContainer/MessageInput/AgentSuggestions';
 import { WEBSITE_AGENT_UI_ATTRIBUTE } from '~/helpers/websiteAgentPage';
-import { EnergyBattery, useDraggableWindow } from '../AssistantDock/frame';
+import { EnergyChip, useDraggableWindow } from '../AssistantDock/frame';
 import AssistantReplyView from '../AssistantDock/AssistantReplyView';
 import {
   EMPTY_ASSISTANT_REPLY,
@@ -231,7 +231,9 @@ export default function QuickAskWindow() {
             {replying ? 'Zero is answering…' : 'For small questions'}
           </span>
         </div>
-        <EnergyBattery width={14} margin=".7rem .4rem" />
+        <div className={css`display: flex; align-items: center;`}>
+          <EnergyChip />
+        </div>
         <button
           type="button"
           data-no-drag=""
