@@ -39,7 +39,8 @@ export interface AssistantAskContext {
   // a pass's kind ('mission' or 'achievement'), as the feed knows it
   rootType?: string;
   // an app asked about for its rewards (the Earn page), not to play
-  focus?: 'rewards';
+  // 'replies': the post's latest replies come along ("Summarize the replies")
+  focus?: 'rewards' | 'replies';
   // an Arena battle question's number, a drill question's version (the
   // server re-reads the question as the member)
   no?: number;
