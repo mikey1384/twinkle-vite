@@ -42,6 +42,8 @@ export default function LootWindow({
   const [shown, setShown] = useState(instant ? drops.length : 0);
   const playedRef = useRef(instant ? drops.length : 0);
   const revealedRef = useRef(false);
+  const windowRef = useRef<HTMLDivElement>(null);
+  const skipRef = useRef<HTMLButtonElement>(null);
   const onRevealedRef = useRef(onRevealed);
   onRevealedRef.current = onRevealed;
 
@@ -54,6 +56,8 @@ export default function LootWindow({
       if (best) playBattleSound(soundFor(best));
     }
     if (shown >= drops.length) {
+      // The skip button goes away: keep keyboard focus in the window.
+      if (document.activeElement === skipRef.current) windowRef.current?.focus();
       if (!revealedRef.current) {
         revealedRef.current = true;
         onRevealedRef.current();
@@ -68,24 +72,14 @@ export default function LootWindow({
   }, [drops, shown]);
 
   const skippable = shown < drops.length;
+  const paidNothing = !summary.basePoints && !summary.xp && !summary.coins && !drops.length;
   return (
     <div
+      ref={windowRef}
+      tabIndex={-1}
       className={cx(windowCls, skippable && skippableCls)}
       data-testid="battle-loot-window"
       onClick={skippable ? () => setShown(drops.length) : undefined}
-      role={skippable ? 'button' : undefined}
-      tabIndex={skippable ? 0 : undefined}
-      aria-label={skippable ? 'Show all the loot' : undefined}
-      onKeyDown={
-        skippable
-          ? (event) => {
-              if (event.key === ' ' || event.key === 'Enter') {
-                event.preventDefault();
-                setShown(drops.length);
-              }
-            }
-          : undefined
-      }
     >
       <div className={titleCls}>{won ? 'LOOT' : 'FOR PLAYING'}</div>
       <div className={paidRowCls} data-testid="battle-reward-chips">
@@ -108,7 +102,7 @@ export default function LootWindow({
         )}
       </div>
       {drops.length > 0 && (
-        <div className={slotsCls}>
+        <div className={slotsCls} aria-live="polite">
           {drops.map((drop, i) =>
             i < shown ? (
               <DropSlot key={i} drop={drop} />
@@ -121,12 +115,23 @@ export default function LootWindow({
         </div>
       )}
       {won && drops.length === 0 && (
-        <div className={noDropCls}>Nothing else dropped this time.</div>
+        <div className={noDropCls}>
+          {paidNothing ? 'No loot this time.' : 'Nothing else dropped this time.'}
+        </div>
       )}
       {skippable && (
-        <div className={skipHintCls} aria-hidden="true">
+        <button
+          ref={skipRef}
+          type="button"
+          className={skipHintCls}
+          aria-label="Show all the loot"
+          onClick={(event) => {
+            event.stopPropagation();
+            setShown(drops.length);
+          }}
+        >
           <span className={skipArrowCls}>▼</span> tap to skip
-        </div>
+        </button>
       )}
     </div>
   );
@@ -172,14 +177,13 @@ const windowCls = css`
   background: #0f0b1a;
   border: 3px solid #ffffff;
   box-shadow: 0 0 0 3px #0f0b1a, inset 0 0 0 3px #2c2442;
+  &:focus {
+    outline: none;
+  }
 `;
 
 const skippableCls = css`
   cursor: pointer;
-  &:focus-visible {
-    outline: 3px solid #ffd34d;
-    outline-offset: 2px;
-  }
 `;
 
 const titleCls = css`
@@ -308,6 +312,14 @@ const skipHintCls = css`
   font-family: ${PIXEL_FONT};
   font-size: 9px;
   color: #a99fc4;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  cursor: pointer;
+  &:focus-visible {
+    outline: 3px solid #ffd34d;
+    outline-offset: 2px;
+  }
 `;
 
 const skipArrowCls = css`
