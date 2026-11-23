@@ -38,6 +38,25 @@ export function encounterLines(word: string, level: number) {
   return lines;
 }
 
+// A Monster Den rematch: practice only, so the lines say so up front.
+export function rematchLines(word: string) {
+  const W = word.toUpperCase();
+  return [`${W} is back for a rematch!`, 'Practice round: no loot, just glory.'];
+}
+
+export function practiceWinLine(word: string) {
+  return pick(
+    ['Still got it. Practice complete!', 'Beaten again. It remembers you now.', 'Twice beaten. Legend.'],
+    word
+  );
+}
+
+// When today's battles come back, in the member's own clock ("9:00 AM").
+export function resetTimeLabel(resetAt?: number) {
+  if (!resetAt) return 'tomorrow';
+  return new Date(resetAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 export function commandLine(type: QuestionType, word: string) {
   const W = word.toUpperCase();
   switch (type) {

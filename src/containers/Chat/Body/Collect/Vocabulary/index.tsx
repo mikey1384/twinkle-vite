@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Input from './Input';
 import Loading from '~/components/Loading';
 import FeedsContainer from './FeedsContainer';
+import MonsterDen from './MonsterDen';
 import VocabularyWidget from './VocabularyWidget';
 import WordMasterBreakModal from './WordMasterBreakModal';
 import DiscoveryMoment, {
@@ -165,6 +166,8 @@ export default function Vocabulary({
 
   const widgetHeight = '10rem';
   const inputAreaHeight = '6.5rem';
+  // The Monster Den tab sits next to the feed (Mikey 11-23).
+  const [denShown, setDenShown] = useState(false);
   const containerHeight = `calc(100% - ${widgetHeight} - ${inputAreaHeight} - ${kbInset}px)`;
 
   const isNewWord = useMemo(() => searchedWord?.isNew === true, [searchedWord]);
@@ -306,15 +309,23 @@ export default function Vocabulary({
             marginBottom: 0
           }}
         >
-          <nav className="active">Word Master</nav>
+          <nav className={denShown ? '' : 'active'} onClick={() => setDenShown(false)}>
+            Word Master
+          </nav>
+          <nav className={denShown ? 'active' : ''} onClick={() => setDenShown(true)}>
+            Den
+          </nav>
           <nav onClick={handleFilterClick}>AI Cards</nav>
         </FilterBar>
       </div>
+      {denShown && <MonsterDen style={{ width: '100%', height: containerHeight }} />}
       {loadingVocabulary ? (
-        <div style={{ height: containerHeight }}>
+        <div style={{ height: containerHeight, display: denShown ? 'none' : undefined }}>
           <Loading style={{ height: '50%' }} text="Loading Word Master..." />
         </div>
       ) : (
+        // Kept mounted under the Den so the feed keeps its place and live
+        // updates.
         <FeedsContainer
           contentRef={feedsContentRef}
           displayedThemeColor={displayedThemeColor}
@@ -322,7 +333,8 @@ export default function Vocabulary({
           style={{
             width: '100%',
             overflow: 'scroll',
-            height: containerHeight
+            height: containerHeight,
+            ...(denShown ? { display: 'none' } : null)
           }}
         />
       )}

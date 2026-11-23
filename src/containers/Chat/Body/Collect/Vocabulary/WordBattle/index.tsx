@@ -5,6 +5,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import MonsterSprite, { MonsterPose } from '~/components/WordMonster/MonsterSprite';
 import { useAppContext, useChatContext } from '~/contexts';
 import BattleScreen, { BattleApi, BattleState } from './BattleScreen';
+import { resetTimeLabel } from './lines';
 import { nextWakeStage, readingMs, WAKE_JOLT_MS, WakeStage, wakeLine } from './wake';
 
 const PIXEL_FONT = "'Press Start 2P', monospace";
@@ -105,6 +106,8 @@ export default function WordBattleGate({
   const startWordBattle = useAppContext((v) => v.requestHelpers.startWordBattle);
   const answerWordBattle = useAppContext((v) => v.requestHelpers.answerWordBattle);
   const loadWordBattleAudio = useAppContext((v) => v.requestHelpers.loadWordBattleAudio);
+  const captureWordBattle = useAppContext((v) => v.requestHelpers.captureWordBattle);
+  const readWordBattle = useAppContext((v) => v.requestHelpers.readWordBattle);
   const onUnlockWordDefinitions = useChatContext((v) => v.actions.onUnlockWordDefinitions);
   const wordId = wordIdOf(wordObj);
   // A form-of word (running) battles its lemma (run), as it collects.
@@ -114,12 +117,25 @@ export default function WordBattleGate({
   const [state, setState] = useState<BattleState | null>(null);
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [denBusy, setDenBusy] = useState<'capture' | 'read' | null>(null);
   const onUnlockedRef = useRef(onUnlocked);
   onUnlockedRef.current = onUnlocked;
 
   const api: BattleApi = useMemo(
     () => ({
-      start: (id) => startWordBattle(id, seenForm),
+      start: async (id) => {
+        try {
+          return await startWordBattle(id, seenForm);
+        } catch (error: any) {
+          // Today's battles ran out since the gate loaded: back to the gate,
+          // which now offers Capture or Just read it.
+          if (error?.response?.data?.error === 'daily_limit') {
+            setOpen(false);
+            setState((prev) => (prev ? { ...prev, battlesLeft: 0 } : prev));
+          }
+          throw error;
+        }
+      },
       answer: (args) => answerWordBattle(args),
       loadAudio: (args) => loadWordBattleAudio(args)
     }),
@@ -180,6 +196,12 @@ export default function WordBattleGate({
   });
   const awake = stage === 'wake' || stage === 'awake';
   const asleep = stage === 'sleep' || stage === 'stir';
+  // Monster Den (Mikey 11-23): past the day's battles the gate never starts
+  // one; it offers Capture (locked, battle later with full loot) or Just read
+  // it (the meaning now, no loot ever). Capture is offered on every gate.
+  const pastLimit = state?.status === 'ready' && state.battlesLeft === 0;
+  const captured = state?.captured === true;
+  const canCapture = state?.status === 'ready' && state.captured === false;
   const skippable = !awake && !failed;
   const gateRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -191,6 +213,33 @@ export default function WordBattleGate({
       buttonRef.current?.focus();
     }
   }, [skippable]);
+
+  async function handleCapture() {
+    if (denBusy) return;
+    setDenBusy('capture');
+    try {
+      const next: BattleState = await captureWordBattle(wordId);
+      if (next?.status) setState(next);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setDenBusy(null);
+    }
+  }
+
+  async function handleRead() {
+    if (denBusy) return;
+    setDenBusy('read');
+    try {
+      const next: BattleState = await readWordBattle(wordId);
+      if (next?.unlocked) return handleUnlocked(next.unlocked);
+      if (next?.status) setState(next);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setDenBusy(null);
+    }
+  }
 
   function openBattle() {
     // Ready while still waking: skip the rest of it.
@@ -243,15 +292,55 @@ export default function WordBattleGate({
         </div>
         <div className={gateTextCls} aria-live="polite">
           <div className={gateTitleCls}>
-            {!state && !failed ? '\u00a0' : active ? `${word.toUpperCase()} is waiting!` : wakeLine(stage, word)}
+            {!state && !failed
+              ? '\u00a0'
+              : active
+                ? `${word.toUpperCase()} is waiting!`
+                : pastLimit
+                  ? "Today's battles are used up!"
+                  : wakeLine(stage, word)}
           </div>
           <div className={gateSubCls}>
             {failed
               ? 'It is fast asleep right now. Try again soon.'
-              : awake
-                ? 'Beat it to see what it means. Two questions, two hearts.'
-                : 'Something is sleeping here...'}
+              : pastLimit
+                ? captured
+                  ? `${word.toUpperCase()} waits in your Den. Battles are back at ${resetTimeLabel(state?.resetAt)}.`
+                  : 'Capture it to battle later with full loot, or just read it now (no loot for this word, ever).'
+                : captured && awake
+                  ? 'Captured! It waits in your Den, or beat it now to see what it means.'
+                  : awake
+                    ? 'Beat it to see what it means. Two questions, two hearts.'
+                    : 'Something is sleeping here...'}
           </div>
+          {pastLimit ? (
+            <div className={gateActionsCls}>
+              {canCapture && (
+                <button
+                  type="button"
+                  className={gateButtonCls}
+                  disabled={!!denBusy}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handleCapture();
+                  }}
+                >
+                  Capture ▶
+                </button>
+              )}
+              <button
+                type="button"
+                className={gateSecondaryButtonCls}
+                disabled={!!denBusy}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void handleRead();
+                }}
+              >
+                Just read it
+              </button>
+            </div>
+          ) : (
           <div className={gateActionsCls}>
             <button
               ref={buttonRef}
@@ -265,12 +354,26 @@ export default function WordBattleGate({
             >
               {active ? 'Back to battle ▶' : awake ? 'Battle! ▶' : ready ? 'Wake it! ▶' : 'Shh...'}
             </button>
+            {(canCapture || captured) && !active && (
+              <button
+                type="button"
+                className={gateSecondaryButtonCls}
+                disabled={captured || !!denBusy}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void handleCapture();
+                }}
+              >
+                {captured ? 'In your Den ✓' : 'Capture'}
+              </button>
+            )}
             {skippable && (
               <span className={skipHintCls} aria-hidden="true">
                 <span className={skipArrowCls}>▼</span> tap to skip
               </span>
             )}
           </div>
+          )}
         </div>
       </div>
       {open && state && (
@@ -530,6 +633,26 @@ const gateButtonCls = css`
   }
   &:disabled {
     opacity: 0.6;
+    cursor: default;
+  }
+`;
+
+// The quieter choice next to the gold one: same pixel shape, dark fill.
+const gateSecondaryButtonCls = css`
+  font-family: ${PIXEL_FONT};
+  font-size: 11px;
+  padding: 11px 14px;
+  color: #ffffff;
+  background: #2c2442;
+  border: 3px solid #a99fc4;
+  box-shadow: 0 4px 0 #120d1f;
+  cursor: pointer;
+  &:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #120d1f;
+  }
+  &:disabled {
+    opacity: 0.75;
     cursor: default;
   }
 `;
