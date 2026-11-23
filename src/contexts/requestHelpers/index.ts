@@ -859,6 +859,7 @@ registerMethods('chat', [
   'loadWordBattle',
   'loadWordleBattle',
   'startWordBattle',
+  'startWordRehunt',
   'answerWordBattle',
   'loadWordBattleAudio',
   'captureWordBattle',
