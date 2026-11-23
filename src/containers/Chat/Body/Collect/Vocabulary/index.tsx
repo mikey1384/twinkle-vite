@@ -170,8 +170,21 @@ export default function Vocabulary({
   const [denShown, setDenShown] = useState(false);
   const containerHeight = `calc(100% - ${widgetHeight} - ${inputAreaHeight} - ${kbInset}px)`;
 
-  const isNewWord = useMemo(() => searchedWord?.isNew === true, [searchedWord]);
-  const canHit = useMemo(() => searchedWord?.canHit === true, [searchedWord]);
+  // A phrase nobody has registered is collected, not discovered, unless it
+  // is one of the good phrases (Mikey, 11-23): the lookup marks it
+  // collectOnly, and it takes the plain collect path (no discovery moment).
+  const isCollectOnlyPhrase = useMemo(
+    () => searchedWord?.isNew === true && searchedWord?.collectOnly === true,
+    [searchedWord]
+  );
+  const isNewWord = useMemo(
+    () => searchedWord?.isNew === true && !isCollectOnlyPhrase,
+    [searchedWord, isCollectOnlyPhrase]
+  );
+  const canHit = useMemo(
+    () => searchedWord?.canHit === true || isCollectOnlyPhrase,
+    [searchedWord, isCollectOnlyPhrase]
+  );
 
   const wordIsAlreadyDiscovered = useMemo(
     () => !!searchedWord?.content && !searchedWord?.isNew,
@@ -192,6 +205,7 @@ export default function Vocabulary({
     if (isCensored)
       return 'This word has already been discovered and it is a type of word that cannot be collected';
     if (isNewWord) return 'New word discovered';
+    if (isCollectOnlyPhrase) return 'You can collect this phrase';
     if (canHit) return 'You can collect this word';
     if (wordIsAlreadyDiscovered)
       return 'Already discovered and already collected this year';
@@ -200,6 +214,7 @@ export default function Vocabulary({
     searchedWord,
     inputText,
     isNewWord,
+    isCollectOnlyPhrase,
     canHit,
     wordIsAlreadyDiscovered,
     isCensored,
@@ -521,6 +536,13 @@ export default function Vocabulary({
         const result = await collectVocabulary(vocabPayload);
         if (result?.wordMasterBreak) {
           handleWordMasterBreakUpdate(result.wordMasterBreak);
+          setIsSubmitting(false);
+          return;
+        }
+        // A collect-only phrase someone else registered at the same moment
+        // (their collect won): nothing to pay here.
+        if (result?.discoveryRace) {
+          setSearchedWord(null);
           setIsSubmitting(false);
           return;
         }
