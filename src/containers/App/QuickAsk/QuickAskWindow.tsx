@@ -103,7 +103,11 @@ export default function QuickAskWindow({
         )
       ]?.messageIds
   );
-  const { saveMode } = useAssistantMode();
+  const { mode, saveMode } = useAssistantMode();
+  // set while this window itself is switching, so the mode watcher below
+  // doesn't react to its own change
+  const selfSwitchRef = useRef(false);
+  const handledRequestRef = useRef(request.nonce);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const navigate = useNavigate();
@@ -170,6 +174,36 @@ export default function QuickAskWindow({
   useEffect(() => {
     if (!phone) setAssistantWindowView({ position });
   }, [phone, position]);
+  // The switch flipped to Saved somewhere else (the Home box, another tab):
+  // offer to keep these answers, or become the saved chat right away.
+  // Only a change counts: the header button and Ctrl+K open a temporary
+  // chat on purpose even when the account's choice is Saved.
+  const prevModeRef = useRef(mode);
+  useEffect(() => {
+    const changed = prevModeRef.current !== mode;
+    prevModeRef.current = mode;
+    if (!changed || mode !== 'saved' || selfSwitchRef.current) return;
+    if (unsavedTurns.length) setCarryOver(true);
+    else {
+      closeQuickAsk();
+      openAssistantDock(agent, context);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+  // A new Ask (a button or the Home box) for the same assistant joins this
+  // conversation instead of replacing it: its item and question come here.
+  useEffect(() => {
+    if (handledRequestRef.current === request.nonce) return;
+    handledRequestRef.current = request.nonce;
+    if (request.context) setContext(request.context);
+    if (request.question.trim()) {
+      // still answering: the new question waits in the box
+      if (replying) setText(request.question);
+      else void handleSend(request.question, request.context);
+    }
+    inputRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request.nonce]);
 
   return createPortal(
     <div
@@ -319,7 +353,7 @@ export default function QuickAskWindow({
       <AssistantModeBar
         assistant={agent}
         mode="temporary"
-        busy={switching}
+        busy={switching || replying}
         onChange={() => {
           if (unsavedTurns.length) setCarryOver(true);
           else void handleSwitchToSaved(false);
@@ -608,9 +642,13 @@ export default function QuickAskWindow({
     document.body
   );
 
-  async function handleSend(content?: string) {
+  async function handleSend(
+    content?: string,
+    contextOverride?: AssistantAskContext | null
+  ) {
     const question = (content ?? text).trim();
-    const sentContext = context;
+    const sentContext =
+      contextOverride !== undefined ? contextOverride : context;
     if ((!question && !sentContext) || replying || sessionError) return;
     const key = ++turnKeyRef.current;
     // the item rides with this question only; follow-ups still see it
@@ -647,6 +685,14 @@ export default function QuickAskWindow({
           if (event.type === 'session') {
             sessionKeyRef.current = String(event.sessionKey || '');
             update(() => ({ messageId: Number(event.turnId) || null }));
+            // the item could not be read any more: don't label it
+            if (event.askedDropped) {
+              setTurns((current) =>
+                current.map((item) =>
+                  item.key === key ? { ...item, contextLabel: undefined } : item
+                )
+              );
+            }
           } else if (event.type === 'status' && event.status) {
             update(() => ({ status: String(event.status) }));
           } else if (event.type === 'reset') {
@@ -742,7 +788,11 @@ export default function QuickAskWindow({
           }
         }
       }
-      if (!(await saveMode('saved'))) throw new Error('mode');
+      selfSwitchRef.current = true;
+      if (!(await saveMode('saved'))) {
+        selfSwitchRef.current = false;
+        throw new Error('mode');
+      }
       closeQuickAsk();
       openAssistantDock(agent, context);
     } catch {

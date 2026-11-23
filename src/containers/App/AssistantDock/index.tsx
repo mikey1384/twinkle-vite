@@ -478,7 +478,7 @@ export function DockWindow({
       <AssistantModeBar
         assistant={assistant}
         mode="saved"
-        busy={modeSwitching || active}
+        busy={modeSwitching || active || replying || sending}
         onChange={handleSwitchToTemporary}
       />
       {modeError && (

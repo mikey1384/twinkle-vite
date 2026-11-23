@@ -56,6 +56,7 @@ export default function AssistantQuickAsk({
   // account-wide choice, switchable right here.
   const { mode, saveMode } = useAssistantMode();
   const [modeSwitching, setModeSwitching] = useState(false);
+  const [modeError, setModeError] = useState('');
   const [focused, setFocused] = useState(false);
   const engaged = focused || !!text.trim() || sending;
 
@@ -217,15 +218,28 @@ export default function AssistantQuickAsk({
           busy={modeSwitching}
           onChange={async (next) => {
             setModeSwitching(true);
+            setModeError('');
             try {
-              await saveMode(next);
+              if (!(await saveMode(next))) throw new Error('mode');
             } catch {
-              // the switch shows the account's value either way
+              setModeError('Couldn’t change that. Try again.');
             } finally {
               setModeSwitching(false);
             }
           }}
         />
+        {modeError && (
+          <div
+            role="alert"
+            className={css`
+              margin-top: 0.3rem;
+              font-size: 1.2rem;
+              color: ${Color.rose()};
+            `}
+          >
+            {modeError}
+          </div>
+        )}
       </div>
       {/* The row keeps its height from the first paint (faint stand-ins until
           the ideas arrive, hidden while typing or replying) so nothing below

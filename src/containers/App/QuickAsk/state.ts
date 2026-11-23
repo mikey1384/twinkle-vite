@@ -21,7 +21,9 @@ function notify() {
 }
 
 // Opening it again for the same assistant with nothing new puts the cursor
-// back in its box; anything else starts a fresh temporary conversation.
+// back in its box. A new item or question for the same assistant joins the
+// open conversation (the window reads the new request); another assistant
+// opens its own window.
 export function openQuickAsk({
   agent = 'Zero',
   context = null,

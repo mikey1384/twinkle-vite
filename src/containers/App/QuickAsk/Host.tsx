@@ -48,7 +48,7 @@ export default function QuickAskHost() {
   if (!request || !available) return null;
   return (
     <Suspense fallback={null}>
-      <QuickAskWindow key={request.nonce} request={request} />
+      <QuickAskWindow key={request.agent} request={request} />
     </Suspense>
   );
 }
