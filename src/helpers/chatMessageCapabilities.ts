@@ -25,7 +25,11 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   // A crew member's request to a Twinkle teacher to be the crew's grown-up.
   'meetupTeacherRequest',
   // The pair's shared-moment card after doing something together in an app.
-  'socialTogether'
+  'socialTogether',
+  // A sponsored "Have Zero/Ciel do this" button in a DM, and its card in the
+  // recipient's Zero/Ciel chat (twinkle-api helpers/sponsoredHelp).
+  'sponsoredHelp',
+  'sponsoredHelpCard'
 ]);
 
 const SENDER_DELETABLE_BUILD_SUGGESTION_ROOT_TYPES: ReadonlySet<string> =

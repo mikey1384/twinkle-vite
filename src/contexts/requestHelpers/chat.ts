@@ -2773,6 +2773,124 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // Sponsored Zero/Ciel help buttons (twinkle-api
+    // helpers/sponsoredHelp/service.ts).
+    async loadSponsoredHelpConfig() {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/sponsored-help/config`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async sendSponsoredHelp({
+      channelId,
+      task,
+      persona,
+      percent
+    }: {
+      channelId: number;
+      task: string;
+      persona: 'zero' | 'ciel';
+      percent: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help`,
+          { channelId, task, persona, percent },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadSponsoredHelp(requestId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/sponsored-help/${requestId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async pressSponsoredHelp(requestId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/${requestId}/press`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async changeSponsoredHelp({
+      requestId,
+      note
+    }: {
+      requestId: number;
+      note: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/${requestId}/change`,
+          { note },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async confirmSponsoredHelp({
+      requestId,
+      planHash
+    }: {
+      requestId: number;
+      planHash: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/${requestId}/confirm`,
+          { planHash },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async declineSponsoredHelp(requestId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/${requestId}/decline`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async cancelSponsoredHelp(requestId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/${requestId}/cancel`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadPendingTransaction(channelId: number) {
       try {
         const {
