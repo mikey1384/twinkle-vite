@@ -83,6 +83,29 @@ export default function SponsoredHelpCard({
     return () => window.clearInterval(timer);
   }, [busy, loadSponsoredHelp, request.id]);
 
+  // A waiting card in the member's own Zero/Ciel chat can be started (or
+  // declined) by Zero/Ciel when the member says so in chat; while it waits
+  // and the page is in view, check now and then so the card follows.
+  const waitingInAssistantChat =
+    variant === 'assistant' &&
+    request.status === 'sent' &&
+    myId === request.recipientId;
+  useEffect(() => {
+    if (!waitingInAssistantChat) return;
+    const timer = window.setInterval(async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const data = await loadSponsoredHelp(request.id);
+        if (mounted.current && data?.request && data.request.status !== 'sent') {
+          setRequest(data.request);
+        }
+      } catch {
+        // keep the last server state; the next tick tries again
+      }
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [waitingInAssistantChat, loadSponsoredHelp, request.id]);
+
   const persona = sponsoredHelpPersonaName(request.persona);
   const isWelcome = !!request.isWelcome;
   const isRecipient = myId === request.recipientId;
