@@ -86,7 +86,7 @@ test('the page reports visibility on every change and on every bind, if supporte
   );
   assert.match(
     visibilitySource,
-    /const live = isPresencePageLive\(\);\s*if \(presenceLiveSupportedRef\.current\) \{\s*socket\.emit\(PRESENCE_LIVE_EVENT, live\);/
+    /const live = isPresencePageLive\(\);\s*if \(presenceLiveSupportedRef\.current\) \{\s*emitLatestState\(socket, PRESENCE_LIVE_EVENT, live\);/
   );
   // Blur is not away (Mikey, 11-22): a visible, unfocused window keeps its
   // heartbeat and is never reported away; only a hidden page is.
@@ -99,10 +99,12 @@ test('the page reports visibility on every change and on every bind, if supporte
   );
   assert.match(
     bindSource,
-    /presenceLiveSupportedRef\.current = bindSupportsPresenceLive\(result\);\s*if \(presenceLiveSupportedRef\.current\) \{\s*socket\.emit\(PRESENCE_LIVE_EVENT, isPresencePageLive\(\)\);[\s\S]*?hydrateOnlinePresence\(bindingUserId\)/
+    /presenceLiveSupportedRef\.current = bindSupportsPresenceLive\(result\);\s*if \(presenceLiveSupportedRef\.current\) \{\s*emitLatestState\(socket, PRESENCE_LIVE_EVENT, isPresencePageLive\(\)\);[\s\S]*?hydrateOnlinePresence\(bindingUserId\)/
   );
-  // Every set_presence_live emit is gated by the advertised capability.
-  const emits = [...socketInitSource.matchAll(/socket\.emit\(PRESENCE_LIVE_EVENT/g)];
+  // Every set_presence_live emit is gated by the advertised capability, and
+  // a disconnected page replays only its newest report (socketStateEmit).
+  assert.doesNotMatch(socketInitSource, /socket\.emit\(PRESENCE_LIVE_EVENT/);
+  const emits = [...socketInitSource.matchAll(/emitLatestState\(socket, PRESENCE_LIVE_EVENT/g)];
   assert.equal(emits.length, 2);
   assert.match(
     slice('function handleDisconnect(reason: string)', 'markSocketTransportGap(true)'),

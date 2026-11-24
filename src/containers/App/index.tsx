@@ -54,6 +54,7 @@ import { stripClientUpdateReloadParam } from '~/helpers/clientUpdate';
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/sockets/api';
+import { emitLatestState } from '~/helpers/socketStateEmit';
 import { relayChatMessage } from '~/helpers/chatMessageSend';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import {
@@ -1407,7 +1408,7 @@ export default function App() {
     if (
       !isLuminePreviewCaptureContext(window.location, readAuthToken().token)
     ) {
-      socket.emit('change_away_status', visible);
+      emitLatestState(socket, 'change_away_status', visible);
     }
     onChangePageVisibility(visible);
     // eslint-disable-next-line react-hooks/exhaustive-deps

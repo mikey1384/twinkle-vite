@@ -27,6 +27,7 @@ import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler
 import { Color } from '~/constants/css';
 import { aiCardScrollHeight, vocabScrollHeight } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';
+import { emitLatestState } from '~/helpers/socketStateEmit';
 import { chatWorkspaceClass } from './containers';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -875,7 +876,7 @@ export default function Main({
   });
 
   useEffect(() => {
-    socket.emit('change_away_status', pageVisible);
+    emitLatestState(socket, 'change_away_status', pageVisible);
     return function cleanUp() {
       if (selectedChannelId) {
         if (selectedSubchannelId) {
