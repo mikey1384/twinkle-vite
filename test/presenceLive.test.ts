@@ -191,7 +191,7 @@ test('a resynced tab forgets which tab Zero and Ciel act in', () => {
   );
   assert.match(
     aiSocketSource,
-    /function handleResync\(\) \{\s*activeAgentTabIdRef\.current = null;\s*\}/
+    /function handleResync\(\) \{\s*activeAgentTabIdRef\.current = null;\s*lastSentAt = 0;\s*reportActive\(\);\s*\}/ // and re-reports at once
   );
   assert.match(aiSocketSource, /socket\.on\(PRESENCE_RESYNC_EVENT, handleResync\)/);
   assert.match(aiSocketSource, /socket\.off\(PRESENCE_RESYNC_EVENT, handleResync\)/);

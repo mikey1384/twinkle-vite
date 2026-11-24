@@ -1372,7 +1372,8 @@ test('matches AI card modal coin styling in rich text compact previews', () => {
   );
 
   assert.match(compactPreviewSource, /<AICardPreview/);
-  assert.match(previewSource, /<AICardMarketDetails card=\{card\}/);
+  // the live copy of the card (a trade passes { id } stubs past its 5th card)
+  assert.match(previewSource, /<AICardMarketDetails card=\{displayedCard\}/);
 
   assert.match(
     marketDetailsSource,
@@ -2550,7 +2551,8 @@ test('home feed cards keep latest canonical preview comments from feed and loade
 
   assert.match(
     feedCardSource,
-    /const selectedPreviewComments = getHomeFeedCardPreviewComments\(\{[\s\S]*contentComments,[\s\S]*feedPreviewComments[\s\S]*\}\);/
+    // memoized since 10-28 (fewer Home feed remounts)
+    /const selectedPreviewComments = useMemo\(\s*\(\) => getHomeFeedCardPreviewComments\(\{\s*contentComments,\s*feedPreviewComments\s*\}\),\s*\[contentComments, feedPreviewComments\]\s*\);/
   );
   assert.match(
     feedCardSource,
@@ -2558,11 +2560,11 @@ test('home feed cards keep latest canonical preview comments from feed and loade
   );
   assert.match(
     feedCardSource,
-    /const previewComments =[\s\S]*livePreviewComment === selectedPreviewComments\[0\][\s\S]*\? selectedPreviewComments[\s\S]*: \[livePreviewComment, \.\.\.selectedPreviewComments\.slice\(1\)\];/
+    /const previewComments = useMemo\(\s*\(\) => livePreviewComment === selectedPreviewComments\[0\]\s*\? selectedPreviewComments\s*: \[livePreviewComment, \.\.\.selectedPreviewComments\.slice\(1\)\],/
   );
   assert.match(
     feedCardSource,
-    /const renderablePreviewComments =[\s\S]*getRenderableHomeFeedPreviewComments\(previewComments\);/
+    /const renderablePreviewComments = useMemo\(\s*\(\) => getRenderableHomeFeedPreviewComments\(previewComments\),/
   );
   assert.match(feedCardSource, /function getHomeFeedCardPreviewComments/);
   assert.match(

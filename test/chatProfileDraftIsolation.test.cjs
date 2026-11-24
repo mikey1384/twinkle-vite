@@ -21,7 +21,9 @@ function fixture() {
     },
     '~/constants/URL':'https://unused.invalid','~/constants/css':{Color:{logoBlue:()=> '#418ceb',darkerGray:()=> '#334155',darkGray:()=> '#526176',gray:()=> '#64748b'},tabletMaxWidth:'820px'},
     '~/helpers/stringHelpers':{addEmoji:noop,finalizeEmoji:noop,renderText:noop,replaceFakeAtSymbol:noop},
-    '~/helpers/profileCanonicalState':{getCanonicalProfileStatus:noop},'./StatusMsg':StatusMsg
+    '~/helpers/profileCanonicalState':{getCanonicalProfileStatus:noop},'./StatusMsg':StatusMsg,
+    // a profile theme key the palette lacks falls back to logoBlue
+    '~/theme/resolveColor':{resolvePaletteColorKey:key=>typeof key==='string'&&key?key:'logoBlue'}
   };
   for(const name of ['~/components/Link','./StatusInput','~/components/Button','~/components/Icon','~/components/Modals/ConfirmModal','~/components/Texts/UserTitle','~/components/ErrorBoundary','~/components/Texts/Bio'])deps[name]=()=>null;
   const mod={exports:{}};

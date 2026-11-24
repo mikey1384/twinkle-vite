@@ -17,15 +17,21 @@ assert.match(shouldHydrateBlock, /Boolean\(contentType\)/);
 assert.match(shouldHydrateBlock, /!contentState\.loaded/);
 assert.doesNotMatch(shouldHydrateBlock, /contentShown|inView|isVisible/);
 
-assert.match(
-  source,
-  // Showcase cards were later added as a third way to show content; the
-  // in-view/visible guarantee this asserts is unchanged.
-  /const contentShown = useMemo\(\s*\(\) =>[^,]*inView \|\| isVisible,/
+// Mounting is owned by the shared card window (10-28): content shows when
+// the card is near the viewport (or always, for showcase cards), otherwise a
+// sized placeholder stands in.
+const cardWindowSource = readFileSync(
+  new URL('../src/containers/Home/Stories/hooks/useCardWindow.ts', import.meta.url),
+  'utf8'
 );
 assert.match(
   source,
-  /\{contentShown \? \([\s\S]*?<div[\s\S]*ref=\{PanelRef\}[\s\S]*?\) : \([\s\S]*?<div[\s\S]*className=\{`\$\{placeholderClass\}/
+  /contentShown,\s*placeholderHeight\s*\} = useCardWindow\(\{ cacheKey: placeholderHeightKey, alwaysShow: showcase \}\);/
+);
+assert.match(cardWindowSource, /const contentShown =\s*alwaysShow \|\|\s*mounted \|\|/);
+assert.match(
+  source,
+  /\{contentShown \? \(\s*<div\s*ref=\{measurePanel\}[\s\S]*?\) : \(\s*<div\s*className=\{`\$\{placeholderClass\}/
 );
 
 assert.match(
@@ -48,6 +54,7 @@ assert.match(
   source,
   /homeFeedContentHydrationRequests\.delete\(hydrationRequestKey\)/
 );
-assert.match(source, /feedPreviewContent = feed\?\.previewContent \|\| \{\}/);
+// a stable empty object, so memoized consumers do not see a new {} each render
+assert.match(source, /feedPreviewContent = feed\?\.previewContent \|\| EMPTY_PREVIEW_CONTENT;/);
 
 console.log('Home feed card hydration verifier passed.');

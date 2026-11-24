@@ -20,7 +20,8 @@ test('AI cancellation waits for canonical server state instead of mutating chat 
   assert.match(rightButtons, /loading=\{cancellingCurrentMessage\}/);
   assert.match(
     rightButtons,
-    /currentlyStreamingAIMsgId \? \(\s*<div[\s\S]*?alignItems: 'center'[\s\S]*?<Button/
+    // the stop button shows only for a Zero/Ciel reply that is streaming
+    /const showStopButton = Boolean\(\s*\(isCielChannel \|\| isZeroChannel\) && currentlyStreamingAIMsgId\s*\);[\s\S]{0,80}?\{showStopButton && \(\s*<div[\s\S]{0,200}?alignItems: 'center'[\s\S]{0,120}?<Button/
   );
   assert.match(
     requestHelper,

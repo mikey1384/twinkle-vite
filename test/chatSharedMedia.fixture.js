@@ -9,7 +9,7 @@ export async function sharedMediaFixture() {
     '~/contexts/Toast':
       'export const useToast=()=>event=>{window.lastToast=event;};',
     '~/constants/sockets/api':
-      'export const socket={on:(name,fn)=>{if(!window.events.has(name))window.events.set(name,new Set());window.events.get(name).add(fn);},off:(name,fn)=>window.events.get(name)?.delete(fn)};',
+      'export const socket={on:(name,fn)=>{if(!window.events.has(name))window.events.set(name,new Set());window.events.get(name).add(fn);},off:(name,fn)=>window.events.get(name)?.delete(fn)};export const socketKeepalive={subscribe:()=>()=>{}};',
     'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url':
       'export default "http://localhost:3000/pdf.worker.mjs";',
     '~/components/ErrorBoundary': 'export default ({children})=>children;',

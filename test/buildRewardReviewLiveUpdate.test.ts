@@ -31,8 +31,11 @@ test('reward review card updates arrive over the socket and merge into message s
   const start = reducer.indexOf("case 'UPDATE_MESSAGE_SETTINGS': {");
   assert.ok(start > 0, 'reducer handles UPDATE_MESSAGE_SETTINGS');
   const body = reducer.slice(start, reducer.indexOf("case 'DELETE_MESSAGE'"));
-  // Unknown message: no state change. Known message: settings merged, content kept.
-  assert.match(body, /if \(!prevMessage\) return state;/);
-  assert.match(body, /settings: \{ \.\.\.prevSettings, \.\.\.action\.settings \}/);
+  // Unknown message: no state change. Known message: settings merged, content
+  // kept. The merge lives in a shared helper that also updates reply copies.
+  assert.match(body, /updateChannelMessageSettings\(\s*prevChannelObj,\s*action\.messageId,\s*action\.settings\s*\);\s*if \(nextChannel === prevChannelObj\) return state;/);
   assert.doesNotMatch(body, /content:/);
+  const helper = readSource('src/helpers/chatReplyTargetSettings.ts');
+  assert.match(helper, /const nextSettings = \{ \.\.\.previous, \.\.\.settings \};/);
+  assert.match(helper, /return \{ \.\.\.message, settings: nextSettings \};/);
 });

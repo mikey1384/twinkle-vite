@@ -32,6 +32,8 @@ function environment(file = 'SelectNewOwnerModal.tsx', initial = {}) {
     '~/constants/defaultValues': { cloudFrontURL: '', priceTable: { chatSubject: 500, chatTheme: 100 } },
     '~/constants/css': { Color: new Proxy({}, { get: () => () => '#418ceb' }) },
     uuid: { v1: () => 'upload-id' },
+    // the site name (Twinkle, or Lumine on lumine.network)
+    '~/constants/siteBrand': { SITE_NAME: 'Twinkle', SITE_FULL_NAME: 'Twinkle Network' },
     './useChatDialogRequest': hook, '../useChatDialogRequest': hook,
     './chatFormStyles': {}, '../chatFormStyles': {}
   };
@@ -71,7 +73,7 @@ test('Settings restore acknowledgement survives refresh failure and rejects malf
   let tree = env.render(); assert.equal(env.events.length, 0); assert.match(alerts(tree)[0].props.children, /Topic restored/);
   assert.equal(button(tree, 'Retry updating').props.variant, 'soft');
   assert.equal(button(tree, 'Retry updating').props.color, 'logoBlue');
-  assert.equal(deletedDialog(tree).props.header.props.style.fontSize, 20);
+  assert.equal(deletedDialog(tree).props.header.props.style.fontSize, 'calc(20 * var(--px))'); // scales on big screens (10-24)
   assert.equal(restore(tree).props.disabled, true);
   env.requests.loadChatChannel = async () => { reads++; return { channel: { id: 7, pinnedTopicIds: [], topicObj: {} } }; };
   await button(env.render(), 'Retry updating').props.onClick(); tree = env.render();

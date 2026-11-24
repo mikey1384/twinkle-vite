@@ -63,6 +63,9 @@ assert.deepEqual(
   [
     'aiCard',
     'aiStory',
+    // Arena challenges became regular posts on 10-25 (likes, comments,
+    // recommends) but still carry no reward button
+    'arenaChallenge',
     'bounty',
     'build',
     'dailyReflection',

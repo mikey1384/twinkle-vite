@@ -5,7 +5,7 @@ test('record presentation keeps readable text, full-size controls and a keyboard
   const tree = f.render(), pgn = nodes(tree, n => n.type === 'pre')[0];
   assert.equal(pgn.props.tabIndex, 0);
   assert.equal(pgn.props['aria-label'], 'PGN move list');
-  assert.match(pgn.props.className, /font-size: 14px/);
+  assert.match(pgn.props.className, /font-size: calc\(14 \* var\(--px\)\)/); // big-screen scale (10-24)
   assert.match(pgn.props.className, /min-width: 0/);
   assert.match(pgn.props.className, /overflow-y: auto/);
   assert.ok(nodes(tree, n => typeof n.props?.className === 'string' && n.props.className.includes('min-height: 44px')).length);
@@ -14,7 +14,7 @@ test('record presentation keeps readable text, full-size controls and a keyboard
 function fixture(fetch,write=async()=>{}) {
   const d=driver(),timers=new Map();let timerId=0,userId=1;
   const Wrapper=compile('src/containers/Chat/Chess/GameRecord.tsx',{
-    react:d.hooks,'~/components/ErrorBoundary':()=>null,'@emotion/css':{css},
+    react:d.hooks,'~/components/ErrorBoundary':()=>null,'~/components/Icon':()=>null,'@emotion/css':{css},
     '~/constants/css':{mobileMaxWidth:'767px',Color:new Proxy({},{get:()=>()=> '#555'})},
     '~/contexts':{useKeyContext:fn=>fn({myState:{userId}}),useAppContext:fn=>fn({requestHelpers:{fetchChessGameRecord:fetch}})}
   },{navigator:{clipboard:{writeText:write}},setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id)}).default;

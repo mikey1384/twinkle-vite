@@ -17,7 +17,7 @@ test('shared prompt ContentPanel uses the common action and non-empty stats rows
 
   assert.match(
     source,
-    /<div className="left">[\s\S]*?\{!secretHidden && \(\s*<LikeButton/
+    /<div className="left">[\s\S]*?\{!secretHidden && contentType !== 'aiCard' && \(\s*<LikeButton/
   );
   assert.match(
     source,

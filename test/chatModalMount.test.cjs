@@ -37,6 +37,10 @@ function initialModalRender({ hasRoot = true, portalTarget } = {}) {
     '~/constants/appShell': { APP_SHELL_KEYBOARD_INSET_STYLE: '0px' },
     '~/helpers': { isMobile: () => false, isTablet: () => false },
     '~/components/Icon': () => null, '~/components/ErrorBoundary': ({ children }) => children,
+    // the open modal holds the page scroll (released on close)
+    '~/helpers/bodyScrollLock': { lockBodyScroll: () => () => {} },
+    // an open modal holds lazy feed content in place
+    '~/helpers/lazyPlaceholder': { useHoldLazyContent: () => {} },
     './Footer': {__esModule: true, default: ({children}) => children, ModalFooterContext: React.createContext(null)}
   };
   const mod = { exports: {} };

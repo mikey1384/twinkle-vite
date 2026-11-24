@@ -15,7 +15,9 @@ const dependencies = {
   '~/components/Texts/FullTextReveal': props => { revealProps = props; return null; },
   '~/helpers': { isMobile: () => false, textIsOverflown: () => false },
   '~/helpers/hooks': { useOutsideClick: () => {} },
-  '../../containers': { chatSubnavRowClass: 'topic-row' }
+  '../../containers': { chatSubnavRowClass: 'topic-row' },
+  '@emotion/css': { cx: (...names) => names.filter(Boolean).join(' ') },
+  '../styles': { contextRowClass: 'context-row' }
 };
 const mod = { exports: {} };
 new Function('require', 'module', 'exports',

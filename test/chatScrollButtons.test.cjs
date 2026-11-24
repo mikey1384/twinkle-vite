@@ -46,7 +46,7 @@ function component(file, profileTheme = 'gold') {
   }).default;
 }
 test('floating chat controls preserve the original theme hues and arrow transparency', () => {
-  assert.equal(Object.keys(theme.themeRegistry).length, 11);
+  assert.equal(Object.keys(theme.themeRegistry).length, 12); // platinum joined on 10-24
   for (const name of Object.keys(theme.themeRegistry)) {
     const arrow = component('ChatGoToBottomButton')({
       theme: name,

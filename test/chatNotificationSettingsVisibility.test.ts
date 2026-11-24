@@ -54,7 +54,7 @@ test('advanced notification settings are collapsed by default', () => {
     '{advancedSettingsAvailable && advancedSettingsShown && ('
   );
   const backgroundSettingsIndex = source.indexOf(
-    'While Twinkle is in the background'
+    'While {SITE_NAME} is in the background' // Twinkle or Lumine (siteBrand)
   );
 
   assert.match(

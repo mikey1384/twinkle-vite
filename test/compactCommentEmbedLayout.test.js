@@ -63,11 +63,11 @@ assert.match(
   /\.compact-ai-card-preview \{[\s\S]*grid-template-columns: minmax\(5\.6rem, 0\.82fr\)/
 );
 assert.match(richTextSource, /\.compact-ai-card-preview__market \{[\s\S]*display: none;/);
-// The multi-card block no longer pins a column template; it just sets its own
-// gap/min-height/padding and lets the inner grid size itself.
+// The multi-card block no longer pins a column template or (since 09-14) a
+// min-height; it sets its own gap/padding and lets the inner grid size itself.
 assert.match(
   richTextSource,
-  /\.compact-ai-card-multi \{[\s\S]{0,120}min-height: 12rem;/
+  /\.compact-ai-card-multi \{\s*gap: 0\.55rem;\s*padding: 0\.74rem;\s*\}/
 );
 assert.match(richTextSource, /\.compact-comment-embed--has-media,[\s\S]*grid-template-columns: 3\.8rem minmax\(0, 1fr\) !important;/);
 assert.match(richTextSource, /\.compact-comment-embed__media \{[\s\S]*aspect-ratio: 16 \/ 9;/);
@@ -90,7 +90,13 @@ assert.match(
   compactAiCardSource,
   /card\.isBurned \? ' compact-ai-card-thumb--burned' : ''/
 );
-assert.match(compactAiCardSource, /compact-ai-card-preview/);
+// The compact preview draws the shared AICardPreview (10-02), which owns the
+// compact-ai-card-preview classes.
+assert.match(compactAiCardSource, /<AICardPreview/);
+assert.match(
+  readSource('../src/components/AICardPreview.tsx'),
+  /compact-ai-card-preview/
+);
 assert.match(compactMultiCardSource, /compact-ai-card-multi/);
 assert.match(mainContentEmbedSource, /theme=\{theme\}/);
 assert.match(

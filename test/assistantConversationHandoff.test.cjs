@@ -233,7 +233,12 @@ test('text sends preserve the Arena step and review language through the chat re
       },
       '../WebsiteAgentSpotlight': { dismissWebsiteAgentPrompts: () => {} },
       './dockState': { getAssistantAccountEpoch: () => 0 },
-      './conversationStore': store
+      './conversationStore': store,
+      // photo uploads from the floating window (11-22); unused by text sends
+      uuid: { v1: () => 'upload-id' },
+      '~/helpers/stringHelpers': { generateFileName: (name) => name },
+      '~/constants/sockets/api': { socket: { emit: () => {} } },
+      '~/helpers/chatMessageSend': { relayChatMessage: () => {} }
     }
   ).default;
   const conversation = useConversation({ assistantName: 'Zero', channelId: 10 });

@@ -22,6 +22,12 @@ const inViewSource = readFileSync(
   new URL('../src/helpers/hooks/useInViewFlag.ts', import.meta.url),
   'utf8'
 );
+// Since 10-28 a card's mounting and measured height live in the shared card
+// window (one boolean of state, sizes in a module cache).
+const cardWindowSource = readFileSync(
+  new URL('../src/containers/Home/Stories/hooks/useCardWindow.ts', import.meta.url),
+  'utf8'
+);
 
 test('feed cards avoid hooks that re-render every row', () => {
   assert.doesNotMatch(cardSource, /from 'react-intersection-observer'/);
@@ -34,7 +40,15 @@ test('feed cards avoid hooks that re-render every row', () => {
     cardSource,
     /<RouteNavigateBridge navigateRef=\{routeNavigateRef\} \/>/
   );
-  assert.match(cardSource, /const \[VisibilityRef, inView\] = useInViewFlag\(\);/);
+  assert.match(
+    cardSource,
+    /\} = useCardWindow\(\{ cacheKey: placeholderHeightKey, alwaysShow: showcase \}\);/
+  );
+  // The window observes with a callback (no per-entry hook state) and keeps
+  // one boolean; a near-viewport change is a ref, not a render.
+  assert.doesNotMatch(cardWindowSource, /useInView\b/);
+  assert.match(cardWindowSource, /const \[mounted, setMounted\] = useState\(measureBeforeHide\);/);
+  assert.match(cardWindowSource, /nearViewportRef\.current = near;/);
   assert.match(cardSource, /export default memo\(HomeFeedCard\);/);
 });
 
@@ -44,33 +58,19 @@ test('the in-view flag stores only the boolean', () => {
   assert.match(inViewSource, /setInView\(nextInView\)/);
 });
 
-test('placeholder height updates keep the state object when unchanged', async () => {
-  const match = cardSource.match(
-    /export function getNextPlaceholderHeightState\([\s\S]*?\n\}/
+test('placeholder height updates keep the state object when unchanged', () => {
+  // An unchanged measured size returns before any state update; a change
+  // stores the new size in the module cache and one measurement object.
+  const panelRef = cardWindowSource.slice(
+    cardWindowSource.indexOf('const panelRef = useCallback('),
+    cardWindowSource.indexOf('return {', cardWindowSource.indexOf('const panelRef = useCallback('))
   );
-  assert.ok(match, 'expected getNextPlaceholderHeightState');
-  const body = match[0]
-    .replace(/^export /, '')
-    .replace(/prev: \{ height: number; key: string \}/, 'prev')
-    .replace(/height: number/, 'height')
-    .replace(/key: string\n/, 'key\n');
-  const getNext = new Function(`${body}; return getNextPlaceholderHeightState;`)();
-  const prev = { height: 320, key: 'home-feed-a' };
-
-  assert.equal(getNext(prev, 320, 'home-feed-a'), prev);
-  assert.deepEqual(getNext(prev, 340, 'home-feed-a'), {
-    height: 340,
-    key: 'home-feed-a'
-  });
-  assert.deepEqual(getNext(prev, 320, 'home-feed-b'), {
-    height: 320,
-    key: 'home-feed-b'
-  });
-  assert.equal(
-    (cardSource.match(/setPlaceholderHeightState\(\(prev\) =>/g) || []).length,
-    2,
-    'both the mount effect and the resize report go through the bail-out'
+  assert.match(
+    panelRef,
+    /if \(previous\?\.height === next\.height && previous\.width === next\.width\) return;[\s\S]{0,300}?setMeasurement\(\{ key: cacheKey, size: next \}\);/
   );
+  assert.equal((cardWindowSource.match(/setMeasurement\(/g) || []).length, 2);
+  assert.doesNotMatch(cardSource, /setPlaceholderHeightState/);
 });
 
 test('only absolute paths bypass the router hook', () => {

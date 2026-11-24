@@ -70,12 +70,11 @@ test('Build Workshop contributes no right-menu DOM until the server enables it',
   assert.doesNotMatch(sectionStyle, /overflow-y|max-height/);
 });
 
-test('only controlled preview accounts mount the Workshop status poller', () => {
-  assert.match(
-    defaultsSource,
-    /BUILD_WORKSHOP_PREVIEW_USER_IDS = new Set\(\[554, 263, 5\]\)/
-  );
-  assert.match(menuSource, /BUILD_WORKSHOP_PREVIEW_USER_IDS\.has/);
+// The preview-account gate ended on 10-03 (139f1423d): every signed-in
+// member gets the Workshop panel, and the server holds the gate.
+test('only signed-in members mount the Workshop status poller', () => {
+  assert.doesNotMatch(defaultsSource, /BUILD_WORKSHOP_PREVIEW_USER_IDS/);
+  assert.match(menuSource, /const isBuildWorkshopPreviewAccount = Number\(currentUserId\) > 0;/);
   assert.match(
     menuSource,
     /isBuildWorkshopPreviewAccount \? \([\s\S]*?<BuildWorkshopPanel/

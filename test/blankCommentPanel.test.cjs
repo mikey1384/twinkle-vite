@@ -60,6 +60,8 @@ test('comment reads carry their request start through delayed responses', async 
   const helpers = compile('src/contexts/requestHelpers/content.ts', name => {
     if (name === './axiosInstance') return { get: () => new Promise(resolve => { finish = resolve; }) };
     if (name === '~/helpers/liveComments') return { getLiveObservedAt: () => clock };
+    // the Home feed's batched content reads (unused by a single loadContent)
+    if (name === '~/helpers/contentBatch') return compile('src/helpers/contentBatch.ts', () => ({}));
     return {};
   }).default({ auth: () => ({}), handleError: error => { throw error; } });
   const pending = helpers.loadContent({ contentId: 350899, contentType: 'comment' });

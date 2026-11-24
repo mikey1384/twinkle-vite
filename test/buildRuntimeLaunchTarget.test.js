@@ -33,6 +33,12 @@ test('Build runtime only uses client launch target state when no notification id
     source,
     /const previewMountedForCurrentBuild =[\s\S]*runtimeBuildId === numericBuildId[\s\S]*previewMountedBuildId === runtimeBuildId;/
   );
+  // An ended walk-up's target is swapped for its follow-up (11-22); any
+  // other launch target passes through unchanged.
+  assert.match(
+    source,
+    /const runtimeLaunchTarget =\s*endedLaunchTarget && endedLaunchTarget\.from === buildLaunchTarget\s*\? endedLaunchTarget\.to\s*: buildLaunchTarget;/
+  );
   assert.match(
     source,
     /const shouldRenderPreviewPanel =\s*buildLaunchTargetReady \|\| previewMountedForCurrentBuild;/
@@ -100,7 +106,7 @@ test('Build runtime only uses client launch target state when no notification id
   );
   assert.match(
     source,
-    /\{shouldRenderPreviewPanel \? \([\s\S]*<PreviewPanel[\s\S]*launchTarget=\{buildLaunchTarget\}[\s\S]*!buildLaunchTargetReady \? \([\s\S]*<Loading className=\{launchTargetLoadingOverlayClass\} \/>[\s\S]*\) : null[\s\S]*\) : \([\s\S]*<Loading className=\{launchTargetLoadingClass\} \/>[\s\S]*\)\}/
+    /\{shouldRenderPreviewPanel \? \([\s\S]*<PreviewPanel[\s\S]*launchTarget=\{runtimeLaunchTarget\}[\s\S]*!buildLaunchTargetReady \? \([\s\S]*<Loading className=\{launchTargetLoadingOverlayClass\} \/>[\s\S]*\) : null[\s\S]*\) : \([\s\S]*<Loading className=\{launchTargetLoadingClass\} \/>[\s\S]*\)\}/
   );
 });
 

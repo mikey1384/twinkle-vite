@@ -35,6 +35,8 @@ const sectionTitles = new Map([
   ['cli', 'Connect Lumine'],
   ['daily-reflection', 'Daily Reflection'],
   ['earn', 'Earn'],
+  // a parent's Arena exam report (confirm page from the parent email)
+  ['exam-report', 'Arena Exam Report'],
   ['explore', 'Explore'],
   ['friends', 'Friends'],
   ['grammarbles', 'Grammarbles'],

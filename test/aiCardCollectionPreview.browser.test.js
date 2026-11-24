@@ -17,7 +17,10 @@ const feedSource = readFileSync(
   'utf8'
 );
 const cardStyles = feedSource.match(/const cardClass = css`[\s\S]*?\n`;/)[0];
-const sizingStyle = feedSource.match(/const sizingStyle = \{[\s\S]*?\n  \}/)[0];
+// memoized in the card since 10-28; the fixture takes its object literal
+const sizingStyle = `const sizingStyle = ${
+  feedSource.match(/const sizingStyle = useMemo\(\(\) => \((\{[\s\S]*?\n  \})\)/)[1]
+}`;
 const artifacts = '/private/tmp/twinkle-ai-card-collection-20260914';
 
 // Actual Home Body, sizing, RichText, collection parser and card thumbnails.

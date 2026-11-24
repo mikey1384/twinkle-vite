@@ -261,13 +261,20 @@ test('a refused voice-call message is appended, never dropped, in the chat it wa
     input,
     /prevChannelId\.current === callChannelId &&\s*prevSubchannelId\.current === callSubchannelId/
   );
+  // Since 10-28 the draft stays in its box until the send is confirmed: a
+  // confirmed send clears only its own unchanged draft (here or in the topic
+  // it was typed in), and a refusal keeps it and says so.
   assert.match(
     input,
-    /handleSetText\(\s*appendRefusedCallMessage\(textRef\.current, callMessage\)/
+    /await submitAiVoiceText\(callMessage, callChannelId, callTopicId\);[\s\S]{0,400}?if \(textRef\.current === messageText\) \{\s*handleSetText\(''\);/
   );
   assert.match(
     input,
-    /appendRefusedCallMessage\(\s*getInputStateValue\(draftKey\)\?\.text \|\| '',\s*callMessage/
+    /if \(getInputStateValue\(draftKey\)\?\.text === messageText\)\s*onEnterComment\(/
+  );
+  assert.match(
+    input,
+    /\} catch \(error\) \{\s*setAlertModalTitle\('Message not sent'\);[\s\S]{0,250}?'Your draft is kept\. Please try again\.'/
   );
   assert.doesNotMatch(input, /if \(stringIsEmpty\(textRef\.current\)\) handleSetText\(callMessage\)/);
 });

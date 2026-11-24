@@ -22,7 +22,13 @@ function fixture() {
     '../../Context': {}, '~/components/ErrorBoundary': ({ children }) => children,
     '~/theme/hooks/useRoleColor': { useRoleColor: () => ({ getColor: () => '#418ceb' }) },
     '~/helpers/chatUnreadProjection': { canonicalUnreadBadgeIsShown: count => Number.isFinite(Number(count)) && Number(count) > 0 },
-    '../../containers': { chatChannelRowClass: 'channel' }
+    '../../containers': { chatChannelRowClass: 'channel' },
+    // played-together cards preview as text in the row (dependency-free helper)
+    '~/helpers/socialTogetherCard': (() => {
+      const helper = { exports: {} };
+      new Function('module', 'exports', transformSync(readFileSync(path.resolve(__dirname, '../src/helpers/socialTogetherCard.ts'), 'utf8'), { loader: 'ts', format: 'cjs' }).code)(helper, helper.exports);
+      return helper.exports;
+    })()
   };
   const module = { exports: {} };
   const source = readFileSync(path.resolve(__dirname, '../src/containers/Chat/LeftMenu/Channels/Channel.tsx'), 'utf8');
@@ -57,7 +63,7 @@ test('subchannel-only and partially loaded channels show the newest available pr
 test('unread has an accessible label, stays suppressed on the active row, and partner-only name is not styled as deleted', () => {
   const app = fixture(); const html = markup(app.render());
   assert.match(html, /aria-label="Unread messages"/); assert.doesNotMatch(html, /color:#aaa/);
-  assert.match(html, /min-width:12px;height:12px;outline:1px solid #64748b/);
+  assert.match(html, /min-width:12px;height:12px;border-radius:50%/); // the outline was dropped on 09-09 (chat UI regressions fix)
   const active = markup(app.render({}, { selectedChannelId: 7, currentPathId: 101 }));
   assert.match(active, /aria-current="page"/); assert.doesNotMatch(active, /Unread messages/);
 });

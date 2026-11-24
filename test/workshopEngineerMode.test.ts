@@ -73,7 +73,8 @@ test('non-Workshop quick-access avatars do not keep the status poll alive', () =
   assert.match(hookSource, /enabled = true/);
   assert.match(
     hookSource,
-    /const shouldSubscribe =[\s\S]*enabled && BUILD_WORKSHOP_PREVIEW_USER_IDS/
+    // signed-in members only (the preview-id gate ended on 10-03)
+    /const shouldSubscribe =\s*enabled && canonicalUserId > 0;/
   );
   assert.match(
     quickAccessAvatarSource,

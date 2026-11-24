@@ -76,13 +76,15 @@ assert.ok(
 );
 assert.match(inlineMeterWrapWithChargeClassMatch[1], /margin-left: 8\.9rem;/);
 assert.match(inlineMeterWrapWithChargeClassMatch[1], /min-width: 0;/);
+// A narrow card (wrapWhenNarrow) keeps the charge slot in flow and the meter
+// beside it; otherwise the meter keeps the reserved offset.
 assert.match(
   aiEnergyCardSource,
-  /<div className=\{inlineChargeSlotCls\}>\s*<GameCTAButton/
+  /<div\s*className=\{`\$\{inlineChargeSlotCls\} \$\{\s*wrapWhenNarrow \? inlineChargeSlotInFlowCls : ''\s*\}`\}\s*>\s*<GameCTAButton/
 );
 assert.match(
   aiEnergyCardSource,
-  /chargeCtaType \? inlineMeterWrapWithChargeCls : ''/
+  /chargeCtaType\s*\? wrapWhenNarrow\s*\? inlineMeterWrapBesideChargeCls\s*: inlineMeterWrapWithChargeCls/
 );
 
 assert.match(

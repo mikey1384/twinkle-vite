@@ -12,7 +12,7 @@ const inputRoot = path.resolve(__dirname, '../src/containers/Chat/Body/MessagesC
 test('every icon-only or abbreviated composer action has an explicit name', () => {
   const expected = {
     'LeftButtons.tsx': ['Open chess game', 'Open Omok game', 'Play Wordle', 'Reply to topic'],
-    'RightButtons/AddButtons.tsx': ['Open trade', 'Attach a video'],
+    'RightButtons/AddButtons.tsx': ['Open trade', 'Have Zero or Ciel do something for them', 'Attach a video'], // sponsored help button (11-24)
     'RightButtons/index.tsx': ['Stop AI response'],
     'index.tsx': ['Send message']
   };

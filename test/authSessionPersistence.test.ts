@@ -940,13 +940,19 @@ test('an offline start keeps the session and rehydrates after connectivity retur
     app,
     /socket\.active` remains true after Socket\.IO exhausts[\s\S]*resumeSavedSession\(true\);[\s\S]*scheduleOfflineRecoveryProbe\(\)/
   );
-  assert.match(app, /socket\.connected && canonicalSessionUserId/);
+  // A connected socket (or, since 11-05, a Lumine preview capture, which
+  // never reconnects) with a confirmed session needs no recovery probe.
+  assert.match(
+    app,
+    /\(\(socket\.connected \|\|\s*isLuminePreviewCaptureContext\([\s\S]{0,120}?\)\) &&\s*canonicalSessionUserId\)/
+  );
   assert.match(app, /resumeSavedSession\(true\)/);
   assert.match(app, /browserReportsOffline\(\) && !allowOfflineProbe/);
   assert.match(app, /markBrowserNetworkReachable\(\);/);
   assert.match(
     app,
-    /if \(!browserReportsOffline\(\) && !socket\.connected\) \{[\s\S]*?socket\.connect\(\)/
+    // (a Lumine preview capture never reconnects, 11-05)
+    /if \(\s*!isLuminePreviewCaptureContext\([\s\S]{0,120}?\) &&\s*!browserReportsOffline\(\) &&\s*!socket\.connected\s*\) \{\s*socket\.connect\(\)/
   );
   assert.doesNotMatch(app, /!socket\.active/);
   assert.match(

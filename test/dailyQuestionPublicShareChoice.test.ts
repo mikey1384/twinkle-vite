@@ -37,11 +37,8 @@ test('Keyword Day feed sharing uses the normal original-versus-polished chooser'
   assert.ok(shareClickStart >= 0 && confirmShareStart > shareClickStart);
   assert.doesNotMatch(shareClickSource, /isKeywordDay/);
   assert.match(shareClickSource, /setShowVersionSelector\(true\)/);
-  // Picture Day alone skips the chooser: its text is never polished
-  assert.match(
-    shareClickSource,
-    /if \(isPictureDay\) \{\s*await handleConfirmShare\('original'\);\s*return;/
-  );
+  // Picture Day uses the same chooser since 10-29 (3178beb27)
+  assert.doesNotMatch(shareClickSource, /isPictureDay/);
   assert.match(
     gradingResultSource,
     /const version = versionOverride \|\| selectedVersion;/

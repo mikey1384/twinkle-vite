@@ -279,8 +279,14 @@ test('a file video the browser refuses shows the notice instead of a dead player
     player,
     /if \(unsupportedSource && props\?\.fileType === 'video'\) \{\s*return <UnsupportedVideoNotice/
   );
+  // every native <video>/<audio> (renamed handleNativeMediaError on 10-27;
+  // only a video source swaps in the notice)
   assert.equal(
-    (player.match(/onError=\{handleNativeVideoError\}/g) || []).length,
-    2
+    (player.match(/onError=\{handleNativeMediaError\}/g) || []).length,
+    3
+  );
+  assert.match(
+    player,
+    /function handleNativeMediaError\([\s\S]{0,300}?props\?\.fileType === 'video' &&[\s\S]{0,120}?MediaError\.MEDIA_ERR_SRC_NOT_SUPPORTED/
   );
 });

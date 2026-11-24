@@ -22,7 +22,7 @@ assert.match(
 );
 assert.match(
   headingTextSource,
-  /renderCompactUser\(feedActivityType \? feedUploader \|\| uploader : uploader\)/
+  /renderCompactUser\(\s*feedActivityType \? feedUploader \|\| uploader : uploader\s*\)/
 );
 
 console.log('Home feed actor profile picture verifier passed.');

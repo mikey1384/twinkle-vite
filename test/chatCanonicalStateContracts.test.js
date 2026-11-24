@@ -457,7 +457,7 @@ test('same-account socket messages update caches without becoming unread', () =>
 
   assert.match(
     receiveMessageHandler,
-    /const isMyMessage =[\s\S]*?Number\(message\.userId\) === Number\(userId\) && !message\.transferId[\s\S]*?onReceiveMessage\(\{[\s\S]*?isMyMessage/
+    /const isMyMessage =[\s\S]*?Number\(message\.userId\) === Number\(userId\) &&\s*!message\.transferId[\s\S]*?onReceiveMessage\(\{[\s\S]*?isMyMessage/
   );
   assert.doesNotMatch(
     socketSource,
@@ -659,10 +659,17 @@ test('favorite membership snapshots reconcile independent activity domains', () 
   // The serialized watermark is the repaired canonical row, coerced to a
   // number — deliberately not channel.lastMessageId, which can be the stale
   // pre-repair pointer read alongside the channel.
+  // Since 09-28 the row is the preview row: the repaired last message, or the
+  // held preview the reader sees (pickPreviewMessage).
   assert.match(
     channelSource,
-    /lastMessageId: Number\(lastMessageRow\.id\) \|\| null/
+    /const previewMessageRow: LastMessageRow =\s*pickPreviewMessage\(\{ lastMessage: lastMessageRow, heldPreview \}\) \|\|\s*lastMessageRow;/
   );
+  assert.match(
+    channelSource,
+    /lastMessageId: Number\(previewMessageRow\.id\) \|\| null/
+  );
+  assert.doesNotMatch(channelSource, /lastMessageId: Number\(channel\.lastMessageId\)/);
 });
 
 test('confirmed visibility has a channel-owned revision and message watermark', () => {

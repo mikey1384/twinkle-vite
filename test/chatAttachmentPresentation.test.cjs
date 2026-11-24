@@ -56,6 +56,9 @@ test('only chat roots opt into the mission, prompt and profile presentation chan
   for(const file of ['MainContentComponent','UserComponent','DefaultComponent','AICardComponent','AchievementUnlockComponent','AchievementComponent'])dependencies[`./${file}`]=()=>null;
   dependencies['./MissionComponent']=MissionLeaf;dependencies['./SharedPromptComponent']=PromptLeaf;
   dependencies['./UserComponent']=UserLeaf;
+  // book links render their own embed (none of these paths is a book link)
+  dependencies['~/components/Books/BookEmbed']=()=>null;
+  dependencies['~/helpers/bookEmbedHelpers']={parseBookLink:()=>null};
   const Internal=load('src/components/Texts/RichText/Markdown/EmbeddedComponent/InternalComponent/index.tsx',dependencies);
   for(const rootType of ['chat','subject','user',undefined]) {
     for(const [src,leaf] of [['/missions/community',MissionLeaf],['/shared-prompts/7',PromptLeaf],['/users/Mina',UserLeaf]]) {

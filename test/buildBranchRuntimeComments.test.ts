@@ -35,6 +35,7 @@ test('the runtime gates both the comment button and drawer', () => {
   );
   assert.match(
     runtimeSource,
-    /\{runtimeCommentsAvailable \? \(\s*<CommentsDrawer/
+    // the drawer sits inside its comment-Lumine provider, still gated
+    /\{runtimeCommentsAvailable \? \(\s*(?:<CommentLumineProvider[^>]*>\s*)?<CommentsDrawer/
   );
 });

@@ -34,7 +34,7 @@ test('pinned chat topic cap is 5 and matches the API mirror when checked out', (
 test('the Topic selector hides Pin using the shared cap', () => {
   assert.match(
     topicItemSource,
-    /import \{ MAX_PINNED_CHAT_TOPICS \} from '~\/constants\/defaultValues'/
+    /import \{ (?:[A-Z_]+, )*MAX_PINNED_CHAT_TOPICS(?:, [A-Z_]+)* \} from '~\/constants\/defaultValues'/
   );
   assert.match(
     topicItemSource,

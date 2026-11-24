@@ -87,7 +87,9 @@ test('every shared Energy card receives the canonical policy, including nested i
     'containers/Build/Runtime/index.tsx',
     'components/Notification/TodayStats/index.tsx',
     'containers/Chat/Body/MessagesContainer/MessageInput/index.tsx',
-    'containers/Arena/AIStory/SuccessModal/index.tsx',
+    // the AI Story clear screen replaced its success modal on 10-24
+    'containers/Arena/AIStory/ClearScreen/index.tsx',
+    'containers/Chat/Body/Collect/AICards/index.tsx',
     'components/Modals/ImageModal/ImageEditModal.tsx',
     'components/Modals/UploadModal/ImageGenerator/index.tsx',
     'components/Modals/UploadModal/ImageGenerator/ImageArea/GeneratedImageDisplay/FollowUpInput.tsx'

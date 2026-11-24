@@ -52,6 +52,8 @@ function fixture() {
       ),
       uuid: { v1: () => 'synthetic' },
       '~/helpers/userDataHelpers': { getStoredItem: () => null },
+      // presence: the modal reports that the member is playing chess
+      '~/helpers/hooks/useUserActivity': () => {},
       '~/containers/Chat/Chess/helpers/theme': {
         getAllowedChatChessThemes: () => [],
         mapThemeToColors: () => undefined

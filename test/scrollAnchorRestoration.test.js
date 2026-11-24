@@ -162,7 +162,9 @@ assert.match(
 );
 assert.match(
   source,
-  /return \(\) => \{[\s\S]*saveCurrentAnchor\(anchorKey, container, getActiveScroller\(\)\);[\s\S]*removeEventListener\('scroll', handleScroll\);/
+  // teardown flushes the save (unless suppressed or tainted), which passes the
+  // anchor reader along, then removes the listeners
+  /function saveAnchorAndMarkSettled\(\) \{\s*saveCurrentAnchor\(anchorKey, container, getActiveScroller\(\), anchorReader\?\.read\);[\s\S]*?return \(\) => \{[\s\S]{0,600}?flushScrollSave\(\);[\s\S]{0,200}?removeEventListener\('scroll', handleScroll\);/
 );
 assert.match(
   mainNavSource,

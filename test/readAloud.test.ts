@@ -30,7 +30,7 @@ test('read-aloud eligibility is a plain length rule on the spoken text', () => {
 test('RichText shows read-aloud tools for opted-in text and keeps Copy for bot messages only', () => {
   const src = read('src/components/Texts/RichText/index.tsx');
   assert.match(src, /readAloudToolsShown =\s*!hideDictation &&\s*!isStreaming &&\s*\(isAIMessage \|\| \(readAloud && isReadAloudEligible\(text\)\)\)/);
-  assert.match(src, /\{readAloudToolsShown && \(/);
+  assert.match(src, /\{readAloudToolsShown &&\s*\(contentType === 'chat' \? \(\s*<ChatMessageTools/); // chat messages get their own tools row
   assert.doesNotMatch(src, /\{isAIMessage && !hideDictation && !isStreaming && \(/);
   const copyBlocks = src.match(/\{isAIMessage && \(\s*<Button[\s\S]*?onClick=\{handleCopyMessage\}/g) || [];
   assert.equal(copyBlocks.length, 2);

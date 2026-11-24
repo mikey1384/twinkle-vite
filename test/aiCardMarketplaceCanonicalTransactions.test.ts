@@ -75,9 +75,12 @@ test('trade acceptance closes only after the canonical request succeeds', () => 
   );
 
   assert.match(buttons, /if \(isDisabled\) \{[\s\S]*?return;[\s\S]*?\}/);
-  assert.match(buttons, /onAcceptTrade\(\);\s+\} catch/);
+  // closes at the end of the successful path; a failed request throws past
+  // it to the confirm modal (no catch since 10-09)
+  assert.match(buttons, /setReviewSnapshot\(null\);\s+onAcceptTrade\(\);\s+\} finally \{\s*setAccepting\(false\);/);
   assert.doesNotMatch(
     buttons,
-    /finally \{[\s\S]*?onAcceptTrade\(\);[\s\S]*?\}/
+    // bounded to one finally block (an unbounded span crossed functions)
+    /finally \{[^}]*onAcceptTrade\(\);/
   );
 });

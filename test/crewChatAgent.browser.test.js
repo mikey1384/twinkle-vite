@@ -107,6 +107,7 @@ async function compileFixture() {
       export const useAppContext = select => select(state);
       export const useKeyContext = select => select(state);
       export const useChatContext = select => select(state);
+      export const useContentContext = select => select({ actions: { onEditContent: () => {} } });
     `,
     '~/containers/BridgeBuilderQuest/useMeetupRefresh':
       'export default () => {};',

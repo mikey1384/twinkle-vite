@@ -7,7 +7,8 @@ const ts = require('typescript');
 function bridge() {
   const source = fs.readFileSync('src/containers/Build/PreviewPanel/hooks/useHostBridge.ts', 'utf8');
   const ast = ts.createSourceFile('bridge.ts', source, ts.ScriptTarget.Latest, true);
-  const names = new Set(['shared-db:get-topics', 'shared-db:get-entries', 'shared-db:get-entries-by-ids', 'shared-db:create-topic', 'private-db:get']);
+  // get-entries falls through to query-entries, which holds the shared body
+  const names = new Set(['shared-db:get-topics', 'shared-db:get-entries', 'shared-db:query-entries', 'shared-db:get-entries-by-ids', 'shared-db:create-topic', 'private-db:get']);
   const clauses = [];
   function visit(node) {
     if (ts.isCaseClause(node) && ts.isStringLiteral(node.expression) && names.has(node.expression.text)) clauses.push(node.getText(ast));
@@ -37,7 +38,7 @@ test('request helpers use the public endpoint only for explicitly public reads',
   const source=fs.readFileSync('src/contexts/requestHelpers/build.ts','utf8');
   const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
   const calls=[];const exported={};
-  vm.runInNewContext(compiled,{exports:exported,require(name){if(name==='./axiosInstance')return {post:async(...args)=>{calls.push(args);return{data:{entries:[]}}}};if(name==='~/constants/URL')return 'https://fixture.invalid';return {}},console});
+  vm.runInNewContext(compiled,{exports:exported,require(name){if(name==='./axiosInstance')return {post:async(...args)=>{calls.push(args);return{data:{entries:[]}}}};if(name==='~/constants/URL')return 'https://fixture.invalid';if(name==='~/helpers/buildRewardRuntimeRenewal')return {createRewardRuntimeRenewal:()=>({})};return {}},console});
   const helpers=exported.default({auth:()=>({headers:{}}),handleError:error=>Promise.reject(error)});
   for (const [method,suffix] of [['getSharedDbTopics','topics'],['getSharedDbEntries','entries'],['getSharedDbEntriesByIds','entries/by-ids']]) {
     await helpers[method]({buildId:2206,topicName:'songs',entryIds:[1],publicRead:true});

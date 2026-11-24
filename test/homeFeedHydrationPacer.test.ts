@@ -70,7 +70,8 @@ test('feed cards apply content through the pacer and stay marked in flight until
     source,
     /homeFeedHydrationPacer\.enqueue\(\(\) => \{\s*releaseHydration\(\);[\s\S]*?onInitContent\(/m
   );
-  assert.match(source, /\}, \(\) => inViewRef\.current\);/);
+  // urgency: the card window's near-viewport ref (10-28)
+  assert.match(source, /\}, \(\) => nearViewportRef\.current\);/);
 });
 
 test('urgency is read when the frame applies, not when the reply arrived', () => {

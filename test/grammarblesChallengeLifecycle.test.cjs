@@ -16,7 +16,11 @@ function fixture() {
     '~/helpers': {},
     '~/helpers/analytics': {},
     '~/helpers/liveComments': {},
-    '~/helpers/featuredSubjects': {}
+    '~/helpers/featuredSubjects': {},
+    // image history, image models and batched feed reads: unused here
+    '~/helpers/aiImageHistory': {},
+    '~/helpers/aiImageModels': {},
+    '~/helpers/contentBatch': compile('src/helpers/contentBatch.ts', {})
   }).default({
     auth: () => ({}),
     handleError: async (error) => {
