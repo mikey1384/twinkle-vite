@@ -1,3 +1,4 @@
+import type { LumineRunActivity } from '../LumineAtWork/activity';
 import type { BuildCapabilitySnapshot } from '../../types/capabilityTypes';
 import type { PreviewCaptureScratch } from '../helpers/previewCaptureScratch';
 import type {
@@ -81,6 +82,8 @@ export interface PreviewPanelProps {
   // A Lumine run is working in this workspace (the Editor's run view).
   // Restoring a version stops it, so Restore asks first.
   lumineRunActive?: boolean;
+  // What Lumine is doing in the active run, for the Lumine-at-work scene.
+  lumineActivity?: LumineRunActivity | null;
   onReplaceCode: (code: string) => void;
   onApplyRestoredProjectFiles: (
     files: Array<{ path: string; content?: string }>,

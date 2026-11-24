@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import CodeDiff from '~/components/CodeDiff';
+import LiveCodeEditor from './LiveCode';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
 import { getFileNameFromPath, isIndexHtmlPath } from './helpers/projectFiles';
@@ -139,15 +139,6 @@ export default function CodeWorkspacePane({
   const [projectFileSearchQuery, setProjectFileSearchQuery] = useState('');
   const resolvedMaxProjectFileLines =
     resolveProjectFileEffectiveLineLimit(maxProjectFileLines);
-  const persistedActiveFileContent = activeFile
-    ? persistedFileContentByPath.get(activeFile.path) || ''
-    : '';
-  const activeFileExistsInPersistedState = activeFile
-    ? persistedFileContentByPath.has(activeFile.path)
-    : false;
-  const activeFileHasStreamingDiff = activeFile
-    ? persistedActiveFileContent !== activeFile.content
-    : false;
   const displayedAssetEntries = currentBuildRuntimeAssets.slice(0, 8);
   const projectFileLineDiagnostics = useMemo(
     () =>
@@ -748,6 +739,17 @@ export default function CodeWorkspacePane({
             const isDirty =
               !isShowingStreamingCode &&
               persistedFileContentByPath.get(file.path) !== file.content;
+            // While Lumine streams, changed files read like VS Code's git
+            // colours: green "U" for new, amber "M" for modified.
+            const streamingChange = !isShowingStreamingCode
+              ? null
+              : !persistedFileContentByPath.has(file.path)
+                ? 'added'
+                : persistedFileContentByPath.get(file.path) !== file.content
+                  ? 'modified'
+                  : null;
+            const streamingWriting =
+              isShowingStreamingCode && isActive && streamingAutoFollowEnabled;
             const displayName = getFileNameFromPath(file.path);
             const fileEffectiveLineCount = countProjectFileEffectiveLines(
               file.content
@@ -792,7 +794,15 @@ export default function CodeWorkspacePane({
                             ? 'rgba(65, 140, 235, 0.2)'
                             : 'rgba(17, 24, 39, 0.6)'
                     };
-                    color: ${isActive ? '#dbeafe' : '#e5e7eb'};
+                    color: ${
+                      streamingChange === 'added'
+                        ? '#73c991'
+                        : streamingChange === 'modified'
+                          ? '#e2c08d'
+                          : isActive
+                            ? '#dbeafe'
+                            : '#e5e7eb'
+                    };
                     border-radius: 8px;
                     padding: 0.42rem 0.5rem;
                     cursor: pointer;
@@ -806,13 +816,60 @@ export default function CodeWorkspacePane({
                 >
                   <span
                     className={css`
+                      flex: 1;
+                      min-width: 0;
                       overflow: hidden;
                       text-overflow: ellipsis;
                       white-space: nowrap;
                     `}
                   >
+                    {streamingWriting ? (
+                      <span
+                        aria-hidden="true"
+                        className={css`
+                          display: inline-block;
+                          width: 0.7rem;
+                          height: 0.7rem;
+                          margin-right: 0.45rem;
+                          border-radius: 50%;
+                          background: #73c991;
+                          vertical-align: middle;
+                          animation: build-tree-writing 1.2s ease-in-out
+                            infinite;
+                          @keyframes build-tree-writing {
+                            50% {
+                              opacity: 0.3;
+                            }
+                          }
+                          @media (prefers-reduced-motion: reduce) {
+                            animation: none;
+                          }
+                        `}
+                      />
+                    ) : null}
                     {displayName}
                   </span>
+                  {streamingChange ? (
+                    <span
+                      className={css`
+                        flex-shrink: 0;
+                        color: ${streamingChange === 'added'
+                          ? '#73c991'
+                          : '#e2c08d'};
+                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                        font-size: 1.1rem;
+                        font-weight: 800;
+                      `}
+                      aria-label={
+                        streamingChange === 'added' ? 'New file' : 'Modified'
+                      }
+                      title={
+                        streamingChange === 'added' ? 'New file' : 'Modified'
+                      }
+                    >
+                      {streamingChange === 'added' ? 'U' : 'M'}
+                    </span>
+                  ) : null}
                   <span
                     data-testid="build-project-file-line-count"
                     className={css`
@@ -1056,10 +1113,14 @@ export default function CodeWorkspacePane({
         className={css`
           position: relative;
           min-height: 0;
+          min-width: 0;
           display: grid;
-          grid-template-rows: auto 1fr;
+          grid-template-rows: ${isShowingStreamingCode && activeFile
+            ? 'minmax(0, 1fr)'
+            : 'auto 1fr'};
         `}
       >
+        {!(isShowingStreamingCode && activeFile) && (
         <div
           className={css`
             padding: 0.55rem 0.75rem;
@@ -1324,80 +1385,16 @@ export default function CodeWorkspacePane({
             )}
           </div>
         </div>
+        )}
         {activeFile ? (
           isShowingStreamingCode ? (
-            <div
-              className={css`
-                height: 100%;
-                min-height: 0;
-                overflow: hidden;
-                background: #111827;
-                display: flex;
-                flex-direction: column;
-              `}
-            >
-              <div
-                className={css`
-                  padding: 0.7rem 1rem;
-                  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                  display: flex;
-                  align-items: center;
-                  justify-content: space-between;
-                  gap: 0.75rem;
-                  flex-wrap: wrap;
-                  background: rgba(15, 23, 42, 0.82);
-                  color: #cbd5e1;
-                  font-size: 1.1rem;
-                `}
-              >
-                <span>
-                  Showing live diff against the last saved
-                  {activeFileExistsInPersistedState ? ' file' : ' version'}
-                </span>
-                <span
-                  className={css`
-                    color: #93c5fd;
-                    font-weight: 700;
-                  `}
-                >
-                  {activeFileHasStreamingDiff
-                    ? 'Changed lines only'
-                    : 'Waiting for file changes'}
-                </span>
-              </div>
-              {activeFileHasStreamingDiff ? (
-                <CodeDiff
-                  oldCode={persistedActiveFileContent}
-                  newCode={activeFile.content}
-                  collapsible={false}
-                  fullHeight={true}
-                  className={css`
-                    flex: 1;
-                    min-height: 0;
-                    border: none;
-                    border-radius: 0;
-                    background: #111827;
-                  `}
-                />
-              ) : (
-                <div
-                  className={css`
-                    flex: 1;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 1.5rem;
-                    text-align: center;
-                    color: #94a3b8;
-                    font-size: 1.1rem;
-                    line-height: 1.5;
-                  `}
-                >
-                  Lumine is still working on this file. The diff will appear
-                  here as soon as changed lines arrive.
-                </div>
-              )}
-            </div>
+            <LiveCodeEditor
+              files={displayedProjectFiles}
+              persistedFileContentByPath={persistedFileContentByPath}
+              activeFilePath={activeFile.path}
+              following={streamingAutoFollowEnabled}
+              onSelectFile={onSelectFile}
+            />
           ) : (
             <div
               className={css`

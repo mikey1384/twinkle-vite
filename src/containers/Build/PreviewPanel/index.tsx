@@ -103,6 +103,11 @@ import { BUILD_WORKSPACE_COMPACT_MEDIA_QUERY } from '../Editor/constants';
 import { SITE_NAME } from '~/constants/siteBrand';
 import { getAppInfoRelease } from '~/helpers/buildAppInfo';
 import { getBuildPreviewCodeSignature } from '../helpers/previewVersion';
+import useLumineWorkSignals from './LumineAtWork/useLumineWorkSignals';
+import {
+  describeLumineWork,
+  resolveLumineWorkMode
+} from './LumineAtWork/activity';
 const GUEST_RESTRICTION_BANNER_TEXT =
   'Some features were restricted because this app uses user-only data. Sign in to access those parts.';
 
@@ -157,6 +162,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       isOwner,
       codeWorkspaceAvailable = isOwner,
       lumineRunActive = false,
+      lumineActivity = null,
       onReplaceCode,
       onApplyRestoredProjectFiles,
       onSaveProjectFiles,
@@ -1213,6 +1219,46 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       previewFrameSources.secondary ||
       previewSrc
     );
+    // Lumine at work (Mikey 11-24): while Lumine builds, or while there is
+    // nothing to preview yet, the preview area shows pixel Lumine at her desk
+    // instead of an empty frame or "Preview file not found". A working
+    // preview stays in view with a small Lumine in the corner.
+    const lumineWorkSignals = useLumineWorkSignals({
+      running: Boolean(lumineRunActive),
+      streamingProjectFiles,
+      streamingFocusFilePath,
+      terminalState: lumineActivity?.terminalState ?? null
+    });
+    const previewHasContent = previewProjectFiles.some((file) =>
+      Boolean(String(file.content || '').trim())
+    );
+    const lumineBusy = Boolean(lumineRunActive) || lumineWorkSignals.lingering;
+    // The full scene only where there is no working preview to look at; the
+    // celebration after a run plays in the corner over an existing preview.
+    const lumineStageShown =
+      !runtimeOnly &&
+      (!previewHasContent ||
+        (lumineBusy && !previewFrameReady[activePreviewFrame]));
+    const lumineWorkMode = resolveLumineWorkMode({
+      running: Boolean(lumineRunActive),
+      activity: lumineActivity,
+      writingRecently: lumineWorkSignals.writingRecently
+    });
+    const lumineScene = runtimeOnly
+      ? null
+      : {
+          stage: lumineStageShown,
+          corner: lumineBusy && !lumineStageShown,
+          mode: lumineWorkMode,
+          saveSignal: lumineWorkSignals.saveSignal,
+          ...describeLumineWork({
+            mode: lumineWorkMode,
+            lingering: lumineWorkSignals.lingering,
+            label: lumineActivity?.label ?? null,
+            focusFilePath: streamingFocusFilePath,
+            isOwner
+          })
+        };
 
     useEffect(() => {
       const activePreviewNonce =
@@ -1746,6 +1792,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                 setPreviewAccessRetryNonce((nonce) => nonce + 1)
               }
               variant="workspace"
+              lumineScene={lumineScene}
               onOpenRuntimeIssueProjectFile={openRuntimeIssueProjectFile}
               onPreviewFrameLoad={handlePreviewFrameLoad}
             />

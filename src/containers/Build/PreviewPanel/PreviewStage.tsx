@@ -15,6 +15,17 @@ import {
   getRuntimePreviewIframeSandbox
 } from './helpers/previewHelpers';
 import { SITE_NAME } from '~/constants/siteBrand';
+import LumineAtWork from './LumineAtWork';
+import type { LumineWorkMode } from './LumineAtWork/activity';
+
+export interface LumineSceneProps {
+  stage: boolean;
+  corner: boolean;
+  mode: LumineWorkMode;
+  saveSignal: number;
+  title: string;
+  subtitle: string | null;
+}
 
 type PreviewFrameKey = 'primary' | 'secondary';
 
@@ -263,6 +274,7 @@ export default function PreviewStage({
   shouldShowRuntimePreviewStage,
   shouldShowWorkspacePreviewStage,
   variant,
+  lumineScene = null,
   onOpenRuntimeIssueProjectFile,
   onPreviewFrameLoad
 }: {
@@ -290,6 +302,7 @@ export default function PreviewStage({
   shouldShowRuntimePreviewStage: boolean;
   shouldShowWorkspacePreviewStage: boolean;
   variant: 'runtime' | 'workspace';
+  lumineScene?: LumineSceneProps | null;
   onOpenRuntimeIssueProjectFile: (path: string) => void;
   onPreviewFrameLoad: (frame: PreviewFrameKey, src: string) => void;
 }) {
@@ -359,7 +372,19 @@ export default function PreviewStage({
     );
   }
 
+  const lumineStage = lumineScene?.stage ? (
+    <LumineAtWork
+      variant="stage"
+      mode={lumineScene.mode}
+      saveSignal={lumineScene.saveSignal}
+      title={lumineScene.title}
+      subtitle={lumineScene.subtitle}
+    />
+  ) : null;
   if (!shouldShowWorkspacePreviewStage) {
+    if (lumineStage) {
+      return <div className={previewStageClass}>{lumineStage}</div>;
+    }
     return (
       <EmptyPreviewState
         body={
@@ -372,7 +397,16 @@ export default function PreviewStage({
   }
   return (
     <div className={previewStageClass}>
-      {!previewFrameReady[activePreviewFrame] && <PreviewLoadingSurface />}
+      {lumineStage ||
+        (!previewFrameReady[activePreviewFrame] && <PreviewLoadingSurface />)}
+      {lumineScene?.corner && previewFrameReady[activePreviewFrame] ? (
+        <LumineAtWork
+          variant="corner"
+          mode={lumineScene.mode}
+          saveSignal={lumineScene.saveSignal}
+          title={lumineScene.title}
+        />
+      ) : null}
       {previewFrameSources.primary && (
         <iframe
           key={
