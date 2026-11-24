@@ -108,6 +108,7 @@ registerMethods('build', [
   'skipBuildUpdateNote',
   'loadBuildUpdateNoteForVersion',
   'recordBuildUpdateNoteWhatsNewTap',
+  'recordBuildPreviewReload',
   'loadBuildForkHistory',
   'loadBuildForkers',
   'loadBuildTeamMembers',

@@ -16,10 +16,20 @@ import { hydrateBuildRunFromPersistedSnapshot } from './helpers/persistedRunSnap
 import type { BuildCopilotPolicy } from './Editor/types';
 import { socket } from '~/constants/sockets/api';
 import {
+  BUILD_PREVIEW_UPDATES_JOIN_EVENT,
+  BUILD_PREVIEW_UPDATES_LEAVE_EVENT,
+  BUILD_VERSION_SAVED_EVENT,
+  PREVIEW_RELOAD_MIN_GAP_MS,
+  parseBuildVersionSaved
+} from './Runtime/helpers/previewSaveFollow';
+import {
   applyBuildProjectFilesSocketUpdate,
   resolveBuildProjectFilesSocketUpdate
 } from '~/helpers/buildProjectFilesSocketUpdate';
 import { mergeBuildPolicyPreservingNewerProjectLimits } from '~/helpers/buildProjectLimitApproval';
+
+// build_version_saved for this tab's own save can beat its HTTP response.
+const STUDIO_OWN_SAVE_SETTLE_MS = 1200;
 
 interface BuildWorkspaceAccessResult {
   kind: 'redirect-runtime' | 'unpublished' | 'branch-private';
@@ -149,6 +159,11 @@ export default function BuildEditorRoute() {
   const [error, setError] = useState('');
   const replayedPersistedRunStateKeysRef = useRef<Record<string, string>>({});
   const lastCanonicalProjectFilesEventTimeMsRef = useRef(0);
+  // The saved files this workspace shows, to tell a save made elsewhere (the
+  // CLI, another tab) from this tab's own (build_version_saved below).
+  const studioFilesHashRef = useRef<string | null>(null);
+  studioFilesHashRef.current =
+    typeof build?.projectFilesHash === 'string' ? build.projectFilesHash : null;
   const applyCanonicalCopilotPolicy = useCallback(
     (nextPolicy: BuildCopilotPolicy | null) => {
       setCopilotPolicy((currentPolicy) => {
@@ -505,6 +520,48 @@ export default function BuildEditorRoute() {
       void refreshCanonicalProjectFiles();
     }
 
+    // A save made elsewhere (the CLI, another tab, a restore) reaches this
+    // workspace through the build's preview room once it commits
+    // (twinkle-api helpers/build/previewUpdateEvents.ts). It is read through
+    // the same canonical refresh as returning to this tab, which keeps
+    // unsaved editor changes (PreviewPanel only reseeds a clean buffer), and
+    // the preview follows the new files as it does for this tab's own saves.
+    // Rapid saves refresh at most once per PREVIEW_RELOAD_MIN_GAP_MS, ending
+    // on the newest.
+    let savedRefreshTimer: number | null = null;
+    let lastSavedRefreshAt = 0;
+    let latestSavedHash = '';
+    function refreshAfterSavedElsewhere() {
+      savedRefreshTimer = null;
+      // This tab's own save (or its Lumine run) has updated the build by
+      // now: nothing to read.
+      if (cancelled || latestSavedHash === studioFilesHashRef.current) return;
+      lastSavedRefreshAt = Date.now();
+      void refreshCanonicalProjectFiles();
+    }
+    function onVersionSaved(event: unknown) {
+      const saved = parseBuildVersionSaved(event, currentBuildId);
+      if (!saved || cancelled) return;
+      latestSavedHash = saved.filesHash;
+      if (saved.filesHash === studioFilesHashRef.current) return;
+      if (savedRefreshTimer !== null) return;
+      // The signal can arrive before this tab's own save response; give that
+      // response a moment to land before deciding the save came from
+      // elsewhere.
+      const wait = Math.max(
+        STUDIO_OWN_SAVE_SETTLE_MS,
+        lastSavedRefreshAt + PREVIEW_RELOAD_MIN_GAP_MS - Date.now()
+      );
+      savedRefreshTimer = window.setTimeout(refreshAfterSavedElsewhere, wait);
+    }
+    function joinPreviewUpdates() {
+      socket.emit(BUILD_PREVIEW_UPDATES_JOIN_EVENT, {
+        buildId: currentBuildId
+      });
+    }
+    socket.on(BUILD_VERSION_SAVED_EVENT, onVersionSaved);
+    socket.on('connect', joinPreviewUpdates);
+    if (socket.connected) joinPreviewUpdates();
     socket.on('build_project_files_updated', applyCanonicalProjectFiles);
     socket.on('connect', recoverCanonicalProjectFiles);
     window.addEventListener('pageshow', recoverCanonicalProjectFiles);
@@ -512,6 +569,12 @@ export default function BuildEditorRoute() {
     document.addEventListener('visibilitychange', recoverCanonicalProjectFiles);
     return () => {
       cancelled = true;
+      socket.off(BUILD_VERSION_SAVED_EVENT, onVersionSaved);
+      socket.off('connect', joinPreviewUpdates);
+      socket.emit(BUILD_PREVIEW_UPDATES_LEAVE_EVENT, {
+        buildId: currentBuildId
+      });
+      if (savedRefreshTimer !== null) window.clearTimeout(savedRefreshTimer);
       socket.off('build_project_files_updated', applyCanonicalProjectFiles);
       socket.off('connect', recoverCanonicalProjectFiles);
       window.removeEventListener('pageshow', recoverCanonicalProjectFiles);
