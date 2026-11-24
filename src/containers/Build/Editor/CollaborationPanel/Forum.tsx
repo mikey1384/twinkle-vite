@@ -710,7 +710,9 @@ function ThreadDetail({
             </div>
             {selectedThread.body ? (
               <div className={forumPostBodyClass}>
-                <RichText maxLines={20}>{selectedThread.body}</RichText>
+                <RichText maxLines={20} onlyTwinkleImages>
+                  {selectedThread.body}
+                </RichText>
               </div>
             ) : null}
             {newsActions.length > 0 ? (
@@ -1177,7 +1179,9 @@ function ForumReply({
           </div>
         ) : null}
         <div className={forumPostBodyClass}>
-          <RichText maxLines={20}>{reply.body}</RichText>
+          <RichText maxLines={20} onlyTwinkleImages>
+            {reply.body}
+          </RichText>
         </div>
       </div>
     </article>

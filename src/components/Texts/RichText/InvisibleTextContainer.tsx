@@ -26,6 +26,7 @@ export default function InvisibleTextContainer({
   contentType,
   embedPreviewMode,
   isAIMessage,
+  onlyTwinkleImages,
   isPreview,
   isProfileComponent,
   showProfileApps,
@@ -44,6 +45,7 @@ export default function InvisibleTextContainer({
   contentType?: string;
   embedPreviewMode?: RichTextEmbedPreviewMode;
   isAIMessage?: boolean;
+  onlyTwinkleImages?: boolean;
   isPreview?: boolean;
   isProfileComponent?: boolean;
   showProfileApps?: boolean;
@@ -164,6 +166,7 @@ export default function InvisibleTextContainer({
             isProfileComponent={isProfileComponent}
             showProfileApps={showProfileApps}
             isAIMessage={isAIMessage}
+            onlyTwinkleImages={onlyTwinkleImages}
             linkColor={linkColor}
             markerColor={markerColor}
             subjectPreviewVariant={subjectPreviewVariant}

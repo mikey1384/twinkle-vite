@@ -21,6 +21,8 @@ const CDN = 'https://d3jvoamd2k4p0s.cloudfront.net/attachments/embed';
 const imageUrl = `${CDN}/0f8e3a5c-a9f1-11f0-8de9-0242ac120002/1763950000000-k3j9qz.png`;
 const pdfUrl = `${CDN}/1a2b3c4d-a9f1-11f0-8de9-0242ac120002/1763950000001-p0d9xa.pdf`;
 const replyImageUrl = `${CDN}/2b3c4d5e-a9f1-11f0-8de9-0242ac120002/1763950000002-r8s7tu.png`;
+const zipUrl = `${CDN}/3c4d5e6f-a9f1-11f0-8de9-0242ac120002/1763950000003-z1p2zz.zip`;
+const outsideImageUrl = 'https://tracker.example/pixel.png?who=owner';
 
 const fixture = `
 import React, { useState } from 'react';
@@ -29,12 +31,12 @@ import { MemoryRouter } from 'react-router-dom';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import {
   faArrowLeft, faComment, faComments, faExternalLinkAlt, faFile, faFileAlt,
-  faFileImage, faFilePdf, faPaperclip, faReply, faThumbsUp, faTimes,
+  faFileArchive, faFileImage, faFilePdf, faPaperclip, faReply, faThumbsUp, faTimes,
   faTrashAlt, faSpinner
 } from '@fortawesome/pro-solid-svg-icons';
 import Forum from './src/containers/Build/Editor/CollaborationPanel/Forum';
 library.add(faArrowLeft, faComment, faComments, faExternalLinkAlt, faFile,
-  faFileAlt, faFileImage, faFilePdf, faPaperclip, faReply, faThumbsUp, faTimes,
+  faFileAlt, faFileArchive, faFileImage, faFilePdf, faPaperclip, faReply, faThumbsUp, faTimes,
   faTrashAlt, faSpinner);
 
 const now = Math.floor(Date.now() / 1000);
@@ -45,7 +47,8 @@ const thread = {
 };
 const replies = [
   { id: 31, threadId: 7, buildId: 884, userId: 1, username: 'mikey', body: 'Found it. Here is the fixed door:\\n![](${replyImageUrl})', createdAt: now - 1200 },
-  { id: 32, threadId: 7, buildId: 884, userId: 2, username: 'minji', replyToReplyId: 31, replyToUserId: 1, replyToUsername: 'mikey', replyToBody: '![](${replyImageUrl})', body: 'It works now, thanks!', createdAt: now - 600 }
+  { id: 32, threadId: 7, buildId: 884, userId: 2, username: 'minji', replyToReplyId: 31, replyToUserId: 1, replyToUsername: 'mikey', replyToBody: 'Found it. Here is the fixed door:\\n![](${replyImageUrl})', body: 'It works now, thanks!', createdAt: now - 600 },
+  { id: 33, threadId: 7, buildId: 884, userId: 3, username: 'old_post', body: 'An old post and a save note: ![tracker](${outsideImageUrl})\\n![homework.pdf](${zipUrl})', createdAt: now - 300 }
 ];
 
 function App() {
@@ -227,6 +230,11 @@ test(
           isMobile: !!device.mobile,
           hasTouch: !!device.mobile
         });
+        const outsideRequests = [];
+        await context.route(/^https:\/\/tracker\.example\//, (route) => {
+          outsideRequests.push(route.request().url());
+          return route.fulfill({ status: 200, contentType: 'image/png', body: png });
+        });
         await context.route(/^https:\/\/d3jvoamd2k4p0s\.cloudfront\.net\//, (route) =>
           route.fulfill({
             status: 200,
@@ -250,7 +258,9 @@ test(
         );
 
         // Image inline, the PDF as a download card named by the member.
-        const fileCard = page.locator('.rich-text-file-card:visible');
+        const fileCard = page.locator(
+          `.rich-text-file-card:visible[href="${pdfUrl}"]`
+        );
         assert.equal(await fileCard.count(), 1);
         assert.match(await fileCard.innerText(), /door bug notes\.pdf/);
         assert.equal(await fileCard.getAttribute('href'), pdfUrl);
@@ -258,9 +268,29 @@ test(
           await page.locator(`img[src="${replyImageUrl}"]:visible`).count(),
           1
         );
-        // The quoted image-only reply reads as words, not markup.
-        assert.ok((await page.innerText('body')).includes('sent an image'));
+        // A quote of a text-plus-image reply shows that reply's words.
+        const quote = page
+          .locator('article')
+          .filter({ hasText: 'It works now, thanks!' });
+        assert.match(
+          await quote.innerText(),
+          /Found it\. Here is the fixed door:/
+        );
+        assert.doesNotMatch(await quote.innerText(), /sent an image/);
         assert.ok(!(await page.innerText('body')).includes('![]('));
+        // An image from outside Twinkle (an old post, a Lumine news save
+        // note) is never loaded; it shows as its words.
+        assert.equal(await page.locator(`img[src="${outsideImageUrl}"]`).count(), 0);
+        assert.equal(outsideRequests.length, 0);
+        assert.match(
+          await page.locator('article').filter({ hasText: 'An old post' }).innerText(),
+          /tracker/
+        );
+        // A typed name of another type never labels a file card.
+        const zipCard = page.locator(`.rich-text-file-card:visible[href="${zipUrl}"]`);
+        assert.equal(await zipCard.count(), 1);
+        assert.doesNotMatch(await zipCard.innerText(), /homework\.pdf/);
+        assert.match(await zipCard.innerText(), /1763950000003-z1p2zz\.zip/);
 
         await page.screenshot({
           path: path.join(shots, `forum-thread-${device.name}.png`),
