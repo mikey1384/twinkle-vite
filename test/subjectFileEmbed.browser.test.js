@@ -181,6 +181,16 @@ for (const engine of ['chromium', 'webkit']) {
                 '.home-feed-card__target-file-embed-preview'
               );
               await tile.waitFor();
+              // RichText stays transparent until its Markdown chunk parses;
+              // measure the description the member actually sees.
+              await page.waitForFunction(
+                () =>
+                  getComputedStyle(
+                    document.querySelector(
+                      '.home-feed-card__target-subject-description'
+                    )
+                  ).opacity === '1'
+              );
               await page.evaluate(
                 () =>
                   new Promise((resolve) =>
@@ -223,6 +233,16 @@ for (const engine of ['chromium', 'webkit']) {
                   descriptionLineHeight: parseFloat(
                     getComputedStyle(description).lineHeight
                   ),
+                  // The first visible line's text box (glyphs, not the
+                  // line box with its leading).
+                  descriptionFirstLine: (() => {
+                    const range = document.createRange();
+                    range.selectNodeContents(description);
+                    const first = [...range.getClientRects()].find(
+                      (r) => r.width > 0 && r.height > 0
+                    );
+                    return first ? first.toJSON() : null;
+                  })(),
                   pageOverflow:
                     document.documentElement.scrollWidth > innerWidth,
                   frameBorder: getComputedStyle(tile).borderTopWidth,
@@ -258,8 +278,14 @@ for (const engine of ['chromium', 'webkit']) {
                 layout.description.bottom <= layout.descriptionSlot.bottom + 1,
                 detail
               );
+              // At least one whole line of text shows: its text box fits the
+              // slot. At 320px a two-line title leaves a slot slightly
+              // shorter than the 1.34 line box, but the glyphs still fit.
+              assert.ok(layout.descriptionFirstLine, detail);
               assert.ok(
-                layout.description.height >= layout.descriptionLineHeight - 1,
+                layout.descriptionFirstLine.top >= layout.descriptionSlot.top - 1 &&
+                  layout.descriptionFirstLine.bottom <=
+                    layout.descriptionSlot.bottom + 1,
                 detail
               );
               assert.equal(
