@@ -2958,13 +2958,16 @@ export default function chatRequestHelpers({
       }
     },
     // practice: a Monster Den rematch of a beaten word (no loot, no daily
-    // battle; the server enforces it).
+    // battle; the server enforces it). engine 2: this website plays the
+    // turn-based battle (word battles v2); the server decides per member
+    // (staged rollout) and says which engine in its reply.
     async startWordBattle(wordId: number, seenForm?: string, practice?: boolean) {
       try {
         const { data } = await request.post(
           `${URL}/chat/vocabulary/battle/start`,
           {
             wordId,
+            engine: 2,
             ...(seenForm ? { seenForm } : {}),
             ...(practice ? { practice: true } : {})
           },
@@ -3042,7 +3045,7 @@ export default function chatRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/chat/vocabulary/battle/start`,
-          { wordId, rehunt: true },
+          { wordId, rehunt: true, engine: 2 },
           auth()
         );
         return data;

@@ -30,6 +30,53 @@ export const HEART_EMPTY = pixelSvg(
   { k: INK, d: '#4a3f5e' }
 );
 
+// Word battles v2: half a heart, the card's shield and its sparkle.
+export const HEART_HALF = pixelSvg(
+  [
+    '.kk.kk.',
+    'krrkddk',
+    'krrdddk',
+    'krrdddk',
+    '.krddk.',
+    '..kdk..',
+    '...k...'
+  ],
+  { k: INK, r: '#ff3b5c', d: '#4a3f5e' }
+);
+export const SHIELD = pixelSvg(
+  [
+    '.kkkkkkk.',
+    'kwwwwwwwk',
+    'kwbbbbbwk',
+    'kwbwwwbwk',
+    'kwbwwwbwk',
+    'kwbbbbbwk',
+    '.kwbbbwk.',
+    '..kwbwk..',
+    '...kwk...',
+    '....k....'
+  ],
+  { k: INK, w: '#ffffff', b: '#5aa9ff' }
+);
+export const SWORD = pixelSvg(
+  [
+    '......kkk',
+    '.....kwwk',
+    '....kwwk.',
+    '...kwwk..',
+    'kk.kwk...',
+    'kykwk....',
+    '.kyk.....',
+    'kykyk....',
+    'kk.kk....'
+  ],
+  { k: INK, w: '#ffffff', y: '#ffd34d' }
+);
+export const STAR = pixelSvg(
+  ['...y...', '...y...', '..yyy..', 'yyywyyy', '..yyy..', '...y...', '...y...'],
+  { y: '#ffd34d', w: '#ffffff' }
+);
+
 export const LOOT_ICONS = {
   xp: pixelSvg(
     [

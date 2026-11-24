@@ -19,7 +19,12 @@ export type BattleSound =
   | 'drop'
   | 'rareDrop'
   | 'massiveDrop'
-  | 'nothing';
+  | 'nothing'
+  // word battles v2
+  | 'dodge'
+  | 'cardFlip'
+  | 'block'
+  | 'beam';
 
 export function playBattleSound(sound: BattleSound) {
   switch (sound) {
@@ -74,6 +79,30 @@ export function playBattleSound(sound: BattleSound) {
       return;
     case 'nothing':
       playNote(60, { instrument: 'marimba', level: 0.12, hold: 0.2 });
+      return;
+    case 'dodge':
+      playWhoosh(0.1, 0.25, 0, 1200, 3200);
+      return;
+    case 'cardFlip':
+      // a quick rising sparkle as the card turns over
+      playWhoosh(0.06, 0.2, 0, 800, 2600);
+      [79, 83, 86, 91].forEach((midi, i) =>
+        playNote(midi, { at: 0.12 + 0.05 * i, instrument: 'glock', level: 0.1, hold: 0.1 })
+      );
+      return;
+    case 'block':
+      // a clang: a short thump and two bright glock hits
+      playThump(1.1);
+      playNote(93, { at: 0.02, instrument: 'glock', level: 0.14, hold: 0.12 });
+      playNote(88, { at: 0.07, instrument: 'glock', level: 0.1, hold: 0.2 });
+      return;
+    case 'beam':
+      // the counter beam: a sweep up and a low hit as it lands
+      playWhoosh(0.12, 0.45, 0, 400, 3600);
+      playThump(1.5);
+      [60, 67, 72, 79].forEach((midi, i) =>
+        playNote(midi, { at: 0.08 * i, instrument: 'marimba', level: 0.16, hold: 0.14 })
+      );
       return;
   }
 }
