@@ -64,6 +64,7 @@ export default function TransactionInitiator({
   balance,
   isCounterPropose,
   selectedOption,
+  sendsAsGift = false,
   partner,
   groupObjs,
   onSetSelectedOption,
@@ -82,6 +83,8 @@ export default function TransactionInitiator({
   balance: number;
   isCounterPropose: boolean;
   selectedOption: string;
+  // Trade tab, something to give and nothing asked back: it goes as a gift
+  sendsAsGift?: boolean;
   partner: { id: number; username: string };
   groupObjs: Record<number, any>;
   onSetSelectedOption: (option: string) => void;
@@ -175,6 +178,7 @@ export default function TransactionInitiator({
             bundle={terms.receive}
             coinInput={coinInputs.want}
             coinError={coinErrors.want}
+            partnerNote={sendsAsGift ? 'Nothing in return' : undefined}
             showOwnership={hasTradeAssets(terms.give)}
             groupObjs={groupObjs}
             onCoinChange={(value) => onCoinChange('want', value)}
@@ -222,15 +226,23 @@ export default function TransactionInitiator({
       {batteryExplanation && (
         <p className={noticeClass}>{batteryExplanation}</p>
       )}
-      <p className={noticeClass}>
-        {selectedOption === 'send'
-          ? 'You will review your gift before sending. Gifts transfer immediately after you confirm.'
-          : selectedOption === 'offer'
-            ? 'Share a showcase to start a conversation. Nothing changes owners.'
-            : !hasTradeAssets(terms.give)
-              ? 'Choose what interests you to start a conversation. Add something on your side to propose a trade.'
-              : `Build an offer with any mix of coins, ${battery ? 'battery, ' : ''}cards, groups and apps. Nothing moves until your partner accepts.`}
-      </p>
+      {sendsAsGift ? (
+        <p className={noticeClass} data-warning="true" role="status">
+          <strong>This will be a gift.</strong> You aren&apos;t asking for
+          anything back, so {partner.username} gets it with nothing in return.
+          Add something you want to make it a trade offer instead.
+        </p>
+      ) : (
+        <p className={noticeClass}>
+          {selectedOption === 'send'
+            ? 'You will review your gift before sending. Gifts transfer immediately after you confirm.'
+            : selectedOption === 'offer'
+              ? 'Share a showcase to start a conversation. Nothing changes owners.'
+              : !hasTradeAssets(terms.give)
+                ? 'Choose what interests you to start a conversation. Add something on your side to propose a trade.'
+                : `Build an offer with any mix of coins, ${battery ? 'battery, ' : ''}cards, groups and apps. Nothing moves until your partner accepts.`}
+        </p>
+      )}
     </div>
   );
 }

@@ -138,6 +138,7 @@ export default function OfferEditor({
   balance,
   showcase,
   showOwnership = true,
+  partnerNote,
   groupObjs,
   onCoinChange,
   onChoose,
@@ -155,6 +156,8 @@ export default function OfferEditor({
   balance?: number;
   showcase?: boolean;
   showOwnership?: boolean;
+  // replaces the "From {partner}" line under the title
+  partnerNote?: string;
   groupObjs: Record<number, any>;
   onCoinChange: (value: string) => void;
   onChoose: (kind: 'card' | 'group' | 'app') => void;
@@ -197,7 +200,8 @@ export default function OfferEditor({
           <div className="partner">
             {showcase
               ? 'Only a showcase · you keep everything'
-              : `${side === 'give' ? 'To' : 'From'} ${partnerName}`}
+              : partnerNote ||
+                `${side === 'give' ? 'To' : 'From'} ${partnerName}`}
           </div>
         </div>
       </header>

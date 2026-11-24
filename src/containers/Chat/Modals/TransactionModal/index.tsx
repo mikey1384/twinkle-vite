@@ -223,23 +223,48 @@ export default function TransactionModal({
     netGiveBattery > 0
       ? "You don't have that much battery left to give today."
       : '';
+  const give = {
+    coins: netGiveCoins,
+    battery: netGiveBattery,
+    ...selectedCards('offer', selectedCardIdsObj.offer),
+    groupIds: selectedGroupIdsObj.offer,
+    builds: selectedBuilds.offer
+  };
+  const hasGive = hasTradeAssets(give);
+  // Anything entered on the receive side, before coins and battery are
+  // netted (an invalid coin entry counts: it is still an ask).
+  const asksForSomething =
+    isTrade &&
+    Boolean(
+      wantCoins.amount ||
+      wantCoins.error ||
+      batteryUnits.want ||
+      selectedCardIdsObj.want.length ||
+      selectedGroupIdsObj.want.length ||
+      selectedBuilds.want.length
+    );
+  // A give side that came prefilled from an explicit trade intent (a
+  // counteroffer, or "Sell or trade" on an app) never turns into a gift by
+  // itself; the Gift tab is still one press away there.
+  const prefilledTrade =
+    !!counterTerms || (!!initialBuild && initialOption === 'want');
+  // Trade tab with things to give and nothing asked back: send it as a gift
+  // (Mikey 11-24, no switching to the Gift tab first). It becomes exactly the
+  // gift the Gift tab sends: same terms, review and request (type 'send').
+  const giftFromTrade =
+    isTrade && hasGive && !asksForSomething && !prefilledTrade;
   const terms: TradeTerms = {
-    give: {
-      coins: netGiveCoins,
-      battery: netGiveBattery,
-      ...selectedCards('offer', selectedCardIdsObj.offer),
-      groupIds: selectedGroupIdsObj.offer,
-      builds: selectedBuilds.offer
-    },
-    receive: isTrade
-      ? {
-          coins: netReceiveCoins,
-          battery: netReceiveBattery,
-          ...selectedCards('want', selectedCardIdsObj.want),
-          groupIds: selectedGroupIdsObj.want,
-          builds: selectedBuilds.want
-        }
-      : emptyBundle()
+    give,
+    receive:
+      isTrade && !giftFromTrade
+        ? {
+            coins: netReceiveCoins,
+            battery: netReceiveBattery,
+            ...selectedCards('want', selectedCardIdsObj.want),
+            groupIds: selectedGroupIdsObj.want,
+            builds: selectedBuilds.want
+          }
+        : emptyBundle()
   };
   const sides = isTrade ? (['offer', 'want'] as const) : (['offer'] as const);
   const unavailableCard = sides.some((side) =>
@@ -260,9 +285,9 @@ export default function TransactionModal({
       : '';
   const validationError =
     coinErrors.offer || coinErrors.want || selectionError || batteryError;
-  const hasGive = hasTradeAssets(terms.give);
   const hasReceive = hasTradeAssets(terms.receive);
-  const canReview = !validationError && (isTrade ? hasReceive : hasGive);
+  const canReview =
+    !validationError && (isTrade && !giftFromTrade ? hasReceive : hasGive);
   const showHandler =
     !!pendingTransaction &&
     !(
@@ -278,7 +303,7 @@ export default function TransactionModal({
     !!batteryPickerSide ||
     !!review;
   const mode =
-    selectedOption === 'send'
+    selectedOption === 'send' || giftFromTrade
       ? 'send'
       : selectedOption === 'offer'
         ? 'show'
@@ -334,7 +359,9 @@ export default function TransactionModal({
                     {selectedOption !== 'offer' && (
                       <span>
                         <b>You receive:</b>{' '}
-                        {summarizeBundleWithBurnValue(terms.receive)}
+                        {mode === 'send'
+                          ? 'Nothing in return'
+                          : summarizeBundleWithBurnValue(terms.receive)}
                       </span>
                     )}
                   </>
@@ -354,13 +381,15 @@ export default function TransactionModal({
                   color="logoBlue"
                   onClick={handleReview}
                 >
-                  {mode === 'send'
-                    ? 'Review gift'
-                    : mode === 'show'
-                      ? 'Review showcase'
-                      : mode === 'request'
-                        ? 'Review interest'
-                        : 'Review offer'}
+                  {giftFromTrade
+                    ? 'Send as a gift'
+                    : mode === 'send'
+                      ? 'Review gift'
+                      : mode === 'show'
+                        ? 'Review showcase'
+                        : mode === 'request'
+                          ? 'Review interest'
+                          : 'Review offer'}
                 </Button>
               )}
             </div>
@@ -409,6 +438,7 @@ export default function TransactionModal({
                 balance={balance}
                 isCounterPropose={!!counterTerms}
                 selectedOption={selectedOption}
+                sendsAsGift={giftFromTrade}
                 partner={partner}
                 groupObjs={groupObjs}
                 onSetSelectedOption={setSelectedOption}
@@ -443,7 +473,7 @@ export default function TransactionModal({
                   {selectionError || batteryError}
                 </p>
               )}
-              {isTrade && !hasReceive && hasGive && (
+              {isTrade && !hasReceive && hasGive && !giftFromTrade && (
                 <p style={{ fontSize: '1.3rem' }}>
                   Add what you want to receive, or choose “Give a gift” if you
                   want nothing back.

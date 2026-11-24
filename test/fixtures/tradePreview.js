@@ -9,7 +9,8 @@ import React,{useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {MemoryRouter} from 'react-router-dom';
 import {library} from '@fortawesome/fontawesome-svg-core';
-import {faSpinner,faSearch,faCaretDown,faCheckCircle,faUser,faClock,faGift,faCoins,faArrowUp,faArrowDown,faLaptopCode,faUsers,faCardsBlank,faEye,faTimes,faXmark,faCheck,faSparkles,faRedo,faRightLeft,faChevronDown,faChevronUp,faChevronRight} from '@fortawesome/pro-solid-svg-icons';
+import {faSpinner,faSearch,faCaretDown,faCheckCircle,faUser,faClock,faGift,faCoins,faArrowUp,faArrowDown,faLaptopCode,faUsers,faCardsBlank,faEye,faTimes,faXmark,faCheck,faSparkles,faRedo,faRightLeft,faChevronDown,faChevronUp,faChevronRight,faBolt,faHourglassHalf} from '@fortawesome/pro-solid-svg-icons';
+import {setFullBatteryUnits,batteryExpiresAtForOffer} from './src/helpers/battery';
 import AppTransferModal from './src/components/Build/AppTransferModal';
 import TransactionModal from './src/containers/Chat/Modals/TransactionModal';
 import TransactionDetails from './src/containers/Chat/TransactionDetails';
@@ -18,7 +19,7 @@ import SelectGroupsModal from './src/containers/Chat/Modals/TransactionModal/Sel
 import SelectAICardModal from './src/components/Modals/SelectAICardModal';
 import Modal from './src/components/Modal';
 import CardThumb from './src/components/CardThumb';
-library.add(faSpinner,faSearch,faCaretDown,faCheckCircle,faUser,faClock,faGift,faCoins,faArrowUp,faArrowDown,faLaptopCode,faUsers,faCardsBlank,faEye,faTimes,faXmark,faCheck,faSparkles,faRedo,faRightLeft,faChevronDown,faChevronUp,faChevronRight);
+library.add(faSpinner,faSearch,faCaretDown,faCheckCircle,faUser,faClock,faGift,faCoins,faArrowUp,faArrowDown,faLaptopCode,faUsers,faCardsBlank,faEye,faTimes,faXmark,faCheck,faSparkles,faRedo,faRightLeft,faChevronDown,faChevronUp,faChevronRight,faBolt,faHourglassHalf);
 window.viewer=1; localStorage.setItem('userId','1'); localStorage.setItem('username','Orbit'); localStorage.setItem('token','local-preview');
 window.posts=[];window.accepts=[];window.closes=[];window.partnerApps=[];window.coinUpdates=[];window.handoffs=[];window.serverCoins=5000;
 window.addEventListener('twinkle:build-ownership-changed',e=>window.handoffs.push(e.detail));
@@ -53,6 +54,8 @@ window.requests={
  searchUsers:async text=>'nova'.includes(text.toLowerCase())?[{id:2,username:'Nova'}]:[],
  postTradeRequest:async payload=>{window.posts.push(payload);if(window.failNext){window.failNext=false;throw {response:{data:{error:'The app is busy. Wait for Lumine to finish, then try again.'}}};}window.serverCoins=3500;return {coins:3500,isNewChannel:false,newChannelId:20,pathId:10020};},
  checkTransactionPossible:async()=>({isDisabled:false}),
+ // GET /chat/trade/battery as the request helper returns it (it also records the full battery size)
+ loadBatteryTradeInfo:async()=>{setFullBatteryUnits(1200000);return window.batteryInfo||{enabled:true,giveableUnits:720000,receiveRoomUnits:600000,dayEndsAt:batteryExpiresAtForOffer(Math.floor(Date.now()/1000)),allowed:true,message:null};},
  acceptTrade:async payload=>{window.accepts.push(payload);window.serverCoins=3500;return {coins:3500,channelId:20};},
  loadCoins:async()=>window.serverCoins,
  closeTransaction:async payload=>{window.closes.push(payload);return {...payload};},
@@ -93,7 +96,8 @@ export async function createTradePreviewPage() {
     `,
     '~/helpers':
       'export const isMobile=()=>innerWidth<600;export const isTablet=()=>false;export const isPhone=()=>innerWidth<600;export const throttle=fn=>fn;export const objectify=rows=>Object.fromEntries(rows.map(row=>[row.id,row]));',
-    '~/constants/sockets/api': 'export const socket={on(){},off(){},emit(){}};',
+    '~/constants/sockets/api':
+      'export const socket={on(){},off(){},emit(){}};export const socketKeepalive={subscribe(){return()=>{};}};',
     '~/components/ErrorBoundary':
       'export default ({children,innerRef,componentPath,...props})=>Object.keys(props).length?<div ref={innerRef} {...props}>{children}</div>:<>{children}</>;',
     '~/components/Loading': 'export default ()=> <p>Loading…</p>;',
