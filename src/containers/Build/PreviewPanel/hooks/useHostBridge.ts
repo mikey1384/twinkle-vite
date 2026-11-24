@@ -284,6 +284,7 @@ export function useHostBridge({
   requestBuildMusicGenerationConfirmationRef,
   requestBuildMediaActionConfirmationRef,
   requestBuildCoinConfirmationRef,
+  requestBuildAppLinkRef,
   requestCardCraftSelectionRef,
   onBuildLiveSafetyHostSessionsChange,
   requestBuildLiveSafetyStopRef,
@@ -2824,6 +2825,34 @@ export function useHostBridge({
             // consent; no extra "Open content?" modal (Mikey 10-10).
             pendingHostNavigationUrl = navigationDecision.url;
             response = { success: true, url: navigationDecision.url };
+            break;
+          }
+
+          case 'app:open-link': {
+            // Twinkle.app.openLink, and plain links / window.open in a tap
+            // (twinkle-api appLinkScript.ts). The page checks the link and
+            // shows its own sheet; the tab opens from the viewer's tap on
+            // Open there (components/Build/AppLink/useAppLinkConfirm.tsx).
+            const handleAppLink = requestBuildAppLinkRef?.current;
+            if (!handleAppLink) {
+              throw createPreviewBridgeError(
+                'Links cannot be opened here.',
+                'LINK_UNAVAILABLE'
+              );
+            }
+            const userActivation = {
+              isActive: navigator.userActivation?.isActive === true
+            };
+            const linkResult = await handleAppLink({
+              target: payload?.url,
+              userActivation,
+              isAppPreviewUrl: (url: URL) =>
+                Boolean(normalizeAllowedBuildPreviewFrameSrc(url.href))
+            });
+            if (linkResult.navigateUrl) {
+              pendingHostNavigationUrl = linkResult.navigateUrl;
+            }
+            response = linkResult.response;
             break;
           }
 
@@ -6506,6 +6535,7 @@ export function useHostBridge({
     requestBuildMusicGenerationConfirmationRef,
     requestBuildMediaActionConfirmationRef,
     requestBuildCoinConfirmationRef,
+    requestBuildAppLinkRef,
     requestBuildLiveSafetyStopRef,
     requestCardCraftSelectionRef,
     runtimeExplorationPlanRef,

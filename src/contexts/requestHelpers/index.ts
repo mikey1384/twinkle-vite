@@ -160,6 +160,7 @@ registerMethods('build', [
   'loadBuildAiPrompts',
   'callBuildRuntimeAiChat',
   'callBuildRuntimeAiImage',
+  'recordBuildAppLinkEvent',
   'loadBuildRuntimeAiImageStatus',
   'callBuildRuntimeAiMusic',
   'callBuildRuntimeAiAudio',

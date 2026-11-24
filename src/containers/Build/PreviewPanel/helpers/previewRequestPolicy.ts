@@ -58,6 +58,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:transcribe-audio',
   'app:navigate',
   'app:open-content',
+  'app:open-link',
   'app-tools:register',
   'app-tools:complete',
   'characters:chat',

@@ -417,7 +417,7 @@ function dialogButtons(buyWrap: HTMLElement | null) {
   );
 }
 
-function isFullscreen(doc: Document) {
+export function isFullscreen(doc: Document) {
   return Boolean(doc.fullscreenElement || (doc as any).webkitFullscreenElement);
 }
 
@@ -439,7 +439,7 @@ function boxVisible(doc: Document, buyWrap: HTMLElement | null) {
   return Boolean(top && (top === buyWrap || buyWrap.contains(top)));
 }
 
-function leaveFullscreenAndPointerLock(doc: Document) {
+export function leaveFullscreenAndPointerLock(doc: Document) {
   try {
     if (doc.fullscreenElement) void doc.exitFullscreen?.().catch(() => undefined);
     else if ((doc as any).webkitFullscreenElement) (doc as any).webkitExitFullscreen?.();
@@ -457,7 +457,7 @@ function leaveFullscreenAndPointerLock(doc: Document) {
   if (active?.tagName === 'IFRAME') active.blur();
 }
 
-function makeInert(root: HTMLElement | null) {
+export function makeInert(root: HTMLElement | null) {
   if (!root) return () => undefined;
   const hadInert = root.hasAttribute('inert');
   const pointerEvents = root.style.pointerEvents;

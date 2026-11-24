@@ -559,6 +559,25 @@ export default function buildRequestHelpers({
   }
 
   return {
+    // Twinkle.app.openLink sheet counts (shown / opened / cancelled /
+    // rejected); counts only, never the link. Never fails the page.
+    async recordBuildAppLinkEvent({
+      buildId,
+      kind
+    }: {
+      buildId: number;
+      kind: 'shown' | 'opened' | 'cancelled' | 'rejected';
+    }) {
+      try {
+        await request.post(
+          `${URL}/build/${buildId}/app-link-events`,
+          { kind },
+          auth()
+        );
+      } catch {
+        // telemetry
+      }
+    },
     async loadBuildRewardSettings(buildId: number) {
       const { data } = await request.get(
         `${URL}/build/${buildId}/rewards`,

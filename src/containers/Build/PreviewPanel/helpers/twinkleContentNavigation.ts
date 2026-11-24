@@ -25,6 +25,10 @@ const TWINKLE_PUBLIC_HOSTS = new Set([
   'www.twinkle.network'
 ]);
 
+export function isTwinklePublicHost(hostname: string) {
+  return TWINKLE_PUBLIC_HOSTS.has(String(hostname || '').toLowerCase());
+}
+
 const PREVIEW_QUERY_PARAMETERS = [
   'appMcpSession',
   'buildApiToken',

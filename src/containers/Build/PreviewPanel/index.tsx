@@ -13,6 +13,10 @@ import useBuildAudioMuted from '~/helpers/useBuildAudioMuted';
 import { css } from '@emotion/css';
 import useConfirmModal from '~/components/Modals/hooks/useConfirmModal';
 import useCoinConfirm from '~/components/Build/Coins/useCoinConfirm';
+import useAppLinkConfirm, {
+  type AppLinkRequest,
+  type AppLinkResult
+} from '~/components/Build/AppLink/useAppLinkConfirm';
 import type { CoinConfirmRequest } from '~/components/Build/Coins/coinConfirmText';
 import type { BuildCapabilitySnapshot } from '../types/capabilityTypes';
 import type {
@@ -821,6 +825,15 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       ((request: CoinConfirmRequest) => Promise<boolean>) | null
     >(null);
     requestBuildCoinConfirmationRef.current = requestCoinConfirm;
+    // Twinkle.app.openLink: "Open example.com?" outside the app frame.
+    const { appLinkModal, handleAppLinkRequest } = useAppLinkConfirm({
+      buildId: build.id,
+      frameRootRef: previewRootRef
+    });
+    const requestBuildAppLinkRef = useRef<
+      ((request: AppLinkRequest) => Promise<AppLinkResult>) | null
+    >(null);
+    requestBuildAppLinkRef.current = handleAppLinkRequest;
     const requestBuildMediaActionConfirmationRef = useRef<
       | ((request: BuildMediaActionConfirmationRequest) => Promise<boolean>)
       | null
@@ -1451,6 +1464,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       requestBuildMusicGenerationConfirmationRef,
       requestBuildMediaActionConfirmationRef,
       requestBuildCoinConfirmationRef,
+      requestBuildAppLinkRef,
       requestCardCraftSelectionRef,
       onBuildLiveSafetyHostSessionsChange: setActiveBuildLiveSafetyHostSessions,
       requestBuildLiveSafetyStopRef,
@@ -1885,6 +1899,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         {musicGenerationConfirmModal}
         {mediaActionConfirmModal}
         {coinConfirmModal}
+        {appLinkModal}
         {cardCraftSelection ? (
           <CardCraftModal
             key={`${cardCraftSelection.mode}:${cardCraftSelection.cardId || 'pick'}`}
