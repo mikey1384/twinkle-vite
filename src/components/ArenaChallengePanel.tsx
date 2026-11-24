@@ -7,7 +7,10 @@ import ArenaRewards from '~/containers/Arena/Rewards';
 import type { ArenaRewardStatus } from '~/containers/Arena/types';
 import { arenaMediaURL } from '~/containers/Arena/media';
 import { ARENA } from '~/containers/Arena/theme';
-import { arenaAssistLabel } from '~/helpers/arenaChallengeCopy';
+import {
+  arenaAssistLabel,
+  isRenderableArenaChallenge
+} from '~/helpers/arenaChallengeCopy';
 import {
   getNavigationLocationKey,
   getNavigationTargetLocation,
@@ -102,20 +105,75 @@ const dailyDateFormatter = new Intl.DateTimeFormat('en-US', {
 });
 
 function ArenaChallengePanel({
-  challenge
+  challenge,
+  compact = false
 }: {
   challenge: ArenaChallengePreview;
+  // the challenge as the root of a Home feed comment: the same paper in the
+  // card's smaller target slot (helpers/sizing.ts 'arena-challenge'), with
+  // the award kept and no buttons; the whole slot opens the post
+  compact?: boolean;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const todayCompleted = useNotiContext(
     (v) => v.state.todayStats?.dailyTaskStatus?.aiStory?.arena?.todayQuestion?.done
   );
-  if (challenge?.kind === 'today') {
-    return <DailyClearPanel challenge={challenge} userId={userId} todayCompleted={todayCompleted} />;
+  if (!isRenderableArenaChallenge(challenge)) return null;
+  if (challenge.kind === 'today') {
+    return compact ? (
+      <CompactDailyClearPanel challenge={challenge} />
+    ) : (
+      <DailyClearPanel challenge={challenge} userId={userId} todayCompleted={todayCompleted} />
+    );
   }
-  if (!challenge?.examKey) return null;
   const mark = gradeMark(challenge.raw, challenge.max);
   const helpedBy = arenaAssistLabel(challenge);
+  if (compact) {
+    return (
+      <div className={cx(resultCls, compactCls)}>
+        <img
+          className={cx(stampCls, compactStampCls)}
+          src={arenaMediaURL(`img/stamps/${mark.file}.png`)}
+          alt={mark.mark}
+        />
+        <img
+          className={cx(eraserCls, compactArtCls)}
+          src={arenaMediaURL(`img/bosses/${challenge.examKey}.jpg`)}
+          alt={challenge.examName}
+        />
+        <div className={cx(resultTextCls, compactTextCls)}>
+          <span className={codeCls}>
+            BOSS {challenge.code}
+            {challenge.codeLabel ? ` · ${challenge.codeLabel}` : ''}
+          </span>
+          <strong className={cx(titleCls, oneLineCls)}>{challenge.examName}</strong>
+          <span className={cx(modeCls, oneLineCls)}>
+            {LENGTH[challenge.length]} · {MODE[challenge.difficulty]}
+          </span>
+          <span className={compactScoreRowCls}>
+            <span className={cx(scoreCls, compactScoreCls)}>
+              <small>Score</small> {challenge.raw} <span>/ {challenge.max}</span>
+            </span>
+            {helpedBy && (
+              <span className={assistedCls} title={`Taken ${helpedBy}`}>
+                {helpedBy.charAt(0).toUpperCase() + helpedBy.slice(1)}
+              </span>
+            )}
+          </span>
+          <ArenaRewards
+            xp={challenge.xpEarned}
+            coins={challenge.coinsEarned}
+            rewardPending={challenge.rewardPending}
+            rewardStatus={challenge.rewardStatus}
+            markingPending={challenge.markingPending}
+            ariaLabel="Exam rewards"
+            emptyNote="Daily exam reward limit reached"
+            label="Awarded"
+          />
+        </div>
+      </div>
+    );
+  }
   const grade = (g: number) => challenge.gradeLabels?.[g - 1] || `${g}등급`;
   // the sharer can't take their own paper again (the API refuses it)
   const isMine = !!userId && userId === challenge.sharer?.id;
@@ -263,6 +321,45 @@ function DailyClearPanel({
           {counts && <span className={metaCls}>{counts}</span>}
         </div>
       )}
+    </div>
+  );
+}
+
+// A daily clear in a feed comment's target slot: the Q card beside the date,
+// the question's title and opening line, and what it paid. Laid out like the
+// compact battle so both fit the one 'arena-challenge' slot.
+function CompactDailyClearPanel({
+  challenge
+}: {
+  challenge: ArenaTodayChallengePreview;
+}) {
+  return (
+    <div className={cx(resultCls, compactCls)}>
+      <span className={cx(clearedStampCls, compactClearedStampCls)} aria-label="Cleared">
+        CLEARED
+      </span>
+      <span className={cx(qCardCls, compactArtCls, compactQCardCls)} aria-hidden="true">
+        Q
+      </span>
+      <div className={cx(resultTextCls, compactTextCls)}>
+        <span className={headLabelsCls}>
+          <span className={codeCls}>ARENA · DAILY</span>
+          <span className={modeCls}>{formatDailyDate(challenge.dayKey)}</span>
+        </span>
+        <strong className={cx(titleCls, oneLineCls)}>
+          {challenge.questionTitle || 'Daily challenge'}
+        </strong>
+        {challenge.questionExcerpt && (
+          <span className={cx(excerptCls, compactExcerptCls)}>{challenge.questionExcerpt}</span>
+        )}
+        <ArenaRewards
+          xp={challenge.xpEarned}
+          coins={challenge.coinsEarned}
+          ariaLabel="Daily challenge rewards"
+          emptyNote="Daily exam reward limit reached"
+          label="Awarded"
+        />
+      </div>
     </div>
   );
 }
@@ -640,4 +737,90 @@ const awardCls = css`
 const metaCls = css`
   font-size: 1.3rem;
   color: ${Color.gray()};
+`;
+
+// the compact paper (a feed comment's target slot): picture beside the words,
+// nothing that wraps onto extra lines, so it always fits the slot's height
+const compactCls = css`
+  gap: 0 1.4rem;
+  padding: 1rem 1.2rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 0 1rem;
+    padding: 0.9rem 1rem;
+  }
+`;
+
+const compactArtCls = css`
+  height: 9rem;
+  margin-left: 0.3rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    height: 7.6rem;
+  }
+`;
+
+const compactQCardCls = css`
+  font-size: 3.8rem;
+  box-shadow: 3px 4px 0 ${ARENA.line};
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 3.2rem;
+  }
+`;
+
+const compactTextCls = css`
+  gap: 0.25rem;
+  padding-right: 4.8rem;
+  line-height: 1.3;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding-right: 3.6rem;
+  }
+`;
+
+const compactStampCls = css`
+  width: 4.8rem;
+  height: 4.8rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 4rem;
+    height: 4rem;
+  }
+`;
+
+const compactClearedStampCls = css`
+  position: absolute;
+  top: 0.9rem;
+  right: 1rem;
+  float: none;
+  margin: 0;
+  padding: 0.2rem 0.6rem;
+  font-size: 1.5rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    top: 1.1rem;
+    right: 1rem;
+    padding: 0.15rem 0.5rem;
+    font-size: 1.3rem;
+  }
+`;
+
+const compactScoreRowCls = css`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.8rem;
+  min-width: 0;
+`;
+
+const compactScoreCls = css`
+  line-height: 1.1;
+`;
+
+const compactExcerptCls = css`
+  font-size: 1.3rem;
+  line-height: 1.4;
+  -webkit-line-clamp: 1;
+`;
+
+const oneLineCls = css`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;

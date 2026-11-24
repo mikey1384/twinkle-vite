@@ -46,3 +46,14 @@ export function arenaChallengeHeadline(score?: ChallengeScore | null) {
     ? 'got a perfect score! Can you match it?'
     : 'took on a boss and won. Can you do better?';
 }
+
+// Whether ArenaChallengePanel draws anything for this shared challenge: a
+// daily clear always does; a boss battle needs its exam (the panel returns
+// null without it). Home feed sizing reserves a slot only for one that draws,
+// so a missing or deleted challenge never leaves an empty box.
+export function isRenderableArenaChallenge(
+  challenge?: { kind?: string; examKey?: string | null; notFound?: boolean } | null
+) {
+  if (!challenge || challenge.notFound) return false;
+  return challenge.kind === 'today' || !!challenge.examKey;
+}

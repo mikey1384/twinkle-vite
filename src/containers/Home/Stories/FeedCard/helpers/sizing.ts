@@ -5,6 +5,7 @@ import {
 } from '~/helpers/bookEmbedHelpers';
 import { resolveWideSubjectMedia } from '~/components/Subjects/wideSubjectMedia';
 import { isRenderableHomeFeedTargetComment } from './targetComment';
+import { isRenderableArenaChallenge } from '~/helpers/arenaChallengeCopy';
 import {
   getAICardCollectionEmbedPreviewTitle,
   getInternalEmbedPreviewInfo,
@@ -73,6 +74,7 @@ export type FeedCardSize =
 
 export type FeedCardTargetSize =
   | 'ai-card'
+  | 'arena-challenge'
   | 'build-comment'
   | 'compact'
   | 'fallback'
@@ -144,6 +146,10 @@ export interface FeedCardFrameSizing {
   placeholderHeight: string;
   size: FeedCardFrameSize;
   subjectSecretPanelHeight: string;
+  // A short comment above a target preview: the comment panel hugs its text
+  // ('100%' when the panel keeps its bucket height)
+  textFitPanelHeight: string;
+  mobileTextFitPanelHeight: string;
 }
 
 export interface FeedCardSizing {
@@ -241,6 +247,11 @@ const TARGET_HEIGHT_REM: Record<
 > = {
   // Compact AICardPreview minima; actual content can grow for wrapped names.
   'ai-card': { desktop: 14, mobile: 12 },
+  // A comment's Arena challenge root: the compact ArenaChallengePanel (boss
+  // battle or daily clear, one shared height since the kind is unknown until
+  // the root hydrates). Must match the --size-arena-challenge heights in
+  // Body/styles (panelPreviewStyles + mobilePreviewStyles).
+  'arena-challenge': { desktop: 16, mobile: 14.5 },
   'build-comment': { desktop: 15.5, mobile: 12 },
   compact: { desktop: 8.5, mobile: 8.5 },
   fallback: { desktop: 13, mobile: 12 },
@@ -375,6 +386,18 @@ const PLAIN_TEXT_PREVIEW_LAYOUT = {
   tallRawLength: 520
 };
 
+// A short plain comment above a target (a subject, a build, an Arena
+// challenge…) sizes its panel to its own lines, so the target sits right
+// under the words instead of below a fixed compact box. The widths are
+// deliberately narrower than the real column (wide Korean/CJK characters and
+// emoji count double), so the estimate can only over-count lines; RichText
+// clamps the preview at the compact bucket's max lines either way.
+const TARGET_TEXT_FIT_LAYOUT = {
+  charsPerLine: { desktop: 44, mobile: 22 },
+  // .home-feed-card__text-preview padding (1rem top and bottom) + rounding
+  paddingY: 2.3
+};
+
 export function getFeedCardSizing({
   content,
   rootObj,
@@ -415,8 +438,20 @@ export function getFeedCardSizing({
     rootObj: resolvedRootObj,
     targetObj: resolvedTargetObj
   });
+  const textFit =
+    !showcase && target && size === 'compact' && isTargetTextFitComment(content, flags)
+      ? {
+          desktop: getTargetTextFitPanelHeight(content, 'desktop'),
+          mobile: getTargetTextFitPanelHeight(content, 'mobile')
+        }
+      : null;
   const main = {
-    className: getFeedCardPanelClassName({ flags, kind, size }),
+    className: [
+      getFeedCardPanelClassName({ flags, kind, size }),
+      textFit ? 'home-feed-card__panel-preview--text-fit' : ''
+    ]
+      .filter(Boolean)
+      .join(' '),
     kind,
     mobileTextMaxLines: getTextMaxLines(size, 'mobile'),
     reflectionAnswerMaxLines: getReflectionAnswerMaxLines(size),
@@ -431,12 +466,60 @@ export function getFeedCardSizing({
       mainSize: size,
       secretHidden: flags.secretHidden,
       showcase,
-      target
+      target,
+      textFit
     }),
     flags,
     main,
     target
   };
+}
+
+function isTargetTextFitComment(
+  content: any,
+  flags: FeedCardSizing['flags']
+) {
+  if (content?.contentType !== 'comment') return false;
+  if (flags.secretHidden || flags.hasAttachment || flags.hasRichTextEmbed) {
+    return false;
+  }
+  // Zero/Ciel placeholders render the AI Energy sponsor notice, not text
+  const uploaderId = Number(content?.uploader?.id || content?.userId || 0);
+  if (
+    uploaderId === Number(ZERO_TWINKLE_ID) ||
+    uploaderId === Number(CIEL_TWINKLE_ID)
+  ) {
+    return false;
+  }
+  const text = getPlainTextValue(content);
+  return (
+    Boolean(text) &&
+    !/https?:\/\/|www\./i.test(text) &&
+    !hasStructuredPreviewMarkdown(text)
+  );
+}
+
+function getTargetTextFitPanelHeight(content: any, axis: FeedCardLayoutAxis) {
+  const charsPerLine = TARGET_TEXT_FIT_LAYOUT.charsPerLine[axis];
+  const lines = getPlainTextValue(content)
+    .split(/\r?\n/)
+    .map((line: string) => line.replace(/\s+/g, ' ').trim())
+    .reduce((count: number, line: string) => {
+      let width = 0;
+      for (const char of line) {
+        width += (char.codePointAt(0) || 0) >= 0x2e80 ? 2 : 1;
+      }
+      return count + Math.max(1, Math.ceil(width / charsPerLine));
+    }, 0);
+  const shownLines = Math.min(
+    Math.max(1, lines),
+    PLAIN_TEXT_PREVIEW_LAYOUT.compactMaxLines[axis]
+  );
+  return Math.min(
+    PANEL_HEIGHT_REM.compact[axis],
+    shownLines * HOME_FEED_MARKDOWN_LINE_HEIGHT_REM[axis] +
+      TARGET_TEXT_FIT_LAYOUT.paddingY
+  );
 }
 
 export function getDailyReflectionAnswerPreviewMaxLines({
@@ -851,6 +934,14 @@ function getTargetPanelSizing({
   if (normalizedRootType === 'aiCard') {
     return buildTargetSizing('ai-card');
   }
+  if (normalizedRootType === 'arenaChallenge') {
+    if (content?.contentType !== 'comment') return null;
+    // Before the root hydrates, reserve the slot it will most likely fill;
+    // once loaded, a challenge the panel can't draw (no exam) reserves none.
+    return !rootObj?.id || isRenderableArenaChallenge(rootObj)
+      ? buildTargetSizing('arena-challenge')
+      : null;
+  }
 
   const standardRootTypes =
     content?.contentType === 'subject'
@@ -920,7 +1011,8 @@ function getFeedCardFrameSizing({
   mainSize,
   secretHidden,
   showcase = false,
-  target
+  target,
+  textFit = null
 }: {
   content: any;
   hasCommentPreview: boolean;
@@ -928,20 +1020,23 @@ function getFeedCardFrameSizing({
   secretHidden: boolean;
   showcase?: boolean;
   target: FeedCardTargetSizing | null;
+  textFit?: Record<FeedCardLayoutAxis, number> | null;
 }): FeedCardFrameSizing {
   const desktopBodyHeight = getBodyHeight({
     axis: 'desktop',
     content,
     mainSize,
     secretHidden,
-    target
+    target,
+    textFit
   });
   const mobileBodyHeight = getBodyHeight({
     axis: 'mobile',
     content,
     mainSize,
     secretHidden,
-    target
+    target,
+    textFit
   });
   const desktopCommentPreviewFrameHeight = hasCommentPreview
     ? CARD_FRAME_REM.desktop.commentPreviewGap +
@@ -1031,7 +1126,11 @@ function getFeedCardFrameSizing({
     mobileHeight: toCssFixedHeight(mobileHeight, CARD_BORDER_PX),
     mobileHeadingHeight: toCssFixedHeight(mobileFrame.heading),
     placeholderHeight: toCssFixedHeight(desktopHeight, CARD_BORDER_PX),
-    size
+    size,
+    textFitPanelHeight: textFit ? toCssFixedHeight(textFit.desktop) : '100%',
+    mobileTextFitPanelHeight: textFit
+      ? toCssFixedHeight(textFit.mobile)
+      : '100%'
   };
 }
 
@@ -1040,16 +1139,19 @@ function getBodyHeight({
   content,
   mainSize,
   secretHidden,
-  target
+  target,
+  textFit = null
 }: {
   axis: 'desktop' | 'mobile';
   content: any;
   mainSize: FeedCardSize;
   secretHidden: boolean;
   target: FeedCardTargetSizing | null;
+  textFit?: Record<FeedCardLayoutAxis, number> | null;
 }) {
-  const panelHeight =
-    mainSize === 'subject-comment-embed'
+  const panelHeight = textFit
+    ? textFit[axis]
+    : mainSize === 'subject-comment-embed'
       ? estimateCommentEmbedBodyHeight(content, axis, secretHidden)
       : mainSize === 'subject-secret-fit'
         ? estimateSubjectSecretBodyHeight(content, axis, secretHidden)

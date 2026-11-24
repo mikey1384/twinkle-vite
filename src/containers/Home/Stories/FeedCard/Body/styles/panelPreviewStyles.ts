@@ -51,6 +51,12 @@ export const panelPreviewStyles = `
     border: 0;
     background: transparent;
   }
+  /* The Arena paper brings its own border, shadow and background. */
+  .home-feed-card__target-preview--type-arenaChallenge.home-feed-card__target-preview {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
   .home-feed-card__target-preview--type-aiCard {
     display: flex;
     align-items: center;
@@ -136,6 +142,11 @@ export const panelPreviewStyles = `
   }
   .home-feed-card__panel-preview--size-compact-desktop {
     height: max(11rem, 110px);
+  }
+  /* A short comment above a target hugs its lines (helpers/sizing.ts
+     getTargetTextFitPanelHeight); the card frame budgets this exact height. */
+  .home-feed-card__panel-preview--size-compact.home-feed-card__panel-preview--text-fit {
+    height: var(--home-feed-card-text-fit-panel-height, max(11rem, 110px));
   }
   .home-feed-card__panel-preview--size-fallback {
     height: max(20rem, 200px);
@@ -257,6 +268,11 @@ export const panelPreviewStyles = `
   .home-feed-card__target-preview--size-media-comment {
     height: max(20rem, 200px);
   }
+  /* Compact Arena paper. Must match TARGET_HEIGHT_REM['arena-challenge'] in
+     helpers/sizing.ts — the card frame budgets this exact height. */
+  .home-feed-card__target-preview--size-arena-challenge {
+    height: max(16rem, 160px);
+  }
   /* Subject target carrying a promoted description embed (profile card,
      image, YouTube). Must match TARGET_HEIGHT_REM['subject-embed'] in
      helpers/sizing.ts — the card frame budgets this exact height. */
@@ -303,6 +319,10 @@ export const panelPreviewStyles = `
     &.home-feed-card__body--tablet-media-attachment
       .home-feed-card__target-preview--size-subject-embed {
       height: max(20rem, 200px);
+    }
+    &.home-feed-card__body--tablet-media-attachment
+      .home-feed-card__target-preview--size-arena-challenge {
+      height: max(14.5rem, 145px);
     }
   }
   h3:where(:not(.rich-text--block-preview *), .rich-text-embedded-component *) {

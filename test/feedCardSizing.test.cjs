@@ -95,8 +95,13 @@ test('uses compact body space for visually short comments with target previews',
   assert.equal(sizing.main.mobileTextMaxLines, 3);
   assert.equal(sizing.target?.size, 'standard');
   assert.equal(sizing.card.hasTarget, true);
-  assert.equal(sizing.card.bodyHeight, 'max(24.85rem, 248.5px)');
-  assert.equal(sizing.card.desktopHeight, 'calc(max(36.75rem, 367.5px) + 2px)');
+  // the comment panel hugs its (conservatively estimated) lines above the
+  // target: two lines on desktop, three on phones
+  assert.match(sizing.main.className, /home-feed-card__panel-preview--text-fit/);
+  assert.equal(sizing.card.textFitPanelHeight, 'max(7.2rem, 72px)');
+  assert.equal(sizing.card.mobileTextFitPanelHeight, 'max(9.24rem, 92.4px)');
+  assert.equal(sizing.card.bodyHeight, 'max(21.05rem, 210.5px)');
+  assert.equal(sizing.card.desktopHeight, 'calc(max(32.95rem, 329.5px) + 2px)');
 });
 
 test('promotes medium plain comments out of compact bucket', () => {
@@ -2692,10 +2697,11 @@ test('uses media target bucket for media-only target comments', () => {
   assert.equal(sizing.target?.size, 'media-comment');
   assert.equal(sizing.card.hasTarget, true);
   assert.equal(sizing.card.size, 'comment-with-target-card');
-  assert.equal(sizing.card.bodyHeight, 'max(31.85rem, 318.5px)');
-  assert.equal(sizing.card.mobileBodyHeight, 'max(28.85rem, 288.5px)');
-  assert.equal(sizing.card.desktopHeight, 'calc(max(43.75rem, 437.5px) + 2px)');
-  assert.equal(sizing.card.mobileHeight, 'calc(max(40.6rem, 406px) + 2px)');
+  // one-line comment panel (4.75 / 4.61) + gap + media target (20 / 18)
+  assert.equal(sizing.card.bodyHeight, 'max(25.6rem, 256px)');
+  assert.equal(sizing.card.mobileBodyHeight, 'max(23.46rem, 234.6px)');
+  assert.equal(sizing.card.desktopHeight, 'calc(max(37.5rem, 375px) + 2px)');
+  assert.equal(sizing.card.mobileHeight, 'calc(max(35.21rem, 352.1px) + 2px)');
   assert.match(
     sizing.target?.className || '',
     /home-feed-card__target-preview--size-media-comment/
@@ -2888,4 +2894,114 @@ test('Picture Day reflections get the picture size, whatever the text length', (
     assert.equal(sizing.main.size, 'reflection-picture');
     assert.equal(sizing.card.bodyHeight, 'max(30rem, 300px)');
   }
+});
+
+test('Arena challenge comment roots reserve the compact Arena slot only when it draws', () => {
+  const comment = {
+    contentType: 'comment',
+    content: '6',
+    rootType: 'arenaChallenge',
+    rootId: 71
+  };
+  const sizeFor = (rootObj) =>
+    getFeedCardSizing({ content: comment, rootObj, userId: 1 });
+
+  // before the root hydrates: the slot it will most likely fill
+  const pending = sizeFor(undefined);
+  assert.equal(pending.target?.size, 'arena-challenge');
+  // the comment's own text is unknown until it loads: keep the compact box
+  const pendingText = getFeedCardSizing({
+    content: { ...comment, content: '' },
+    userId: 1
+  });
+  assert.equal(pendingText.target?.size, 'arena-challenge');
+  assert.equal(pendingText.card.bodyHeight, 'max(27.85rem, 278.5px)');
+
+  const daily = sizeFor({ id: 71, kind: 'today', dayKey: '2026-11-23' });
+  const battle = sizeFor({ id: 72, kind: 'battle', examKey: 'ssat-middle' });
+  for (const sizing of [daily, battle]) {
+    assert.equal(sizing.target?.size, 'arena-challenge');
+    assert.match(
+      sizing.target.className,
+      /home-feed-card__target-preview--size-arena-challenge/
+    );
+    assert.equal(sizing.card.size, 'comment-with-target-card');
+    // one-line comment (4.75 / 4.61) + target gap (0.85) + Arena slot (16 / 14.5)
+    assert.equal(sizing.card.bodyHeight, 'max(21.6rem, 216px)');
+    assert.equal(sizing.card.mobileBodyHeight, 'max(19.96rem, 199.6px)');
+  }
+
+  // a boss battle the panel can't draw, or a deleted challenge: no box at all
+  for (const rootObj of [
+    { id: 74, kind: 'battle', examKey: '' },
+    { id: 75, notFound: true, contentType: 'arenaChallenge' }
+  ]) {
+    const sizing = sizeFor(rootObj);
+    assert.equal(sizing.target, null);
+    assert.equal(sizing.card.hasTarget, false);
+    assert.equal(sizing.card.bodyHeight, 'max(11rem, 110px)');
+  }
+});
+
+test('Arena target CSS heights match the budgeted slot', () => {
+  const stylesDir = path.resolve(
+    __dirname,
+    '../src/containers/Home/Stories/FeedCard/Body/styles'
+  );
+  const desktop = readFileSync(path.join(stylesDir, 'panelPreviewStyles.ts'), 'utf8');
+  const mobile = readFileSync(path.join(stylesDir, 'mobilePreviewStyles.ts'), 'utf8');
+  const selector = '.home-feed-card__target-preview--size-arena-challenge';
+  assert.match(getCssBlock(desktop, `  ${selector}`), /height: max\(16rem, 160px\)/);
+  assert.match(getCssBlock(mobile, `    ${selector}`), /height: max\(14\.5rem, 145px\)/);
+});
+
+test('only plain short comments above a target hug their text', () => {
+  const arenaRoot = { id: 71, kind: 'today', dayKey: '2026-11-23' };
+  const sizeFor = (content) =>
+    getFeedCardSizing({
+      content: {
+        contentType: 'comment',
+        rootType: 'arenaChallenge',
+        rootId: 71,
+        ...content
+      },
+      rootObj: arenaRoot,
+      userId: 1
+    });
+
+  assert.equal(sizeFor({ content: 'gg' }).card.textFitPanelHeight, 'max(4.75rem, 47.5px)');
+  // AI Energy placeholders draw the sponsor notice; links can draw previews
+  for (const content of [
+    { content: 'thinking', uploader: { id: TEST_ZERO_TWINKLE_ID } },
+    { content: 'look https://example.com' },
+    { content: '- one\n- two' }
+  ]) {
+    const sizing = sizeFor(content);
+    assert.equal(sizing.card.textFitPanelHeight, '100%');
+    assert.doesNotMatch(sizing.main.className, /--text-fit/);
+    assert.equal(sizing.card.bodyHeight, 'max(27.85rem, 278.5px)');
+  }
+
+  // no target: the short-comment card keeps its compact bucket
+  const alone = getFeedCardSizing({
+    content: { contentType: 'comment', content: 'gg' },
+    userId: 1
+  });
+  assert.equal(alone.card.textFitPanelHeight, '100%');
+  assert.equal(alone.card.bodyHeight, 'max(11rem, 110px)');
+
+  const stylesDir = path.resolve(
+    __dirname,
+    '../src/containers/Home/Stories/FeedCard/Body/styles'
+  );
+  const fitSelector =
+    '.home-feed-card__panel-preview--size-compact.home-feed-card__panel-preview--text-fit';
+  assert.match(
+    getCssBlock(readFileSync(path.join(stylesDir, 'panelPreviewStyles.ts'), 'utf8'), `  ${fitSelector}`),
+    /var\(--home-feed-card-text-fit-panel-height/
+  );
+  assert.match(
+    getCssBlock(readFileSync(path.join(stylesDir, 'mobilePreviewStyles.ts'), 'utf8'), `    ${fitSelector}`),
+    /var\(--home-feed-card-text-fit-mobile-panel-height/
+  );
 });

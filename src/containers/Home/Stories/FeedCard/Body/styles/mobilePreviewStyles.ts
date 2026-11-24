@@ -80,6 +80,9 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--size-compact-desktop {
       height: max(19rem, 190px);
     }
+    .home-feed-card__panel-preview--size-compact.home-feed-card__panel-preview--text-fit {
+      height: var(--home-feed-card-text-fit-mobile-panel-height, max(10rem, 100px));
+    }
     .home-feed-card__panel-preview--size-fallback {
       height: max(19rem, 190px);
     }
@@ -195,6 +198,11 @@ export const mobilePreviewStyles = `
        panelPreviewStyles; must match TARGET_HEIGHT_REM['subject-embed']. */
     .home-feed-card__target-preview--size-subject-embed {
       height: max(20rem, 200px);
+    }
+    /* Mobile counterpart of the Arena target height; must match
+       TARGET_HEIGHT_REM['arena-challenge']. */
+    .home-feed-card__target-preview--size-arena-challenge {
+      height: max(14.5rem, 145px);
     }
     .home-feed-card__panel-preview,
     .home-feed-card__target-preview {
