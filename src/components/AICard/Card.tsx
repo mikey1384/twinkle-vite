@@ -2,6 +2,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
 import useSizedImage from '~/helpers/hooks/useSizedImage';
+import { isFreshAICardArt } from '~/helpers/sizedImages';
 import MysteryCardArt from '~/components/AICard/MysteryCardArt';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -94,15 +95,18 @@ export default function Card({
   }, [finalCard.imagePath, finalCard.imageGenerationPreviewUrl]);
   // Lists, the feed and collections draw the card small: they get the copy of
   // the art that fits (helpers/sizedImages.ts). The card's own detail view
-  // (fullSize) keeps the original. One hook per <img>; they pick the same file.
-  const coverArt = useSizedImage({
-    src: fullSize ? '' : frontPicUrl,
+  // (fullSize) and art saved moments ago keep the original. One hook per <img>.
+  const artCopiesEnabled = !fullSize && !isFreshAICardArt(finalCard);
+  const coverArtProps = useSizedImage({
+    src: frontPicUrl,
     fit: 'cover',
-    aspect: 1
+    aspect: 2 / 3,
+    enabled: artCopiesEnabled
   });
-  const containArt = useSizedImage({ src: fullSize ? '' : frontPicUrl });
-  const coverArtProps = fullSize ? { src: frontPicUrl } : coverArt;
-  const containArtProps = fullSize ? { src: frontPicUrl } : containArt;
+  const containArtProps = useSizedImage({
+    src: frontPicUrl,
+    enabled: artCopiesEnabled
+  });
   const isOpenAiImage = useMemo(
     () =>
       finalCard?.engine === 'image-1' ||

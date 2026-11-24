@@ -18,9 +18,13 @@ export default function useSizedImage({
   src,
   fit = 'contain',
   aspect = 16 / 9,
+  enabled = true,
   onError
 }: {
   src: string;
+  // false: show src as it is (e.g. a detail view, or art saved seconds ago
+  // whose copies the worker has not made yet).
+  enabled?: boolean;
   fit?: 'contain' | 'cover';
   aspect?: number;
   onError?: (event: React.SyntheticEvent<HTMLImageElement>) => void;
@@ -31,7 +35,7 @@ export default function useSizedImage({
   const srcSet = getSizedImageSrcSet(src);
   const [failedSrcSet, setFailedSrcSet] = useState('');
   const [sizes, setSizes] = useState('');
-  const useCopies = Boolean(srcSet) && failedSrcSet !== srcSet;
+  const useCopies = enabled && Boolean(srcSet) && failedSrcSet !== srcSet;
 
   useLayoutEffect(() => {
     if (!useCopies || !img) return;

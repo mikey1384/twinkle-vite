@@ -1,5 +1,6 @@
 import React from 'react';
 import useSizedImage from '~/helpers/hooks/useSizedImage';
+import { isFreshAICardArt } from '~/helpers/sizedImages';
 import AICardPreview from '~/components/AICardPreview';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -30,7 +31,8 @@ export function CompactThumb({
   const sizedArt = useSizedImage({
     src: imageSrc && !card.isBurned ? imageSrc : '',
     fit: 'cover',
-    aspect: 1
+    aspect: 2 / 3,
+    enabled: !isFreshAICardArt(card)
   });
   const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const burnXP = isTotalMysteryQuality(card.quality)

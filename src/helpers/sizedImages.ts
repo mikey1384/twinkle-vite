@@ -44,3 +44,16 @@ export function getSizedImageSrcSet(src: unknown) {
     (width) => `${getSizedImageUrl(src, width)} ${width}w`
   ).join(', ');
 }
+
+// Copies of a card's art are made by the image worker right after the art is
+// saved, so for its first minutes a card shows the original (no failed copy
+// request, no gap while a reveal's preview hands over to the saved art).
+const FRESH_ART_SECONDS = 180;
+export function isFreshAICardArt(card: {
+  timeStamp?: unknown;
+  imageGenerationPreviewUrl?: unknown;
+}) {
+  if (card.imageGenerationPreviewUrl) return true;
+  const savedAt = Number(card.timeStamp || 0);
+  return savedAt > 0 && Date.now() / 1000 - savedAt < FRESH_ART_SECONDS;
+}
