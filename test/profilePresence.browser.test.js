@@ -380,6 +380,10 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
           }
           await setPresence({ activity: { kind: 'app', id: 2460, title: 'Math Lab' } }, 'Online');
           await setPresence({ isAway: true }, 'Away');
+          // Away no longer hides the app badge (7b9e4fd10, Mikey 11-22): the
+          // server withdraws the activity itself for idle or long-hidden pages.
+          assert.equal(await badge.count(), 1);
+          await setPresence({ activity: null }, 'Away');
           assert.equal(await badge.count(), 0);
           await setPresence({ isOnline: false, isBusy: true }, null);
           assert.equal(

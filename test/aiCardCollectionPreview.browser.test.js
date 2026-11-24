@@ -79,7 +79,7 @@ async function compileFixture() {
       export const useKeyContext = select => select(state);
       export const useChatContext = select => select({...state,state:{cardObj:window.collectionCardObj}});
     `,
-    '~/helpers': 'export const isMobile = () => false;',
+    '~/helpers': 'export const isMobile = () => false; export const isTablet = () => false;',
     '~/helpers/hooks':
       'export const useLiveComment = value => value; export const useContentState = () => ({cardIds:window.collectionIds});',
     '~/theme/hooks/useRoleColor':
@@ -99,6 +99,13 @@ async function compileFixture() {
     '~/components/ProfilePic': 'export default () => null;',
     '~/components/Build/Cards': 'export const BuildMiniCard = () => null;',
     '~/components/AchievementItem': 'export default () => null;',
+    // summon-discussion targets (1c5b9b8cd), Arena challenges (9c7191975),
+    // Bridge Builder steps (088b72153) and PDF links (49c9c171a) are not
+    // part of a card collection embed.
+    '~/components/AICardSummonContent': 'export default () => null;',
+    '~/components/ArenaChallengePanel': 'export default () => null;',
+    './MeetupStepPreview': 'export default () => null;',
+    'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url': 'export default "";',
     '~/components/SharedPromptBlock': 'export default () => null;',
     '~/components/SecretComment':
       'import React from "react"; export default ({label,style}) => <div style={style}>{label}</div>;',

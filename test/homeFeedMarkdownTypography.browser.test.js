@@ -75,6 +75,8 @@ async function compileFixture() {
       'export default function ErrorBoundary({children}) {return children}',
     '~/theme/hooks/useRoleColor':
       'export const useRoleColor = () => ({color:"#126bb5",colorKey:"logoBlue",themeName:"logoBlue"});',
+    // Markdown links PDFs since 49c9c171a; Vite's ?url import has no esbuild loader
+    'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url': 'export default "";',
     './AIAudioButton': 'export default function AIAudioButton() {return null}',
     './ChatMessageTools':
       'export default function ChatMessageTools() {return null}',

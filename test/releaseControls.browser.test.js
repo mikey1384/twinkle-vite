@@ -156,11 +156,12 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
           0
         );
         await page.getByRole('button', { name: 'Close pins' }).click();
+        // labels come from describeBuildAppReference ("Your app") since aecd722b5
         for (const width of [1280, 390]) {
           await page.setViewportSize({ width, height: 850 });
           await page.getByRole('button', { name: 'Reference an app' }).click();
           await page
-            .getByRole('button', { name: 'Math Lab, your app', exact: true })
+            .getByRole('button', { name: 'Math Lab, Your app', exact: true })
             .waitFor();
           const bounds = await page.locator('dialog').boundingBox();
           assert.ok(bounds.x >= -1 && bounds.x + bounds.width <= width + 1);
@@ -172,7 +173,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
         }
         await page.getByRole('button', { name: 'Reference an app' }).click();
         await page
-          .getByRole('button', { name: 'Math Lab, your app', exact: true })
+          .getByRole('button', { name: 'Math Lab, Your app', exact: true })
           .click();
         assert.equal(await page.locator('output').textContent(), 'Math Lab');
         assert.deepEqual(errors, []);

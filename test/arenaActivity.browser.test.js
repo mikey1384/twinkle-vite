@@ -11,6 +11,8 @@ const { chromium, webkit } = require('/Users/mikey/.npm-packages/lib/node_module
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const artifacts = process.env.ARENA_ACTIVITY_ARTIFACTS;
 const art = process.env.ARENA_ACTIVITY_BOSS_ART;
+// The cover offers Zero/Ciel as exam companions (48ab869a0); it reads their
+// chat channels from Chat state.
 const fixture = `
 import React,{useState} from 'react';
 import {createRoot} from 'react-dom/client';
@@ -42,7 +44,7 @@ let bundle;
 async function compileFixture() {
   if (bundle) return bundle;
   const stubs = {
-    '~/contexts': `import React,{createContext,useContext} from 'react';const Context=createContext(null);export const FixtureProvider=Context.Provider;export const useAppContext=select=>select(useContext(Context));export const useKeyContext=select=>select({myState:{userId:useContext(Context).viewer}});export const useChatContext=select=>select({actions:{}});export const useHomeContext=select=>select({actions:{}});`,
+    '~/contexts': `import React,{createContext,useContext} from 'react';const Context=createContext(null);export const FixtureProvider=Context.Provider;export const useAppContext=select=>select(useContext(Context));export const useKeyContext=select=>select({myState:{userId:useContext(Context).viewer}});export const useChatContext=select=>select({state:{zeroChannelId:11,cielChannelId:12},actions:{}});export const useHomeContext=select=>select({actions:{}});`,
     '~/components/Buttons/AskAgentButton': 'export default ()=>null;',
     './League': 'export default ()=>null;',
     './Rising': 'export default ()=>null;',
@@ -105,7 +107,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
         await page.waitForFunction(()=>window.prepares.length===1);
         assert.deepEqual(await page.evaluate(()=>window.starts),[],'Reading the cover must not start the exam');
         await start.click();await page.waitForFunction(()=>window.started===77);
-        assert.deepEqual(await page.evaluate(()=>window.starts),[{examKey:'c1-advanced',length:'full',difficulty:'hard',previewToken:'confirmed-preview'}]);
+        assert.deepEqual(await page.evaluate(()=>window.starts),[{examKey:'c1-advanced',length:'full',difficulty:'hard',previewToken:'confirmed-preview',companion:'solo'}]);
         await page.getByRole('button',{name:/Full exam/}).click();await cover.waitFor();
         await page.evaluate(()=>window.openExam('ielts-academic'));
         await cover.waitFor({state:'detached'});await page.getByText('IELTS Academic',{exact:true}).waitFor();

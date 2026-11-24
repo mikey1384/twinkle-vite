@@ -20,13 +20,14 @@ const state={
   shareDailyQuestionWithAI:async args=>{window.aiShares.push(args);return {channelId:3,newCoins:1000};}
  },
  user:{actions:{onSetUserState:()=>{}}},
- actions:{onLoadNewFeeds:()=>{}},
+ actions:{onLoadNewFeeds:()=>{},onEditContent:()=>{}},
  myState:{userId:5,twinkleCoins:0},state:{thinkHard:{}}
 };
 export const useAppContext=select=>select(state);
 export const useKeyContext=useAppContext;
 export const useHomeContext=useAppContext;
 export const useChatContext=useAppContext;
+export const useContentContext=useAppContext;
 `;
 const fixture = `
 import React from 'react';
@@ -59,13 +60,18 @@ async function compile() {
     '~/contexts': contexts,
     '~/theme/hooks/useRoleColor': 'export const useRoleColor=()=>({colorKey:"blue",getColor:()=>"#4682b4"});',
     '~/constants/sockets/api': 'export const socket={emit(){}};',
+    // Pictures open the standard image viewer since f4b9e41e1; this test
+    // never opens it, and the viewer pulls in the whole RichText/embed graph.
+    '~/components/Modals/ImageModal': 'export default ()=>null;',
     './Preferences': 'export default ()=>null;',
     './ReflectionStatsPanel': 'export default ()=>null;'
   };
   const result = await build({
     stdin: { contents: fixture, resolveDir: repo, loader: 'tsx' },
     bundle: true, write: false, format: 'iife', platform: 'browser',
-    alias: { '~': path.join(repo, 'src') }, loader: { '.png': 'dataurl' },
+    // Vite's asset loaders and react-sanitized-html shim (vite.config.ts)
+    alias: { '~': path.join(repo, 'src'), 'react-sanitized-html': path.join(repo, 'src/shims/react-sanitized-html.tsx') },
+    loader: { '.png': 'dataurl', '.webp': 'dataurl', '.gif': 'dataurl', '.svg': 'dataurl' },
     define: { 'import.meta.env': '{}', 'process.env.NODE_ENV': '"development"' },
     plugins: [{ name: 'local-services', setup(builder) {
       builder.onResolve({ filter: /.*/ }, ({ path }) => stubs[path] ? { path, namespace: 'fixture' } : undefined);

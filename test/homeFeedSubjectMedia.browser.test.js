@@ -17,7 +17,17 @@ const feedSource = readFileSync(
   'utf8'
 );
 const cardStyles = feedSource.match(/const cardClass = css`[\s\S]*?\n`;/)[0];
-const sizingStyle = feedSource.match(/const sizingStyle = \{[\s\S]*?\n  \}/)[0];
+// memoized in the card since 2878f393f; the fixture takes its object literal
+const sizingStyle = `const sizingStyle = ${
+  feedSource.match(/const sizingStyle = useMemo\(\(\) => \((\{[\s\S]*?\n  \})\)/)[1]
+}`;
+const cardWindowSource = readFileSync(
+  path.join(repo, 'src/containers/Home/Stories/hooks/useCardWindow.ts'),
+  'utf8'
+);
+const renderMargin = Number(
+  cardWindowSource.match(/const RENDER_MARGIN = '(\d+)px/)[1]
+);
 const artifacts = process.env.FEED_MEDIA_ARTIFACTS ||
   path.join(repo, '../work/home-feed-subject-media');
 
@@ -90,7 +100,7 @@ async function compileFixture() {
   if (bundle) return bundle;
   const stubs = {
     '~/contexts': `const state={myState:{userId:1,level:20},user:{actions:{}},helpers:{checkUserChange:()=>false},requestHelpers:{},actions:{onSyncServerComments:()=>{}}};export const useAppContext=select=>select(state);export const useContentContext=select=>select(state);export const useKeyContext=select=>select(state);`,
-    '~/helpers': 'export const isMobile=()=>false;export const determineUserCanRewardThis=()=>true;export const determineXpButtonDisabled=()=>false;export const scrollElementToCenter=()=>{};',
+    '~/helpers': 'export const isMobile=()=>false;export const isTablet=()=>false;export const determineUserCanRewardThis=()=>true;export const determineXpButtonDisabled=()=>false;export const scrollElementToCenter=()=>{};',
     '~/helpers/hooks': `
       import React,{useCallback,useEffect,useRef,useSyncExternalStore} from 'react';
       import {lazyLoadStore} from '${repo}/src/helpers/hooks/lazyLoadStore';
@@ -102,7 +112,7 @@ async function compileFixture() {
       'import React from "react";export default ()=> <header className="heading"><div><b>dew started a subject</b><small>A day ago</small></div></header>;',
     '~/components/Buttons/AskAgentButton': 'export default ()=>null;',
     '~/helpers/hooks/useOwnerTrace': 'export const useOwnerFeedCardFrameCount=()=>{};',
-    '~/helpers/ownerTrace': 'export const isOwnerTraceActive=()=>false;export const measureOwnerFeedText=fn=>fn();export const measureOwnerLayout=fn=>fn();export const noteOwnerTraceTap=()=>{};export const recordOwnerTrace=()=>{};export const takeOwnerTraceTap=()=>null;',
+    '~/helpers/ownerTrace': 'export const isOwnerTraceActive=()=>false;export const measureOwnerFeedText=fn=>fn();export const measureOwnerLayout=fn=>fn();export const measureOwnerBlockPreview=fn=>fn();export const noteOwnerTraceTap=()=>{};export const recordOwnerTrace=()=>{};export const takeOwnerTraceTap=()=>null;',
     '~/helpers/analytics': 'export const trackEvent=()=>{};',
     '~/helpers/hooks/useScrollAnchorRestoration': 'export const saveScrollAnchorForElement=()=>{};',
     '~/theme/hooks/useRoleColor':
@@ -131,6 +141,11 @@ async function compileFixture() {
       'export const getAiEnergyPlaceholderName=()=>null;export const shouldRenderAiEnergySponsorNotice=()=>false;export default ()=>null;',
     '~/components/Modals/ImageModal':
       'import React from "react";export default ({onHide})=><button data-image-modal onClick={onHide}>Close image</button>;',
+    // Feed Body also renders Arena challenges (9c7191975) and Bridge Builder
+    // steps (088b72153); Markdown links PDFs (49c9c171a). None are subject media.
+    '~/components/ArenaChallengePanel': 'export default ()=>null;',
+    './MeetupStepPreview': 'export default ()=>null;',
+    'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url': 'export default "";',
     './FileInfo': 'export default ()=>null;',
     './MediaPlayer': 'export default ()=>null;',
     '~/components/Embedly': 'export default ()=>null;',
@@ -375,7 +390,9 @@ for (const engine of ['webkit', 'chromium']) {
         const top = await tracked.evaluate(el => el.getBoundingClientRect().top + scrollY);
         for (let cycle = 0; cycle < 2; cycle++) {
           // Let the real one-second virtualization delay finish below the card.
-          await page.evaluate(y => scrollTo(0, y), top + height + 300);
+          // Cards stay mounted within useCardWindow's pre-render margin
+          // (400px since 2878f393f), so leave by more than that.
+          await page.evaluate(y => scrollTo(0, y), top + height + renderMargin + 200);
           await tracked.locator('article').waitFor({ state: 'detached' });
           assert.ok(Math.abs((await tracked.boundingBox()).height - height) <= 1);
           await page.evaluate(() => {

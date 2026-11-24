@@ -123,12 +123,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           : undefined;
 
     if (current.kind === 'completion') {
+      // CompletionToast closes itself after its action succeeds and stays
+      // open with "Couldn't open it" when the action fails, so it gets the
+      // action itself rather than the close-first wrapper above.
       return (
         <CompletionToast
           key={current.id}
           {...current}
           onClose={closeCurrent}
-          onClick={goLink}
+          onClick={
+            onTap ||
+            (current.linkTo
+              ? () => navigate(current.linkTo as string)
+              : undefined)
+          }
         />
       );
     }

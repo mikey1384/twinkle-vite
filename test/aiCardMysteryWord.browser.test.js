@@ -12,6 +12,10 @@ const {
   webkit
 } = require('/Users/mikey/.npm-packages/lib/node_modules/playwright');
 const repo = fileURLToPath(new URL('..', import.meta.url));
+// The embedded preview shows the word in the shared AICardDetails identity
+// since 240c9689d (it replaced CompactPreview's own __word element).
+const embeddedWord =
+  '[data-surface="embedded"] .ai-card-details__identity strong';
 const artifacts = fileURLToPath(
   new URL('../../work/ai-card-hidden-word-20261002', import.meta.url)
 );
@@ -149,7 +153,7 @@ for (const engine of ['chromium', 'webkit']) {
         await page.addScriptTag({ content: script });
         console.log(engine + ': fixture mounted');
         await page
-          .locator('[data-surface="embedded"] .compact-ai-card-preview__word')
+          .locator(embeddedWord)
           .waitFor();
         async function assertHidden() {
           const surfaces = await page.evaluate(async () => {
@@ -223,9 +227,10 @@ for (const engine of ['chromium', 'webkit']) {
             visible
           );
           await page.waitForFunction(
-            () =>
-              document.querySelector('.compact-ai-card-preview__word')
-                .textContent === 'air'
+            (selector) =>
+              document.querySelector(selector)
+                .textContent === 'air',
+            embeddedWord
           );
           const surfaces = await page.evaluate(() =>
             [...document.querySelectorAll('[data-surface]')].map((el) => ({
@@ -246,9 +251,10 @@ for (const engine of ['chromium', 'webkit']) {
           })
         );
         await page.waitForFunction(
-          () =>
-            document.querySelector('.compact-ai-card-preview__word')
-              .textContent === 'air'
+          (selector) =>
+            document.querySelector(selector)
+              .textContent === 'air',
+          embeddedWord
         );
         assert.deepEqual(errors, []);
       } finally {

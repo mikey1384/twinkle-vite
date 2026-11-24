@@ -50,8 +50,19 @@ test('Home feed preview RichText computes the standard card line-height in a bro
   );
 
   const tempDir = await mkdtemp(path.join(tmpdir(), 'twinkle-line-height-'));
+  // One ordered teardown: Chrome keeps writing its profile until it exits,
+  // so removing the folder after only signalling it raced (ENOTEMPTY when
+  // the machine was busy running other tests in parallel).
+  let chrome = null;
+  let client = null;
   t.after(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    client?.close();
+    if (chrome && chrome.exitCode === null && chrome.signalCode === null) {
+      const exited = new Promise((resolve) => chrome.once('exit', resolve));
+      chrome.kill('SIGTERM');
+      await exited;
+    }
+    await rm(tempDir, { recursive: true, force: true, maxRetries: 5 });
   });
 
   const htmlPath = path.join(tempDir, 'fixture.html');
@@ -145,7 +156,7 @@ test('Home feed preview RichText computes the standard card line-height in a bro
     'utf8'
   );
 
-  const chrome = spawn(
+  chrome = spawn(
     chromePath,
     [
       '--headless=new',
@@ -158,16 +169,10 @@ test('Home feed preview RichText computes the standard card line-height in a bro
     ],
     { stdio: ['ignore', 'ignore', 'pipe'] }
   );
-  t.after(() => {
-    chrome.kill('SIGTERM');
-  });
 
   const port = await waitForDevToolsPort(chrome);
   const pageWebSocketUrl = await getPageWebSocketUrl(port);
-  const client = await createCdpClient(pageWebSocketUrl);
-  t.after(() => {
-    client.close();
-  });
+  client = await createCdpClient(pageWebSocketUrl);
 
   await client.send('Runtime.enable');
   await waitForPageComplete(client);

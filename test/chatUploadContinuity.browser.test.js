@@ -39,7 +39,9 @@ test(
   async () => {
     const stubs = {
       '~/contexts':
-        'export function useAppContext(selector){return selector({requestHelpers:{loadPendingTransaction:async()=>({transaction:null}),cancelAIMessage:async()=>({})}})}',
+        // useChatContext: sponsored help buttons (27807258c); useKeyContext:
+        // shared theme tokens read the viewer's profile theme.
+        'export function useAppContext(selector){return selector({requestHelpers:{loadPendingTransaction:async()=>({transaction:null}),loadSponsoredHelpConfig:async()=>({enabled:false}),cancelAIMessage:async()=>({})}})} export function useChatContext(selector){return selector({state:{channelsObj:{}}})} export function useKeyContext(selector){return selector({myState:{}})}',
       '~/theme/hooks/useRoleColor':
         'export function useRoleColor(){return {colorKey:"logoBlue",themeName:"blue"}}',
       '~/components/Button':

@@ -317,8 +317,20 @@ const MAX_FINGERPRINTS = 2000;
 // reused, so a ref from an earlier look either still means the same thing
 // or is reported gone (never silently another button).
 let lastRefNumber = 0;
-export const WEBSITE_AGENT_PAGE_ID = crypto.randomUUID();
+export const WEBSITE_AGENT_PAGE_ID = createPageId();
 let pageGeneration = 0;
+
+// Evaluated when the app loads (AssistantDock imports this file), so it must
+// not throw: randomUUID exists only in secure contexts and from Safari 15.4,
+// while the build still targets Safari 14. getRandomValues has neither limit.
+function createPageId() {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 let lastPageIdentity = '';
 
 // The window the user sees on top: the last open dialog that is rendered.

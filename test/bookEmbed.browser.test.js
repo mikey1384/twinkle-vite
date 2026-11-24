@@ -133,6 +133,10 @@ async function compile() {
   stubs['~/components/AICardSummonContent'] = 'export default ()=>null;';
   stubs['~/components/AICardDetails'] = 'export default ()=>null;';
   stubs['~/components/AICard'] = 'export default ()=>null;';
+  // Feed Body also renders Arena challenges (9c7191975) and Bridge Builder
+  // steps (088b72153); neither is part of a book embed.
+  stubs['~/components/ArenaChallengePanel'] = 'export default ()=>null;';
+  stubs['./MeetupStepPreview'] = 'export default ()=>null;';
   const result = await build({
     stdin: { contents: fixture, resolveDir: repo, loader: 'tsx' },
     bundle: true,

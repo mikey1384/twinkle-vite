@@ -102,7 +102,9 @@ async function compileFixture() {
           trackMeetupQuestView: (kind) => { (window.tracked ||= []).push(kind); },
           decideWebsiteAgentCard: async ({ approved }) => { window.decided = (window.decided || 0) + 1; return { card: { ...window.lastCard, status: approved ? 'approved' : 'declined' } }; }
         },
-        actions: { onUpdateMessageSettings: () => {}, onSubmitMessage: ({ message }) => { (window.sent ||= []).push(message.content); } }
+        actions: { onUpdateMessageSettings: () => {}, onSubmitMessage: ({ message }) => { (window.sent ||= []).push(message.content); } },
+        // approved profile/settings cards apply canonical user state (e0271eee4)
+        user: { actions: { onSetUserState: () => {}, onApplyCanonicalUserSettings: () => {}, onUpdateNavTabsState: () => {}, onApplyCanonicalUserProfileState: () => {} } }
       };
       export const useAppContext = select => select(state);
       export const useKeyContext = select => select(state);
@@ -116,7 +118,11 @@ async function compileFixture() {
       'export const useRoleColor = () => ({getColor:()=>"#126bb5", color:"#126bb5",colorKey:"logoBlue",themeName:"logoBlue"});',
     '~/components/Icon':
       'import React from "react"; export default ({style}) => <span aria-hidden="true" style={style}>●</span>;',
-    '~/containers/BridgeBuilderQuest/Checkin/CheckinButton': 'export default () => null;'
+    '~/containers/BridgeBuilderQuest/Checkin/CheckinButton': 'export default () => null;',
+    // The card imports the live API socket (df419a4cf); never dial a real
+    // server (localhost:3500) from a fixture.
+    '~/constants/sockets/api':
+      'export const socket = { connected: false, on() {}, off() {}, emit() {} };'
   };
   const result = await build({
     stdin: { contents: fixture, resolveDir: repo, loader: 'tsx' },

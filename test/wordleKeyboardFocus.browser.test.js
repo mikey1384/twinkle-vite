@@ -51,7 +51,8 @@ async function compile() {
     '~/helpers/analytics': 'export const trackEvent=()=>{},trackCoinSpend=()=>{};',
     '~/helpers/hooks/useUserActivity': 'export default function useUserActivity(){}',
     '~/helpers/ownerTrace': 'export const isOwnerTraceActive=()=>false,traceOwnerRequest=()=>{};',
-    '~/helpers/websiteAgentAction': 'export const WEBSITE_AGENT_ACTION_HEADER="x-test-agent",isWebsiteAgentActionActive=()=>false;',
+    // the request client asks for delivery headers since 2617a1709
+    '~/helpers/websiteAgentAction': 'export const WEBSITE_AGENT_ACTION_HEADER="x-test-agent",isWebsiteAgentActionActive=()=>false,websiteAgentRequestHeaders=()=>({}),trackWebsiteAgentRequest=request=>request;',
     '~/helpers/aiImageStatus': 'export const pollCanonicalRequestStatus=()=>{};',
     '~/constants/URL': 'export default "http://localhost:3000";',
     '~/components/LumineRescueEntry': 'export default function Rescue(){return null}',

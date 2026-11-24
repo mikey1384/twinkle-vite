@@ -17,7 +17,10 @@ const feedSource = readFileSync(
   'utf8'
 );
 const cardStyles = feedSource.match(/const cardClass = css`[\s\S]*?\n`;/)[0];
-const sizingStyle = feedSource.match(/const sizingStyle = \{[\s\S]*?\n  \}/)[0];
+// memoized in the card since 2878f393f; the fixture takes its object literal
+const sizingStyle = `const sizingStyle = ${
+  feedSource.match(/const sizingStyle = useMemo\(\(\) => \((\{[\s\S]*?\n  \})\)/)[1]
+}`;
 const artifacts = '/private/tmp/twinkle-subject-file-preview-20260914';
 
 // Real Body, both subject-placement paths, RichText, attachment tiles and
@@ -38,7 +41,9 @@ function Fixture(){
  const [state,setState]=useState({mode:'target',longName:false,attached:false});
  window.configureSubject=patch=>setState(previous=>({...previous,...patch}));
  const filename=state.longName ? 'A very long lesson worksheet filename that should remain contained.pdf' : '1780890278703-pj7ti3.pdf';
- const subject={id:2,contentId:2,contentType:'subject',loaded:true,title:'let me think of something',rewardLevel:4,
+ // bookAvailable: a loaded subject states whether it has a book, or the
+ // preview reloads it to find out (29103cd26).
+ const subject={id:2,contentId:2,contentType:'subject',loaded:true,bookAvailable:0,title:'let me think of something',rewardLevel:4,
   description:'Inktober is a drawing challenge where you have to create a drawing each day. Share your work with everyone.\\n\\n!['+filename+'](https://cdn.example.com/'+encodeURIComponent(filename)+')',uploader:{id:1,username:'mikey'},
   ...(state.attached ? {actualFilePath:'/artwork',actualFileName:'drawing.png'} : {})};
  window.fixtureSubject=subject;
@@ -62,7 +67,7 @@ async function compileFixture() {
   if (bundle) return bundle;
   const stubs = {
     '~/contexts': `const state={myState:{userId:1},helpers:{checkUserChange:()=>false},requestHelpers:{},actions:{}};export const useAppContext=select=>select(state);export const useContentContext=select=>select(state);export const useKeyContext=select=>select(state);`,
-    '~/helpers': 'export const isMobile=()=>false;',
+    '~/helpers': 'export const isMobile=()=>false;export const isTablet=()=>false;',
     '~/helpers/hooks':
       'export const useLiveComment=value=>value;export const useContentState=({contentId})=>contentId===2?window.fixtureSubject:{};',
     '~/theme/hooks/useRoleColor':
@@ -83,6 +88,12 @@ async function compileFixture() {
     '~/components/Build/Cards': 'export const BuildMiniCard=()=>null;',
     '~/components/CardThumb': 'export default ()=>null;',
     '~/components/AchievementItem': 'export default ()=>null;',
+    // summon-discussion targets (1c5b9b8cd), Arena challenges (9c7191975)
+    // and Bridge Builder steps (088b72153) are not subject files.
+    '~/components/AICardSummonContent': 'export default ()=>null;',
+    '~/components/ArenaChallengePanel': 'export default ()=>null;',
+    './MeetupStepPreview': 'export default ()=>null;',
+    'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url': 'export default "";',
     '~/components/SharedPromptBlock': 'export default ()=>null;',
     '~/components/SecretComment':
       'import React from "react";export default ({label,style})=><div style={style}>{label}</div>;',

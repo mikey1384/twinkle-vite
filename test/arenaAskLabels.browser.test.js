@@ -55,6 +55,9 @@ async function compile() {
     '~/helpers/websiteAgentScreenState': 'export const useAgentScreenState=()=>{};',
     '~/constants/sockets/api': 'export const socket={emit(){},on(){},off(){}};',
     '~/containers/App/AssistantDock/dockState': 'export function openAssistantDock(assistant,context){window.opened={assistant,context};}',
+    // Ask buttons summon through the account's Temporary/Saved choice since
+    // 5c784cb2b; it reaches the dock by a relative import, so stub it here.
+    '~/containers/App/QuickAsk/assistantMode': 'export function summonAssistant(assistant,context){window.opened={assistant,context};return "saved";}',
     // layout-neutral wrappers whose own imports reach the whole app
     '~/components/ErrorBoundary': 'export default ({children})=>children;',
     '~/helpers/assistantVoice': 'export const useUserAssistant=()=>"Zero";',
