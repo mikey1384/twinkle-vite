@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useState, useEffect } from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
+import useSizedImage from '~/helpers/hooks/useSizedImage';
+import { isFreshAICardArt } from '~/helpers/sizedImages';
 import MysteryCardArt from '~/components/AICard/MysteryCardArt';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -19,6 +21,7 @@ export default function Card({
   cardStyle,
   compact = false,
   detailShown,
+  fullSize = false,
   innerRef,
   isAnimated,
   onMouseLeave,
@@ -29,6 +32,7 @@ export default function Card({
   cardStyle: AnimatedProps<React.ComponentPropsWithoutRef<'div'>>['style'];
   compact?: boolean;
   detailShown?: boolean;
+  fullSize?: boolean;
   innerRef: any;
   isAnimated: boolean;
   onMouseLeave: () => void;
@@ -89,6 +93,20 @@ export default function Card({
     }
     return `${cloudFrontURL}${finalCard.imagePath}`;
   }, [finalCard.imagePath, finalCard.imageGenerationPreviewUrl]);
+  // Lists, the feed and collections draw the card small: they get the copy of
+  // the art that fits (helpers/sizedImages.ts). The card's own detail view
+  // (fullSize) and art saved moments ago keep the original. One hook per <img>.
+  const artCopiesEnabled = !fullSize && !isFreshAICardArt(finalCard);
+  const coverArtProps = useSizedImage({
+    src: frontPicUrl,
+    fit: 'cover',
+    aspect: 2 / 3,
+    enabled: artCopiesEnabled
+  });
+  const containArtProps = useSizedImage({
+    src: frontPicUrl,
+    enabled: artCopiesEnabled
+  });
   const isOpenAiImage = useMemo(
     () =>
       finalCard?.engine === 'image-1' ||
@@ -175,7 +193,8 @@ export default function Card({
                     objectFit: 'cover',
                     transition: 'opacity 0.2s ease'
                   }}
-                  src={frontPicUrl}
+                  decoding="async"
+                  {...coverArtProps}
                 />
                 <img
                   loading="lazy"
@@ -193,11 +212,17 @@ export default function Card({
                       }
                     }
                   `}
-                  src={frontPicUrl}
+                  decoding="async"
+                  {...containArtProps}
                 />
               </>
             ) : (
-              <img loading="lazy" style={{ width: '100%' }} src={frontPicUrl} />
+              <img
+                loading="lazy"
+                decoding="async"
+                style={{ width: '100%' }}
+                {...containArtProps}
+              />
             )
           ) : !finalCard.isBurned ? (
             <MysteryCardArt level={finalCard.level} />

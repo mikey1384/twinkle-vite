@@ -1,5 +1,5 @@
 import React from 'react';
-import SageBadge from '~/assets/sage.png';
+import SageBadge from '~/assets/badges-small/sage.webp';
 import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Sage({

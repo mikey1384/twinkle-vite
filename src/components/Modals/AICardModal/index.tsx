@@ -577,7 +577,7 @@ export default function AICardModal({
                 }
               `}
             >
-              <AICard card={card} />
+              <AICard card={card} fullSize />
             </div>
             <div
               className={css`

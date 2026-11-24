@@ -1,5 +1,5 @@
 import React from 'react';
-import MeetupBadge from '~/assets/bridge-builder.png'; // Bridge Builder (once Face to Face)
+import MeetupBadge from '~/assets/badges-small/bridge-builder.webp'; // Bridge Builder (once Face to Face)
 import ItemThumbPanel from './ItemThumbPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 

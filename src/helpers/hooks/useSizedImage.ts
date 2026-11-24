@@ -10,16 +10,23 @@ import { getSizedImageSrcSet } from '~/helpers/sizedImages';
 // src unchanged.
 //
 // `fit: 'cover'` is for an image cropped to fill its box (object-fit: cover):
-// a 16:9 cover then needs the box height times 16/9 when that is wider.
+// the picture then needs the box height times its aspect ratio (`aspect`,
+// width / height; 16:9 for app covers) when that is wider than the box.
 const FALLBACK_SIZES = '360px';
 
 export default function useSizedImage({
   src,
   fit = 'contain',
+  aspect = 16 / 9,
+  enabled = true,
   onError
 }: {
   src: string;
+  // false: show src as it is (e.g. a detail view, or art saved seconds ago
+  // whose copies the worker has not made yet).
+  enabled?: boolean;
   fit?: 'contain' | 'cover';
+  aspect?: number;
   onError?: (event: React.SyntheticEvent<HTMLImageElement>) => void;
 }) {
   // A callback ref, so measuring re-runs when the <img> mounts later (e.g.
@@ -28,14 +35,14 @@ export default function useSizedImage({
   const srcSet = getSizedImageSrcSet(src);
   const [failedSrcSet, setFailedSrcSet] = useState('');
   const [sizes, setSizes] = useState('');
-  const useCopies = Boolean(srcSet) && failedSrcSet !== srcSet;
+  const useCopies = enabled && Boolean(srcSet) && failedSrcSet !== srcSet;
 
   useLayoutEffect(() => {
     if (!useCopies || !img) return;
     const measure = () => {
       const rect = img.getBoundingClientRect();
       const needed =
-        fit === 'cover' ? Math.max(rect.width, (rect.height * 16) / 9) : rect.width;
+        fit === 'cover' ? Math.max(rect.width, rect.height * aspect) : rect.width;
       // Round up to a 10 px step so small layout jitter does not re-pick.
       setSizes(needed > 0 ? `${Math.ceil(needed / 10) * 10}px` : FALLBACK_SIZES);
     };
@@ -44,7 +51,7 @@ export default function useSizedImage({
     const observer = new ResizeObserver(measure);
     observer.observe(img);
     return () => observer.disconnect();
-  }, [fit, img, useCopies]);
+  }, [aspect, fit, img, useCopies]);
 
   const handleError = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>) => {
