@@ -1560,10 +1560,17 @@ export function useHostBridge({
       );
     }
 
-    function subscribeBuildRuntimeChatRoom(buildId: number, roomKey: string) {
+    // The server checks the build API token's chat:read scope on join, like
+    // the HTTP chat routes (and admits only the two members of a direct room).
+    function subscribeBuildRuntimeChatRoom(
+      buildId: number,
+      roomKey: string,
+      token?: string | null
+    ) {
       socket.emit('build_app_chat_subscribe', {
         buildId,
-        roomKey
+        roomKey,
+        ...(token ? { token } : {})
       });
     }
 
@@ -2129,18 +2136,35 @@ export function useHostBridge({
       };
     }
 
-    function replayBuildRuntimeChatSubscriptions() {
+    async function replayBuildRuntimeChatSubscriptions() {
+      if (chatSubscriptions.size === 0) return;
+      // Tokens expire, so a reconnect asks for a current one (cached when
+      // still valid). It is only for the active build; on failure the join
+      // goes without one and the server applies its older rule.
+      let token: string | null = null;
+      const activeBuildId = Number(previewAuth.buildRef.current?.id || 0);
+      if (!isGuestViewerActive(previewAuth)) {
+        try {
+          token = await ensureBuildApiToken(['chat:read'], previewAuth);
+        } catch {
+          token = null;
+        }
+      }
       for (const subscriptionKey of chatSubscriptions.keys()) {
         const [rawBuildId, ...roomKeyParts] = subscriptionKey.split(':');
         const subscribedBuildId = Number(rawBuildId);
         const subscribedRoomKey = roomKeyParts.join(':');
         if (!subscribedBuildId || !subscribedRoomKey) continue;
-        subscribeBuildRuntimeChatRoom(subscribedBuildId, subscribedRoomKey);
+        subscribeBuildRuntimeChatRoom(
+          subscribedBuildId,
+          subscribedRoomKey,
+          subscribedBuildId === activeBuildId ? token : null
+        );
       }
     }
 
     function handleSocketAuthReady() {
-      replayBuildRuntimeChatSubscriptions();
+      void replayBuildRuntimeChatSubscriptions();
       if (activeAiImageStatusTargets.size > 0) {
         void ensureAiImageNotificationChannel();
       }
@@ -4964,7 +4988,10 @@ export function useHostBridge({
           }
 
           case 'chat:subscribe': {
-            await ensureBuildApiToken(['chat:read'], previewAuth);
+            const chatReadToken = await ensureBuildApiToken(
+              ['chat:read'],
+              previewAuth
+            );
             const roomKey = normalizeBuildRuntimeChatRoomKey(payload?.roomKey);
             const subscriptionKey = getBuildRuntimeChatSubscriptionKey(
               activeBuild.id,
@@ -4976,7 +5003,11 @@ export function useHostBridge({
             frames.add(sourceWindow);
             chatSubscriptions.set(subscriptionKey, frames);
             if (wasEmpty) {
-              subscribeBuildRuntimeChatRoom(activeBuild.id, roomKey);
+              subscribeBuildRuntimeChatRoom(
+                activeBuild.id,
+                roomKey,
+                chatReadToken
+              );
             }
             response = { success: true };
             break;
