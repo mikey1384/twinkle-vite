@@ -4,7 +4,9 @@ import { useAppContext } from '~/contexts';
 import { useToast } from '~/contexts/Toast';
 import { trackEvent } from '~/helpers/analytics';
 import {
+  isSocialRoomKey,
   joinNotice,
+  socialLaunchTarget,
   socialJoinableStore,
   socialWalkupStore,
   type JoinIntent,
@@ -24,22 +26,6 @@ export function useOwnJoinable(buildId: number) {
   return useSyncExternalStore(socialJoinableStore.subscribe, () =>
     socialJoinableStore.get(buildId)
   );
-}
-
-// What the app receives through Twinkle.notifications.getLaunchTarget().
-export function socialLaunchTarget(buildId: number, visit: SocialVisit) {
-  return {
-    source: 'social',
-    buildId,
-    target: {
-      kind: 'social',
-      hostUserId: visit.host.id,
-      hostUsername: visit.host.username,
-      // waiting | later | watch | unavailable
-      status: visit.status,
-      hostJoinable: visit.joinable
-    }
-  };
 }
 
 // A drop-in (the host is in an open room): the visitor's app joins roomKey.
@@ -175,7 +161,10 @@ export function useWalkUp() {
           status: outcome.status,
           walkupId: outcome.walkup?.id || null,
           expiresAt: outcome.walkup?.expiresAt,
-          joinable: outcome.joinable
+          joinable: outcome.joinable,
+          ...(outcome.status === 'watch' && isSocialRoomKey(outcome.roomKey)
+            ? { roomKey: outcome.roomKey }
+            : {})
         }
       : { host, status: 'unavailable', walkupId: null, joinable: null };
     const previous = socialWalkupStore.get(buildId).visit;
