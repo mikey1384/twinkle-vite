@@ -80,6 +80,9 @@ function EmbeddedComponent({
     return { ext: extension, fileNameFromSrc: fileName, fileType };
   }, [src]);
   const shouldAttemptImage = fileType === 'image' || !ext;
+  // Uploads are stored under a generated name (1732...-x8f2.pdf); an embed
+  // that names its file, ![design notes.pdf](url), shows that name instead.
+  const fileCardName = alt?.trim() || fileNameFromSrc || 'file';
   // Images bring their own size. Every other embed (content cards, YouTube,
   // file rows) sizes itself from its parent, so a shrink-to-fit parent such as
   // a chat bubble has to give it real width; this class is how it can tell.
@@ -155,7 +158,7 @@ function EmbeddedComponent({
         <FileDownload
           extension={ext}
           src={href || src}
-          fileName={fileNameFromSrc || alt || 'file'}
+          fileName={fileCardName}
           fileType={fileType}
           isPreview={isPreview}
           theme={theme}
@@ -164,7 +167,7 @@ function EmbeddedComponent({
         <FileDownload
           extension={ext}
           src={href}
-          fileName={fileNameFromSrc || alt || 'file'}
+          fileName={fileCardName}
           fileType={fileType}
           isPreview={isPreview}
           theme={theme}
