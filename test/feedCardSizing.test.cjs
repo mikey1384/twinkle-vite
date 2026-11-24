@@ -2889,3 +2889,55 @@ test('Picture Day reflections get the picture size, whatever the text length', (
     assert.equal(sizing.card.bodyHeight, 'max(30rem, 300px)');
   }
 });
+
+test('Arena challenge comment roots reserve the compact Arena slot only when it draws', () => {
+  const comment = {
+    contentType: 'comment',
+    content: '6',
+    rootType: 'arenaChallenge',
+    rootId: 71
+  };
+  const sizeFor = (rootObj) =>
+    getFeedCardSizing({ content: comment, rootObj, userId: 1 });
+
+  // before the root hydrates: the slot it will most likely fill
+  const pending = sizeFor(undefined);
+  assert.equal(pending.target?.size, 'arena-challenge');
+
+  const daily = sizeFor({ id: 71, kind: 'today', dayKey: '2026-11-23' });
+  const battle = sizeFor({ id: 72, kind: 'battle', examKey: 'ssat-middle' });
+  for (const sizing of [daily, battle]) {
+    assert.equal(sizing.target?.size, 'arena-challenge');
+    assert.match(
+      sizing.target.className,
+      /home-feed-card__target-preview--size-arena-challenge/
+    );
+    assert.equal(sizing.card.size, 'comment-with-target-card');
+    // compact comment panel (11 / 10) + target gap (0.85) + Arena slot (16 / 14.5)
+    assert.equal(sizing.card.bodyHeight, 'max(27.85rem, 278.5px)');
+    assert.equal(sizing.card.mobileBodyHeight, 'max(25.35rem, 253.5px)');
+  }
+
+  // a boss battle the panel can't draw, or a deleted challenge: no box at all
+  for (const rootObj of [
+    { id: 74, kind: 'battle', examKey: '' },
+    { id: 75, notFound: true, contentType: 'arenaChallenge' }
+  ]) {
+    const sizing = sizeFor(rootObj);
+    assert.equal(sizing.target, null);
+    assert.equal(sizing.card.hasTarget, false);
+    assert.equal(sizing.card.bodyHeight, 'max(11rem, 110px)');
+  }
+});
+
+test('Arena target CSS heights match the budgeted slot', () => {
+  const stylesDir = path.resolve(
+    __dirname,
+    '../src/containers/Home/Stories/FeedCard/Body/styles'
+  );
+  const desktop = readFileSync(path.join(stylesDir, 'panelPreviewStyles.ts'), 'utf8');
+  const mobile = readFileSync(path.join(stylesDir, 'mobilePreviewStyles.ts'), 'utf8');
+  const selector = '.home-feed-card__target-preview--size-arena-challenge';
+  assert.match(getCssBlock(desktop, `  ${selector}`), /height: max\(16rem, 160px\)/);
+  assert.match(getCssBlock(mobile, `    ${selector}`), /height: max\(14\.5rem, 145px\)/);
+});

@@ -3,6 +3,7 @@ import RewardChips from '~/components/RewardChips';
 import React from 'react';
 import AICardSummonContent from '~/components/AICardSummonContent';
 import AchievementItem from '~/components/AchievementItem';
+import ArenaChallengePanel from '~/components/ArenaChallengePanel';
 import { BuildMiniCard } from '~/components/Build/Cards';
 import CompactCommentEmbedPreview from '~/components/Comments/CompactCommentEmbedPreview';
 import Icon from '~/components/Icon';
@@ -16,6 +17,7 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import DailyReflectionMetaBadges from '~/components/DailyReflectionMetaBadges';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useThemedCardVars } from '~/theme/hooks/useThemedCardVars';
+import { isRenderableArenaChallenge } from '~/helpers/arenaChallengeCopy';
 import {
   AudioWavePreview,
   MarkdownEmbedPreview,
@@ -199,6 +201,14 @@ export default function TargetPreview({
 
   if (contentType === 'comment' && normalizedRootType === 'pass') {
     return renderRootPanel(renderTargetPassPreview(resolvedRootObj));
+  }
+
+  if (contentType === 'comment' && normalizedRootType === 'arenaChallenge') {
+    // sizing reserves the slot only for a challenge the panel draws
+    if (!isRenderableArenaChallenge(resolvedRootObj)) return null;
+    return renderRootPanel(
+      <ArenaChallengePanel challenge={resolvedRootObj} compact />
+    );
   }
 
   if (contentType === 'comment' && normalizedRootType === 'xpChange') {

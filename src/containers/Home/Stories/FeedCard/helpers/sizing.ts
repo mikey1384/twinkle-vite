@@ -5,6 +5,7 @@ import {
 } from '~/helpers/bookEmbedHelpers';
 import { resolveWideSubjectMedia } from '~/components/Subjects/wideSubjectMedia';
 import { isRenderableHomeFeedTargetComment } from './targetComment';
+import { isRenderableArenaChallenge } from '~/helpers/arenaChallengeCopy';
 import {
   getAICardCollectionEmbedPreviewTitle,
   getInternalEmbedPreviewInfo,
@@ -73,6 +74,7 @@ export type FeedCardSize =
 
 export type FeedCardTargetSize =
   | 'ai-card'
+  | 'arena-challenge'
   | 'build-comment'
   | 'compact'
   | 'fallback'
@@ -241,6 +243,11 @@ const TARGET_HEIGHT_REM: Record<
 > = {
   // Compact AICardPreview minima; actual content can grow for wrapped names.
   'ai-card': { desktop: 14, mobile: 12 },
+  // A comment's Arena challenge root: the compact ArenaChallengePanel (boss
+  // battle or daily clear, one shared height since the kind is unknown until
+  // the root hydrates). Must match the --size-arena-challenge heights in
+  // Body/styles (panelPreviewStyles + mobilePreviewStyles).
+  'arena-challenge': { desktop: 16, mobile: 14.5 },
   'build-comment': { desktop: 15.5, mobile: 12 },
   compact: { desktop: 8.5, mobile: 8.5 },
   fallback: { desktop: 13, mobile: 12 },
@@ -850,6 +857,14 @@ function getTargetPanelSizing({
   }
   if (normalizedRootType === 'aiCard') {
     return buildTargetSizing('ai-card');
+  }
+  if (normalizedRootType === 'arenaChallenge') {
+    if (content?.contentType !== 'comment') return null;
+    // Before the root hydrates, reserve the slot it will most likely fill;
+    // once loaded, a challenge the panel can't draw (no exam) reserves none.
+    return !rootObj?.id || isRenderableArenaChallenge(rootObj)
+      ? buildTargetSizing('arena-challenge')
+      : null;
   }
 
   const standardRootTypes =
