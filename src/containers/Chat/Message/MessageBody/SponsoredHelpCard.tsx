@@ -80,6 +80,7 @@ export default function SponsoredHelpCard({
   }, [busy, loadSponsoredHelp, request.id]);
 
   const persona = sponsoredHelpPersonaName(request.persona);
+  const isWelcome = !!request.isWelcome;
   const isRecipient = myId === request.recipientId;
   const isSender = myId === request.senderId;
   const themeName = request.persona === 'ciel' ? 'pink' : 'logoBlue';
@@ -164,21 +165,34 @@ export default function SponsoredHelpCard({
       <BuildMessageCard
         themeName={themeName}
         bannerIcon="wand-magic-sparkles"
-        bannerText={`From ${request.senderUsername} · sponsored help`}
+        bannerText={
+          isWelcome
+            ? `${persona} · welcome to Twinkle`
+            : `From ${request.senderUsername} · sponsored help`
+        }
         chips={
           <>
-            <BuildMessageCardChip icon="bolt" themeName={themeName}>
-              {request.energyPercent}% AI Energy from {request.senderUsername}
+            <BuildMessageCardChip icon={isWelcome ? 'gift' : 'bolt'} themeName={themeName}>
+              {isWelcome
+                ? 'Free from Twinkle'
+                : `${request.energyPercent}% AI Energy from ${request.senderUsername}`}
             </BuildMessageCardChip>
             {statusLine ? <BuildMessageCardChip muted>{statusLine}</BuildMessageCardChip> : null}
           </>
         }
         actions={renderAssistantActions()}
       >
+        {isWelcome && request.greeting ? (
+          <p className={summaryClass}>{request.greeting}</p>
+        ) : null}
         {request.status === 'planning' ? (
           <div className={thinkingClass}>
             <Loading style={{ height: '2.4rem', width: '2.4rem', margin: 0 }} />
-            <span>{persona} is reading {request.senderUsername}’s request…</span>
+            <span>
+              {isWelcome
+                ? `${persona} is getting it ready…`
+                : `${persona} is reading ${request.senderUsername}’s request…`}
+            </span>
           </div>
         ) : request.summary ? (
           <p className={summaryClass}>{request.summary}</p>
@@ -214,10 +228,12 @@ export default function SponsoredHelpCard({
             {ideaShown ? <p className={ideaTextClass}>{project.idea}</p> : null}
           </div>
         ) : null}
-        <details className={requestDetailsClass}>
-          <summary>{request.senderUsername}’s request</summary>
-          <p>{request.task}</p>
-        </details>
+        {isWelcome ? null : (
+          <details className={requestDetailsClass}>
+            <summary>{request.senderUsername}’s request</summary>
+            <p>{request.task}</p>
+          </details>
+        )}
         {changing && request.status === 'awaiting_confirm' ? (
           <div className={changeClass}>
             <textarea
@@ -276,6 +292,30 @@ export default function SponsoredHelpCard({
             onClick={handleDecline}
           >
             No thanks
+          </GameCTAButton>
+        </>
+      );
+    }
+    if (isWelcome && request.status === 'sent') {
+      // The greeting's own button: press plans right here in this card.
+      return (
+        <>
+          <GameCTAButton
+            variant={request.persona === 'ciel' ? 'pink' : 'logoBlue'}
+            size="md"
+            icon="wand-magic-sparkles"
+            loading={working === 'press'}
+            onClick={handlePress}
+          >
+            {request.failureCode ? 'Try again' : 'Show me!'}
+          </GameCTAButton>
+          <GameCTAButton
+            variant="neutral"
+            size="md"
+            loading={working === 'decline'}
+            onClick={handleDecline}
+          >
+            Maybe later
           </GameCTAButton>
         </>
       );

@@ -44,3 +44,10 @@ test('the sender sees their Energy came back when it was not used', () => {
   assert.match(sponsoredHelpStatusLine({ ...VIEW, status: 'expired' }, sender), /Energy back/);
   assert.equal(sponsoredHelpStatusLine({ ...VIEW, status: 'sent' }, sender), 'Waiting for ryrytwinkie');
 });
+
+test('the new-member welcome reads as a welcome, not a sponsorship', () => {
+  const welcome = { ...VIEW, senderId: 0, senderUsername: 'Twinkle', isWelcome: true };
+  const recipient = { isSender: false, isRecipient: true, variant: 'assistant' as const };
+  assert.equal(sponsoredHelpStatusLine({ ...welcome, status: 'sent' }, recipient), '');
+  assert.equal(sponsoredHelpStatusLine({ ...welcome, status: 'declined' }, recipient), 'Maybe later');
+});

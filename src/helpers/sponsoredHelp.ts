@@ -31,6 +31,9 @@ export interface SponsoredHelpView {
   recipientUsername: string;
   createdAt: number;
   expiresAt: number;
+  // the new-member welcome (sponsored by Twinkle; the greeting is the card)
+  isWelcome?: boolean;
+  greeting?: string;
   summary?: string;
   steps?: SponsoredHelpStep[];
   cannotDo?: string[];
@@ -104,6 +107,7 @@ export function sponsoredHelpStatusLine(
   switch (request.status) {
     case 'sent':
       if (variant === 'assistant' && request.failureCode) return 'Didn’t work this time';
+      if (request.isWelcome) return '';
       if (isSender) return `Waiting for ${request.recipientUsername}`;
       return isRecipient ? 'Ready when you are' : '';
     case 'planning':
@@ -117,6 +121,7 @@ export function sponsoredHelpStatusLine(
     case 'failed':
       return 'Something went wrong';
     case 'declined':
+      if (request.isWelcome) return 'Maybe later';
       return isSender ? `${request.recipientUsername} said no thanks · unused Energy back` : 'You said no thanks';
     case 'cancelled':
       return isSender ? 'Taken back · unused Energy back' : 'Taken back';
