@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import Modal from '~/components/Modal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import MonsterSprite, { MonsterPose } from '~/components/WordMonster/MonsterSprite';
 import { useAppContext, useChatContext } from '~/contexts';
-import BattleScreen, { BattleApi, BattleState } from './BattleScreen';
+import { BattleState } from './BattleScreen';
+import { wordBattleHost } from './battleHost';
 import ExploringScene, { EncounterFlash, useExplorePhase } from './ExploringScene';
 import { resetTimeLabel } from './lines';
 import RanAwayCard from './RanAwayCard';
@@ -93,8 +93,10 @@ export function isBattleLocked(wordObj: any) {
 
 // The gate in front of an unplayed word's definition (design §1): the word's
 // monster blocks the way until the member battles it. The battle opens over
-// everything, like the definition sheet it guards,
-// and when it ends the definitions it guarded are handed to `onUnlocked`.
+// everything, like the definition sheet it guards, and when it ends the
+// definitions it guarded are handed to `onUnlocked`. The battle itself is
+// hosted by the app (battleHost.ts), so a gate unmounted mid-battle (its feed
+// card swapped out, its window closed) never takes the battle with it.
 export default function WordBattleGate({
   wordObj,
   onUnlocked,
@@ -105,9 +107,6 @@ export default function WordBattleGate({
   compact?: boolean;
 }) {
   const loadWordBattle = useAppContext((v) => v.requestHelpers.loadWordBattle);
-  const startWordBattle = useAppContext((v) => v.requestHelpers.startWordBattle);
-  const answerWordBattle = useAppContext((v) => v.requestHelpers.answerWordBattle);
-  const loadWordBattleAudio = useAppContext((v) => v.requestHelpers.loadWordBattleAudio);
   const captureWordBattle = useAppContext((v) => v.requestHelpers.captureWordBattle);
   const readWordBattle = useAppContext((v) => v.requestHelpers.readWordBattle);
   const onUnlockWordDefinitions = useChatContext((v) => v.actions.onUnlockWordDefinitions);
@@ -117,34 +116,27 @@ export default function WordBattleGate({
   const word = String(wordObj?.battle?.word || typed);
   const seenForm = typed && typed !== word ? typed : undefined;
   const [state, setState] = useState<BattleState | null>(null);
-  const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
   const [denBusy, setDenBusy] = useState<'capture' | 'read' | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const onUnlockedRef = useRef(onUnlocked);
   onUnlockedRef.current = onUnlocked;
 
-  const api: BattleApi = useMemo(
-    () => ({
-      start: async (id) => {
-        try {
-          return await startWordBattle(id, seenForm);
-        } catch (error: any) {
-          // Today's battles ran out since the gate loaded: back to the gate,
-          // which now offers Capture or Just read it. (handleError rejects
-          // with the server's error code as `message`.)
-          if (error?.message === 'daily_limit') {
-            setOpen(false);
-            setState((prev) => (prev ? { ...prev, battlesLeft: 0 } : prev));
-          }
-          throw error;
-        }
+  // The hosted battle reports back while this gate is mounted: its end (the
+  // host has already put the definitions into Word Master's state), or the
+  // day's battles running out (back to the gate, which then offers Capture
+  // or Just read it).
+  useEffect(() => {
+    if (!wordId) return;
+    return wordBattleHost.registerGate(wordId, {
+      onFinished: (finished) => {
+        if (finished.unlocked) onUnlockedRef.current(finished.unlocked);
       },
-      answer: (args) => answerWordBattle(args),
-      loadAudio: (args) => loadWordBattleAudio(args)
-    }),
-    [answerWordBattle, loadWordBattleAudio, startWordBattle, seenForm]
-  );
+      onDailyLimit: () => {
+        setState((prev) => (prev ? { ...prev, battlesLeft: 0 } : prev));
+      }
+    });
+  }, [wordId]);
 
   useEffect(() => {
     if (!wordId) return;
@@ -251,9 +243,10 @@ export default function WordBattleGate({
   }
 
   function openBattle() {
+    if (!state) return;
     // Ready while still waking: skip the rest of it.
     setStage('awake');
-    setOpen(true);
+    wordBattleHost.open({ wordId, word, seenForm, state });
   }
 
   return (
@@ -398,30 +391,6 @@ export default function WordBattleGate({
         </div>
         {explorePhase === 'encounter' && <EncounterFlash />}
       </div>
-      )}
-      {open && state && (
-        <Modal
-          modalKey="WordBattle"
-          isOpen
-          size="md"
-          hasHeader={false}
-          bodyPadding={0}
-          closeOnBackdropClick={false}
-          showCloseButton={false}
-          xpActivity
-          onClose={() => setOpen(false)}
-          aria-label={`Battle ${word}`}
-        >
-          <BattleScreen
-            initial={state}
-            api={api}
-            onClose={() => setOpen(false)}
-            onFinished={(finished) => {
-              setOpen(false);
-              if (finished.unlocked) handleUnlocked(finished.unlocked);
-            }}
-          />
-        </Modal>
       )}
     </ErrorBoundary>
   );

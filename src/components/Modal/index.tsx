@@ -21,6 +21,7 @@ import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ModalFooter, { ModalFooterContext } from './Footer';
 import { lockBodyScroll } from '~/helpers/bodyScrollLock';
+import { useHoldLazyContent } from '~/helpers/lazyPlaceholder';
 
 function safeRender(node: React.ReactNode): React.ReactNode {
   if (isValidElement(node)) return node;
@@ -219,6 +220,9 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
     // DOM, so the mark travels through React instead.
     const insideXpActivity = useContext(XpActivityContext);
     const marksXpActivity = xpActivity || insideXpActivity;
+    // An open window keeps the lazy list item it was opened from mounted
+    // (lazyPlaceholder.ts): an item swapped for its stand-in would close it.
+    useHoldLazyContent(isOpen);
     const [isAnimating, setIsAnimating] = useState(false);
     const [shouldRender, setShouldRender] = useState(isOpen);
     const modalRef = useRef<HTMLDivElement>(null);
