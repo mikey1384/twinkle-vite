@@ -247,6 +247,12 @@ async function openPage(browser, viewport) {
           body: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#14213d"/><circle cx="12" cy="14" r="1.5" fill="#fff"/><circle cx="66" cy="10" r="1.2" fill="#fff"/><circle cx="58" cy="66" r="1.4" fill="#fff"/><rect x="24" y="22" width="32" height="42" rx="16" fill="#e04848"/><rect x="18" y="34" width="8" height="18" rx="4" fill="#b83232"/><rect x="34" y="28" width="22" height="12" rx="6" fill="#9ed8f0"/><rect x="28" y="58" width="9" height="12" rx="3" fill="#e04848"/><rect x="43" y="58" width="9" height="12" rx="3" fill="#e04848"/></svg>`
         });
       }
+      if (thumb[1] === 'redsquare') {
+        return route.fulfill({
+          contentType: 'image/svg+xml',
+          body: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#6cb8f0"/><rect y="62" width="80" height="18" fill="#3c9a3c"/><rect y="62" width="80" height="4" fill="#2b7a2b"/><rect x="46" y="30" width="18" height="10" fill="#c8722c"/><rect x="22" y="40" width="20" height="20" fill="#e02f2f"/><rect x="34" y="45" width="4" height="4" fill="#fff"/></svg>`
+        });
+      }
       const board = thumb[1] === 'baduk';
       return route.fulfill({
         contentType: 'image/svg+xml',
@@ -371,13 +377,13 @@ test(
       await page.waitForFunction(() => window.lastLocation?.state === null);
       assert.equal(await page.evaluate(() => window.socialWalkupStore.get(5).visit), null);
 
-      // Join on the row walks up to whoever is ready; with nobody ready it
-      // just opens the app (today's behavior).
+      // The row's button says what it does: Play walks up to whoever is
+      // ready; a watch-only member (Sketch Town, mode 'watch') is Watch.
       await page.evaluate(() => {
         window.walkupAnswer = window.originalWalkupAnswer;
         window.walkups.length = 0;
       });
-      await page.getByRole('button', { name: 'Join Baduk' }).click();
+      await page.getByRole('button', { name: 'Play: Baduk' }).click();
       await page.waitForFunction(() => window.walkups.length === 1);
       assert.deepEqual(await page.evaluate(() => window.walkups[0]), {
         buildId: 5,
@@ -388,10 +394,16 @@ test(
       await page.evaluate(() => {
         window.walkups.length = 0;
       });
-      await page.getByRole('button', { name: 'Join Sketch Town' }).click();
+      await page.getByRole('button', { name: 'Watch: Sketch Town' }).click();
       await page.waitForFunction(() => window.lastLocation?.pathname === '/app/8');
-      assert.deepEqual(await page.evaluate(() => window.walkups), []);
-      assert.equal(await page.evaluate(() => window.lastLocation.state), null);
+      assert.deepEqual(await page.evaluate(() => window.walkups), [
+        { buildId: 8, hostUserId: 14, intent: 'watch', dropIn: true }
+      ]);
+      // nobody to join (Word Search Adventure): no button; the row opens the app
+      assert.equal(
+        await page.locator('li', { hasText: 'Word Search Adventure' }).locator('button').count(),
+        0
+      );
       await page.evaluate(() => window.setScene({ name: 'settings' }));
       const hostPreference = page.getByRole('switch', {
         name: 'Let people walk up while I play'
@@ -741,7 +753,7 @@ test(
       await page.waitForFunction(() => !document.querySelector('[data-social-join]'));
 
       // One tap on the row's Join: straight into dew's room.
-      await page.getByRole('button', { name: 'Join Among Us' }).click();
+      await page.getByRole('button', { name: 'Join: Among Us' }).click();
       await page.waitForFunction(() => window.lastLocation?.pathname === '/app/2809');
       assert.deepEqual(await page.evaluate(() => window.walkups), [
         { buildId: 2809, hostUserId: 16, intent: 'play', dropIn: true }
@@ -778,12 +790,12 @@ test(
         window.walkupAnswer = { status: 'unavailable' };
         window.setScene({ name: 'live' });
       });
-      await page.getByRole('button', { name: 'Join Among Us' }).click();
+      await page.getByRole('button', { name: 'Join: Among Us' }).click();
       await page.waitForFunction(() => window.lastLocation?.state === null);
       assert.equal(await page.evaluate(() => window.socialWalkupStore.get(2809).match), null);
 
-      // Only a busy room in Among Us: Live now shows it busy, and the row's
-      // Join just opens the app. Nobody is walked up to or queued.
+      // Only a busy room in Among Us: Live now shows it busy with no button,
+      // and the row just opens the app. Nobody is walked up to or queued.
       // (a fresh card: Live now holds what it showed while the pointer is on it)
       await page.mouse.move(380, 890);
       await page.evaluate(() => {
@@ -803,7 +815,8 @@ test(
         ['Cloudstar · In a match']
       );
       assert.equal(await busyRow.locator('.live-join').first().getAttribute('data-state'), 'busy');
-      await page.getByRole('button', { name: 'Join Among Us' }).click();
+      assert.equal(await busyRow.getByRole('button', { name: /: Among Us$/ }).count(), 0);
+      await busyRow.locator('.live-title').click();
       await page.waitForFunction(() => window.lastLocation?.pathname === '/app/2809');
       assert.deepEqual(await page.evaluate(() => window.walkups), []);
       assert.equal(await page.evaluate(() => window.lastLocation.state), null);
@@ -832,6 +845,115 @@ test(
       await shot(host.page.locator('[data-app-shell]'), 'dropin-host-toast-phone.png');
       await host.page.waitForFunction(() => !document.querySelector('[data-social-arrival]'), null, { timeout: 6000 });
       assert.deepEqual(host.errors, []);
+    } finally {
+      await browser.close();
+    }
+  }
+);
+
+test(
+  'the row button says what tapping does: Join a room, Play someone ready, Watch a game or a watch-only player',
+  { timeout: 120000 },
+  async () => {
+    const browser = await chromium.launch();
+    try {
+      const { page, errors } = await openPage(browser, { width: 390, height: 1000 });
+      await page.evaluate(() => {
+        window.names[21] = 'Lemon';
+        window.names[22] = 'Hur';
+        window.names[23] = 'Heo';
+        const red = (joinable) => ({ kind: 'app', id: 2, title: 'The Adventure of a Red Square', thumbnailUrl: '/thumbs/redsquare.png', multiplayer: false, ...(joinable ? { joinable } : {}) });
+        const baduk = (joinable) => ({ kind: 'app', id: 2915, title: 'Baduk', thumbnailUrl: '/thumbs/baduk.png', multiplayer: true, ...(joinable ? { joinable } : {}) });
+        const among = (joinable) => ({ kind: 'app', id: 2809, title: 'Among Us', thumbnailUrl: '/thumbs/amongus.png', multiplayer: true, ...(joinable ? { joinable } : {}) });
+        const person = (id, activity) => ({ id, username: window.names[id], profilePicUrl: '/pictures/' + id + '.jpg', isOnline: true, isAway: false, activity });
+        window.labelScenes = {
+          ready: {
+            16: person(16, among({ state: 'open', label: 'Waiting for crews', mode: 'room', dropIn: true })),
+            11: person(11, baduk({ state: 'open', label: 'Looking for a game', mode: '1v1' })),
+            21: person(21, red({ state: 'busy-watchable', label: 'Playing World 3-2', mode: 'watch' }))
+          },
+          busy: {
+            // Among Us full / no seat left: a watchable room (Mikey 11-24)
+            17: person(17, among({ state: 'busy-watchable', label: 'Room full · come watch', mode: 'room', dropIn: true })),
+            12: person(12, baduk({ state: 'busy-watchable', label: 'In a game, come watch', mode: '1v1' })),
+            22: person(22, baduk({ state: 'busy', label: 'Playing the AI', mode: '1v1' })),
+            23: person(23, red())
+          }
+        };
+        window.walkups.length = 0;
+        window.walkupAnswer = { status: 'unavailable' };
+        window.setScene({ name: 'live' });
+        window.setChatStatus(window.labelScenes.ready);
+      });
+      const rowButtons = async () =>
+        page.evaluate(() =>
+          [...document.querySelectorAll('section[aria-label="Live now"] li')].map((li) => [
+            li.querySelector('.live-title').textContent,
+            li.querySelector(':scope > button')?.textContent.trim() || null
+          ])
+        );
+      const expandAll = async () => {
+        const more = page.getByRole('button', { name: /more$/ });
+        if (await more.count()) await more.click();
+      };
+      await page.getByText('Live now', { exact: true }).waitFor();
+      await expandAll();
+      await page.waitForFunction(() => document.querySelectorAll('section[aria-label="Live now"] li').length === 3);
+      assert.deepEqual(new Map(await rowButtons()), new Map([
+        ['Among Us', 'Join'],
+        ['Baduk', 'Play'],
+        ['The Adventure of a Red Square', 'Watch']
+      ]));
+      await page.mouse.move(385, 995);
+      await page.waitForTimeout(500);
+      await shot(page.locator('[data-column]'), 'labels-join-play-watch-phone.png');
+
+      // Watch on a watch-only player: the walk-up watch path, no queue
+      await page.getByRole('button', { name: 'Watch: The Adventure of a Red Square' }).click();
+      await page.waitForFunction(() => window.walkups.length === 1);
+      assert.deepEqual(await page.evaluate(() => window.walkups[0]), {
+        buildId: 2, hostUserId: 21, intent: 'watch', dropIn: true
+      });
+
+      // Busy: Baduk online game = Watch, a full Among Us room = Watch,
+      // Baduk vs the AI alone and a closed Red Square = nothing to tap.
+      // (a fresh card: Live now holds what it showed while the pointer is on it)
+      await page.mouse.move(385, 995);
+      await page.evaluate(() => {
+        window.walkups.length = 0;
+        window.setScene({ name: 'none' });
+        window.setChatStatus(window.labelScenes.busy);
+      });
+      await page.evaluate(() => window.setScene({ name: 'live' }));
+      await page.getByText('Live now', { exact: true }).waitFor();
+      await page.waitForFunction(() => document.body.textContent.includes('Room full'));
+      await expandAll();
+      await page.waitForFunction(() => document.querySelectorAll('section[aria-label="Live now"] li').length === 3);
+      assert.deepEqual(new Map(await rowButtons()), new Map([
+        ['Among Us', 'Watch'],
+        ['Baduk', 'Watch'],
+        ['The Adventure of a Red Square', null]
+      ]));
+      await page.mouse.move(385, 995);
+      await page.waitForTimeout(500);
+      await shot(page.locator('[data-column]'), 'labels-busy-watch-phone.png');
+      await page.getByRole('button', { name: 'Watch: Among Us' }).click();
+      await page.waitForFunction(() => window.walkups.length === 1);
+      assert.deepEqual(await page.evaluate(() => window.walkups[0]), {
+        buildId: 2809, hostUserId: 17, intent: 'watch', dropIn: true
+      });
+
+      // Only the AI game: Baduk shows no button at all
+      await page.mouse.move(385, 995);
+      await page.evaluate(() => {
+        window.setScene({ name: 'none' });
+        window.setChatStatus({ 22: window.labelScenes.busy[22] });
+      });
+      await page.evaluate(() => window.setScene({ name: 'live' }));
+      await page.getByText('Live now', { exact: true }).waitFor();
+      await page.waitForFunction(() => !document.body.textContent.includes('Room full'));
+      assert.deepEqual(await rowButtons(), [['Baduk', null]]);
+      assert.deepEqual(errors, []);
     } finally {
       await browser.close();
     }

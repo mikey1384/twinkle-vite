@@ -66,9 +66,22 @@ export function isGameMode(mode: string) {
   return GAME_MODES.has(mode);
 }
 
+// A watch-only member (mode 'watch'): a single-player game people can
+// spectate. Joining them is watching; nobody is queued and the host never
+// accepts anyone. Only 'busy-watchable' offers anything (the server reads
+// 'open' or 'busy' with mode 'watch' as closed).
+export const WATCH_ONLY_MODE = 'watch';
+export function isWatchOnly(joinable: Joinable) {
+  return joinable.mode === WATCH_ONLY_MODE;
+}
+function isRoom(joinable: Joinable) {
+  return !!joinable.dropIn || joinable.mode === DROP_IN_MODE;
+}
+
 /** The few words shown next to a face. The app's own label when it gave one. */
 export function joinableBadge(joinable: Joinable) {
   if (joinable.label) return joinable.label;
+  if (isWatchOnly(joinable)) return 'Playing, come watch';
   if (joinable.state === 'open')
     return isGameMode(joinable.mode) ? 'Looking for a game' : 'Come join';
   if (joinable.state === 'busy-watchable')
@@ -82,10 +95,61 @@ export interface JoinAction {
   label: string;
 }
 
+// What tapping does, in one word (Live now's row button). Derived from the
+// state and mode the app set; apps never name the button themselves.
+//
+//   state           mode                     verb    tap
+//   open            'room' (drop-in)         Join    walk straight in
+//   open            any queue mode           Play    walk up (you're next)
+//   busy-watchable  any, incl. room/watch    Watch   watch, never queued
+//   busy            any                      -       nothing to tap
+//   open / busy     'watch'                  -       (read as closed)
+//   closed / none   -                        -       nothing to tap
+export type JoinVerb = 'join' | 'play' | 'watch';
+export const JOIN_VERB_LABELS: Record<JoinVerb, string> = {
+  join: 'Join',
+  play: 'Play',
+  watch: 'Watch'
+};
+export interface PrimaryJoinAction {
+  verb: JoinVerb;
+  intent: 'play' | 'watch';
+}
+export function primaryJoinAction(
+  joinable: Joinable | null | undefined
+): PrimaryJoinAction | null {
+  if (!joinable) return null;
+  if (joinable.state === 'busy-watchable') return { verb: 'watch', intent: 'watch' };
+  if (joinable.state !== 'open' || isWatchOnly(joinable)) return null;
+  return isRoom(joinable)
+    ? { verb: 'join', intent: 'play' }
+    : { verb: 'play', intent: 'play' };
+}
+
+const VERB_RANK: Record<JoinVerb, number> = { join: 0, play: 1, watch: 2 };
+
 /**
- * What a member can do about someone who is joinable. Open: play or join
- * now. Busy: be next (the host is never interrupted), and watch if the app
- * lets people watch.
+ * The row's one button when several members are in the same app: the best
+ * action anyone offers (Join, then Play, then Watch), from the first member
+ * offering it. Null when nobody has anything to tap.
+ */
+export function bestJoinAction<M extends { joinable?: Joinable | null }>(
+  members: M[]
+): (PrimaryJoinAction & { member: M }) | null {
+  let best: (PrimaryJoinAction & { member: M }) | null = null;
+  for (const member of members) {
+    const action = primaryJoinAction(member.joinable);
+    if (action && (!best || VERB_RANK[action.verb] < VERB_RANK[best.verb]))
+      best = { ...action, member };
+  }
+  return best;
+}
+
+/**
+ * What a member can do about someone who is joinable (the profile popup).
+ * The first action is the row's verb (primaryJoinAction). Busy: be next (the
+ * host is never interrupted), and watch if the app lets people watch. Rooms
+ * and watch-only members never use the queue.
  */
 export function joinActions({
   joinable,
@@ -96,33 +160,26 @@ export function joinActions({
   appTitle: string;
   username: string;
 }): JoinAction[] {
-  const game = isGameMode(joinable.mode);
+  const primary = primaryJoinAction(joinable);
   // A room (mode 'room') never uses the queue, in any state. Open: Join
   // drops the visitor straight in (or, with no held key, just opens the app).
   // In a match or full: shown busy, no Join and no "Join next"; at most they
-  // can watch.
-  if (joinable.dropIn || joinable.mode === DROP_IN_MODE) {
-    if (joinable.state === 'open')
+  // can watch. A watch-only member is only ever watched.
+  if (isRoom(joinable) || isWatchOnly(joinable)) {
+    if (!primary) return [];
+    if (primary.verb === 'join')
       return [{ intent: 'play', label: `Join ${username} in ${appTitle}` }];
-    return joinable.state === 'busy-watchable'
-      ? [{ intent: 'watch', label: 'Watch' }]
-      : [];
-  }
-  if (joinable.state === 'open') {
     return [
       {
-        intent: 'play',
-        label: game
-          ? `Play ${appTitle} with ${username}`
-          : `Join ${username} in ${appTitle}`
+        intent: 'watch',
+        label: isWatchOnly(joinable) ? `Watch ${username}` : 'Watch'
       }
     ];
   }
-  const next: JoinAction = {
-    intent: 'next',
-    label: game ? 'Play next' : 'Join next'
-  };
-  return joinable.state === 'busy-watchable'
+  if (primary?.verb === 'play')
+    return [{ intent: 'play', label: `Play ${appTitle} with ${username}` }];
+  const next: JoinAction = { intent: 'next', label: 'Play next' };
+  return primary?.verb === 'watch'
     ? [{ intent: 'watch', label: 'Watch' }, next]
     : [next];
 }

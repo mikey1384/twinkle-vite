@@ -6,8 +6,10 @@ import {
   createSocialJoinableStore,
   createSocialWalkupStore,
   EMPTY_SOCIAL_STATE,
+  bestJoinAction,
   joinActions,
   joinNotice,
+  primaryJoinAction,
   joinableBadge,
   queueChipText,
   readJoinable,
@@ -85,7 +87,45 @@ test('Play or Join when they are ready; Watch and "next" when they are busy', ()
     ['watch', 'Watch'],
     ['next', 'Play next']
   ]);
-  assert.deepEqual(labels({ state: 'busy', label: '', mode: 'coop' }), [['next', 'Join next']]);
+  assert.deepEqual(labels({ state: 'busy', label: '', mode: 'coop' }), [['next', 'Play next']]);
+  assert.deepEqual(labels({ state: 'open', label: '', mode: 'coop' }, 'Sketch Town'), [
+    ['play', 'Play Sketch Town with KenGo']
+  ]);
+  // a watch-only member is only ever watched: never "next", never Play
+  assert.deepEqual(labels({ state: 'busy-watchable', label: '', mode: 'watch' }), [['watch', 'Watch KenGo']]);
+  assert.deepEqual(labels({ state: 'open', label: '', mode: 'watch' }), []);
+  assert.deepEqual(labels({ state: 'busy', label: '', mode: 'watch' }), []);
+});
+
+test('the row verb is derived from state and mode: Join a room, Play a queue, Watch anything watchable', () => {
+  const verb = (joinable: any) => {
+    const action = primaryJoinAction(joinable);
+    return action ? `${action.verb}/${action.intent}` : null;
+  };
+  assert.equal(verb({ state: 'open', label: '', mode: 'room', dropIn: true }), 'join/play');
+  assert.equal(verb({ state: 'open', label: '', mode: 'room' }), 'join/play');
+  assert.equal(verb(open), 'play/play');
+  assert.equal(verb({ state: 'open', label: '', mode: 'coop' }), 'play/play');
+  assert.equal(verb({ state: 'open', label: '', mode: '' }), 'play/play');
+  assert.equal(verb(watchable), 'watch/watch');
+  assert.equal(verb({ state: 'busy-watchable', label: '', mode: 'room', dropIn: true }), 'watch/watch');
+  assert.equal(verb({ state: 'busy-watchable', label: '', mode: 'watch' }), 'watch/watch');
+  assert.equal(verb({ state: 'busy', label: '', mode: '1v1' }), null);
+  assert.equal(verb({ state: 'busy', label: '', mode: 'room', dropIn: true }), null);
+  assert.equal(verb({ state: 'open', label: '', mode: 'watch' }), null);
+  assert.equal(verb(null), null);
+
+  // several members: the best action anyone offers, from the first offering it
+  const m = (id: number, joinable?: any) => ({ id, ...(joinable ? { joinable } : {}) });
+  const best = (members: any[]) => {
+    const action = bestJoinAction(members);
+    return action ? [action.verb, action.member.id] : null;
+  };
+  assert.deepEqual(best([m(1, watchable), m(2, open), m(3, open)]), ['play', 2]);
+  assert.deepEqual(best([m(1, open), m(2, { state: 'open', label: '', mode: 'room', dropIn: true })]), ['join', 2]);
+  assert.deepEqual(best([m(1), m(2, { state: 'busy', label: '', mode: '1v1' }), m(3, watchable)]), ['watch', 3]);
+  assert.equal(best([m(1), m(2, { state: 'busy', label: '', mode: '1v1' })]), null);
+  assert.equal(best([]), null);
 });
 
 test('Live now carries each member’s joinable state and puts joinable faces first', () => {
