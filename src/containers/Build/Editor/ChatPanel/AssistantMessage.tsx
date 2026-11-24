@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { LUMINE_KEEPS_WORKING_NOTE } from '../../PreviewPanel/LumineAtWork/activity';
 import { css } from '@emotion/css';
 import CodeDiff from '~/components/CodeDiff';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -465,6 +466,23 @@ export default function AssistantMessage({
           >
             {displayedCurrentActivityMessage}
           </div>
+          {isOwner ? (
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+                margin-top: 0.2rem;
+                font-size: var(--build-workshop-meta-font-size);
+                line-height: 1.4;
+                color: var(--chat-text);
+                opacity: 0.7;
+              `}
+            >
+              <Icon icon="bell" />
+              <span>{LUMINE_KEEPS_WORKING_NOTE}</span>
+            </div>
+          ) : null}
         </div>
       ) : null}
       {displayedStatusStepEntries.length > 0 ? (

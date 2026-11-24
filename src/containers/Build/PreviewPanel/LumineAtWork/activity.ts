@@ -5,13 +5,24 @@ import type { LuminePose } from './pixelScene';
 // run carries `queue`, and file writes arrive as streamed project files.
 export interface LumineRunActivity {
   thinking: boolean;
+  // Lumine is trying the app in the preview (the API names the tool on each
+  // tool event: details.toolName).
+  testing: boolean;
   queued: boolean;
   // The latest step line the chat shows (already plain language), if any.
   label: string | null;
   terminalState: 'complete' | 'error' | 'stopped' | null;
 }
 
-export type LumineWorkMode = 'writing' | 'thinking' | 'working' | 'queued' | 'idle';
+export type LumineWorkMode =
+  | 'writing'
+  | 'thinking'
+  | 'testing'
+  | 'working'
+  | 'queued'
+  | 'idle';
+
+const PREVIEW_TEST_TOOLS = new Set(['view_preview', 'run_preview_test']);
 
 interface RunEventLike {
   kind?: string | null;
@@ -31,6 +42,7 @@ export function resolveLumineRunActivity({
   terminalState?: 'complete' | 'error' | 'stopped' | null;
 }): LumineRunActivity {
   let thinking = false;
+  let testing = false;
   let sawLatest = false;
   let label: string | null = null;
   for (let index = runEvents.length - 1; index >= 0; index -= 1) {
@@ -43,6 +55,9 @@ export function resolveLumineRunActivity({
     if (!sawLatest) {
       sawLatest = true;
       thinking = isThought && !event.details?.isComplete;
+      testing =
+        !isThought &&
+        PREVIEW_TEST_TOOLS.has(String(event.details?.toolName || ''));
     }
     if (isThought) continue;
     const message = String(event.message || '').trim();
@@ -61,6 +76,7 @@ export function resolveLumineRunActivity({
   }
   return {
     thinking,
+    testing,
     queued: Boolean(queue),
     label,
     terminalState: terminalState ?? null
@@ -79,6 +95,7 @@ export function resolveLumineWorkMode({
   if (!running) return 'idle';
   if (activity?.queued) return 'queued';
   if (writingRecently) return 'writing';
+  if (activity?.testing) return 'testing';
   if (activity?.thinking) return 'thinking';
   return 'working';
 }
@@ -97,12 +114,14 @@ export const POSE_TICKS: Record<LuminePose, [number, number]> = {
   wave: [30, 30],
   rest: [40, 60],
   slam: [36, 48],
+  test: [40, 56],
   flow: [42, 60]
 };
 
 const WEIGHTS: Record<LumineWorkMode, Partial<Record<LuminePose, number>>> = {
   writing: { type: 4, burst: 3, slam: 2.5, flow: 2.5, glance: 1, sip: 0.5 },
   thinking: { think: 5, glance: 2, sip: 2, type: 1, stretch: 1 },
+  testing: { test: 5, glance: 2, think: 1 },
   working: { type: 2, burst: 2, slam: 1.5, flow: 1.5, think: 2, glance: 2, sip: 1.5, stretch: 1 },
   queued: { sip: 3, stretch: 2, think: 2, rest: 1, glance: 1 },
   idle: { rest: 3, wave: 2, sip: 1, stretch: 1 }
@@ -172,6 +191,8 @@ export function describeLumineWork({
       };
     case 'thinking':
       return { title: 'Lumine is thinking', subtitle: label };
+    case 'testing':
+      return { title: 'Lumine is testing your app', subtitle: label };
     case 'working':
       return { title: 'Lumine is building', subtitle: label };
     case 'queued':
@@ -189,3 +210,8 @@ export function describeLumineWork({
       };
   }
 }
+
+// Shown while Lumine works (Mikey 11-24): members may leave the page; a
+// notice tells them when the run is done (App/LumineRunNotifications).
+export const LUMINE_KEEPS_WORKING_NOTE =
+  "You can visit other pages while Lumine works. You'll get a notice when it's done.";

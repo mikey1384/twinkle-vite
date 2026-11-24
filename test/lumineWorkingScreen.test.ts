@@ -12,6 +12,11 @@ import {
   SCENE_H
 } from '../src/containers/Build/PreviewPanel/LumineAtWork/pixelScene';
 import {
+  describeLumineRunFinished,
+  isLumineBuildPage,
+  normalizeLumineRunFinishedNotice
+} from '../src/helpers/lumineRunFinished';
+import {
   diffLines,
   foldRows,
   freshLineNumbers
@@ -41,7 +46,7 @@ test('run activity reads structured signals: reasoning events mean thinking, lab
 });
 
 test('work mode: idle when not running, then queued > writing > thinking > working', () => {
-  const base = { thinking: true, queued: false, label: null, terminalState: null };
+  const base = { thinking: true, testing: false, queued: false, label: null, terminalState: null };
   assert.equal(resolveLumineWorkMode({ running: false, activity: base, writingRecently: true }), 'idle');
   assert.equal(resolveLumineWorkMode({ running: true, activity: { ...base, queued: true }, writingRecently: true }), 'queued');
   assert.equal(resolveLumineWorkMode({ running: true, activity: base, writingRecently: true }), 'writing');
@@ -66,7 +71,7 @@ test('poses never repeat back to back, follow an idea with a burst, and keep the
 });
 
 test('every pose renders a full frame at the narrowest and widest scene sizes', () => {
-  const poses = ['type', 'burst', 'think', 'sip', 'stretch', 'glance', 'celebrate', 'wave', 'rest', 'slam', 'flow'] as const;
+  const poses = ['type', 'burst', 'think', 'sip', 'stretch', 'glance', 'celebrate', 'wave', 'rest', 'slam', 'flow', 'test'] as const;
   for (const width of [112, 160, 232]) {
     for (const pose of poses) {
       for (const poseFrame of [0, 5, 11, 30]) {
@@ -109,4 +114,35 @@ test('long unchanged runs fold, keeping three lines of context, and expand on re
 test('the typing cursor only types lines the latest update brought', () => {
   assert.deepEqual(freshLineNumbers('a\nb', 'a\nnew\nb\n\nlast'), [2, 5]);
   assert.deepEqual(freshLineNumbers('same', 'same'), []);
+});
+
+test('a preview-test tool event (named by the API) puts Lumine in testing mode', () => {
+  const activity = resolveLumineRunActivity({
+    runEvents: [{ kind: 'action', message: 'Lumine checked the preview.', details: { toolName: 'run_preview_test', toolPhase: 'inspect' } }],
+    queue: null,
+    assistantStatusSteps: []
+  });
+  assert.equal(activity.testing, true);
+  assert.equal(resolveLumineWorkMode({ running: true, activity, writingRecently: false }), 'testing');
+  const edit = resolveLumineRunActivity({
+    runEvents: [{ kind: 'action', message: 'x', details: { toolName: 'edit_project_file' } }],
+    queue: null,
+    assistantStatusSteps: []
+  });
+  assert.equal(edit.testing, false);
+});
+
+test('Lumine finished notices: wording per outcome, and the build page is recognised', () => {
+  const saved = normalizeLumineRunFinishedNotice({ buildId: 3, requestId: 'r', title: 'Star Catcher', outcome: 'saved', versionNumber: 12 });
+  assert.ok(saved);
+  assert.deepEqual(describeLumineRunFinished(saved!), { title: 'Your app is ready!', message: 'Star Catcher: version 12 saved.', success: true });
+  assert.match(describeLumineRunFinished({ ...saved!, unfinished: true }).message, /stopped before finishing/);
+  assert.equal(describeLumineRunFinished({ ...saved!, outcome: 'failed', message: null, title: null }).message, 'Your project: something went wrong. You can try again.');
+  assert.equal(describeLumineRunFinished({ ...saved!, outcome: 'stopped' }).success, false);
+  assert.equal(normalizeLumineRunFinishedNotice({ buildId: 0, outcome: 'saved' }), null);
+  assert.equal(normalizeLumineRunFinishedNotice({ buildId: 3, outcome: 'weird' }), null);
+  assert.equal(isLumineBuildPage('/build/3', 3), true);
+  assert.equal(isLumineBuildPage('/build/3/branches', 3), true);
+  assert.equal(isLumineBuildPage('/build/33', 3), false);
+  assert.equal(isLumineBuildPage('/home', 3), false);
 });

@@ -8,7 +8,7 @@ import {
   type LuminePose,
   type LumineSceneState
 } from './pixelScene';
-import { nextLuminePose, type LumineWorkMode } from './activity';
+import { nextLuminePose, POSE_TICKS, type LumineWorkMode } from './activity';
 
 // Lumine at work (Mikey 11-24): "pixelated version of lumine typing
 // diligently ... different typing animation variation so keep users engaged".
@@ -47,15 +47,22 @@ export default function LumineAtWork({
   mode,
   saveSignal = 0,
   title,
-  subtitle
+  subtitle,
+  note,
+  startPose
 }: {
   // stage: fills the preview area. corner: a small badge over a live preview.
-  variant?: 'stage' | 'corner';
+  // toast: just the little scene, for the "Lumine finished" notice.
+  variant?: 'stage' | 'corner' | 'toast';
+  // Play this pose first (e.g. celebrate when the notice appears).
+  startPose?: LuminePose;
   mode: LumineWorkMode;
   // Goes up by one whenever Lumine finishes a file or a run: a celebration.
   saveSignal?: number;
   title?: string;
   subtitle?: string | null;
+  // A quiet extra line under the caption (e.g. "you can leave this page").
+  note?: string | null;
 }) {
   const hidden = usePageHidden();
   const [reduced] = useState(prefersReducedMotion);
@@ -73,15 +80,15 @@ export default function LumineAtWork({
   }>({
     frame: 0,
     poseStart: 0,
-    poseUntil: 0,
-    pose: mode === 'idle' ? 'wave' : 'type',
+    poseUntil: startPose ? POSE_TICKS[startPose][0] : 0,
+    pose: startPose || (mode === 'idle' ? 'wave' : 'type'),
     typed: 140
   });
   const lastSaveSignalRef = useRef(saveSignal);
 
   // Whole-number scale that fits the space; the scene widens to fill it.
   useLayoutEffect(() => {
-    if (variant === 'corner') {
+    if (variant !== 'stage') {
       setFit({ width: CORNER_WIDTH, scale: 1 });
       return;
     }
@@ -124,7 +131,7 @@ export default function LumineAtWork({
         typed: s.typed,
         savedLabel: s.pose === 'celebrate',
         idle: modeRef.current === 'idle' && s.pose !== 'celebrate',
-        compact: variant === 'corner'
+        compact: variant !== 'stage'
       };
       image.data.set(renderScene(width, state));
       ctx!.putImageData(image, 0, 0);
@@ -188,6 +195,8 @@ export default function LumineAtWork({
     />
   );
 
+  if (variant === 'toast') return canvas;
+
   if (variant === 'corner') {
     return (
       <div className={cornerCls} data-testid="lumine-at-work-corner">
@@ -217,6 +226,7 @@ export default function LumineAtWork({
           )}
         </div>
         {subtitle ? <div className={subCls}>{subtitle}</div> : null}
+        {note ? <div className={noteCls}>{note}</div> : null}
       </div>
     </div>
   );
@@ -279,6 +289,16 @@ const subCls = css`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+`;
+
+const noteCls = css`
+  margin-top: 0.3rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid #2c2442;
+  border-radius: 12px;
+  font-size: 1.15rem;
+  line-height: 1.4;
+  color: #a99fc4;
 `;
 
 const dotsCls = css`

@@ -106,6 +106,7 @@ import { getBuildPreviewCodeSignature } from '../helpers/previewVersion';
 import useLumineWorkSignals from './LumineAtWork/useLumineWorkSignals';
 import {
   describeLumineWork,
+  LUMINE_KEEPS_WORKING_NOTE,
   resolveLumineWorkMode
 } from './LumineAtWork/activity';
 const GUEST_RESTRICTION_BANNER_TEXT =
@@ -1251,6 +1252,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           corner: lumineBusy && !lumineStageShown,
           mode: lumineWorkMode,
           saveSignal: lumineWorkSignals.saveSignal,
+          note:
+            lumineRunActive && !lumineWorkSignals.lingering
+              ? LUMINE_KEEPS_WORKING_NOTE
+              : null,
           ...describeLumineWork({
             mode: lumineWorkMode,
             lingering: lumineWorkSignals.lingering,

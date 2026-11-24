@@ -12,6 +12,7 @@ import { isLuminePreviewCaptureContext } from '~/helpers/luminePreviewCapture';
 import Header from './Header';
 import SocketManager, { CaptureSocketIdentity } from './SocketManager';
 import DailyPictureNotifications from './DailyPictureNotifications';
+import LumineRunNotifications from './LumineRunNotifications';
 import OnboardingNavTracker from './OnboardingNavTracker';
 import InvalidPage from '~/components/InvalidPage';
 import LazyModalFallback from '~/components/Modals/LazyModalFallback';
@@ -1488,6 +1489,7 @@ export default function App() {
           <SocketManager onInit={handleSocketInit} />
         )}
         <DailyPictureNotifications />
+        <LumineRunNotifications />
         <OnboardingNavTracker />
         {mobileMenuShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>

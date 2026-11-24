@@ -24,7 +24,9 @@ export type LuminePose =
   | 'rest'
   // Typing variations: an Enter-key slam, and vibing to music.
   | 'slam'
-  | 'flow';
+  | 'flow'
+  // Trying the app on the side screen (Lumine's preview tests).
+  | 'test';
 
 export interface LumineSceneState {
   pose: LuminePose;
@@ -559,6 +561,18 @@ function geometry(state: LumineSceneState, lay: Layout): PoseGeometry {
       const sway = Math.floor(f / 6) % 2 ? 1 : -1;
       return { ...base, ...arms, sway, eyes: blinkNow ? 'blink' : 'happy', look: [sway, 0] };
     }
+    case 'test': {
+      // Reach over and tap the app on the side screen; the other hand types
+      // now and then.
+      const tap = Math.floor(f / 4) % 2;
+      return {
+        ...base,
+        look: [2, -1],
+        left: { fore: [cx - 31, 68], fist: [cx - 16, tap ? 73 : 76], kind: 'flat' },
+        right: { fore: [cx + 43, 50], fist: [cx + 50 + tap, 40 - tap], kind: 'up' },
+        litKeys: tap ? [] : [Math.floor(hash(f + 5) * 10) + 1]
+      };
+    }
     case 'glance': {
       // Peek at the app on the right screen, typing slowly with one hand.
       const tap = Math.floor(f / 3) % 2;
@@ -817,6 +831,24 @@ function drawAppScreen(r: Raster, box: Box, state: LumineSceneState, bright: num
   // A coin and a score bar.
   if (Math.floor(state.frame / 3) % 2) r.set(x1 - 6, y0 + 8, C.goldHi);
   r.rect(x0 + 3, y0 + 7, 8, 1, C.holoDim);
+  if (state.pose === 'test') {
+    // A test sweep down the screen, then a green tick.
+    const height = y1 - y0 - 6;
+    const scanY = y0 + 5 + ((state.poseFrame * 2) % height);
+    for (let x = x0 + 1; x < x1; x++) {
+      r.blend(x, scanY, C.ok, 0.75);
+      r.blend(x, scanY - 1, C.ok, 0.25);
+    }
+    if (state.poseFrame > 26) {
+      const bx = x1 - 12;
+      const by = y0 + 10;
+      r.rect(bx - 1, by - 1, 10, 9, C.okLo);
+      r.rect(bx, by, 8, 7, C.ok);
+      [[1, 3], [2, 4], [3, 5], [4, 4], [5, 3], [6, 2], [7, 1]].forEach(([dx, dy]) =>
+        r.set(bx + dx - 0.5, by + dy - 0.5, C.whiteHi)
+      );
+    }
+  }
 }
 
 function drawDesk(r: Raster, lay: Layout) {
@@ -1272,7 +1304,12 @@ export function renderScene(width: number, state: LumineSceneState) {
     drawBeam(r, lay.main, lay.deskY);
     drawBeam(r, lay.side, lay.deskY);
     drawCodeScreen(r, lay.main, state, screenBright);
-    drawAppScreen(r, lay.side, state, state.pose === 'glance' ? 1 : screenBright * 0.85);
+    drawAppScreen(
+      r,
+      lay.side,
+      state,
+      state.pose === 'glance' || state.pose === 'test' ? 1 : screenBright * 0.85
+    );
   }
   drawLumine(r, lay, g, state);
   drawDesk(r, lay);

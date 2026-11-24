@@ -25,6 +25,7 @@ export interface LumineSceneProps {
   saveSignal: number;
   title: string;
   subtitle: string | null;
+  note: string | null;
 }
 
 type PreviewFrameKey = 'primary' | 'secondary';
@@ -379,6 +380,7 @@ export default function PreviewStage({
       saveSignal={lumineScene.saveSignal}
       title={lumineScene.title}
       subtitle={lumineScene.subtitle}
+      note={lumineScene.note}
     />
   ) : null;
   if (!shouldShowWorkspacePreviewStage) {
