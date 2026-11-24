@@ -8,6 +8,7 @@ import {
   PREVIEW_AUTO_RELOAD_JITTER_MS,
   isViewerActive,
   parseBuildVersionSaved,
+  trackViewerActivity,
   type BuildVersionSaved
 } from '../helpers/previewSaveFollow';
 
@@ -207,35 +208,12 @@ export function usePreviewSaveFollow({
     evaluateRef.current();
   }, [activeBuildId, loadedFilesHash]);
 
-  // Input on the page counts as using the app (see isViewerActive), and so
-  // does moving focus into the app frame (the page's window loses focus to
-  // its own iframe).
+  // Input on the page, or focus in the app frame, counts as using the app.
   useEffect(() => {
     if (!activeBuildId) return;
-    const note = (event: Event) => {
-      if (!event.isTrusted) return;
-      stateRef.current.lastInteractionAt = Date.now();
-    };
-    const onBlur = () => {
-      window.setTimeout(() => {
-        if (document.activeElement?.tagName === 'IFRAME') {
-          stateRef.current.lastInteractionAt = Date.now();
-        }
-      }, 0);
-    };
-    const passive = { capture: true, passive: true } as const;
-    document.addEventListener('pointerdown', note, true);
-    document.addEventListener('keydown', note, true);
-    document.addEventListener('touchstart', note, passive);
-    document.addEventListener('wheel', note, passive);
-    window.addEventListener('blur', onBlur);
-    return () => {
-      document.removeEventListener('pointerdown', note, true);
-      document.removeEventListener('keydown', note, true);
-      document.removeEventListener('touchstart', note, passive);
-      document.removeEventListener('wheel', note, passive);
-      window.removeEventListener('blur', onBlur);
-    };
+    return trackViewerActivity((at) => {
+      stateRef.current.lastInteractionAt = at;
+    });
   }, [activeBuildId]);
 
   return {

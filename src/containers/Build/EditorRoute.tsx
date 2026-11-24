@@ -618,7 +618,10 @@ export default function BuildEditorRoute() {
   // (Editor/hooks/useStudioSaveFollow.ts). The saved files are read again
   // the way this route first loaded them; unsaved editor edits are never
   // replaced (the Editor asks first, see savedVersionNotice).
-  const [studioDraftDirty, setStudioDraftDirty] = useState(false);
+  const [studioDraft, setStudioDraft] = useState({
+    unsavedEdits: false,
+    saving: false
+  });
   const recordBuildPreviewReload = useAppContext(
     (v) => v.requestHelpers.recordBuildPreviewReload
   );
@@ -630,7 +633,8 @@ export default function BuildEditorRoute() {
       typeof build?.projectFilesHash === 'string'
         ? build.projectFilesHash
         : null,
-    dirty: studioDraftDirty,
+    unsavedEdits: studioDraft.unsavedEdits,
+    saving: studioDraft.saving,
     refresh: refreshStudioWorkspaceFiles,
     onReloadCounted: (buildId, kind) =>
       void recordBuildPreviewReload?.(buildId, kind)
@@ -730,7 +734,14 @@ export default function BuildEditorRoute() {
       onUpdateBuild={setBuild}
       onUpdateChatMessages={setChatMessages}
       onUpdateCopilotPolicy={applyCanonicalCopilotPolicy}
-      onProjectFilesDirtyChange={setStudioDraftDirty}
+      onProjectFilesDirtyChange={(next) =>
+        setStudioDraft((current) =>
+          current.unsavedEdits === next.unsavedEdits &&
+          current.saving === next.saving
+            ? current
+            : next
+        )
+      }
       savedVersionNotice={
         studioSaveFollow.pillShown
           ? { onLoad: studioSaveFollow.loadNow }

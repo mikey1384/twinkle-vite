@@ -375,7 +375,7 @@ export default function BuildEditor({
     setSavedVersionConfirmShown(false);
     discardCurrentProjectFileDraft();
     projectFilesDirtyRef.current = false;
-    onProjectFilesDirtyChangeRef.current?.(false);
+    onProjectFilesDirtyChangeRef.current?.({ unsavedEdits: false, saving: false });
     savedVersionNotice?.onLoad();
   }
   const [deleteModalShown, setDeleteModalShown] = useState(false);
@@ -753,7 +753,10 @@ export default function BuildEditor({
       const draftDirty = Boolean(state.hasUnsavedChanges || state.saving);
       setRewardDraftDirty(draftDirty);
       projectFilesDirtyRef.current = draftDirty;
-      onProjectFilesDirtyChangeRef.current?.(draftDirty);
+      onProjectFilesDirtyChangeRef.current?.({
+        unsavedEdits: Boolean(state.hasUnsavedChanges),
+        saving: Boolean(state.saving)
+      });
       handleProjectFilesDraftStateChange(state);
     },
     prepareProjectFilesForContributionAction: (options) =>

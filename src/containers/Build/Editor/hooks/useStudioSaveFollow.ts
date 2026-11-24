@@ -5,11 +5,15 @@ import {
   BUILD_PREVIEW_UPDATES_LEAVE_EVENT,
   BUILD_VERSION_SAVED_EVENT,
   PREVIEW_RELOAD_MIN_GAP_MS,
-  parseBuildVersionSaved
+  isViewerActiveNow,
+  parseBuildVersionSaved,
+  trackViewerActivity
 } from '../../Runtime/helpers/previewSaveFollow';
 
 // build_version_saved for this tab's own save can beat its HTTP response.
 export const STUDIO_OWN_SAVE_SETTLE_MS = 1200;
+// While a save waits (this tab saving, the pill up), check again this often.
+export const STUDIO_RECHECK_MS = 2000;
 
 // Build Studio follows saves made elsewhere (the CLI, another tab, a
 // teammate on a branch, a merge into Main): main for its owner, and a branch
@@ -17,38 +21,46 @@ export const STUDIO_OWN_SAVE_SETTLE_MS = 1200;
 // branch" and the branch switcher land) for anyone the server admits to the
 // build's preview room (twinkle-api helpers/build/previewUpdateEvents.ts).
 //
-// - A save this tab already shows (its own save, its Lumine run) does nothing.
-// - Clean editor: the saved files are read again (`refresh`) and the preview
-//   follows them, as it does for this tab's own saves.
-// - Unsaved edits in the editor: nothing is replaced; `pillShown` asks the
-//   viewer, and the page decides what loading means for their edits.
+// The decision is made again whenever the files this tab shows, its unsaved
+// edits or its saving state change, and every STUDIO_RECHECK_MS while a save
+// is waiting:
+// - The signal names the files this tab shows: nothing to do. That is how
+//   this tab's own save ends, however slowly its response comes back: while
+//   this tab is saving nothing is decided, and when the save returns its
+//   hash is the signal's.
+// - Unsaved edits, or the viewer used the page in the last 20 s (playing the
+//   preview, same idle window as /app): nothing is replaced; `pillShown`
+//   asks, and the page decides what loading means for unsaved edits.
+// - Otherwise the saved files are read again (`refresh`) and the preview
+//   follows them.
 // - Each signal causes at most one read: a read that started after the
 //   signal arrived uses it up, whatever files it found, so a writer that
 //   changes files without a signal (or signals out of order) never loops.
-// - Rapid saves read at most once per PREVIEW_RELOAD_MIN_GAP_MS.
+//   Reads come at most once per PREVIEW_RELOAD_MIN_GAP_MS.
 export function useStudioSaveFollow({
   workspaceBuildId,
   currentFilesHash,
-  dirty,
+  unsavedEdits,
+  saving,
   refresh,
   onReloadCounted
 }: {
   workspaceBuildId: number;
   currentFilesHash: string | null;
-  dirty: boolean;
+  unsavedEdits: boolean;
+  saving: boolean;
   refresh: () => Promise<unknown>;
   onReloadCounted?: (buildId: number, kind: 'auto' | 'pill') => void;
 }) {
   const [pillShown, setPillShown] = useState(false);
-  const hashRef = useRef(currentFilesHash);
-  hashRef.current = currentFilesHash;
-  const dirtyRef = useRef(dirty);
-  dirtyRef.current = dirty;
+  const propsRef = useRef({ currentFilesHash, unsavedEdits, saving });
+  propsRef.current = { currentFilesHash, unsavedEdits, saving };
   const refreshRef = useRef(refresh);
   refreshRef.current = refresh;
   const countRef = useRef(onReloadCounted);
   countRef.current = onReloadCounted;
   const loadRef = useRef<(kind: 'auto' | 'pill') => void>(() => {});
+  const decideRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (!workspaceBuildId) return;
@@ -56,6 +68,7 @@ export function useStudioSaveFollow({
     let timer: number | null = null;
     let latest: { filesHash: string; receivedAt: number } | null = null;
     let lastReadAt = 0;
+    let lastInteractionAt = 0;
     let reading = false;
 
     function schedule(ms: number) {
@@ -63,17 +76,42 @@ export function useStudioSaveFollow({
       timer = window.setTimeout(() => {
         timer = null;
         decide();
-      }, ms);
+      }, Math.max(0, ms));
+    }
+    function clearTimer() {
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
     }
     function decide() {
       if (stopped || reading) return;
-      if (!latest || latest.filesHash === hashRef.current) {
+      const { currentFilesHash: shown, unsavedEdits: dirty, saving: busy } =
+        propsRef.current;
+      if (!latest || latest.filesHash === shown) {
         latest = null;
+        clearTimer();
         setPillShown(false);
         return;
       }
-      if (dirtyRef.current) {
+      const now = Date.now();
+      // This tab's own save is still on its way back: its hash will settle it.
+      if (busy) {
+        setPillShown(false);
+        schedule(STUDIO_RECHECK_MS);
+        return;
+      }
+      const settleAt = latest.receivedAt + STUDIO_OWN_SAVE_SETTLE_MS;
+      if (now < settleAt) {
+        schedule(settleAt - now);
+        return;
+      }
+      if (dirty || isViewerActiveNow(lastInteractionAt)) {
         setPillShown(true);
+        schedule(STUDIO_RECHECK_MS);
+        return;
+      }
+      const readAt = lastReadAt + PREVIEW_RELOAD_MIN_GAP_MS;
+      if (now < readAt) {
+        schedule(readAt - now);
         return;
       }
       void load('auto');
@@ -81,6 +119,7 @@ export function useStudioSaveFollow({
     async function load(kind: 'auto' | 'pill') {
       if (stopped || reading || !latest) return;
       reading = true;
+      clearTimer();
       const startedAt = Date.now();
       lastReadAt = startedAt;
       setPillShown(false);
@@ -93,22 +132,17 @@ export function useStudioSaveFollow({
       reading = false;
       if (stopped) return;
       if (latest && latest.receivedAt <= startedAt) latest = null;
-      if (latest) schedule(Math.max(0, lastReadAt + PREVIEW_RELOAD_MIN_GAP_MS - Date.now()));
+      decide();
     }
     loadRef.current = (kind) => void load(kind);
+    decideRef.current = decide;
 
     function onSaved(event: unknown) {
       const saved = parseBuildVersionSaved(event, workspaceBuildId);
       if (!saved || stopped) return;
-      if (saved.filesHash === hashRef.current) return;
+      if (saved.filesHash === propsRef.current.currentFilesHash) return;
       latest = { filesHash: saved.filesHash, receivedAt: Date.now() };
-      if (reading) return;
-      schedule(
-        Math.max(
-          STUDIO_OWN_SAVE_SETTLE_MS,
-          lastReadAt + PREVIEW_RELOAD_MIN_GAP_MS - Date.now()
-        )
-      );
+      decide();
     }
     function join() {
       socket.emit(BUILD_PREVIEW_UPDATES_JOIN_EVENT, { buildId: workspaceBuildId });
@@ -116,16 +150,27 @@ export function useStudioSaveFollow({
     socket.on(BUILD_VERSION_SAVED_EVENT, onSaved);
     socket.on('connect', join);
     if (socket.connected) join();
+    const stopTracking = trackViewerActivity((at) => {
+      lastInteractionAt = at;
+    });
     return () => {
       stopped = true;
-      if (timer !== null) window.clearTimeout(timer);
+      clearTimer();
+      stopTracking();
       socket.off(BUILD_VERSION_SAVED_EVENT, onSaved);
       socket.off('connect', join);
       socket.emit(BUILD_PREVIEW_UPDATES_LEAVE_EVENT, { buildId: workspaceBuildId });
       loadRef.current = () => {};
+      decideRef.current = () => {};
       setPillShown(false);
     };
   }, [workspaceBuildId]);
+
+  // The files shown, the unsaved edits or the saving state changed: decide
+  // again (a slow own save clears here when its hash arrives).
+  useEffect(() => {
+    decideRef.current();
+  }, [currentFilesHash, unsavedEdits, saving]);
 
   return {
     pillShown,

@@ -101,3 +101,42 @@ export function decidePreviewFollowStep({
       : 0;
   return { kind: 'reload', inMs };
 }
+
+// Records when the viewer last used the page: input on the page itself, or
+// focus moving into an app frame (the page's window loses focus to its own
+// iframe). Returns the cleanup.
+export function trackViewerActivity(onActivity: (at: number) => void) {
+  const note = (event: Event) => {
+    if (!event.isTrusted) return;
+    onActivity(Date.now());
+  };
+  const onBlur = () => {
+    window.setTimeout(() => {
+      if (document.activeElement?.tagName === 'IFRAME') onActivity(Date.now());
+    }, 0);
+  };
+  const passive = { capture: true, passive: true } as const;
+  document.addEventListener('pointerdown', note, true);
+  document.addEventListener('keydown', note, true);
+  document.addEventListener('touchstart', note, passive);
+  document.addEventListener('wheel', note, passive);
+  window.addEventListener('blur', onBlur);
+  return () => {
+    document.removeEventListener('pointerdown', note, true);
+    document.removeEventListener('keydown', note, true);
+    document.removeEventListener('touchstart', note, passive);
+    document.removeEventListener('wheel', note, passive);
+    window.removeEventListener('blur', onBlur);
+  };
+}
+
+// isViewerActive with this page's own focus and visibility.
+export function isViewerActiveNow(lastInteractionAt: number) {
+  return isViewerActive({
+    now: Date.now(),
+    lastInteractionAt,
+    pageVisible: document.visibilityState !== 'hidden',
+    windowFocused: document.hasFocus(),
+    frameFocused: document.activeElement?.tagName === 'IFRAME'
+  });
+}
