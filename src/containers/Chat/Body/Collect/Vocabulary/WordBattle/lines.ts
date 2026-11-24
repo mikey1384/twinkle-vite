@@ -19,7 +19,7 @@ export const COMMAND_NAMES: Record<QuestionType, string> = {
   mirror: 'MIRROR'
 };
 
-function pick<T>(list: T[], seed: string) {
+export function pick<T>(list: T[], seed: string) {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
   return list[h % list.length];

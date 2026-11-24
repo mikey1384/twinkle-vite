@@ -1,9 +1,26 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import MonsterSprite, { MonsterPose } from '~/components/WordMonster/MonsterSprite';
-import { backdropUri, HEART, HEART_EMPTY, SCROLL, SPEAKER } from './art';
+import { backdropUri, HEART, HEART_EMPTY, HEART_HALF, SCROLL, SPEAKER } from './art';
 import { playBattleSound } from './battleSfx';
+import CardPopup from './CardPopup';
 import LootWindow from './LootWindow';
+import {
+  AttackTier,
+  BattleEvent,
+  applyEvent,
+  BattleMeter,
+  eventHoldMs,
+  eventLine,
+  FIRST_BATTLE_TIP,
+  FOCUS_CAP,
+  heartSlots,
+  hpBand,
+  koLines,
+  monsterTurnLine,
+  TIER_TAGS,
+  turnFlagText
+} from './turns';
 import { ServerLoot, summarizeLoot } from './loot';
 import { useAppContext, useKeyContext } from '~/contexts';
 import {
@@ -35,6 +52,10 @@ export interface BattleQuestion {
   hasSentenceAudio?: boolean;
   timeLimitMs: number;
   revealDelayMs: number;
+  // Engine 2: whose question this is, and for the monster's, the word it
+  // attacks with and where that word came from.
+  side?: 'player' | 'monster';
+  attacker?: { word: string; tier: AttackTier };
 }
 
 // What a finished battle paid (loot.ts): base Word Master points for playing,
@@ -87,6 +108,12 @@ export interface BattleState {
   rehunt?: boolean;
   rehuntReadyAt?: number;
   escape?: RehuntEscape;
+  // Engine 2 (turns.ts): the meters, this answer's events in order, and how
+  // a lost battle ended. Absent from engine-1 battles and older servers.
+  engine?: number;
+  battle?: BattleMeter;
+  events?: BattleEvent[];
+  reason?: 'ko' | 'escaped';
 }
 
 export interface RehuntEscape {
@@ -111,7 +138,33 @@ export interface BattleApi {
 
 type Phase = 'loading' | 'talk' | 'question' | 'loot' | 'done' | 'error';
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+// Waits that stop while the tab is hidden, so a battle never plays on (and
+// never heats a phone) in the background.
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => {
+    const go = () => setTimeout(resolve, ms);
+    if (typeof document !== 'undefined' && document.hidden) {
+      document.addEventListener('visibilitychange', function onShow() {
+        if (document.hidden) return;
+        document.removeEventListener('visibilitychange', onShow);
+        go();
+      });
+    } else go();
+  });
+
+function useDocumentHidden() {
+  const [hidden, setHidden] = useState(() => typeof document !== 'undefined' && document.hidden);
+  useEffect(() => {
+    const onChange = () => setHidden(document.hidden);
+    document.addEventListener('visibilitychange', onChange);
+    return () => document.removeEventListener('visibilitychange', onChange);
+  }, []);
+  return hidden;
+}
+
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
 
 // Whole-number sprite scales so the pixels stay crisp; bosses are drawn
 // bigger (approved art: 5x for level 5 against 3x for levels 1-2).
@@ -173,9 +226,21 @@ export default function BattleScreen({
   const [answerReveal, setAnswerReveal] = useState<BattleState['answered'] | null>(null);
   const [remainingMs, setRemainingMs] = useState(0);
   const [burst, setBurst] = useState<string | null>(null);
+  const [burstTone, setBurstTone] = useState<'gold' | 'white' | 'big'>('gold');
   const [finished, setFinished] = useState<BattleState | null>(null);
   const [errorText, setErrorText] = useState('');
+  // Engine 2: the meters (HP, half-hearts, focus), whose turn it is, a card
+  // on screen, the first battle's tip and the HP segments draining now.
+  const [meter, setMeter] = useState<BattleMeter | null>(initial.battle || null);
+  const [turnFlag, setTurnFlag] = useState<'player' | 'monster' | null>(null);
+  const [cardEvent, setCardEvent] = useState<Extract<BattleEvent, { kind: 'card' }> | null>(null);
+  const [cardLeaving, setCardLeaving] = useState(false);
+  const [tip, setTip] = useState('');
+  const [drainFrom, setDrainFrom] = useState<number | null>(null);
+  const hidden = useDocumentHidden();
   const mounted = useRef(true);
+  const meterRef = useRef<BattleMeter | null>(meter);
+  meterRef.current = meter;
   const playIdRef = useRef<number>(initial.playId || 0);
   const revealAtRef = useRef(0);
   const submittingRef = useRef(false);
@@ -229,7 +294,8 @@ export default function BattleScreen({
       } else if (state.status === 'lost') {
         setRanAway(true);
         playBattleSound('ranAway');
-        const [ran, left] = rehunt ? rehuntEscapeLines(word) : ranAwayLines(word);
+        const [ran, left] =
+          state.reason === 'ko' ? koLines(word) : rehunt ? rehuntEscapeLines(word) : ranAwayLines(word);
         await say(ran, 500);
         await say(left, 600);
         setFinished(state);
@@ -248,12 +314,16 @@ export default function BattleScreen({
       setQuestion(q);
       setRevealed(false);
       setPicked(null);
-      setClaimPicks([null, null, null]);
+      setClaimPicks((q.claims || [null, null, null]).map(() => null));
       setSpellInput('');
       setAnswerReveal(null);
       submittingRef.current = false;
       setPhase('talk');
-      await say(commandLine(q.type, word), 200);
+      if (q.side) setTurnFlag(q.side);
+      await say(
+        q.side === 'monster' && q.attacker ? monsterTurnLine(word, q.attacker.word) : commandLine(q.type, word),
+        200
+      );
       if (!mounted.current) return;
       setPhase('question');
       const delay = resumedAgoMs ? 0 : Math.max(0, q.revealDelayMs - 400) / speed;
@@ -283,6 +353,7 @@ export default function BattleScreen({
         }
         playIdRef.current = state.playId || 0;
         setHearts(state.hearts ?? 2);
+        if (state.engine === 2 && state.battle) setMeter(state.battle);
         setPhase('talk');
         await wait(60);
         setEntered(true);
@@ -298,6 +369,8 @@ export default function BattleScreen({
               ? rehuntLines(word)
               : encounterLines(word, level);
           for (const text of opening) await say(text, 450);
+          // The gentle first v2 battle: a one-line tip under the encounter.
+          if (state.battle?.firstBattle) setTip(FIRST_BATTLE_TIP);
         }
         if (state.question) await askQuestion(state.question, state.servedAgoMs || 0);
       } catch (error: any) {
@@ -352,6 +425,18 @@ export default function BattleScreen({
       return;
     }
     if (!mounted.current) return;
+    if (state.engine === 2 && state.events) {
+      await playTurn(state, q);
+      if (!mounted.current) return;
+      if (state.status === 'active' && state.question) {
+        await askQuestion(state.question);
+        return;
+      }
+      await finish(state);
+      return;
+    }
+    // A stale engine-2 reply (a repeat) carries no events: just its meters.
+    if (state.battle) setMeter(state.battle);
     const result = state.answered;
     const isFinal = state.status !== 'active';
     if (result) {
@@ -376,10 +461,104 @@ export default function BattleScreen({
       setLostHeart(-1);
     }
     if (state.status === 'active' && state.question) {
-      await askQuestion(state.question);
+      // A stale reply's question has been open for servedAgoMs already.
+      await askQuestion(state.question, state.stale ? state.servedAgoMs || 0 : 0);
       return;
     }
     await finish(state);
+  }
+
+  // Engine 2: the server's events for this answer, in order. The right
+  // answer shows first, then each event animates and types its line; the
+  // meters move with them and end on the server's numbers.
+  async function playTurn(state: BattleState, q: BattleQuestion) {
+    const reduced = prefersReducedMotion();
+    const pace = (ms: number) => (reduced ? Math.min(ms, 900) : ms) / speed;
+    if (state.answered) setAnswerReveal(state.answered);
+    setTip('');
+    // The command window stays up with the right answer marked while the
+    // turn plays: the card saves hearts, not learning.
+    await wait(pace(450));
+    if (!mounted.current) return;
+    let local: BattleMeter | null = meterRef.current;
+    const attacker = q.attacker?.word;
+    const focusAfter = state.battle?.focus ?? 0;
+    for (const event of state.events || []) {
+      if (!mounted.current) return;
+      const before = local;
+      local = local ? applyEvent(local, event) : local;
+      const showMeters = () => {
+        if (!local) return;
+        if (before && local.mhp < before.mhp) setDrainFrom(before.mhp);
+        setMeter(local);
+      };
+      const line = eventLine(event, { word, attacker, focus: focusAfter });
+      switch (event.kind) {
+        case 'attack':
+        case 'glancing': {
+          setPose('hit');
+          setBurstTone(event.kind === 'attack' && event.crit ? 'big' : 'gold');
+          setBurst(`-${event.damage}${event.kind === 'attack' && event.crit ? ' CRITICAL!' : ''}`);
+          playBattleSound('hit');
+          if (event.kind === 'attack' && event.crit) {
+            setShake(true);
+            setTimeout(() => mounted.current && setShake(false), 450);
+          }
+          showMeters();
+          break;
+        }
+        case 'miss':
+          setBurstTone('white');
+          setBurst('MISS');
+          playBattleSound('nothing');
+          break;
+        case 'dodge':
+          setPose('attack');
+          setBurstTone('white');
+          setBurst('DODGED!');
+          playBattleSound('dodge');
+          break;
+        case 'hit': {
+          setPose('attack');
+          setShake(true);
+          playBattleSound('counter');
+          setTimeout(() => mounted.current && setShake(false), 450);
+          if (local) setLostHeart(Math.floor(Math.max(0, local.php) / 2));
+          showMeters();
+          break;
+        }
+        case 'card': {
+          setCardLeaving(false);
+          setCardEvent(event);
+          playBattleSound('cardFlip');
+          await wait(pace(1000));
+          if (!mounted.current) return;
+          if (event.outcome === 'block') playBattleSound('block');
+          if (event.outcome === 'counter') playBattleSound('beam');
+          if (event.outcome === 'parry' || event.outcome === 'boost') playBattleSound('hit');
+          if (event.damage) {
+            setPose('hit');
+            showMeters();
+          }
+          await wait(pace(eventHoldMs(event) - 1000));
+          if (!mounted.current) return;
+          setCardLeaving(true);
+          await wait(pace(350));
+          setCardEvent(null);
+          setPose('idle');
+          break;
+        }
+        default:
+          break;
+      }
+      if (line) await say(line, event.kind === 'card' ? 300 : eventHoldMs(event));
+      if (!mounted.current) return;
+      setBurst(null);
+      setPose('idle');
+      setLostHeart(-1);
+      setDrainFrom(null);
+    }
+    if (state.battle) setMeter(state.battle);
   }
 
   async function playClip(kind: 'word' | 'sentence') {
@@ -442,22 +621,66 @@ export default function BattleScreen({
     <div className={cx(rootCls, shake && shakeCls)} data-phase={phase}>
       <div className={sceneCls} style={{ backgroundImage: `url("${backdropUri(level)}")` }}>
         <div className={hudCls}>
-          <div className={heartsCls} aria-label={`${hearts} hearts left`}>
-            {[0, 1].map((i) => (
-              <img
-                key={i}
-                src={i < hearts ? HEART : HEART_EMPTY}
-                alt=""
-                className={cx(heartCls, i === lostHeart && heartLostCls)}
-              />
-            ))}
-          </div>
-          <div className={plateCls}>
+          {meter ? (
+            <div
+              className={cx(heartsCls, panelV2Cls)}
+              aria-label={`${meter.php / 2} hearts left, focus ${meter.focus} of ${FOCUS_CAP}`}
+            >
+              <span className={panelLabelCls}>YOU</span>
+              <div className={heartRowCls}>
+                {heartSlots(meter.php, meter.pmax).map((slot, i) => (
+                  <img
+                    key={i}
+                    src={slot === 'full' ? HEART : slot === 'half' ? HEART_HALF : HEART_EMPTY}
+                    alt=""
+                    className={cx(heartCls, heartV2Cls, i === lostHeart && heartLostCls)}
+                  />
+                ))}
+              </div>
+              <div className={focusCls}>
+                FOCUS
+                {Array.from({ length: FOCUS_CAP }, (_, i) => (
+                  <span key={i} className={cx(pipCls, i < meter.focus && pipOnCls)} />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className={heartsCls} aria-label={`${hearts} hearts left`}>
+              {[0, 1].map((i) => (
+                <img
+                  key={i}
+                  src={i < hearts ? HEART : HEART_EMPTY}
+                  alt=""
+                  className={cx(heartCls, i === lostHeart && heartLostCls)}
+                />
+              ))}
+            </div>
+          )}
+          <div className={cx(plateCls, meter && plateV2Cls)}>
             <span className={plateNameCls}>{word.toUpperCase()}</span>
             <span className={plateLevelCls}>
               {level >= 5 ? 'BOSS' : `Lv${level}`}
               {practice ? ' · REMATCH' : rehunt ? ' · RE-HUNT' : ''}
             </span>
+            {meter && (
+              <div className={hpWrapCls} aria-label={`${word} HP ${meter.mhp} of ${meter.mmax}`}>
+                <div className={cx(hpBarCls, hpBandCls[hpBand(meter.mhp, meter.mmax)])}>
+                  {Array.from({ length: meter.mmax }, (_, i) => (
+                    <span
+                      key={i}
+                      className={cx(
+                        hpSegCls,
+                        i < meter.mhp && hpFullCls,
+                        drainFrom != null && i >= meter.mhp && i < drainFrom && hpDrainCls
+                      )}
+                    />
+                  ))}
+                </div>
+                <span className={hpNumCls}>
+                  {Math.max(0, meter.mhp)}/{meter.mmax}
+                </span>
+              </div>
+            )}
           </div>
           {onClose && (
             <button type="button" className={closeCls} onClick={onClose} aria-label="Close">
@@ -473,9 +696,19 @@ export default function BattleScreen({
             ranAway && ranAwayCls
           )}
         >
-          <MonsterSprite word={word} level={level} pose={pose} scale={monsterScale} />
-          {burst && <div className={burstCls}>{burst}</div>}
+          <MonsterSprite word={word} level={level} pose={pose} scale={monsterScale} still={hidden} />
+          {burst && (
+            <div className={cx(burstCls, burstTone === 'white' && burstWhiteCls, burstTone === 'big' && burstBigCls)}>
+              {burst}
+            </div>
+          )}
         </div>
+        {meter && turnFlag && !cardEvent && (phase === 'talk' || phase === 'question') && (
+          <div key={turnFlag + (question?.index ?? '')} className={cx(turnFlagCls, turnFlag === 'monster' && turnFlagItsCls)}>
+            {turnFlagText(turnFlag, word)}
+          </div>
+        )}
+        {cardEvent && <CardPopup event={cardEvent} leaving={cardLeaving} paused={hidden} />}
       </div>
 
       <div className={windowCls} aria-live="polite">
@@ -483,12 +716,18 @@ export default function BattleScreen({
           {phase === 'error' ? errorText : typed}
           {phase !== 'error' && typed.length < line.length && <span className={caretCls}>▌</span>}
         </div>
+        {tip && <div className={tipCls}>{tip}</div>}
       </div>
 
       {(phase === 'question' || (phase === 'talk' && question && revealed)) && question && (
-        <div className={commandCls}>
+        <div className={cx(commandCls, question.side === 'monster' && commandItsCls)}>
           <div className={commandHeadCls}>
-            <span className={commandNameCls}>{COMMAND_NAMES[question.type]}</span>
+            <span className={commandNameCls}>
+              {question.side === 'monster' ? 'DEFEND!' : COMMAND_NAMES[question.type]}
+            </span>
+            {question.side === 'monster' && question.attacker && (
+              <span className={commandTagCls}>{TIER_TAGS[question.attacker.tier] || ''}</span>
+            )}
             <div className={timerCls} aria-hidden>
               <div className={timerFillCls} style={{ width: `${Math.round(timeShare * 100)}%` }} />
             </div>
@@ -505,6 +744,7 @@ export default function BattleScreen({
                   <button
                     key={i}
                     type="button"
+                    data-testid="battle-choice"
                     className={cx(
                       choiceCls,
                       isPicked && choicePickedCls,
@@ -1082,6 +1322,193 @@ const castCls = css`
 
 
 
+
+// ---- engine 2 (turns.ts) ----
+const panelV2Cls = css`
+  flex-direction: column;
+  gap: 5px;
+  background: #0f0b1a;
+`;
+
+const panelLabelCls = css`
+  font-family: ${PIXEL_FONT};
+  font-size: 8px;
+  color: #8d84a8;
+  letter-spacing: 1px;
+`;
+
+const heartRowCls = css`
+  display: flex;
+  gap: 5px;
+`;
+
+const heartV2Cls = css`
+  width: 26px;
+  height: 26px;
+  @media (max-width: 480px) {
+    width: 22px;
+    height: 22px;
+  }
+`;
+
+const focusCls = css`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: ${PIXEL_FONT};
+  font-size: 7px;
+  color: #8d84a8;
+`;
+
+const pipCls = css`
+  width: 10px;
+  height: 6px;
+  background: #3a3150;
+  border: 1px solid #6d6290;
+`;
+
+const pipOnCls = css`
+  background: #ffd34d;
+  border-color: #fff3b0;
+`;
+
+const plateV2Cls = css`
+  max-width: 58%;
+  background: #0f0b1a;
+`;
+
+const hpWrapCls = css`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const hpBarCls = css`
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: #0f0b1a;
+  border: 2px solid #ffffff;
+`;
+
+const hpSegCls = css`
+  width: 11px;
+  height: 8px;
+  background: #3a3150;
+  @media (max-width: 480px) {
+    width: 8px;
+    height: 7px;
+  }
+`;
+
+const hpFullCls = css`
+  background: var(--hp);
+`;
+
+const hpBandCls = {
+  high: css`
+    --hp: #5ee36a;
+  `,
+  mid: css`
+    --hp: #ffd34d;
+  `,
+  low: css`
+    --hp: #ff3b5c;
+  `
+};
+
+const hpDrainCls = css`
+  animation: hp-drain 0.5s steps(2) 1 forwards;
+  @keyframes hp-drain {
+    0% {
+      background: #ffffff;
+    }
+    100% {
+      background: #3a3150;
+    }
+  }
+`;
+
+const hpNumCls = css`
+  font-family: ${PIXEL_FONT};
+  font-size: 8px;
+  color: #d9d2ee;
+`;
+
+const turnFlagCls = css`
+  position: absolute;
+  left: 50%;
+  top: 88px;
+  transform: translateX(-50%);
+  font-family: ${PIXEL_FONT};
+  font-size: 10px;
+  padding: 6px 10px;
+  border: 2px solid #ffffff;
+  background: #0f0b1a;
+  color: #ffd34d;
+  z-index: 3;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  max-width: 92%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: flag-in 0.3s steps(3) 1;
+  @keyframes flag-in {
+    0% {
+      transform: translate(-50%, -14px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+  }
+  @media (max-width: 480px) {
+    top: 94px;
+    font-size: 8px;
+  }
+`;
+
+const turnFlagItsCls = css`
+  color: #ff7d93;
+`;
+
+const burstWhiteCls = css`
+  color: #ffffff;
+`;
+
+const burstBigCls = css`
+  font-size: 26px;
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
+`;
+
+const tipCls = css`
+  margin-top: 8px;
+  font-family: ${PIXEL_FONT};
+  font-size: 9px;
+  line-height: 1.8;
+  color: #cfe6ff;
+  border-top: 2px dashed #3a3150;
+  padding-top: 8px;
+`;
+
+const commandItsCls = css`
+  & > div:first-child > span:first-child {
+    color: #ff7d93;
+  }
+`;
+
+const commandTagCls = css`
+  font-family: ${PIXEL_FONT};
+  font-size: 7px;
+  color: #8d84a8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+`;
 
 const doneRowCls = css`
   display: flex;
