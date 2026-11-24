@@ -58,15 +58,24 @@ const pillClass = css`
   }
 `;
 
+// Build Studio: over the whole workspace, below the site header.
+const fixedClass = css`
+  position: fixed;
+  top: calc(var(--app-shell-top-offset, 0px) + 12px);
+  z-index: 1000;
+`;
+
 export default function PreviewSavedVersionPill({
-  onReload
+  onReload,
+  placement = 'absolute'
 }: {
   onReload: () => void;
+  placement?: 'absolute' | 'fixed';
 }) {
   return (
     <button
       type="button"
-      className={pillClass}
+      className={placement === 'fixed' ? `${pillClass} ${fixedClass}` : pillClass}
       aria-label="New version saved. Reload"
       onClick={onReload}
     >

@@ -30,6 +30,7 @@ window.fakeSocket={connected:true,
   off(name,fn){listeners.get(name)?.delete(fn)},
   emit(name,payload){window.emitted.push([name,payload])}};
 window.serverSaved=(buildId,filesHash,serverTime=Date.now())=>{window.serverHash[buildId]=filesHash;for(const fn of listeners.get('build_version_saved')||[])fn({buildId,artifactVersionId:1,filesHash,source:'save',serverTime})};
+window.signalOnly=(buildId,filesHash,serverTime=Date.now())=>{for(const fn of listeners.get('build_version_saved')||[])fn({buildId,artifactVersionId:1,filesHash,source:'save',serverTime})};
 window.hostContext={requestHelpers:{loadBuildPublishedVersion:async()=>({publishedArtifactVersionId:5}),loadBuildUpdateNoteForVersion:async()=>({note:null}),recordBuildUpdateNoteWhatsNewTap:async()=>{},recordBuildPreviewReload:async(id,kind)=>{window.reloads.push([id,kind])}}};
 window.snapshot=async(id,reason)=>{window.snapshots.push({id,reason});return true};
 function Navigation(){const navigate=useNavigate();useEffect(()=>{window.go=p=>navigate(p)},[navigate]);return null;}
@@ -131,28 +132,48 @@ for (const [engine, type] of Object.entries({ chromium, webkit })) {
       await page.waitForTimeout(4500);
       assert.equal(await page.evaluate(() => window.mounts[501]), 4, 'the newest save needs no further reload');
 
+      // Loop guard: each signal causes at most one reload, even when the
+      // files the reload finds differ from the signal's hash.
+      // (a) A writer changed the files without a signal: the signal says 7,
+      // the server has 8.
+      await page.evaluate(([shown, signalled]) => { window.serverHash[501] = shown; window.signalOnly(501, signalled); }, [hash(8), hash(7)]);
+      await page.waitForFunction(() => window.mounts[501] === 5, null, { timeout: 8000 });
+      await page.getByText('Showing save 8').waitFor();
+      // (b) Out of order across API processes: a stale signal with the larger
+      // server time wins over the newest save's own signal.
+      await page.waitForTimeout(4200);
+      await page.evaluate(([newest, stale]) => {
+        window.serverHash[501] = newest;
+        window.signalOnly(501, stale, Date.now() + 60000);
+        window.signalOnly(501, newest, Date.now());
+      }, [hash(2), hash(5)]);
+      await page.waitForFunction(() => window.mounts[501] === 6, null, { timeout: 8000 });
+      await page.getByText('Showing save 2').waitFor();
+      await page.waitForTimeout(9000);
+      assert.equal(await page.evaluate(() => window.mounts[501]), 6, 'no reload loop after a mismatched load');
+
       // Active viewer (just tapped the page): the pill waits for their tap.
       await page.mouse.click(200, 120);
       await page.evaluate((h) => window.serverSaved(501, h), hash(7));
       await pill(page).waitFor();
-      assert.equal(await page.evaluate(() => window.mounts[501]), 4, 'no reload while active');
+      assert.equal(await page.evaluate(() => window.mounts[501]), 6, 'no reload while active');
       assert.equal((await pill(page).textContent()).replace(/\s+/g, ' ').trim(), 'New version · Reload');
       await page.waitForTimeout(250); // entry animation
       const box = await pill(page).boundingBox();
       assert.ok(box && Math.round(box.height) >= 44 && box.x >= 0 && box.x + box.width <= 391, JSON.stringify(box));
       if (shots) { mkdirSync(shots, { recursive: true }); await page.screenshot({ path: path.join(shots, `pill-${engine}.png`) }); }
       await pill(page).click();
-      await page.waitForFunction(() => window.mounts[501] === 5);
+      await page.waitForFunction(() => window.mounts[501] === 7);
       await page.getByText('Showing save 7').waitFor();
       assert.equal(await pill(page).count(), 0);
-      assert.deepEqual((await page.evaluate(() => window.reloads)).map((r) => r[1]), ['auto', 'auto', 'auto', 'pill']);
+      assert.deepEqual((await page.evaluate(() => window.reloads)).map((r) => r[1]), ['auto', 'auto', 'auto', 'auto', 'auto', 'pill']);
 
       // Focus inside the app frame on a focused window counts as playing.
       await page.waitForTimeout(4200);
       await page.frameLocator('iframe').getByRole('button', { name: 'Play' }).click();
-      await page.evaluate((h) => window.serverSaved(501, h), hash(8));
+      await page.evaluate((h) => window.serverSaved(501, h), hash(9));
       await pill(page).waitFor();
-      assert.equal(await page.evaluate(() => window.mounts[501]), 5);
+      assert.equal(await page.evaluate(() => window.mounts[501]), 7);
 
       // Leaving the preview leaves the room.
       await page.evaluate(() => window.go('/build'));

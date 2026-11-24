@@ -19,6 +19,9 @@ export const PREVIEW_IDLE_WINDOW_MS = 20_000;
 // Rapid saves (an agent saving every few seconds) reload at most once per
 // this gap; the reload after the gap loads whatever is newest by then.
 export const PREVIEW_RELOAD_MIN_GAP_MS = 4_000;
+// Automatic reloads wait a random 0 to 1.5 s after the signal, so many idle
+// tabs of one preview do not all read the saved files at the same moment.
+export const PREVIEW_AUTO_RELOAD_JITTER_MS = 1_500;
 
 export interface BuildVersionSaved {
   buildId: number;

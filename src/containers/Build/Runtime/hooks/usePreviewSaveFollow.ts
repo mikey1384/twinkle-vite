@@ -5,12 +5,32 @@ import {
   BUILD_PREVIEW_UPDATES_LEAVE_EVENT,
   BUILD_VERSION_SAVED_EVENT,
   decidePreviewFollowStep,
+  PREVIEW_AUTO_RELOAD_JITTER_MS,
   isViewerActive,
   parseBuildVersionSaved,
   type BuildVersionSaved
 } from '../helpers/previewSaveFollow';
 
 export type PreviewReloadKind = 'auto' | 'pill';
+
+interface PendingSave extends BuildVersionSaved {
+  // this page's clock, for "did a load start after it?"
+  receivedAt: number;
+  jitterMs: number;
+}
+
+// Each signal causes at most one reload: once a load that started after it
+// has finished, it is used up even if the files that load found differ from
+// its hash (a writer that sends no signal, or signals out of order), so the
+// page can never reload in a loop.
+function consumeSignalsBeforeLoad(state: {
+  latest: PendingSave | null;
+  loadStartedAt: number;
+}) {
+  if (state.latest && state.latest.receivedAt <= state.loadStartedAt) {
+    state.latest = null;
+  }
+}
 
 // While the pill is up, check this often whether the viewer has gone idle
 // (then the preview reloads by itself after all).
@@ -43,9 +63,12 @@ export function usePreviewSaveFollow({
   // runtime session); started over for another build.
   const stateRef = useRef({
     buildId: 0,
-    latest: null as BuildVersionSaved | null,
+    latest: null as PendingSave | null,
     lastReloadAt: 0,
     reloadingSince: 0,
+    // When the load now on screen (or in flight) started: a signal heard
+    // before it is used up once that load finishes, whatever files it found.
+    loadStartedAt: 0,
     lastInteractionAt: 0
   });
   const timerRef = useRef<number | null>(null);
@@ -59,6 +82,7 @@ export function usePreviewSaveFollow({
       latest: null,
       lastReloadAt: 0,
       reloadingSince: 0,
+      loadStartedAt: Date.now(),
       lastInteractionAt: 0
     };
   }
@@ -82,6 +106,7 @@ export function usePreviewSaveFollow({
     const now = Date.now();
     state.reloadingSince = now;
     state.lastReloadAt = now;
+    state.loadStartedAt = now;
     clearTimer();
     setPillShown(false);
     onReloadRef.current(kind);
@@ -93,7 +118,9 @@ export function usePreviewSaveFollow({
     if (!activeBuildId) return;
     const now = Date.now();
     if (state.reloadingSince && now - state.reloadingSince >= RELOAD_STUCK_MS) {
+      // A load that never finished still used up the signals before it.
       state.reloadingSince = 0;
+      consumeSignalsBeforeLoad(state);
     }
     const pending = Boolean(
       state.latest &&
@@ -125,8 +152,13 @@ export function usePreviewSaveFollow({
       schedule(ACTIVE_RECHECK_MS);
       return;
     }
-    if (step.inMs > 0) {
-      schedule(step.inMs);
+    // Spread automatic reloads of many idle tabs over a moment after a save.
+    const waitMs = Math.max(
+      step.inMs,
+      (state.latest?.receivedAt || 0) + (state.latest?.jitterMs || 0) - now
+    );
+    if (waitMs > 0) {
+      schedule(waitMs);
       return;
     }
     reloadRef.current('auto');
@@ -147,7 +179,11 @@ export function usePreviewSaveFollow({
       // Saves arrive in order on one connection; an older one that arrives
       // late is ignored so the page always ends on the newest.
       if (state.latest && saved.serverTime < state.latest.serverTime) return;
-      state.latest = saved;
+      state.latest = {
+        ...saved,
+        receivedAt: Date.now(),
+        jitterMs: Math.floor(Math.random() * (PREVIEW_AUTO_RELOAD_JITTER_MS + 1))
+      };
       evaluateRef.current();
     };
     socket.on(BUILD_VERSION_SAVED_EVENT, onSaved);
@@ -167,6 +203,7 @@ export function usePreviewSaveFollow({
   useEffect(() => {
     if (!activeBuildId || !loadedFilesHash) return;
     stateRef.current.reloadingSince = 0;
+    consumeSignalsBeforeLoad(stateRef.current);
     evaluateRef.current();
   }, [activeBuildId, loadedFilesHash]);
 
