@@ -600,9 +600,10 @@ export default function LiveNow({
   }
 }
 
-// The row's one button, worded by what tapping it does: Join (an open room),
-// Play (someone ready for a game) or Watch. Nothing when there is nothing to
-// join; the row itself still opens the app.
+// The row's one button, worded by what tapping it does: Join (an open room
+// someone is in), Play (someone ready for a game) or Watch. With nothing to
+// join it says Play and opens the app: "Join" is kept for real joinable
+// moments (Mikey, 11-24).
 function LiveNowRowButton({
   app,
   buttonColor,
@@ -613,8 +614,7 @@ function LiveNowRowButton({
   onJoin: () => void;
 }) {
   const action = bestJoinAction(app.members);
-  if (!action) return null;
-  const label = JOIN_VERB_LABELS[action.verb];
+  const label = action ? JOIN_VERB_LABELS[action.verb] : 'Play';
   return (
     <Button
       color={buttonColor}
