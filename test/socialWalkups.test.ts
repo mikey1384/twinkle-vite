@@ -15,6 +15,7 @@ import {
   readJoinable,
   readOwnJoinable,
   settledSocialLaunchTarget,
+  socialLaunchTarget,
   visitLine,
   visitorBannerText,
   withJoinable,
@@ -426,6 +427,29 @@ test('an update that arrives before its notice row is kept, so the newest revisi
   const plain = { id: 602, rootType: 'chat', settings: null };
   assert.equal(withNewestSocialTogetherCard(plain), plain);
   forgetSocialTogetherCards();
+});
+
+// ---- watch rooms (11-24): a private roomKey for spectators -------------------
+
+test('watch rooms: the page keeps its own watch key; only a watch visit puts it on the launch target', () => {
+  const watching = { state: 'busy-watchable', label: 'Playing World 3-2', mode: 'watch' };
+  assert.deepEqual(readOwnJoinable({ ...watching, roomKey: 'w-Zq81kP0x' }), { ...watching, roomKey: 'w-Zq81kP0x' });
+  assert.equal(readOwnJoinable({ state: 'busy-watchable', mode: '1v1', roomKey: 'g-7f3a' })?.roomKey, 'g-7f3a');
+  assert.equal(readOwnJoinable({ state: 'busy', mode: '1v1', roomKey: 'g-7f3a' })?.roomKey, undefined);
+  assert.equal(readOwnJoinable({ ...watching, roomKey: 'bad key' })?.roomKey, undefined);
+  // someone else's presence never yields a key
+  assert.equal('roomKey' in (readJoinable({ kind: 'app', id: 2, joinable: { ...watching, roomKey: 'w-X' } }) as any), false);
+  const host = { id: 10, username: 'Lemon', profilePicUrl: '' };
+  const visit = (status: SocialVisit['status'], roomKey?: string): SocialVisit => ({
+    host, status, walkupId: null, joinable: watching as any, ...(roomKey ? { roomKey } : {})
+  });
+  assert.deepEqual(socialLaunchTarget(2, visit('watch', 'w-Zq81kP0x')).target, {
+    kind: 'social', hostUserId: 10, hostUsername: 'Lemon', status: 'watch', hostJoinable: watching, roomKey: 'w-Zq81kP0x'
+  });
+  // no key from the server (an older app): exactly the old target
+  assert.equal('roomKey' in socialLaunchTarget(2, visit('watch')).target, false);
+  // never on any other status
+  assert.equal('roomKey' in socialLaunchTarget(2, visit('waiting', 'w-Zq81kP0x')).target, false);
 });
 
 // ---- drop-in rooms (projects/drop-in/BRIEF.md) ------------------------------

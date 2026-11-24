@@ -19,13 +19,24 @@ export interface Joinable {
   // state is 'open'. The roomKey itself never reaches other members.
   dropIn?: boolean;
   // Only on this page's OWN joinable (what its app set): sent with the
-  // activity report and kept private by the server.
+  // activity report and kept private by the server. A drop-in room's key
+  // (mode 'room'), or a watch room's (any other mode while busy-watchable).
   roomKey?: string;
 }
 
 export const DROP_IN_MODE = 'room';
 export const DROP_IN_ROOM_KEY_MAX = 64;
 const ROOM_KEY_PATTERN = /^[A-Za-z0-9._:-]+$/;
+
+/** A room key as the server hands it over (the Twinkle.world charset). */
+export function isSocialRoomKey(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= DROP_IN_ROOM_KEY_MAX &&
+    ROOM_KEY_PATTERN.test(value)
+  );
+}
 
 /** What this page's app asked for (social:set-joinable), with its roomKey. */
 export function readOwnJoinable(payload: any): Joinable | null {
@@ -34,7 +45,7 @@ export function readOwnJoinable(payload: any): Joinable | null {
   delete joinable.dropIn;
   const roomKey = payload?.roomKey;
   if (
-    joinable.mode === DROP_IN_MODE &&
+    (joinable.mode === DROP_IN_MODE || joinable.state === 'busy-watchable') &&
     typeof roomKey === 'string' &&
     roomKey.length > 0 &&
     roomKey.length <= DROP_IN_ROOM_KEY_MAX &&
@@ -272,6 +283,27 @@ export interface SocialVisit {
   walkupId: string | null;
   expiresAt?: number;
   joinable: Joinable | null;
+  // watch: the host's private watch room, when the server handed one over
+  // (only to a visitor allowed to watch). Goes to the app's launch target.
+  roomKey?: string;
+}
+
+// What the app receives through Twinkle.notifications.getLaunchTarget().
+export function socialLaunchTarget(buildId: number, visit: SocialVisit) {
+  return {
+    source: 'social',
+    buildId,
+    target: {
+      kind: 'social',
+      hostUserId: visit.host.id,
+      hostUsername: visit.host.username,
+      // waiting | later | watch | unavailable
+      status: visit.status,
+      hostJoinable: visit.joinable,
+      // the host's private watch room (status 'watch' only)
+      ...(visit.status === 'watch' && visit.roomKey ? { roomKey: visit.roomKey } : {})
+    }
+  };
 }
 
 export interface SocialMatchReady {
