@@ -69,7 +69,6 @@ import {
 import { getConfirmedAnalyticsUserId } from '~/helpers/analyticsIdentity';
 import { startPausingOffscreenAnimations } from '~/helpers/pauseOffscreenAnimations';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
-import WordBattleHost from '~/containers/Chat/Body/Collect/Vocabulary/WordBattle/WordBattleHost';
 import { navigateToChatWithPendingChessModal } from '~/helpers/pendingChessModalNavigation';
 import {
   adoptRejectedAuthSessionStorageEvent,
@@ -1797,9 +1796,6 @@ export default function App() {
             </Suspense>
           )}
         {!!userId && !sessionAccessBlocked && <MinecraftVouchLink />}
-        {/* The word battle in progress, kept apart from the card or window
-            that opened it so nothing underneath can close it (11-24). */}
-        {!!userId && !sessionAccessBlocked && <WordBattleHost key={userId} />}
         {!!userId && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <BridgeStoryReveal />

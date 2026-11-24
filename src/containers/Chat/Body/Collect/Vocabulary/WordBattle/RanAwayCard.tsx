@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
+import Modal from '~/components/Modal';
 import MonsterSprite from '~/components/WordMonster/MonsterSprite';
-import { useAppContext } from '~/contexts';
-import { BattleState, RehuntEscape } from './BattleScreen';
-import { wordBattleHost } from './battleHost';
+import { useAppContext, useChatContext } from '~/contexts';
+import BattleScreen, { BattleApi, BattleState, RehuntEscape } from './BattleScreen';
 import { backInLabel, resetTimeLabel } from './lines';
 
 const PIXEL_FONT = "'Press Start 2P', monospace";
@@ -15,8 +15,7 @@ const PIXEL_FONT = "'Press Start 2P', monospace";
 // ticking timer). Once it is back (and while the re-hunt is open) the parent
 // hides the definitions (onHuntingChange): the battle tests what the member
 // kept, so the meaning isn't sitting next to the button. Peeking stays the
-// member's choice ("Peek at the meaning"). The re-hunt battle is hosted by
-// the app (battleHost.ts), so this card unmounting never closes it.
+// member's choice ("Peek at the meaning").
 export default function RanAwayCard({
   wordId,
   word,
@@ -31,17 +30,14 @@ export default function RanAwayCard({
   onUnlocked?: (unlocked: Record<string, any>) => void;
 }) {
   const loadWordBattle = useAppContext((v) => v.requestHelpers.loadWordBattle);
+  const startWordRehunt = useAppContext((v) => v.requestHelpers.startWordRehunt);
+  const answerWordBattle = useAppContext((v) => v.requestHelpers.answerWordBattle);
+  const loadWordBattleAudio = useAppContext((v) => v.requestHelpers.loadWordBattleAudio);
+  const onUnlockWordDefinitions = useChatContext((v) => v.actions.onUnlockWordDefinitions);
   const [escape, setEscape] = useState<RehuntEscape | null>(null);
   const [caught, setCaught] = useState(false);
+  const [open, setOpen] = useState(false);
   const [peeked, setPeeked] = useState(false);
-  const hosted = useSyncExternalStore(
-    wordBattleHost.subscribe,
-    wordBattleHost.getSnapshot,
-    wordBattleHost.getSnapshot
-  );
-  const open = !!hosted?.rehunt && hosted.wordId === wordId;
-  const onUnlockedRef = useRef(onUnlocked);
-  onUnlockedRef.current = onUnlocked;
 
   useEffect(() => {
     if (!wordId) return;
@@ -73,38 +69,40 @@ export default function RanAwayCard({
     };
   }, [onHuntingChange, concealed]);
 
-  // The hosted re-hunt reports back while this card is mounted (the host
-  // has already put any unlocked definitions into Word Master's state).
-  useEffect(() => {
-    if (!wordId) return;
-    return wordBattleHost.registerGate(wordId, {
-      rehunt: true,
-      onFinished: (finished: BattleState) => {
-        if (finished.status === 'won') {
-          setCaught(true);
-          setEscape(null);
-        } else if (finished.status === 'lost' && finished.rehuntReadyAt) {
-          const readyAt = finished.rehuntReadyAt;
-          setEscape((prev) =>
-            prev ? { ...prev, active: false, ready: false, readyAt } : prev
-          );
+  const api: BattleApi = useMemo(
+    () => ({
+      start: async (id) => {
+        try {
+          return await startWordRehunt(id);
+        } catch (error: any) {
+          // Today's battles ran out since the card loaded: the card says so.
+          if (error?.message === 'daily_limit') {
+            setOpen(false);
+            setEscape((prev) => (prev ? { ...prev, battlesLeft: 0 } : prev));
+          }
+          throw error;
         }
-        if (finished.unlocked) onUnlockedRef.current?.(finished.unlocked);
       },
-      // Today's battles ran out since the card loaded: the card says so.
-      onDailyLimit: () => {
-        setEscape((prev) => (prev ? { ...prev, battlesLeft: 0 } : prev));
-      }
-    });
-  }, [wordId]);
+      answer: (args) => answerWordBattle({ ...args, rehunt: true }),
+      loadAudio: (args) => loadWordBattleAudio({ ...args, rehunt: true })
+    }),
+    [answerWordBattle, loadWordBattleAudio, startWordRehunt]
+  );
 
-  function openRehunt() {
-    wordBattleHost.open({
-      wordId,
-      word,
-      rehunt: true,
-      state: { status: 'ready', wordId, word, wordLevel: level }
-    });
+  function handleFinished(finished: BattleState) {
+    setOpen(false);
+    if (finished.status === 'won') {
+      setCaught(true);
+      setEscape(null);
+    } else if (finished.status === 'lost' && finished.rehuntReadyAt) {
+      setEscape((prev) =>
+        prev ? { ...prev, active: false, ready: false, readyAt: finished.rehuntReadyAt! } : prev
+      );
+    }
+    if (finished.unlocked) {
+      onUnlockWordDefinitions(finished.unlocked);
+      onUnlocked?.(finished.unlocked);
+    }
   }
 
   let action: React.ReactNode = null;
@@ -112,7 +110,7 @@ export default function RanAwayCard({
     if (huntOpen) {
       action = (
         <span className={huntRowCls}>
-          <button type="button" className={huntButtonCls} onClick={openRehunt}>
+          <button type="button" className={huntButtonCls} onClick={() => setOpen(true)}>
             {escape.active ? 'Back to the hunt ▶' : 'Re-hunt ▶'}
           </button>
           {!peeked && !escape.active && (
@@ -147,6 +145,28 @@ export default function RanAwayCard({
           {action}
         </span>
       </div>
+      {open && (
+        <Modal
+          modalKey="WordBattle"
+          isOpen
+          size="md"
+          hasHeader={false}
+          bodyPadding={0}
+          closeOnBackdropClick={false}
+          showCloseButton={false}
+          xpActivity
+          onClose={() => setOpen(false)}
+          aria-label={`Re-hunt ${word}`}
+        >
+          <BattleScreen
+            initial={{ status: 'ready', wordId, word, wordLevel: level }}
+            api={api}
+            rehunt
+            onClose={() => setOpen(false)}
+            onFinished={handleFinished}
+          />
+        </Modal>
+      )}
     </>
   );
 }
