@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import MonsterSprite, { MonsterPose } from '~/components/WordMonster/MonsterSprite';
-import { backdropUri, HEART, HEART_EMPTY, HEART_HALF, SCROLL, SPEAKER } from './art';
+import { backdropUri, HEART, HEART_EMPTY, HEART_HALF, SCROLL, SPEAKER, STAR } from './art';
 import { playBattleSound } from './battleSfx';
 import CardPopup from './CardPopup';
 import LootWindow from './LootWindow';
@@ -14,6 +14,7 @@ import {
   eventLine,
   FIRST_BATTLE_TIP,
   FOCUS_CAP,
+  freeStrikeLine,
   heartSlots,
   hpBand,
   koLines,
@@ -56,6 +57,8 @@ export interface BattleQuestion {
   // attacks with and where that word came from.
   side?: 'player' | 'monster';
   attacker?: { word: string; tier: AttackTier };
+  // Defense rules 2: your free strike (the stunned monster's turn).
+  free?: boolean;
 }
 
 // What a finished battle paid (loot.ts): base Word Master points for playing,
@@ -237,6 +240,8 @@ export default function BattleScreen({
   const [cardLeaving, setCardLeaving] = useState(false);
   const [tip, setTip] = useState('');
   const [drainFrom, setDrainFrom] = useState<number | null>(null);
+  // The STUNNED! stamp over the monster while the stun event plays.
+  const [stunStamp, setStunStamp] = useState(false);
   const hidden = useDocumentHidden();
   const mounted = useRef(true);
   const meterRef = useRef<BattleMeter | null>(meter);
@@ -321,7 +326,11 @@ export default function BattleScreen({
       setPhase('talk');
       if (q.side) setTurnFlag(q.side);
       await say(
-        q.side === 'monster' && q.attacker ? monsterTurnLine(word, q.attacker.word) : commandLine(q.type, word),
+        q.side === 'monster' && q.attacker
+          ? monsterTurnLine(word, q.attacker.word)
+          : q.free
+            ? freeStrikeLine(word)
+            : commandLine(q.type, word),
         200
       );
       if (!mounted.current) return;
@@ -535,7 +544,8 @@ export default function BattleScreen({
           if (!mounted.current) return;
           if (event.outcome === 'block') playBattleSound('block');
           if (event.outcome === 'counter') playBattleSound('beam');
-          if (event.outcome === 'parry' || event.outcome === 'boost') playBattleSound('hit');
+          if (event.outcome === 'parry') playBattleSound('parry');
+          if (event.outcome === 'boost') playBattleSound('hit');
           if (event.damage) {
             setPose('hit');
             showMeters();
@@ -548,10 +558,18 @@ export default function BattleScreen({
           setPose('idle');
           break;
         }
+        case 'stun':
+          // The monster reels: stars circle its head until your free strike.
+          setPose('hit');
+          setStunStamp(true);
+          playBattleSound('stun');
+          showMeters();
+          break;
         default:
           break;
       }
       if (line) await say(line, event.kind === 'card' ? 300 : eventHoldMs(event));
+      setStunStamp(false);
       if (!mounted.current) return;
       setBurst(null);
       setPose('idle');
@@ -696,16 +714,38 @@ export default function BattleScreen({
             ranAway && ranAwayCls
           )}
         >
-          <MonsterSprite word={word} level={level} pose={pose} scale={monsterScale} still={hidden} />
+          <div className={cx(meter?.stunned && !ranAway && dazedCls, hidden && pausedCls)}>
+            <MonsterSprite word={word} level={level} pose={pose} scale={monsterScale} still={hidden} />
+          </div>
+          {meter?.stunned && !ranAway && (
+            <div className={cx(starsCls, hidden && pausedCls)} aria-hidden>
+              {[0, 1, 2].map((i) => (
+                <img key={i} src={STAR} alt="" className={starCls} style={{ animationDelay: `${-0.4 * i}s` }} />
+              ))}
+            </div>
+          )}
+          {stunStamp && (
+            <div className={stunStampCls}>
+              STUNNED!
+              <span className={stunSubCls}>SKIPS ITS TURN</span>
+            </div>
+          )}
           {burst && (
             <div className={cx(burstCls, burstTone === 'white' && burstWhiteCls, burstTone === 'big' && burstBigCls)}>
               {burst}
             </div>
           )}
         </div>
-        {meter && turnFlag && !cardEvent && (phase === 'talk' || phase === 'question') && (
-          <div key={turnFlag + (question?.index ?? '')} className={cx(turnFlagCls, turnFlag === 'monster' && turnFlagItsCls)}>
-            {turnFlagText(turnFlag, word)}
+        {meter && turnFlag && !cardEvent && !stunStamp && (phase === 'talk' || phase === 'question') && (
+          <div
+            key={turnFlag + (question?.index ?? '')}
+            className={cx(
+              turnFlagCls,
+              turnFlag === 'monster' && turnFlagItsCls,
+              turnFlag === 'player' && question?.free && turnFlagFreeCls
+            )}
+          >
+            {turnFlagText(turnFlag, word, turnFlag === 'player' && !!question?.free)}
           </div>
         )}
         {cardEvent && <CardPopup event={cardEvent} leaving={cardLeaving} paused={hidden} />}
@@ -1528,4 +1568,153 @@ const doneButtonCls = css`
     transform: translateY(3px);
     box-shadow: 0 1px 0 #b88a00;
   }
+`;
+
+// ---- defense rules 2: the stunned monster ----
+// It sways, dizzy, while stars circle its head (stepped, light on phones;
+// paused while the tab is hidden; still under reduced motion).
+const dazedCls = css`
+  transform-origin: 50% 100%;
+  animation: dazed-sway 1.2s steps(4) infinite;
+  @keyframes dazed-sway {
+    0%,
+    100% {
+      transform: rotate(-4deg);
+    }
+    50% {
+      transform: rotate(4deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+const pausedCls = css`
+  &,
+  * {
+    animation-play-state: paused !important;
+  }
+`;
+
+const starsCls = css`
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+`;
+
+const starCls = css`
+  position: absolute;
+  left: -14px;
+  top: -14px;
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 2px 0 #0f0b1a);
+  animation: star-orbit 1.2s steps(8) infinite;
+  @keyframes star-orbit {
+    0% {
+      transform: translate(0, -14px) scale(1);
+    }
+    12.5% {
+      transform: translate(40px, -10px) scale(0.95);
+    }
+    25% {
+      transform: translate(58px, 0) scale(0.85);
+    }
+    37.5% {
+      transform: translate(40px, 10px) scale(0.75);
+    }
+    50% {
+      transform: translate(0, 14px) scale(0.7);
+    }
+    62.5% {
+      transform: translate(-40px, 10px) scale(0.75);
+    }
+    75% {
+      transform: translate(-58px, 0) scale(0.85);
+    }
+    87.5% {
+      transform: translate(-40px, -10px) scale(0.95);
+    }
+    100% {
+      transform: translate(0, -14px) scale(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    &:nth-child(1) {
+      transform: translate(-44px, 0);
+    }
+    &:nth-child(2) {
+      transform: translate(0, -14px);
+    }
+    &:nth-child(3) {
+      transform: translate(44px, 0);
+    }
+  }
+  @media (max-width: 480px) {
+    width: 22px;
+    height: 22px;
+    left: -11px;
+    top: -11px;
+  }
+`;
+
+const stunStampCls = css`
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  z-index: 4;
+  font-family: ${PIXEL_FONT};
+  font-size: 22px;
+  line-height: 1;
+  text-align: center;
+  color: #ffd34d;
+  padding: 8px 12px 7px;
+  background: #0f0b1a;
+  border: 3px solid #ffd34d;
+  box-shadow: 0 0 0 3px #0f0b1a, 5px 5px 0 3px rgba(15, 11, 26, 0.6);
+  white-space: nowrap;
+  animation: stun-in 0.36s steps(3) 1 both;
+  @keyframes stun-in {
+    0% {
+      transform: translateX(-50%) scale(2.4) rotate(10deg);
+      opacity: 0;
+    }
+    60% {
+      transform: translateX(-50%) scale(0.92) rotate(4deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(-50%) scale(1) rotate(5deg);
+      opacity: 1;
+    }
+  }
+  @media (max-width: 480px) {
+    bottom: 10%;
+    font-size: 14px;
+    padding: 6px 9px 5px;
+  }  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    transform: translateX(-50%) rotate(5deg);
+  }
+`;
+
+const stunSubCls = css`
+  display: block;
+  margin-top: 6px;
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: #ffffff;
+`;
+
+const turnFlagFreeCls = css`
+  color: #0f0b1a;
+  background: #ffd34d;
+  border-color: #ffffff;
 `;

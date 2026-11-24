@@ -58,6 +58,23 @@ export const SHIELD = pixelSvg(
   ],
   { k: INK, w: '#ffffff', b: '#5aa9ff' }
 );
+// A related card's block: the shield holds, but cracks (half the hit gets
+// through).
+export const SHIELD_CRACKED = pixelSvg(
+  [
+    '.kkkkkkk.',
+    'kwwwkwwwk',
+    'kwbbkbbwk',
+    'kwbwwkbwk',
+    'kwbwkwbwk',
+    'kwbbkbbwk',
+    '.kwbbkwk.',
+    '..kwbwk..',
+    '...kwk...',
+    '....k....'
+  ],
+  { k: INK, w: '#ffffff', b: '#5aa9ff' }
+);
 export const SWORD = pixelSvg(
   [
     '......kkk',
