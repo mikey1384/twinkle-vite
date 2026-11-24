@@ -17,7 +17,11 @@ import { trackEvent } from '~/helpers/analytics';
 import useBlockedUsers from '~/helpers/hooks/useBlockedUsers';
 import { abbreviateNumber, addCommasToNumber } from '~/helpers/stringHelpers';
 import { useWalkUp } from '~/helpers/hooks/useSocialWalkups';
-import { joinableBadge } from '~/helpers/socialWalkups';
+import {
+  bestJoinAction,
+  JOIN_VERB_LABELS,
+  joinableBadge
+} from '~/helpers/socialWalkups';
 import type { User } from '~/types';
 import {
   createLiveNowShownTracker,
@@ -545,20 +549,11 @@ export default function LiveNow({
                 </span>
               ) : null}
             </span>
-            <Button
-              color={buttonColor}
-              variant="soft"
-              tone="raised"
-              size="sm"
-              uppercase={false}
-              aria-label={`Join ${app.title}`}
-              onClick={(event: React.MouseEvent) => {
-                event?.stopPropagation?.();
-                join(app, index, 'join');
-              }}
-            >
-              Join
-            </Button>
+            <LiveNowRowButton
+              app={app}
+              buttonColor={buttonColor}
+              onJoin={() => join(app, index, 'join')}
+            />
           </li>
         ))}
       </ul>
@@ -579,30 +574,63 @@ export default function LiveNow({
   );
 
   function join(app: LiveNowApp, index: number, target: 'app' | 'join') {
+    // The row's button says what this does (bestJoinAction): Join an open
+    // room, Play with someone ready for a game, or Watch. Tapping the row
+    // itself does the same; with nothing to join it opens the app, as always
+    // (nobody busy is queued on without the member choosing them).
+    const action = bestJoinAction(app.members);
     trackEvent('live_now_tap', { target, app_id: app.appId });
     trackEvent('live_now_join', {
       app_id: app.appId,
       people: app.count,
       multiplayer: app.multiplayer,
-      position: index + 1
+      position: index + 1,
+      action: action?.verb || 'open'
     });
-    // Join = walking up: when someone here is ready for company right now,
-    // Join opens the app next to them. Otherwise it opens the app, as always
-    // (nobody busy is queued on without the member choosing them).
-    const ready = app.members.find(
-      (member) => member.joinable?.state === 'open'
-    );
-    if (ready) {
+    if (action) {
       void walkUp({
         buildId: app.appId,
-        host: ready,
-        intent: 'play',
+        host: action.member,
+        intent: action.intent,
         source: 'live_now'
       });
       return;
     }
     navigate(`/app/${app.appId}`);
   }
+}
+
+// The row's one button, worded by what tapping it does: Join (an open room),
+// Play (someone ready for a game) or Watch. Nothing when there is nothing to
+// join; the row itself still opens the app.
+function LiveNowRowButton({
+  app,
+  buttonColor,
+  onJoin
+}: {
+  app: LiveNowApp;
+  buttonColor: string;
+  onJoin: () => void;
+}) {
+  const action = bestJoinAction(app.members);
+  if (!action) return null;
+  const label = JOIN_VERB_LABELS[action.verb];
+  return (
+    <Button
+      color={buttonColor}
+      variant="soft"
+      tone="raised"
+      size="sm"
+      uppercase={false}
+      aria-label={`${label}: ${app.title}`}
+      onClick={(event: React.MouseEvent) => {
+        event?.stopPropagation?.();
+        onJoin();
+      }}
+    >
+      {label}
+    </Button>
+  );
 }
 
 // A member's face or join line opens the site's standard profile card, the same
