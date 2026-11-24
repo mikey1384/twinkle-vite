@@ -307,6 +307,7 @@ test(
       // an app nobody adopted this in looks as before
       const plainRow = page.locator('li', { hasText: 'Word Search Adventure' });
       assert.equal(await plainRow.locator('.live-join').count(), 0);
+
       // nothing overflows the phone-width card
       const overflow = await page.evaluate(() => {
         const section = document.querySelector('section[aria-label="Live now"]');
@@ -399,11 +400,7 @@ test(
       assert.deepEqual(await page.evaluate(() => window.walkups), [
         { buildId: 8, hostUserId: 14, intent: 'watch', dropIn: true }
       ]);
-      // nobody to join (Word Search Adventure): no button; the row opens the app
-      assert.equal(
-        await page.locator('li', { hasText: 'Word Search Adventure' }).locator('button').count(),
-        0
-      );
+
       await page.evaluate(() => window.setScene({ name: 'settings' }));
       const hostPreference = page.getByRole('switch', {
         name: 'Let people walk up while I play'
@@ -815,7 +812,11 @@ test(
         ['Cloudstar · In a match']
       );
       assert.equal(await busyRow.locator('.live-join').first().getAttribute('data-state'), 'busy');
-      assert.equal(await busyRow.getByRole('button', { name: /: Among Us$/ }).count(), 0);
+      // nothing to join: the default Play (opens the app), never Join
+      assert.deepEqual(
+        (await busyRow.getByRole('button', { name: /: Among Us$/ }).allInnerTexts()).map((t) => t.trim()),
+        ['Play']
+      );
       await busyRow.locator('.live-title').click();
       await page.waitForFunction(() => window.lastLocation?.pathname === '/app/2809');
       assert.deepEqual(await page.evaluate(() => window.walkups), []);
@@ -916,7 +917,8 @@ test(
       });
 
       // Busy: Baduk online game = Watch, a full Among Us room = Watch,
-      // Baduk vs the AI alone and a closed Red Square = nothing to tap.
+      // Baduk vs the AI alone and a closed Red Square = the default Play
+      // (opens the app; "Join" only for real joinable moments).
       // (a fresh card: Live now holds what it showed while the pointer is on it)
       await page.mouse.move(385, 995);
       await page.evaluate(() => {
@@ -932,7 +934,7 @@ test(
       assert.deepEqual(new Map(await rowButtons()), new Map([
         ['Among Us', 'Watch'],
         ['Baduk', 'Watch'],
-        ['The Adventure of a Red Square', null]
+        ['The Adventure of a Red Square', 'Play']
       ]));
       await page.mouse.move(385, 995);
       await page.waitForTimeout(500);
@@ -943,7 +945,7 @@ test(
         buildId: 2809, hostUserId: 17, intent: 'watch', dropIn: true
       });
 
-      // Only the AI game: Baduk shows no button at all
+      // Only the AI game: nothing to join, so Baduk shows the default Play
       await page.mouse.move(385, 995);
       await page.evaluate(() => {
         window.setScene({ name: 'none' });
@@ -952,7 +954,7 @@ test(
       await page.evaluate(() => window.setScene({ name: 'live' }));
       await page.getByText('Live now', { exact: true }).waitFor();
       await page.waitForFunction(() => !document.body.textContent.includes('Room full'));
-      assert.deepEqual(await rowButtons(), [['Baduk', null]]);
+      assert.deepEqual(await rowButtons(), [['Baduk', 'Play']]);
       assert.deepEqual(errors, []);
     } finally {
       await browser.close();
