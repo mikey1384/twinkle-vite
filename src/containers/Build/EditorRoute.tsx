@@ -15,6 +15,7 @@ import { normalizeBuildResumeRunState } from '~/contexts/Build/resumeRunState';
 import { hydrateBuildRunFromPersistedSnapshot } from './helpers/persistedRunSnapshot';
 import type { BuildCopilotPolicy } from './Editor/types';
 import { socket } from '~/constants/sockets/api';
+import { useStudioSaveFollow } from './Editor/hooks/useStudioSaveFollow';
 import {
   applyBuildProjectFilesSocketUpdate,
   resolveBuildProjectFilesSocketUpdate
@@ -612,6 +613,69 @@ export default function BuildEditorRoute() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build, chatMessages, copilotPolicy, numericBuildId, userId]);
 
+  // Saves made elsewhere reach this workspace once they commit: main for
+  // its owner, a branch for anyone the server admits to its preview room
+  // (Editor/hooks/useStudioSaveFollow.ts). The saved files are read again
+  // the way this route first loaded them; unsaved editor edits are never
+  // replaced (the Editor asks first, see savedVersionNotice).
+  const [studioDraft, setStudioDraft] = useState({
+    unsavedEdits: false,
+    saving: false
+  });
+  const recordBuildPreviewReload = useAppContext(
+    (v) => v.requestHelpers.recordBuildPreviewReload
+  );
+  const studioWorkspaceBuildId =
+    Number(userId || 0) > 0 && !loading ? Number(build?.id || 0) : 0;
+  const studioSaveFollow = useStudioSaveFollow({
+    workspaceBuildId: studioWorkspaceBuildId,
+    currentFilesHash:
+      typeof build?.projectFilesHash === 'string'
+        ? build.projectFilesHash
+        : null,
+    unsavedEdits: studioDraft.unsavedEdits,
+    saving: studioDraft.saving,
+    refresh: refreshStudioWorkspaceFiles,
+    onReloadCounted: (buildId, kind) =>
+      void recordBuildPreviewReload?.(buildId, kind)
+  });
+
+  async function refreshStudioWorkspaceFiles() {
+    const workspaceBuildId = Number(build?.id || 0);
+    const readStartedAtMs = Date.now();
+    const data = numericBranchNumber
+      ? await loadBuildBranch({
+          buildId: numericBuildId,
+          branchNumber: numericBranchNumber,
+          options: { fromWriter: true }
+        })
+      : await loadBuild(numericBuildId, { fromWriter: true });
+    if (!data?.build || Number(data.build.id || 0) !== workspaceBuildId) {
+      return;
+    }
+    const update = resolveBuildProjectFilesSocketUpdate({
+      buildId: workspaceBuildId,
+      build: data.build,
+      projectFiles: Array.isArray(data.projectFiles) ? data.projectFiles : [],
+      filesHash: data.projectFilesHash,
+      source: 'canonical_refresh',
+      eventTimeMs: readStartedAtMs
+    });
+    if (!update) return;
+    setBuild((currentBuild: any) => {
+      if (!currentBuild || Number(currentBuild.id || 0) !== workspaceBuildId) {
+        return currentBuild;
+      }
+      const applied = applyBuildProjectFilesSocketUpdate({
+        currentBuild,
+        currentEventTimeMs: lastCanonicalProjectFilesEventTimeMsRef.current,
+        update
+      });
+      lastCanonicalProjectFilesEventTimeMsRef.current = applied.eventTimeMs;
+      return applied.build;
+    });
+  }
+
   if (!numericBuildId) {
     return (
       <Unavailable
@@ -670,6 +734,19 @@ export default function BuildEditorRoute() {
       onUpdateBuild={setBuild}
       onUpdateChatMessages={setChatMessages}
       onUpdateCopilotPolicy={applyCanonicalCopilotPolicy}
+      onProjectFilesDirtyChange={(next) =>
+        setStudioDraft((current) =>
+          current.unsavedEdits === next.unsavedEdits &&
+          current.saving === next.saving
+            ? current
+            : next
+        )
+      }
+      savedVersionNotice={
+        studioSaveFollow.pillShown
+          ? { onLoad: studioSaveFollow.loadNow }
+          : null
+      }
     />
   );
 }

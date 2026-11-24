@@ -53,7 +53,12 @@ import {
   warmAppLifecycleStore
 } from '~/helpers/buildAppLifecycle';
 import PublishedUpdateNotice from './PublishedUpdateNotice';
+import PreviewSavedVersionPill from './PreviewSavedVersionPill';
 import { usePublishedUpdate } from './hooks/usePublishedUpdate';
+import {
+  usePreviewSaveFollow,
+  type PreviewReloadKind
+} from './hooks/usePreviewSaveFollow';
 import { useUpdateNote } from './hooks/useUpdateNote';
 
 // Phones run out of memory with several apps loaded at once (10-25: Safari
@@ -95,6 +100,8 @@ interface RuntimeSession {
   loaded: boolean;
   loadFromWriter: boolean;
   publishedVersionId: number | null;
+  // projectFilesHash of the saved files a workspace preview is showing.
+  workspaceFilesHash: string | null;
   runtimeSource: BuildRuntimeSource;
   title: string;
   userId: number | null;
@@ -159,6 +166,7 @@ function createRuntimeSession({
     loaded: false,
     loadFromWriter,
     publishedVersionId: null,
+    workspaceFilesHash: null,
     runtimeSource,
     title: 'Build App',
     userId
@@ -333,6 +341,51 @@ export default function BuildRuntimeKeepAliveHost() {
     active: publishedUpdate.available,
     loadNote: loadBuildUpdateNoteForVersion
   });
+  // A draft or branch preview (/app/<id>?runtimeSource=workspace) follows
+  // new saves without a browser reload (hooks/usePreviewSaveFollow.ts). The
+  // published view above follows publishes only, so a draft save never
+  // reloads the live app.
+  const recordBuildPreviewReload = useAppContext(
+    (v) => v.requestHelpers.recordBuildPreviewReload
+  );
+  const previewSaveFollow = usePreviewSaveFollow({
+    buildId: activeBuildId,
+    enabled: Boolean(
+      isRuntimeRoute &&
+        activeSession?.runtimeSource === 'workspace' &&
+        !isPinnedAppSession
+    ),
+    loadedFilesHash: activeSession?.workspaceFilesHash ?? null,
+    onReload: (kind) => void reloadWorkspacePreview(kind)
+  });
+
+  async function reloadWorkspacePreview(kind: PreviewReloadKind) {
+    const session = sessionsRef.current.find(
+      (s) =>
+        Number(s.buildId) === Number(activeBuildId) &&
+        s.runtimeSource === 'workspace'
+    );
+    if (!session) return;
+    void recordBuildPreviewReload?.(session.buildId, kind);
+    try {
+      // Same as the published Update: apps using Twinkle.app.lifecycle get
+      // their place back in the new version.
+      await requestAppLifecycleSnapshot(session.buildId, 'unload');
+    } catch {
+      // A snapshot is best effort.
+    }
+    setSessions((current) => current.map((s) =>
+      s.key === session.key
+        ? createRuntimeSession({
+            buildId: s.buildId,
+            location: s.location,
+            runtimeSource: s.runtimeSource,
+            userId: s.userId,
+            loadFromWriter: true
+          })
+        : s
+    ));
+  }
   const getInputState = useInputContext((v) => v.getInputState);
   const updatingSessionsRef = useRef(new Set<string>());
   const [updatingSessionKey, setUpdatingSessionKey] = useState<string | null>(null);
@@ -597,6 +650,12 @@ export default function BuildRuntimeKeepAliveHost() {
                   : null,
               loaded: true,
               publishedVersionId: Number(build.publishedArtifactVersionId) || null,
+              workspaceFilesHash:
+                runtimeSource === 'workspace' &&
+                typeof build.projectFilesHash === 'string' &&
+                build.projectFilesHash
+                  ? build.projectFilesHash
+                  : null,
               title: String(build.title || 'Build App')
             }
           : s
@@ -646,6 +705,11 @@ export default function BuildRuntimeKeepAliveHost() {
                   void recordBuildUpdateNoteWhatsNewTap(s.buildId)
                 }
               />
+            ) : null}
+            {isActive &&
+            s.runtimeSource === 'workspace' &&
+            previewSaveFollow.pillShown ? (
+              <PreviewSavedVersionPill onReload={previewSaveFollow.reloadNow} />
             ) : null}
           </div>
         );

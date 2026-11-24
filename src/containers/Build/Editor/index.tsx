@@ -81,6 +81,7 @@ import {
 } from '~/contexts';
 import DeleteModal from '../DeleteModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import PreviewSavedVersionPill from '../Runtime/PreviewSavedVersionPill';
 import { useBuildTeamLeave } from './useBuildTeamLeave';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -169,7 +170,9 @@ export default function BuildEditor({
   seedGreeting = false,
   onUpdateBuild,
   onUpdateChatMessages,
-  onUpdateCopilotPolicy
+  onUpdateCopilotPolicy,
+  onProjectFilesDirtyChange,
+  savedVersionNotice = null
 }: BuildEditorProps) {
   const canEditCurrentBuildProject = isOwner && canEditBuildProject(build);
   const canInspectCurrentBuildProject = canInspectBuildProjectSource({
@@ -354,6 +357,28 @@ export default function BuildEditor({
   const [collaborationSettingsModalShown, setCollaborationSettingsModalShown] =
     useState(false);
   const [rewardDraftDirty, setRewardDraftDirty] = useState(false);
+  const projectFilesDirtyRef = useRef(false);
+  const onProjectFilesDirtyChangeRef = useRef(onProjectFilesDirtyChange);
+  onProjectFilesDirtyChangeRef.current = onProjectFilesDirtyChange;
+  // "New version · Reload" with unsaved edits: loading the saved version
+  // discards them, so the viewer confirms first.
+  const [savedVersionConfirmShown, setSavedVersionConfirmShown] =
+    useState(false);
+  function handleLoadSavedVersion() {
+    if (!savedVersionNotice) return;
+    if (projectFilesDirtyRef.current) {
+      setSavedVersionConfirmShown(true);
+      return;
+    }
+    savedVersionNotice.onLoad();
+  }
+  function handleConfirmLoadSavedVersion() {
+    setSavedVersionConfirmShown(false);
+    discardCurrentProjectFileDraft();
+    projectFilesDirtyRef.current = false;
+    onProjectFilesDirtyChangeRef.current?.({ unsavedEdits: false, saving: false });
+    savedVersionNotice?.onLoad();
+  }
   const [deleteModalShown, setDeleteModalShown] = useState(false);
   const [deleteInProgress, setDeleteInProgress] = useState(false);
   const [threeUpgradeNoticeDismissed, setThreeUpgradeNoticeDismissed] =
@@ -726,7 +751,13 @@ export default function BuildEditor({
     mergeBuildContribution,
     mergeBuildContributionIntoMyBranch,
     onProjectFilesDraftStateChange: (state) => {
-      setRewardDraftDirty(Boolean(state.hasUnsavedChanges || state.saving));
+      const draftDirty = Boolean(state.hasUnsavedChanges || state.saving);
+      setRewardDraftDirty(draftDirty);
+      projectFilesDirtyRef.current = draftDirty;
+      onProjectFilesDirtyChangeRef.current?.({
+        unsavedEdits: Boolean(state.hasUnsavedChanges),
+        saving: Boolean(state.saving)
+      });
       handleProjectFilesDraftStateChange(state);
     },
     prepareProjectFilesForContributionAction: (options) =>
@@ -2226,6 +2257,27 @@ export default function BuildEditor({
                   {teamLeave.leaveError}
                 </div>
               ) : null}
+            </div>
+          }
+        />
+      ) : null}
+      {savedVersionNotice ? (
+        <PreviewSavedVersionPill
+          placement="fixed"
+          onReload={handleLoadSavedVersion}
+        />
+      ) : null}
+      {savedVersionConfirmShown && savedVersionNotice ? (
+        <ConfirmModal
+          title="Load the new version?"
+          descriptionFontSize="1.6rem"
+          confirmButtonLabel="Load new version"
+          onHide={() => setSavedVersionConfirmShown(false)}
+          onConfirm={handleConfirmLoadSavedVersion}
+          description={
+            <div style={{ textAlign: 'center', lineHeight: 1.5 }}>
+              A newer version was saved. Loading it removes the changes you
+              haven&apos;t saved here.
             </div>
           }
         />

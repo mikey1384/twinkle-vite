@@ -1533,7 +1533,9 @@ export default function BuildRuntime({
     const nextBuild = {
       ...data.build,
       capabilitySnapshot: data.capabilitySnapshot || null,
-      projectFiles: Array.isArray(data.projectFiles) ? data.projectFiles : []
+      projectFiles: Array.isArray(data.projectFiles) ? data.projectFiles : [],
+      projectFilesHash:
+        typeof data.projectFilesHash === 'string' ? data.projectFilesHash : null
     };
     setLoadedRuntimeSource(nextRuntimeSource);
     setBuild(nextBuild);

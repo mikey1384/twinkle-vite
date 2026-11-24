@@ -557,6 +557,15 @@ export interface BuildEditorProps {
   onUpdateBuild: (build: Build) => void;
   onUpdateChatMessages: (messages: ChatMessage[]) => void;
   onUpdateCopilotPolicy: (policy: BuildCopilotPolicy | null) => void;
+  // Whether the editor holds unsaved project file edits, and whether it is
+  // saving them right now.
+  onProjectFilesDirtyChange?: (state: {
+    unsavedEdits: boolean;
+    saving: boolean;
+  }) => void;
+  // A newer save made elsewhere is waiting (EditorRoute's
+  // useStudioSaveFollow); shown as the "New version · Reload" pill.
+  savedVersionNotice?: { onLoad: () => void } | null;
 }
 
 export interface ProjectFileSaveResult {

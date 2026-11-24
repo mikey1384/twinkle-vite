@@ -1501,6 +1501,20 @@ export default function buildRequestHelpers({
       }
     },
 
+    // Counts-only telemetry: the open saved-workspace preview loaded a new
+    // save by itself (auto) or from its "New version · Reload" pill.
+    async recordBuildPreviewReload(buildId: number, kind: 'auto' | 'pill') {
+      try {
+        await request.post(
+          `${URL}/build/${buildId}/preview-reloads`,
+          { kind },
+          auth()
+        );
+      } catch {
+        // A counter only; never surfaces.
+      }
+    },
+
     async loadBuildForkHistory(
       buildId: number,
       options?: { fromWriter?: boolean }

@@ -42,6 +42,9 @@ export interface RuntimeBuild {
     createdAt?: number;
     updatedAt?: number;
   }>;
+  // The saved workspace's files hash (saved-workspace previews only); the
+  // preview compares it with each build_version_saved signal.
+  projectFilesHash?: string | null;
 }
 
 export interface RuntimeBuildReleaseStatus {
