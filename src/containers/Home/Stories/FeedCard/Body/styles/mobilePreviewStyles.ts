@@ -80,6 +80,9 @@ export const mobilePreviewStyles = `
     .home-feed-card__panel-preview--size-compact-desktop {
       height: max(19rem, 190px);
     }
+    .home-feed-card__panel-preview--size-compact.home-feed-card__panel-preview--text-fit {
+      height: var(--home-feed-card-text-fit-mobile-panel-height, max(10rem, 100px));
+    }
     .home-feed-card__panel-preview--size-fallback {
       height: max(19rem, 190px);
     }

@@ -78,7 +78,9 @@ export default function HeadingText({
                     ? 'daily reflection'
                     : rootType === 'aiCard'
                       ? 'AI card'
-                      : rootType;
+                      : rootType === 'arenaChallenge'
+                        ? 'Arena challenge'
+                        : rootType;
   const isSubjectComment =
     contentType === 'comment' &&
     targetObj?.subject &&

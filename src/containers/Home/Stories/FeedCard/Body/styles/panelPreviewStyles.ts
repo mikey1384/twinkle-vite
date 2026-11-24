@@ -143,6 +143,11 @@ export const panelPreviewStyles = `
   .home-feed-card__panel-preview--size-compact-desktop {
     height: max(11rem, 110px);
   }
+  /* A short comment above a target hugs its lines (helpers/sizing.ts
+     getTargetTextFitPanelHeight); the card frame budgets this exact height. */
+  .home-feed-card__panel-preview--size-compact.home-feed-card__panel-preview--text-fit {
+    height: var(--home-feed-card-text-fit-panel-height, max(11rem, 110px));
+  }
   .home-feed-card__panel-preview--size-fallback {
     height: max(20rem, 200px);
   }

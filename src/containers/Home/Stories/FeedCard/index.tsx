@@ -381,7 +381,10 @@ function HomeFeedCard({
     '--home-feed-card-subject-secret-panel-height':
       sizing.card.subjectSecretPanelHeight,
     '--home-feed-card-subject-secret-mobile-panel-height':
-      sizing.card.mobileSubjectSecretPanelHeight
+      sizing.card.mobileSubjectSecretPanelHeight,
+    '--home-feed-card-text-fit-panel-height': sizing.card.textFitPanelHeight,
+    '--home-feed-card-text-fit-mobile-panel-height':
+      sizing.card.mobileTextFitPanelHeight
   }) as React.CSSProperties & Record<string, string>, [sizing]);
   const placeholderStyle: React.CSSProperties = placeholderHeight
     ? { ...sizingStyle, height: placeholderHeight }
@@ -1499,6 +1502,8 @@ function getHomeFeedCardSizingSignature(sizing: FeedCardSizing) {
     sizing.main.kind,
     sizing.main.size,
     sizing.target?.size || 'no-target',
+    // a short comment above a target hugs its text once the text is known
+    sizing.card.textFitPanelHeight,
     sizing.card.hasCommentPreview ? 'comment-preview' : 'no-comment-preview',
     sizing.flags.hasAttachment ? 'attachment' : 'no-attachment',
     sizing.flags.hasRichTextEmbed ? 'rich-embed' : 'no-rich-embed',
