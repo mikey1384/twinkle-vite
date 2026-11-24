@@ -30,8 +30,8 @@ export interface AgentManualSdk {
 }
 
 export const AGENT_MANUAL_SDK: AgentManualSdk = {
-  version: "1.100.0",
-  updatedAt: "2026-11-24",
+  version: "1.101.0",
+  updatedAt: "2026-11-25",
   platformRules: {
     summary: "Each rule below is a way an app breaks once it runs inside Twinkle's sandboxed frame, even when the code itself is correct. They outrank every other guideline: follow them in every change, including small ones, and fix any break of them you see in code you touch.",
     rules: [
@@ -539,7 +539,7 @@ export const AGENT_MANUAL_SDK: AgentManualSdk = {
       name: "Twinkle.chat",
       description: "Runtime chat rooms scoped to this Build app. Use this for app-made chat UIs, lobby chat, comments, and collaborative messages without coupling to Twinkle's native chat page.",
       methods: [
-        {"call":"await Twinkle.chat.listRooms()","returns":"{ rooms: [{ id, buildId, key, name, createdByUserId, createdAt, updatedAt }] }","summary":"Returns chat rooms created by this Build app.","notes":["Scope: chat:read"]},
+        {"call":"await Twinkle.chat.listRooms()","returns":"{ rooms: [{ id, buildId, key, name, createdByUserId, createdAt, updatedAt }] }","summary":"Lists only the rooms the viewer created or has posted in (oldest 200). The app's owner and team members list every room of the app.","notes":["Scope: chat:read","Never use it as a public room browser or to discover other people's rooms: share a room's key through the app's own flow instead (a lobby code, Twinkle.social's roomKey, a key in sharedDb).","Anyone who knows a room key can read and post in that room, so give private rooms unguessable random keys, never ones built from user ids or other guessable parts."]},
         {"call":"await Twinkle.chat.createRoom({ roomKey, name })","returns":"{ room: { id, buildId, key, name, createdByUserId, createdAt, updatedAt } }","summary":"Creates a room or returns the existing one.","notes":["Scope: chat:write","roomKey may include letters, numbers, '.', '_', ':', and '-'."]},
         {"call":"await Twinkle.chat.listMessages(roomKey, { cursor, limit } = {})","returns":"{ messages: [{ id, roomId, roomKey, userId, username, profilePicUrl, role, status, text, metadata, clientMessageId, createdAt, updatedAt }], cursor? }","summary":"Returns messages in chronological order.","notes":["Scope: chat:read","Use the returned cursor to fetch older messages."]},
         {"call":"await Twinkle.chat.sendMessage(roomKey, textOrOptions, options)","returns":"{ message: { id, buildId, roomId, roomKey, userId, username, profilePicUrl, role, status, text, metadata, clientMessageId, createdAt, updatedAt }, room: { id, buildId, key, name, createdByUserId, createdAt, updatedAt }, created }","summary":"Accepts sendMessage('lobby', 'hi') or sendMessage('lobby', { text, metadata, clientMessageId }).","notes":["Scope: chat:write","Pass clientMessageId when manually retrying a send; the SDK also includes one per send request."]},
