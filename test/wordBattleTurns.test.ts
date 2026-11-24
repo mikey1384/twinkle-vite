@@ -110,3 +110,10 @@ test('an older API (no stun or reduced fields) still reads as before', () => {
   assert.equal(cardBanner(old).title, 'Your SWIFT card counters!');
   assert.equal(applyEvent(meter, old).stunned, undefined);
 });
+
+test('a counter-KO has its own line', async () => {
+  const { cardKoLine } = await import('../src/containers/Chat/Body/Collect/Vocabulary/WordBattle/turns');
+  const ev = (outcome: string) => ({ kind: 'card', job: 'defense', card: card('rare'), match: 'exact', matchedWord: 'brisk', outcome, damage: 5 }) as any;
+  assert.match(cardKoLine(ev('counter'), 'ubiquitous'), /Counter K\.O\.! UBIQUITOUS/);
+  assert.match(cardKoLine(ev('parry'), 'ubiquitous'), /Parry K\.O\.!/);
+});

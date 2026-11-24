@@ -170,6 +170,14 @@ export function monsterTurnLine(word: string, attacker: string) {
   return `${word.toUpperCase()} calls on ${attacker.toUpperCase()}!`;
 }
 
+// A card's strike-back that finishes the monster (a counter-KO).
+export function cardKoLine(event: Extract<BattleEvent, { kind: 'card' }>, word: string) {
+  const W = word.toUpperCase();
+  return event.outcome === 'counter'
+    ? `Counter K.O.! ${W} is knocked out by its own attack!`
+    : `Parry K.O.! One clean strike back finishes ${W}!`;
+}
+
 // A stun's free strike: the dazed monster's turn is yours.
 export function freeStrikeLine(word: string) {
   return `${word.toUpperCase()} is still dazed. Free strike!`;

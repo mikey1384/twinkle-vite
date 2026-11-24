@@ -10,6 +10,7 @@ import {
   BattleEvent,
   applyEvent,
   BattleMeter,
+  cardKoLine,
   eventHoldMs,
   eventLine,
   FIRST_BATTLE_TIP,
@@ -501,7 +502,10 @@ export default function BattleScreen({
         if (before && local.mhp < before.mhp) setDrainFrom(before.mhp);
         setMeter(local);
       };
-      const line = eventLine(event, { word, attacker, focus: focusAfter });
+      // A parry or counter that finishes the monster gets its own line.
+      const cardKo = event.kind === 'card' && !!event.damage && !!local && local.mhp <= 0;
+      const line =
+        cardKo && event.kind === 'card' ? cardKoLine(event, word) : eventLine(event, { word, attacker, focus: focusAfter });
       switch (event.kind) {
         case 'attack':
         case 'glancing': {
@@ -549,6 +553,10 @@ export default function BattleScreen({
           if (event.damage) {
             setPose('hit');
             showMeters();
+            if (cardKo) {
+              setShake(true);
+              setTimeout(() => mounted.current && setShake(false), 450);
+            }
           }
           await wait(pace(eventHoldMs(event) - 1000));
           if (!mounted.current) return;
