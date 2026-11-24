@@ -16,9 +16,9 @@ import { build } from 'esbuild';
 // "Got Lucky!" card (21:51:23). The battle's third question then timed out
 // on the server and it was recorded as abandoned (lost).
 //
-// Real Word Master Feed, lazy-load helpers, Modal and app-level battle host;
-// only the card's layout (a word window with a Battle button) and the battle
-// screen are stand-ins.
+// Real Word Master Feed, lazy-load helpers and Modal; the card's layout is a
+// stand-in that opens a word window and, inside it, the battle window, as
+// WordBattleGate does.
 const require = createRequire(import.meta.url);
 const { chromium } = require('/Users/mikey/.npm-packages/lib/node_modules/playwright');
 const repo = fileURLToPath(new URL('..', import.meta.url));
@@ -28,7 +28,6 @@ const fixture = `
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import Feed from './${vocab}/FeedsContainer/Feed';
-import WordBattleHost from './${vocab}/WordBattle/WordBattleHost';
 const card = (id, height = 140) => ({ id, action: 'register', content: 'word' + id, timeStamp: 1795500000 + id, wordLevel: 3 });
 window.cardHeights = {};
 function Fixture() {
@@ -38,7 +37,6 @@ function Fixture() {
     window.cardHeights[next.content] = height;
     return [next, ...list];
   });
-  window.dropCard = (id) => setFeeds((list) => list.filter((feed) => feed.id !== id));
   // A member reading at the bottom stays at the bottom when a card arrives
   // (FeedsContainer's scroll-to-bottom on a new card).
   useEffect(() => {
@@ -51,7 +49,6 @@ function Fixture() {
           {feeds.map((feed, index) => <Feed key={feed.id} feed={feed} eager={index < 8} />)}
         </div>
       </div>
-      <WordBattleHost />
     </>
   );
 }
@@ -79,17 +76,21 @@ const stubs = {
   './DefaultLayout': `
     import React, { useState } from 'react';
     import Modal from '~/components/Modal';
-    import { wordBattleHost } from '~/${vocab.slice(4)}/WordBattle/battleHost';
     export default function DefaultLayout({ content }) {
       const [open, setOpen] = useState(false);
-      const wordId = Number(content.slice(4));
+      const [battle, setBattle] = useState(false);
       return (
         <div data-card={content} style={{ height: window.cardHeights[content] || 140, background: '#eef' }}>
           <button onClick={() => setOpen(true)}>Open {content}</button>
           {open && (
             <Modal modalKey="WordModal" isOpen onClose={() => setOpen(false)} hasHeader={false}>
               <div data-word-window={content}>
-                <button onClick={() => wordBattleHost.open({ wordId, word: content, state: { status: 'ready', wordId, word: content, wordLevel: 3 } })}>Battle {content}</button>
+                <button onClick={() => setBattle(true)}>Battle {content}</button>
+                {battle && (
+                  <Modal modalKey="WordBattle" isOpen onClose={() => setBattle(false)} hasHeader={false}>
+                    <div data-battle={content}>Battle {content}</div>
+                  </Modal>
+                )}
               </div>
             </Modal>
           )}
@@ -103,18 +104,7 @@ const stubs = {
   '~/components/WordMasterBadges': 'export const badgeStyle = () => ({}); export const getActionColor = () => ""; export const getBreakTypeColor = () => ""; export const getRGBA = () => "";',
   './SpellLayout': 'export default () => null;',
   './RewardLayout': 'export default () => null;',
-  './BreakLayout': 'export default () => null;',
-  './BattleScreen': `
-    import React from 'react';
-    export default function BattleScreen({ initial, onFinished }) {
-      return (
-        <div data-battle={initial.word}>
-          Battle {initial.word}
-          <button onClick={() => onFinished({ ...initial, status: 'won', unlocked: { id: initial.wordId } })}>Win</button>
-        </div>
-      );
-    }
-  `
+  './BreakLayout': 'export default () => null;'
 };
 
 let bundle;
@@ -126,8 +116,6 @@ async function compile() {
     write: false,
     format: 'iife',
     platform: 'browser',
-    // HostedWordBattle loads lazily in the app; inline here.
-    splitting: false,
     alias: { '~': path.join(repo, 'src') },
     define: { 'import.meta.env': '{}', 'process.env.NODE_ENV': '"development"' },
     plugins: [
@@ -201,14 +189,6 @@ test('new cards never close the word window or battle opened from a card they pu
     // its content for a stand-in.
     assert.equal(await page.locator('[data-card="word98"]').count(), 0, 'cards without a window still lazy-unmount');
 
-    // Even if the card that opened it is gone entirely, the battle stays.
-    await page.evaluate(() => window.dropCard(99));
-    await page.waitForTimeout(300);
-    assert.equal(await page.locator('[data-word-window="word99"]').count(), 0);
-    assert.equal(await page.locator('[data-battle="word99"]').count(), 1, 'the battle outlives its opener');
-    await page.getByRole('button', { name: 'Win' }).click();
-    await page.waitForFunction(() => !document.querySelector('[data-battle]'));
-    assert.deepEqual(await page.evaluate(() => window.unlocked), { id: 99 }, 'the host unlocks the definitions with no gate left');
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();
