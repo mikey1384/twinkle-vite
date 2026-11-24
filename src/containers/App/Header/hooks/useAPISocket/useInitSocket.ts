@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useReducer, useRef } from 'react';
 import { socket, socketKeepalive } from '~/constants/sockets/api';
+import { emitLatestState } from '~/helpers/socketStateEmit';
 import { isSocketHandshakeInFlight } from '~/helpers/socketKeepalive';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -2172,17 +2173,17 @@ export default function useInitSocket({
   // or the server's 10-minute idle sweep.
   useEffect(() => {
     const emitVisible = () => {
-      socket.emit('change_away_status', true);
+      emitLatestState(socket, 'change_away_status', true);
       startUserHeartbeat();
     };
     const emitHidden = () => {
       stopUserHeartbeat();
-      socket.emit('change_away_status', false);
+      emitLatestState(socket, 'change_away_status', false);
     };
     const onVisibility = () => {
       const live = isPresencePageLive();
       if (presenceLiveSupportedRef.current) {
-        socket.emit(PRESENCE_LIVE_EVENT, live);
+        emitLatestState(socket, PRESENCE_LIVE_EVENT, live);
       }
       if (live) emitVisible();
       else emitHidden();
@@ -2495,7 +2496,7 @@ export default function useInitSocket({
         // so the website may deploy before or after the API.
         presenceLiveSupportedRef.current = bindSupportsPresenceLive(result);
         if (presenceLiveSupportedRef.current) {
-          socket.emit(PRESENCE_LIVE_EVENT, isPresencePageLive());
+          emitLatestState(socket, PRESENCE_LIVE_EVENT, isPresencePageLive());
         }
         startUserHeartbeat();
         userActionAckedRef.current = result?.presenceQualified === true;

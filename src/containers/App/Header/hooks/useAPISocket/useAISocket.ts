@@ -6,6 +6,7 @@ import {
 import React, { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
+import { emitLatestState } from '~/helpers/socketStateEmit';
 import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 import { PRESENCE_RESYNC_EVENT } from '~/helpers/presenceLive';
 import { showDesktopNotification } from '~/helpers/desktopNotifications';
@@ -431,7 +432,9 @@ export default function useAISocket({
       if (now - lastSentAt < 3_000) return;
       lastSentAt = now;
       activeAgentTabIdRef.current = WEBSITE_AGENT_TAB_ID;
-      socket.emit('website_agent_active', { tabId: WEBSITE_AGENT_TAB_ID });
+      emitLatestState(socket, 'website_agent_active', {
+        tabId: WEBSITE_AGENT_TAB_ID
+      });
     }
     function handleActiveTab({ tabId }: { tabId?: string }) {
       if (typeof tabId === 'string') activeAgentTabIdRef.current = tabId;
