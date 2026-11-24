@@ -64,6 +64,31 @@ test('groups people by app, multiplayer first, then by head count', () => {
   );
 });
 
+test('apps with something to tap (Join, Play with someone, Watch) come before ones that only open', () => {
+  const breadface = app(1, { title: 'Breadface', multiplayer: true });
+  const cr7 = app(2, { title: 'CR7', multiplayer: true });
+  const busy = app(4, { title: 'Busy duel', multiplayer: true, joinable: { state: 'busy', mode: '1v1' } });
+  const redSquare = app(3, {
+    title: 'The Adventure of a Red Square',
+    joinable: { state: 'busy-watchable', mode: 'watch', label: 'Playing World 2-C' }
+  });
+  const apps = group(
+    statusOf(
+      member(11, breadface),
+      member(12, breadface),
+      member(13, cr7),
+      member(14, busy),
+      member(15, redSquare)
+    )
+  );
+  // Red Square's Watch first; busy (nothing to tap) sorts with the plain
+  // rows, by head count then title.
+  assert.deepEqual(
+    apps.map((entry) => entry.appId),
+    [3, 1, 4, 2]
+  );
+});
+
 test('shows only what avatar badges show: online, apps only, never the viewer', () => {
   const apps = group(
     statusOf(

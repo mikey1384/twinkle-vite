@@ -9,7 +9,7 @@
 //
 // Kept free of app imports so node tests can load it.
 import { isActivityShown, type PresenceFlags } from './presenceVisibility';
-import { readJoinable, type Joinable } from './socialWalkups';
+import { bestJoinAction, readJoinable, type Joinable } from './socialWalkups';
 
 export const LIVE_NOW_COLLAPSED_APPS = 2;
 // Hard bound for the expanded list and for the faces per app.
@@ -114,8 +114,13 @@ export function groupLiveNowApps({
     app.members = app.members.slice(0, LIVE_NOW_MAX_FACES);
     app.joinable = app.members.filter((member) => member.joinable).length;
   }
+  // Apps where the row's button really does something with someone (Join,
+  // Play with someone, Watch) come first; rows that only open the app ("Play")
+  // follow. Mikey 11-24.
+  const actionable = new Map(apps.map((app) => [app, bestJoinAction(app.members) ? 1 : 0]));
   apps.sort(
     (a, b) =>
+      (actionable.get(b) || 0) - (actionable.get(a) || 0) ||
       Number(b.multiplayer) - Number(a.multiplayer) ||
       b.count - a.count ||
       a.title.localeCompare(b.title) ||
