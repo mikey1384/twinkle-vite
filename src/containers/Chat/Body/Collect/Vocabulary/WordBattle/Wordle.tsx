@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import Loading from '~/components/Loading';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import MonsterSprite from '~/components/WordMonster/MonsterSprite';
@@ -10,6 +9,7 @@ import { badgeStyle } from '~/components/WordMasterBadges';
 import { useAppContext, useChatContext } from '~/contexts';
 import WordModal from '../WordModal';
 import { LOOT_ICONS } from './art';
+import ExploringScene, { useExplorePhase } from './ExploringScene';
 import { isBattleLocked, wordIdOf } from './index';
 
 const PIXEL_FONT = "'Press Start 2P', monospace";
@@ -44,6 +44,9 @@ export function WordleWordPopup({
   const onApplyServerWordObj = useChatContext((v) => v.actions.onApplyServerWordObj);
   const [result, setResult] = useState<WordleBattleResult | null>(null);
   const [failed, setFailed] = useState(false);
+  // The exploring scene while a slow answer loads, without the word: it may
+  // be today's answer the member hasn't earned yet.
+  const explorePhase = useExplorePhase({ loading: !result && !failed, failed: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -107,7 +110,11 @@ export function WordleWordPopup({
     >
       <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordBattle/WordleWordPopup">
         {!result && !failed ? (
-          <Loading style={{ minHeight: '14rem' }} />
+          explorePhase === 'explore' ? (
+            <ExploringScene />
+          ) : (
+            <div style={{ minHeight: '14rem' }} />
+          )
         ) : (
           <div className={noticeCls} data-testid="wordle-word-notice">
             {finishFirst && (
