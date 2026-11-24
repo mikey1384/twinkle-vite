@@ -461,7 +461,8 @@ export default function BattleScreen({
       setLostHeart(-1);
     }
     if (state.status === 'active' && state.question) {
-      await askQuestion(state.question);
+      // A stale reply's question has been open for servedAgoMs already.
+      await askQuestion(state.question, state.stale ? state.servedAgoMs || 0 : 0);
       return;
     }
     await finish(state);
