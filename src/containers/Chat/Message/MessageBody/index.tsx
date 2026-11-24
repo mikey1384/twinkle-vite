@@ -831,16 +831,11 @@ function MessageBody({
     );
   }
 
+  // A sponsored help card is a message from someone (the sender's button in
+  // a DM, Zero/Ciel's card or welcome in their chat): it sits in the normal
+  // message row with the author's picture, name and time, in place of the
+  // text, keeping the row's actions and its reactions.
   const sponsoredHelp = readSponsoredHelpView(message);
-  if (sponsoredHelp) {
-    return withCardFrame(
-      'Sponsored help',
-      <SponsoredHelpCard
-        request={sponsoredHelp.view}
-        variant={sponsoredHelp.variant}
-      />
-    );
-  }
 
   if (transferDetails) {
     return withCardFrame(
@@ -1025,6 +1020,16 @@ function MessageBody({
               settings={message?.settings}
               isAIChat={isAIChat}
             />
+            {sponsoredHelp ? (
+              <>
+                <SponsoredHelpCard
+                  request={sponsoredHelp.view}
+                  variant={sponsoredHelp.variant}
+                  inMessageRow
+                />
+                {cardReactions}
+              </>
+            ) : (
             <Content
               appliedUsername={appliedUsername}
               channelId={channelId}
@@ -1079,6 +1084,7 @@ function MessageBody({
               userCanEditThis={userCanEditThis}
               userId={userId}
             />
+            )}
             <AlertActions settings={message?.settings} />
             {actionButtons}
           </div>

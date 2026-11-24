@@ -27,10 +27,14 @@ import {
 // planning or running and never assumes an outcome.
 export default function SponsoredHelpCard({
   request: initialRequest,
-  variant
+  variant,
+  inMessageRow = false
 }: {
   request: SponsoredHelpView;
   variant: 'dm' | 'assistant';
+  // inside the normal message row (author picture, name, time): no outer
+  // padding of its own, aligned with the message text
+  inMessageRow?: boolean;
 }) {
   const myId = Number(useKeyContext((v) => v.myState.userId) || 0);
   const navigate = useNavigate();
@@ -88,7 +92,7 @@ export default function SponsoredHelpCard({
 
   if (variant === 'dm') {
     return (
-      <div className={wrapClass} data-sponsored-help={request.id}>
+      <div className={inMessageRow ? rowWrapClass : wrapClass} data-sponsored-help={request.id}>
         <BuildMessageCard
           themeName={themeName}
           bannerIcon="wand-magic-sparkles"
@@ -161,7 +165,7 @@ export default function SponsoredHelpCard({
   const project = steps.find((step) => step.action === 'create_lumine_project');
   const result = request.result || {};
   return (
-    <div className={wrapClass} data-sponsored-help-card={request.id}>
+    <div className={inMessageRow ? rowWrapClass : wrapClass} data-sponsored-help-card={request.id}>
       <BuildMessageCard
         themeName={themeName}
         bannerIcon="wand-magic-sparkles"
@@ -435,6 +439,15 @@ const wrapClass = css`
   }
   @media (max-width: ${mobileMaxWidth}) {
     padding: 0.6rem 0.5rem;
+  }
+`;
+
+const rowWrapClass = css`
+  width: 100%;
+  padding: 0.4rem 0 0.2rem;
+  > div {
+    max-width: 56rem;
+    width: 100%;
   }
 `;
 
