@@ -233,6 +233,17 @@ export function useWebsiteAgentOverlayActive() {
   return !!spotlight || !!prompt;
 }
 
+// A coin purchase Zero or Ciel ask about. Every word comes from the
+// website, which writes it from the purchase itself (what, for which chat,
+// card, post or theme, and the price); the agent's wording is never shown.
+export interface WebsiteAgentPurchase {
+  headline: string;
+  note?: string;
+  price: number;
+  balance: number;
+  left: number;
+}
+
 // Asking the user, on whatever page they are on, to allow a task Zero or
 // Ciel described (the website agent's permission prompt).
 interface PermissionPrompt {
@@ -243,6 +254,8 @@ interface PermissionPrompt {
   // The yes button's words, when a plain yes would undersell it (a purchase:
   // "Yes, spend 20 coins").
   confirmLabel?: string;
+  // Shown instead of summary and details for a coin purchase.
+  purchase?: WebsiteAgentPurchase;
   assistant: 'Zero' | 'Ciel' | null;
   finish(decision: 'allow' | 'deny' | 'replaced'): void;
 }
@@ -265,11 +278,13 @@ export function askWebsiteAgentPermission({
   summary,
   details = '',
   confirmLabel = '',
+  purchase,
   assistant = null
 }: {
   summary: string;
   details?: string;
   confirmLabel?: string;
+  purchase?: WebsiteAgentPurchase;
   assistant?: 'Zero' | 'Ciel' | null;
 }): Promise<{ decision: 'allow' | 'deny' | 'replaced' }> {
   currentPrompt?.finish('replaced');
@@ -278,6 +293,7 @@ export function askWebsiteAgentPermission({
       summary,
       details: details || undefined,
       confirmLabel: confirmLabel || undefined,
+      purchase,
       assistant,
       finish(decision) {
         if (currentPrompt === prompt) setCurrentPrompt(null);
@@ -353,10 +369,17 @@ function PermissionPromptLayer() {
         animation: ${appear} 0.2s ease-out;
       `}
     >
-      <AssistantLine assistant={prompt.assistant}>
-        {renderCaption(prompt.summary)}
-      </AssistantLine>
-      {prompt.details ? (
+      {prompt.purchase ? (
+        <PurchaseSummary
+          assistant={prompt.assistant}
+          purchase={prompt.purchase}
+        />
+      ) : (
+        <AssistantLine assistant={prompt.assistant}>
+          {renderCaption(prompt.summary)}
+        </AssistantLine>
+      )}
+      {prompt.details && !prompt.purchase ? (
         <div
           className={css`
             margin-top: 0.8rem;
@@ -609,6 +632,106 @@ function AssistantLine({
 }
 
 // Captions are plain sentences; **bold** is the one emphasis kept.
+// The purchase card's body: what is bought and for what, then the price
+// against the member's Coins. Plain text throughout (no **bold** parsing):
+// names inside it are members' own words.
+function PurchaseSummary({
+  assistant,
+  purchase
+}: {
+  assistant: 'Zero' | 'Ciel' | null;
+  purchase: WebsiteAgentPurchase;
+}) {
+  const coins = (value: number) => value.toLocaleString('en-US');
+  const rows: Array<[string, string, boolean?]> = [
+    ['Price', `${coins(purchase.price)} Coins`, true],
+    ['You have', `${coins(purchase.balance)} Coins`],
+    ['Left after', `${coins(purchase.left)} Coins`]
+  ];
+  return (
+    <div>
+      <div
+        className={css`
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+        `}
+      >
+        <AssistantFace assistant={assistant} size="2.6rem" />
+        <div
+          className={css`
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: ${Color.darkerGray()};
+          `}
+        >
+          {assistant ? `${assistant} wants to make a purchase` : 'Purchase'}
+        </div>
+      </div>
+      <div
+        className={css`
+          margin-top: 0.8rem;
+          font-size: 1.6rem;
+          font-weight: 800;
+          line-height: 1.35;
+          overflow-wrap: anywhere;
+          color: ${Color.black()};
+        `}
+      >
+        {purchase.headline}
+      </div>
+      <dl
+        className={css`
+          margin: 0.9rem 0 0;
+          padding: 0.7rem 1rem;
+          border-radius: ${borderRadius};
+          background: ${Color.logoBlue(0.05)};
+          border: 1px solid ${Color.logoBlue(0.15)};
+          display: grid;
+          grid-template-columns: auto 1fr;
+          row-gap: 0.3rem;
+          column-gap: 1rem;
+          font-size: 1.35rem;
+        `}
+      >
+        {rows.map(([label, value, strong]) => (
+          <React.Fragment key={label}>
+            <dt
+              className={css`
+                color: ${Color.darkerGray()};
+              `}
+            >
+              {label}
+            </dt>
+            <dd
+              className={css`
+                margin: 0;
+                text-align: right;
+                font-variant-numeric: tabular-nums;
+                font-weight: ${strong ? 800 : 600};
+                color: ${strong ? Color.black() : Color.darkerGray()};
+              `}
+            >
+              {value}
+            </dd>
+          </React.Fragment>
+        ))}
+      </dl>
+      {purchase.note ? (
+        <div
+          className={css`
+            margin-top: 0.6rem;
+            font-size: 1.25rem;
+            color: ${Color.darkerGray()};
+          `}
+        >
+          {purchase.note}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function renderCaption(caption: string) {
   return caption
     .split(/\*\*(.+?)\*\*/g)
