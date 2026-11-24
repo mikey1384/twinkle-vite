@@ -5,6 +5,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import MonsterSprite, { MonsterPose } from '~/components/WordMonster/MonsterSprite';
 import { useAppContext, useChatContext } from '~/contexts';
 import BattleScreen, { BattleApi, BattleState } from './BattleScreen';
+import ExploringScene, { EncounterFlash, useExplorePhase } from './ExploringScene';
 import { resetTimeLabel } from './lines';
 import RanAwayCard from './RanAwayCard';
 import { nextWakeStage, readingMs, WAKE_JOLT_MS, WakeStage, wakeLine } from './wake';
@@ -119,6 +120,7 @@ export default function WordBattleGate({
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
   const [denBusy, setDenBusy] = useState<'capture' | 'read' | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const onUnlockedRef = useRef(onUnlocked);
   onUnlockedRef.current = onUnlocked;
 
@@ -173,7 +175,12 @@ export default function WordBattleGate({
       if (timer) window.clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wordId]);
+  }, [wordId, reloadKey]);
+
+  // A slow first load shows the exploring scene, then a quick encounter
+  // flash into the gate; a fast one goes straight to the gate (Mikey 11-24).
+  const explorePhase = useExplorePhase({ loading: !state && !failed, failed: failed && !state });
+  const exploring = !state && (failed || explorePhase === 'explore');
 
   function handleUnlocked(unlocked: Record<string, any>) {
     onUnlockWordDefinitions(unlocked);
@@ -251,13 +258,25 @@ export default function WordBattleGate({
 
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordBattle">
+      {exploring ? (
+        <ExploringScene
+          word={word}
+          failed={failed}
+          onRetry={() => {
+            setFailed(false);
+            setReloadKey((key) => key + 1);
+          }}
+          compact={compact}
+        />
+      ) : (
       <div
         className={cx(gateCls, skippable && gateSkippableCls)}
         // Hidden (space kept) until the first state says asleep or awake, so
         // an awake monster never flashes its sleeping frame first.
         style={{
           ...(compact ? { padding: '1rem' } : null),
-          ...(!state && !failed ? { visibility: 'hidden' as const } : null)
+          ...(!state && !failed ? { visibility: 'hidden' as const } : null),
+          ...(explorePhase === 'encounter' ? { position: 'relative' as const, overflow: 'hidden' as const } : null)
         }}
         ref={gateRef}
         tabIndex={skippable ? 0 : undefined}
@@ -377,7 +396,9 @@ export default function WordBattleGate({
           </div>
           )}
         </div>
+        {explorePhase === 'encounter' && <EncounterFlash />}
       </div>
+      )}
       {open && state && (
         <Modal
           modalKey="WordBattle"
