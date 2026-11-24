@@ -80,6 +80,20 @@ function EmbeddedComponent({
     return { ext: extension, fileNameFromSrc: fileName, fileType };
   }, [src]);
   const shouldAttemptImage = fileType === 'image' || !ext;
+  // Uploads are stored under a generated name (1732...-x8f2.pdf); an embed
+  // that names its file, ![design notes.pdf](url), shows that name instead,
+  // but only when the name is a file name of the same type as the stored
+  // file. A typed "homework.pdf" on a zip, a spoiler marker or a long image
+  // description (an image that failed to load) shows the stored name.
+  const fileCardName = useMemo(() => {
+    const name = String(alt || '').trim();
+    const altExtension = name.match(/\.([A-Za-z0-9]{1,10})$/)?.[1];
+    const namesStoredType =
+      !!altExtension &&
+      !!ext &&
+      altExtension.toLowerCase() === String(ext).toLowerCase();
+    return (namesStoredType ? name : '') || fileNameFromSrc || 'file';
+  }, [alt, ext, fileNameFromSrc]);
   // Images bring their own size. Every other embed (content cards, YouTube,
   // file rows) sizes itself from its parent, so a shrink-to-fit parent such as
   // a chat bubble has to give it real width; this class is how it can tell.
@@ -155,7 +169,7 @@ function EmbeddedComponent({
         <FileDownload
           extension={ext}
           src={href || src}
-          fileName={fileNameFromSrc || alt || 'file'}
+          fileName={fileCardName}
           fileType={fileType}
           isPreview={isPreview}
           theme={theme}
@@ -164,7 +178,7 @@ function EmbeddedComponent({
         <FileDownload
           extension={ext}
           src={href}
-          fileName={fileNameFromSrc || alt || 'file'}
+          fileName={fileCardName}
           fileType={fileType}
           isPreview={isPreview}
           theme={theme}

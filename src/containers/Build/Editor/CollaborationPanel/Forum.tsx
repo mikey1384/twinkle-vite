@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
-import Textarea from '~/components/Texts/Textarea';
+import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
 import { mobileMaxWidth, Theme } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { getBuildBranchDisplayTitle } from '~/helpers/buildRelationshipHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import type { User } from '~/types';
+import ForumComposerInput from './ForumComposerInput';
+import { summarizeForumBody } from './helpers/forumAttachments';
 import type { BuildForumReply, BuildForumThread } from './types';
 
 const detailClass = css`
@@ -171,8 +173,18 @@ const forumPostActionsClass = css`
 const forumPostBodyClass = css`
   color: #111827;
   line-height: 1.45;
-  white-space: pre-wrap;
+  min-width: 0;
   word-break: break-word;
+  .rich-text-embedded-component {
+    align-items: flex-start;
+    padding: 0.5rem 0;
+  }
+  .rich-text-embedded-component img {
+    max-width: 100%;
+    max-height: 32rem;
+    width: auto;
+    border-radius: 6px;
+  }
 `;
 
 const forumReplyContextClass = css`
@@ -609,6 +621,7 @@ function ThreadDetail({
   onToggleReplyLike: (replyId: number) => void;
   onToggleThreadLike: (threadId: number) => void;
 }) {
+  const [attachmentUploading, setAttachmentUploading] = useState(false);
   const threadUser = getForumUser(selectedThread);
   const threadIsLumine = isLumineForumItem(selectedThread);
   const replyTargetUser = replyTarget ? getForumUser(replyTarget) : null;
@@ -696,7 +709,11 @@ function ThreadDetail({
               </div>
             </div>
             {selectedThread.body ? (
-              <div className={forumPostBodyClass}>{selectedThread.body}</div>
+              <div className={forumPostBodyClass}>
+                <RichText maxLines={20} onlyTwinkleImages>
+                  {selectedThread.body}
+                </RichText>
+              </div>
             ) : null}
             {newsActions.length > 0 ? (
               <div className={forumNewsActionsClass}>
@@ -765,14 +782,15 @@ function ThreadDetail({
               </button>
             </div>
             <div className={forumReplyTargetPreviewClass}>
-              {replyTarget.body}
+              {summarizeForumBody(replyTarget.body)}
             </div>
           </div>
         ) : null}
-        <Textarea
+        <ForumComposerInput
           className={textareaClass}
           value={replyInput}
-          onChange={(event) => onReplyInputChange(event.target.value)}
+          onChange={onReplyInputChange}
+          onUploadingChange={setAttachmentUploading}
           placeholder="Add a reply..."
           minRows={2}
           maxRows={8}
@@ -784,7 +802,11 @@ function ThreadDetail({
             size="sm"
             icon="reply"
             loading={actionLoading === 'create-reply'}
-            disabled={!replyInput.trim() || Boolean(actionLoading)}
+            disabled={
+              !replyInput.trim() ||
+              Boolean(actionLoading) ||
+              attachmentUploading
+            }
             onClick={onCreateReply}
           >
             Reply
@@ -836,6 +858,7 @@ function ThreadList({
   onTitleInputChange: (value: string) => void;
   onToggleThreadLike: (threadId: number) => void;
 }) {
+  const [attachmentUploading, setAttachmentUploading] = useState(false);
   return (
     <div className={detailClass}>
       <div className={rowClass}>
@@ -856,10 +879,11 @@ function ThreadList({
           onChange={(event) => onTitleInputChange(event.target.value)}
           placeholder="Topic title"
         />
-        <Textarea
+        <ForumComposerInput
           className={textareaClass}
           value={bodyInput}
-          onChange={(event) => onBodyInputChange(event.target.value)}
+          onChange={onBodyInputChange}
+          onUploadingChange={setAttachmentUploading}
           placeholder="Optional details..."
           minRows={3}
           maxRows={10}
@@ -871,7 +895,11 @@ function ThreadList({
             size="sm"
             icon="comment"
             loading={actionLoading === 'create-thread'}
-            disabled={!titleInput.trim() || Boolean(actionLoading)}
+            disabled={
+              !titleInput.trim() ||
+              Boolean(actionLoading) ||
+              attachmentUploading
+            }
             onClick={onCreateThread}
           >
             Post Topic
@@ -958,7 +986,9 @@ function ForumThread({
       <div className={forumThreadMainClass}>
         <span className={forumThreadTitleClass}>{thread.title}</span>
         {thread.body ? (
-          <span className={forumThreadPreviewClass}>{thread.body}</span>
+          <span className={forumThreadPreviewClass}>
+            {summarizeForumBody(thread.body)}
+          </span>
         ) : null}
         <div className={forumThreadMetaClass}>
           {showScopeTags ? (
@@ -1143,12 +1173,16 @@ function ForumReply({
             </div>
             {reply.replyToBody ? (
               <div className={forumReplyContextBodyClass}>
-                {reply.replyToBody}
+                {summarizeForumBody(reply.replyToBody)}
               </div>
             ) : null}
           </div>
         ) : null}
-        <div className={forumPostBodyClass}>{reply.body}</div>
+        <div className={forumPostBodyClass}>
+          <RichText maxLines={20} onlyTwinkleImages>
+            {reply.body}
+          </RichText>
+        </div>
       </div>
     </article>
   );

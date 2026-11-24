@@ -58,6 +58,7 @@ function Markdown({
   isProfileComponent,
   showProfileApps,
   isAIMessage,
+  onlyTwinkleImages,
   disableImageModal,
   linkColor,
   markerColor,
@@ -75,6 +76,9 @@ function Markdown({
   isProfileComponent?: boolean;
   showProfileApps?: boolean;
   isAIMessage?: boolean;
+  // Show images only from Twinkle's own hosts (Zero and Ciel's messages
+  // always; the Team Forum, whose bodies include unvalidated news text).
+  onlyTwinkleImages?: boolean;
   disableImageModal?: boolean;
   children: string;
   linkColor: string;
@@ -178,6 +182,7 @@ function Markdown({
     disableImageModal,
     embedPreviewMode,
     isAIMessage,
+    onlyTwinkleImages,
     isPreview,
     isProfileComponent,
     showProfileApps,
@@ -318,7 +323,7 @@ function Markdown({
                       alt={unescapeEqualSignAndDash(domNode.attribs?.alt || '')}
                       theme={theme}
                       embeddedContentRef={embeddedContentRef}
-                      onlyTwinkleImages={isAIMessage}
+                      onlyTwinkleImages={isAIMessage || onlyTwinkleImages}
                     />
                   );
                 }
@@ -740,7 +745,7 @@ function Markdown({
                   embedPreviewMode={embedPreviewMode}
                   subjectPreviewVariant={subjectPreviewVariant}
                   embeddedContentRef={embeddedContentRef}
-                  onlyTwinkleImages={isAIMessage}
+                  onlyTwinkleImages={isAIMessage || onlyTwinkleImages}
                   src={unescapeEqualSignAndDash(commonProps?.src || '')}
                   alt={unescapeEqualSignAndDash(commonProps?.alt || '')}
                   theme={theme}

@@ -312,6 +312,7 @@ function RichText({
   showProfileApps,
   isProfileComponent,
   isAIMessage,
+  onlyTwinkleImages,
   disableImageModal,
   isAudioButtonShown = true,
   readAloud,
@@ -353,6 +354,8 @@ function RichText({
   isProfileComponent?: boolean;
   isShowMoreButtonCentered?: boolean;
   isAIMessage?: boolean;
+  // Images only from Twinkle's own hosts; other image embeds show as text.
+  onlyTwinkleImages?: boolean;
   disableImageModal?: boolean;
   section?: string;
   maxLines?: number;
@@ -794,6 +797,7 @@ function RichText({
           isProfileComponent={isProfileComponent}
           showProfileApps={showProfileApps}
           isAIMessage={isAIMessage}
+          onlyTwinkleImages={onlyTwinkleImages}
           disableImageModal={disableImageModal}
           linkColor={appliedLinkColor}
           markerColor={markerColor}
@@ -815,6 +819,7 @@ function RichText({
     embedPreviewMode,
     embedPreview,
     isAIMessage,
+    onlyTwinkleImages,
     isProfileComponent,
     showProfileApps,
     markerColor,
@@ -1001,6 +1006,7 @@ function RichText({
               contentType={contentType}
               embedPreviewMode={embedPreviewMode}
               isAIMessage={isAIMessage}
+              onlyTwinkleImages={onlyTwinkleImages}
               isProfileComponent={isProfileComponent}
               showProfileApps={showProfileApps}
               lineHeight={effectiveCollapsedLineHeight}
