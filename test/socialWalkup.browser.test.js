@@ -802,6 +802,10 @@ test(
         window.setChatStatus({ ...window.live, 17: window.rooms[17] });
       });
       await page.evaluate(() => window.setScene({ name: 'live' }));
+      // A row with nothing to tap sorts below rows that have something to
+      // tap, so it can sit behind "+N more" (Mikey 11-24).
+      const more = page.getByRole('button', { name: /^\+\d+ more$/ });
+      if (await more.count()) await more.click();
       const busyRow = page.locator('li', { hasText: 'Among Us' });
       await page.waitForFunction(() => {
         const row = [...document.querySelectorAll('li')].find((li) => li.textContent.includes('Among Us'));
