@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { backdropUri, SHIELD, STAR, SWORD } from './art';
+import { backdropUri, SHIELD, SHIELD_CRACKED, STAR, SWORD } from './art';
 import { BattleEvent, cardBanner, cardTier } from './turns';
 
 const PIXEL_FONT = "'Press Start 2P', monospace";
@@ -80,29 +80,51 @@ export default function CardPopup({
   );
 }
 
+// What the card did, each with its own move (defense rules 2, 11-24):
+// BLOCK slams a shield down (cracked when only half the hit is stopped),
+// PARRY crosses two blade slashes and strikes back, COUNTER fires a beam
+// that lands hard (and, on an exact match, dazes the monster). A stamp
+// names the move in its own colour so it reads at a glance.
 function effectFor(event: CardEvent) {
   switch (event.outcome) {
     case 'block':
-      return <div className={cx(burstCls, sideCls, whiteCls)}>BLOCKED!</div>;
+      return (
+        <>
+          <img src={event.reduced ? SHIELD_CRACKED : SHIELD} alt="" className={cx(shieldCls, event.reduced && shieldCrackedCls)} />
+          <div className={clangCls} />
+          <div className={cx(stampCls, stampBlockCls)}>
+            BLOCK!
+            <span className={stampSubCls}>{event.reduced ? 'HALF DAMAGE' : 'NO DAMAGE'}</span>
+          </div>
+        </>
+      );
     case 'parry':
       return (
         <>
+          <div className={slashCls} />
+          <div className={cx(slashCls, slashTwoCls)} />
           <div className={sparkCls}>
             <img src={STAR} alt="" />
           </div>
-          <div className={cx(burstCls, sideCls)}>
-            -{event.damage || 0}
-            <span className={subCls}>PARRY!</span>
+          {event.damage ? <div className={cx(burstCls, sideCls)}>-{event.damage}</div> : null}
+          <div className={cx(stampCls, stampParryCls)}>
+            PARRY!
+            <span className={stampSubCls}>NO DAMAGE + STRIKE BACK</span>
           </div>
         </>
       );
     case 'counter':
       return (
         <>
+          <div className={flashCls} />
           <div className={beamCls} />
-          <div className={cx(burstCls, sideCls, bigCls)}>
-            -{event.damage || 0}
-            <span className={subCls}>COUNTER!</span>
+          <div className={impactCls}>
+            <img src={STAR} alt="" />
+          </div>
+          {event.damage ? <div className={cx(burstCls, sideCls, bigCls)}>-{event.damage}</div> : null}
+          <div className={cx(stampCls, stampCounterCls)}>
+            COUNTER!
+            <span className={stampSubCls}>{event.stun ? 'AND IT\'S DAZED!' : 'SENT STRAIGHT BACK'}</span>
           </div>
         </>
       );
@@ -431,14 +453,12 @@ const sideCls = css`
   top: 30%;
   left: 80%;
   @media (max-width: 480px) {
-    left: 76%;
-    font-size: 14px;
+    top: 56%;
+    left: 80%;
+    font-size: 16px;
   }
 `;
 
-const whiteCls = css`
-  color: #ffffff;
-`;
 
 const bigCls = css`
   font-size: 24px;
@@ -447,13 +467,6 @@ const bigCls = css`
   }
 `;
 
-const subCls = css`
-  display: block;
-  font-size: 9px;
-  text-align: center;
-  margin-top: 6px;
-  color: #ffffff;
-`;
 
 const sparkCls = css`
   position: absolute;
@@ -507,5 +520,249 @@ const beamCls = css`
       transform: scaleY(1);
       opacity: 0;
     }
+  }
+`;
+
+// ---- defense moves (rules 2) ----
+// The move's name: a pixel stamp that thuds onto the lower card.
+const stampCls = css`
+  position: absolute;
+  left: 50%;
+  top: 196px;
+  z-index: 2;
+  font-family: ${PIXEL_FONT};
+  font-size: 20px;
+  line-height: 1;
+  text-align: center;
+  padding: 8px 12px 7px;
+  background: #0f0b1a;
+  border: 3px solid currentColor;
+  box-shadow: 0 0 0 3px #0f0b1a, 5px 5px 0 3px rgba(15, 11, 26, 0.6);
+  white-space: nowrap;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+  animation: stamp-in 0.36s steps(3) 1s 1 both;
+  @keyframes stamp-in {
+    0% {
+      transform: translateX(-50%) scale(2.4) rotate(-14deg);
+      opacity: 0;
+    }
+    60% {
+      transform: translateX(-50%) scale(0.92) rotate(-5deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(-50%) scale(1) rotate(-6deg);
+      opacity: 1;
+    }
+  }
+  @media (max-width: 480px) {
+    top: 158px;
+    font-size: 15px;
+    padding: 6px 9px 5px;
+  }
+`;
+
+const stampSubCls = css`
+  display: block;
+  margin-top: 6px;
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: #ffffff;
+  @media (max-width: 480px) {
+    font-size: 6px;
+    margin-top: 5px;
+  }
+`;
+
+const stampBlockCls = css`
+  color: #8fd0ff;
+`;
+
+const stampParryCls = css`
+  color: #5ce1e6;
+`;
+
+const stampCounterCls = css`
+  color: #ffd34d;
+  font-size: 22px;
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
+`;
+
+// BLOCK: the card's shield slams down in front of it, with a clang ring.
+const shieldCls = css`
+  position: absolute;
+  left: 50%;
+  top: 112px;
+  width: 72px;
+  height: 80px;
+  margin-left: -36px;
+  z-index: 1;
+  image-rendering: pixelated;
+  filter: drop-shadow(4px 4px 0 rgba(15, 11, 26, 0.7));
+  animation: shield-slam 0.3s steps(3) 0.85s 1 both;
+  @keyframes shield-slam {
+    0% {
+      transform: translateY(-60px) scale(1.7);
+      opacity: 0;
+    }
+    70% {
+      transform: translateY(6px) scale(0.94);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+  @media (max-width: 480px) {
+    top: 92px;
+    width: 56px;
+    height: 62px;
+    margin-left: -28px;
+  }
+`;
+
+// Half the hit gets through: the cracked shield shudders once.
+const shieldCrackedCls = css`
+  animation: shield-slam 0.3s steps(3) 0.85s 1 both, shield-shudder 0.32s steps(4) 1.25s 1;
+  @keyframes shield-shudder {
+    25% {
+      transform: translateX(-5px) rotate(-6deg);
+    }
+    75% {
+      transform: translateX(5px) rotate(6deg);
+    }
+  }
+`;
+
+const clangCls = css`
+  position: absolute;
+  left: 50%;
+  top: 152px;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border: 4px solid #ffffff;
+  opacity: 0;
+  animation: clang 0.42s steps(4) 1.1s 1 both;
+  @keyframes clang {
+    0% {
+      transform: scale(0.6) rotate(45deg);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(3.4) rotate(45deg);
+      opacity: 0;
+    }
+  }
+  @media (max-width: 480px) {
+    top: 123px;
+  }
+`;
+
+// PARRY: two crossing blade slashes over the monster, one after the other.
+const slashCls = css`
+  position: absolute;
+  left: 80%;
+  top: 40%;
+  width: 96px;
+  height: 8px;
+  margin: -4px 0 0 -48px;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px #5ce1e6, 0 0 0 6px #0f0b1a;
+  transform: rotate(-38deg) scaleX(0);
+  animation: slash-a 0.3s steps(3) 0.9s 1 both;
+  @keyframes slash-a {
+    0% {
+      transform: rotate(-38deg) scaleX(0);
+      opacity: 1;
+    }
+    60% {
+      transform: rotate(-38deg) scaleX(1);
+      opacity: 1;
+    }
+    100% {
+      transform: rotate(-38deg) scaleX(1);
+      opacity: 0.85;
+    }
+  }
+  @media (max-width: 480px) {
+    left: 78%;
+    width: 64px;
+    margin-left: -32px;
+    height: 6px;
+  }
+`;
+
+const slashTwoCls = css`
+  transform: rotate(38deg) scaleX(0);
+  animation: slash-b 0.3s steps(3) 1.08s 1 both;
+  @keyframes slash-b {
+    0% {
+      transform: rotate(38deg) scaleX(0);
+      opacity: 1;
+    }
+    60% {
+      transform: rotate(38deg) scaleX(1);
+      opacity: 1;
+    }
+    100% {
+      transform: rotate(38deg) scaleX(1);
+      opacity: 0.85;
+    }
+  }
+`;
+
+// COUNTER: a one-frame white flash as the beam fires, and a starburst where
+// it lands.
+const flashCls = css`
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  animation: counter-flash 0.24s steps(2) 0.9s 1 both;
+  @keyframes counter-flash {
+    0% {
+      opacity: 0.55;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+`;
+
+const impactCls = css`
+  position: absolute;
+  left: 80%;
+  top: 52%;
+  width: 60px;
+  height: 60px;
+  transform: translate(-50%, -50%);
+  animation: counter-impact 0.5s steps(4) 1.15s 1 both;
+  img {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+  }
+  @keyframes counter-impact {
+    0% {
+      transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+      opacity: 1;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.5) rotate(45deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1.1) rotate(45deg);
+      opacity: 0;
+    }
+  }
+  @media (max-width: 480px) {
+    left: 78%;
+    width: 44px;
+    height: 44px;
   }
 `;

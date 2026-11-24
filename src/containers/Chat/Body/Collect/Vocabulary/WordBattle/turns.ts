@@ -26,12 +26,19 @@ export type BattleEvent =
       matchedWord: string;
       outcome: 'boost' | 'miss' | 'block' | 'parry' | 'counter' | 'fail';
       damage?: number;
+      // Defense rules 2 (11-24): an exact card's counter also stunned the
+      // monster; a block that only halved the hit (a 'hit' event follows).
+      stun?: boolean;
+      reduced?: boolean;
     }
   | { kind: 'attack'; damage: number; crit: boolean; endure: boolean; focusBonus: number }
   | { kind: 'glancing'; damage: number; endure: boolean }
   | { kind: 'miss'; timedOut: boolean }
   | { kind: 'dodge' }
-  | { kind: 'hit'; halfHearts: number; softened: boolean }
+  // blocked: a card's block took half of this hit.
+  | { kind: 'hit'; halfHearts: number; softened: boolean; blocked?: boolean }
+  // The monster is dazed: its next turn is your free strike.
+  | { kind: 'stun' }
   | { kind: 'standing' }
   | { kind: 'rest' };
 
@@ -46,6 +53,8 @@ export interface BattleMeter {
   maxQuestions: number;
   firstBattle: boolean;
   plain: boolean;
+  // Defense rules 2: the monster is dazed (older servers leave it out).
+  stunned?: boolean;
 }
 
 export const FOCUS_CAP = 2;
@@ -81,9 +90,9 @@ export function cardBanner(event: Extract<BattleEvent, { kind: 'card' }>) {
   const verb: Record<typeof event.outcome, string> = {
     boost: 'powers up your strike!',
     miss: 'glows... but the strike misses.',
-    block: 'blocks!',
+    block: event.reduced ? 'softens the blow!' : 'blocks!',
     parry: 'parries!',
-    counter: 'counters!',
+    counter: event.stun ? 'counters and stuns!' : 'counters!',
     fail: 'tries to block...'
   };
   return {
@@ -128,7 +137,10 @@ export function eventLine(
     case 'dodge':
       return focus >= FOCUS_CAP ? 'You saw it coming. Focus is full!' : 'You saw it coming. Focus +1.';
     case 'hit':
+      if (event.blocked) return `Your card took the edge off. Only half the hit gets through.`;
       return event.softened ? `${A} hits you... gently. It's going easy, this time.` : pick([`Ouch! ${A} lands a hit.`, `${A} strikes! That stung.`], attacker || word);
+    case 'stun':
+      return `${W} is seeing stars! It loses its next turn.`;
     case 'card': {
       const C = event.card.word.toUpperCase();
       switch (event.outcome) {
@@ -137,11 +149,11 @@ export function eventLine(
         case 'miss':
           return `Your ${C} card glows... but the strike misses.`;
         case 'block':
-          return `Your ${C} card blocks the attack!`;
+          return event.reduced ? `Your ${C} card catches part of the blow!` : `Your ${C} card blocks the attack! Not a scratch.`;
         case 'parry':
-          return 'Parried, with a sting in return!';
+          return `Parried! ${C} turns the blow and strikes back.`;
         case 'counter':
-          return 'Its own attack, sent straight back!';
+          return event.stun ? `Counter! ${C} sends it straight back, hard.` : 'Its own attack, sent straight back!';
         case 'fail':
           return `Your ${C} card tries to block...`;
       }
@@ -158,6 +170,19 @@ export function monsterTurnLine(word: string, attacker: string) {
   return `${word.toUpperCase()} calls on ${attacker.toUpperCase()}!`;
 }
 
+// A card's strike-back that finishes the monster (a counter-KO).
+export function cardKoLine(event: Extract<BattleEvent, { kind: 'card' }>, word: string) {
+  const W = word.toUpperCase();
+  return event.outcome === 'counter'
+    ? `Counter K.O.! ${W} is knocked out by its own attack!`
+    : `Parry K.O.! One clean strike back finishes ${W}!`;
+}
+
+// A stun's free strike: the dazed monster's turn is yours.
+export function freeStrikeLine(word: string) {
+  return `${word.toUpperCase()} is still dazed. Free strike!`;
+}
+
 // The gentle first v2 battle's tip, shown under the encounter line.
 export const FIRST_BATTLE_TIP = 'Tip: answer right to attack. On its turn, answer right to dodge!';
 
@@ -170,6 +195,7 @@ export function koLines(word: string) {
 // question's window).
 export function eventHoldMs(event: BattleEvent) {
   if (event.kind === 'card') return event.outcome === 'counter' || event.outcome === 'parry' ? 2600 : 2200;
+  if (event.kind === 'stun') return 1300;
   if (event.kind === 'attack' && event.crit) return 900;
   return 650;
 }
@@ -185,13 +211,15 @@ export function applyEvent(meter: BattleMeter, event: BattleEvent): BattleMeter 
       return event.damage ? { ...meter, mhp: Math.max(0, meter.mhp - event.damage) } : meter;
     case 'hit':
       return { ...meter, php: Math.max(0, meter.php - event.halfHearts) };
+    case 'stun':
+      return { ...meter, stunned: true };
     default:
       return meter;
   }
 }
 
 // The turn flag: a long name would not fit on a phone.
-export function turnFlagText(turn: 'player' | 'monster', word: string) {
-  if (turn === 'player') return 'YOUR TURN';
+export function turnFlagText(turn: 'player' | 'monster', word: string, free = false) {
+  if (turn === 'player') return free ? 'FREE STRIKE!' : 'YOUR TURN';
   return word.length <= 12 ? `${word.toUpperCase()}'S TURN` : 'ITS TURN';
 }

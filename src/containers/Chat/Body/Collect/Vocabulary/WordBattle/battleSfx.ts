@@ -24,7 +24,10 @@ export type BattleSound =
   | 'dodge'
   | 'cardFlip'
   | 'block'
-  | 'beam';
+  | 'beam'
+  // defense rules 2: the parry's blade ring and the dizzy stun
+  | 'parry'
+  | 'stun';
 
 export function playBattleSound(sound: BattleSound) {
   switch (sound) {
@@ -103,6 +106,20 @@ export function playBattleSound(sound: BattleSound) {
       [60, 67, 72, 79].forEach((midi, i) =>
         playNote(midi, { at: 0.08 * i, instrument: 'marimba', level: 0.16, hold: 0.14 })
       );
+      return;
+    case 'parry':
+      // a blade ring: a fast swish, a bright double ting, then the sting
+      playWhoosh(0.1, 0.16, 0, 2400, 5200);
+      playNote(96, { at: 0.03, instrument: 'glock', level: 0.14, hold: 0.1 });
+      playNote(100, { at: 0.09, instrument: 'glock', level: 0.12, hold: 0.22 });
+      playThump(0.8);
+      return;
+    case 'stun':
+      // dizzy: three tweets falling and wobbling, like stars round its head
+      [91, 86, 89, 84, 88, 83].forEach((midi, i) =>
+        playNote(midi, { at: 0.07 * i, instrument: 'glock', level: 0.1, hold: 0.09 })
+      );
+      playWhoosh(0.06, 0.4, 0.05, 1800, 700);
       return;
   }
 }
