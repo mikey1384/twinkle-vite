@@ -43,6 +43,11 @@ import TopicStartNotification from './TopicStartNotification';
 import TransferMessage from './TransferMessage';
 import Reactions from './Reactions';
 import AICardOfferMessage from './AICardOfferMessage';
+import SponsoredHelpCard, { SponsoredHelpStartChip } from './SponsoredHelpCard';
+import {
+  SPONSORED_HELP_ROOT_TYPE,
+  readSponsoredHelpView
+} from '~/helpers/sponsoredHelp';
 import { parseMessageSettings } from './messageSettings';
 import AskedAboutChip from './AskedAboutChip';
 import AlertActions from './AlertActions';
@@ -232,13 +237,14 @@ function MessageBody({
   const canReply = canReplyToChatMessage(capabilityMessage);
   const canReact = canReactToChatMessage(capabilityMessage);
   // Any member's message except your own; server-issued cards and notices
-  // are not member speech and take no report.
+  // are not member speech and take no report. A sponsored help button is the
+  // exception: its words are the sender's own request, so it is reportable.
   const canReport =
     !!messageId &&
     !!myId &&
     Number(userId) > 0 &&
     Number(userId) !== Number(myId) &&
-    genericActionsAllowed;
+    (genericActionsAllowed || message?.rootType === SPONSORED_HELP_ROOT_TYPE);
 
   useEffect(() => {
     if (isLastMsg && isNewMessage && !userIsUploader) {
@@ -825,6 +831,17 @@ function MessageBody({
     );
   }
 
+  const sponsoredHelp = readSponsoredHelpView(message);
+  if (sponsoredHelp) {
+    return withCardFrame(
+      'Sponsored help',
+      <SponsoredHelpCard
+        request={sponsoredHelp.view}
+        variant={sponsoredHelp.variant}
+      />
+    );
+  }
+
   if (transferDetails) {
     return withCardFrame(
       'AI card sale',
@@ -1004,6 +1021,10 @@ function MessageBody({
               </div>
             )}
             <AskedAboutChip settings={message?.settings} />
+            <SponsoredHelpStartChip
+              settings={message?.settings}
+              isAIChat={isAIChat}
+            />
             <Content
               appliedUsername={appliedUsername}
               channelId={channelId}
