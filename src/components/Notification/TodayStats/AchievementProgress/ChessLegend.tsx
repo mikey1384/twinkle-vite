@@ -1,5 +1,5 @@
 import React from 'react';
-import ChessLegendBadge from '~/assets/chess-legend.png';
+import ChessLegendBadge from '~/assets/badges-small/chess-legend.webp';
 import ItemThumb from './ItemThumb';
 
 export default function ChessLegend({

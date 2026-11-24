@@ -1,5 +1,5 @@
 import React from 'react';
-import DonorBadge from '~/assets/donor.png';
+import DonorBadge from '~/assets/badges-small/donor.webp';
 import ItemThumb from './ItemThumb';
 
 export default function Donor({

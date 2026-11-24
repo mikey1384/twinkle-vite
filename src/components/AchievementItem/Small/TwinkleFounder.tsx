@@ -1,5 +1,5 @@
 import React from 'react';
-import FounderBadge from '~/assets/founder.png';
+import FounderBadge from '~/assets/badges-small/founder.webp';
 import ItemThumbPanel from './ItemThumbPanel';
 
 export default function TwinkleFounder({

@@ -1,5 +1,5 @@
 import React from 'react';
-import GoldBadge from '~/assets/gold.png';
+import GoldBadge from '~/assets/badges-small/gold.webp';
 import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Grammar({

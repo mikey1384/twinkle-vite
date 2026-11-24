@@ -1,5 +1,5 @@
 import React from 'react';
-import GrammarBadge from '~/assets/grammar.png';
+import GrammarBadge from '~/assets/badges-small/grammar.webp';
 import ItemThumb from './ItemThumb';
 
 export default function Grammar({

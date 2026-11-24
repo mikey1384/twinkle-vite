@@ -1,5 +1,5 @@
 import React from 'react';
-import MissionBadge from '~/assets/mission.png';
+import MissionBadge from '~/assets/badges-small/mission.webp';
 import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Mission({

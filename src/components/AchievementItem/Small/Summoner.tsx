@@ -1,5 +1,5 @@
 import React from 'react';
-import SummonerBadge from '~/assets/summoner.png';
+import SummonerBadge from '~/assets/badges-small/summoner.webp';
 import ItemThumbPanel from './ItemThumbPanel';
 
 export default function Summoner({

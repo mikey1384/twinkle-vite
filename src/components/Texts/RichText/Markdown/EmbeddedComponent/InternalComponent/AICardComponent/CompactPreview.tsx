@@ -1,4 +1,5 @@
 import React from 'react';
+import useSizedImage from '~/helpers/hooks/useSizedImage';
 import AICardPreview from '~/components/AICardPreview';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
@@ -25,6 +26,12 @@ export function CompactThumb({
   const cardColor = getCardColor(card);
   const qualityColor = getQualityColor(card) || cardColor;
   const imageSrc = getCardImageSrc(card);
+  // A ~47 px thumb: a small copy of the art (cropped to fill).
+  const sizedArt = useSizedImage({
+    src: imageSrc && !card.isBurned ? imageSrc : '',
+    fit: 'cover',
+    aspect: 1
+  });
   const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const burnXP = isTotalMysteryQuality(card.quality)
     ? '???'
@@ -36,8 +43,10 @@ export function CompactThumb({
   const content =
     imageSrc && !card.isBurned ? (
       <img
-        src={imageSrc}
         alt={getAICardDisplayWord(card) || `AI card ${card.id}`}
+        loading="lazy"
+        decoding="async"
+        {...sizedArt}
       />
     ) : !card.isBurned ? (
       <MysteryCardArt level={card.level} />

@@ -1,6 +1,7 @@
 import React from 'react';
 import Loading from '~/components/Loading';
 import MysteryCardArt from '~/components/AICard/MysteryCardArt';
+import useSizedImage from '~/helpers/hooks/useSizedImage';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
@@ -31,6 +32,16 @@ export default function CardThumb({
   xpNumberColor: string;
 }) {
   const isTotalMystery = isTotalMysteryQuality(card.quality) && !card.isBurned;
+  // The thumb is a few dozen px wide: a small copy of the art, not the
+  // 1024x1536 original (cropped to fill, so square art is the worst case).
+  const sizedArt = useSizedImage({
+    src:
+      card.imagePath && !card.isBurned
+        ? `${cloudFrontURL}${card.imagePath}`
+        : '',
+    fit: 'cover',
+    aspect: 1
+  });
   const word = getAICardDisplayWord(card);
 
   return isLoading ? (
@@ -87,7 +98,8 @@ export default function CardThumb({
               objectFit: 'cover'
             }}
             loading="lazy"
-            src={`${cloudFrontURL}${card.imagePath}`}
+            decoding="async"
+            {...sizedArt}
           />
         ) : !card.isBurned ? (
           <MysteryCardArt level={card.level} style={{ height: '75%' }} />

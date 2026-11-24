@@ -1,6 +1,6 @@
 import React from 'react';
 import ItemThumbPanel from './ItemThumbPanel';
-import ChessLegendBadge from '~/assets/chess-legend.png';
+import ChessLegendBadge from '~/assets/badges-small/chess-legend.webp';
 
 export default function ChessLegend({
   isThumb,

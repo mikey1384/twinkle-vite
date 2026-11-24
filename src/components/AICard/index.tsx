@@ -21,12 +21,15 @@ export default function AICard({
   card,
   compact = false,
   detailShown,
+  fullSize = false,
   onClick
 }: {
   animateOnMouseLeave?: boolean;
   card: CardType;
   compact?: boolean;
   detailShown?: boolean;
+  // The card's own detail view: show the original art, not a smaller copy.
+  fullSize?: boolean;
   onClick?: () => void;
 }) {
   const [isAnimated, setIsAnimated] = useState(false);
@@ -102,6 +105,7 @@ export default function AICard({
           compact={compact}
           bind={bind}
           detailShown={detailShown}
+          fullSize={fullSize}
           innerRef={CardRef}
           isAnimated={isAnimated}
           cardStyle={cardStyle}

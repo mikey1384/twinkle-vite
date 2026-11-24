@@ -1,5 +1,5 @@
 import React from 'react';
-import TeenagerBadge from '~/assets/adult.png';
+import TeenagerBadge from '~/assets/badges-small/adult.webp';
 import ItemThumbPanel from './ItemThumbPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 
