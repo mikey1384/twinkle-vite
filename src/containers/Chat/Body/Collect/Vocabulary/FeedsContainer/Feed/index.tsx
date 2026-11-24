@@ -7,7 +7,9 @@ import { vocabFeedHeight } from '~/constants/state';
 import { useLazyLoad } from '~/helpers/hooks';
 import {
   isMeasuredHeight,
+  LazyContentHoldContext,
   lazyContentShown,
+  useLazyContentHold,
   useLazyStandInReady
 } from '~/helpers/lazyPlaceholder';
 import { useInView } from 'react-intersection-observer';
@@ -45,13 +47,16 @@ function Feed({
   const PanelRef = useRef<HTMLDivElement>(null);
   const [heightCachedAtMount] = useState(() => vocabFeedHeight[feed.id]);
   const placeholderHeightRef = useRef(heightCachedAtMount);
-  const [placeholderHeight, setPlaceholderHeight] = useState(
-    heightCachedAtMount
-  );
+  const [placeholderHeight, setPlaceholderHeight] =
+    useState(heightCachedAtMount);
   const [inViewRef, inView, inViewEntry] = useInView({
     rootMargin: '200px 0px'
   });
   const standInReady = useLazyStandInReady(inViewEntry);
+  // A word or battle window opened from this card keeps the card mounted: a
+  // new card arriving pushes this one off screen, and its stand-in would
+  // close the window (Mikey 11-24).
+  const [held, hold] = useLazyContentHold();
 
   const isVisible = useLazyLoad({
     id: `vocab-feed-${feed.id}`,
@@ -86,87 +91,90 @@ function Feed({
       isVisible,
       measuredHeight: placeholderHeight,
       standInReady,
-      heightCachedAtMount
+      heightCachedAtMount,
+      held
     });
   const isBreakFeed = action === 'break_start' || action === 'break_clear';
 
   return (
-    <div ref={inViewRef} style={{ marginBottom: '1.5rem' }}>
-      {!feedShown ? (
-        <div style={{ width: '100%', height: placeholderHeight }} />
-      ) : (
-        <div ref={PanelRef}>
-          {isBreakFeed ? (
-            <BreakLayout
-              userId={userId}
-              username={username}
-              profilePicUrl={profilePicUrl}
-              action={action}
-              breakIndex={feed.breakIndex}
-              breakType={feed.breakType}
-              displayedTime={displayedTime}
-              getRGBA={getRGBA}
-              getActionColor={getActionColor}
-              getBreakTypeColor={getBreakTypeColor}
-              badgeStyle={badgeStyle}
-            />
-          ) : action === 'spell' ? (
-            <SpellLayout
-              userId={userId}
-              username={username}
-              profilePicUrl={profilePicUrl}
-              action={action}
-              wordLevel={wordLevel}
-              aiCard={aiCard}
-              content={content}
-              xpReward={xpReward}
-              coinReward={coinReward}
-              totalPoints={totalPoints}
-              displayedTime={displayedTime}
-              getRGBA={getRGBA}
-              getActionColor={getActionColor}
-              badgeStyle={badgeStyle}
-              onWordMasterBreak={onWordMasterBreak}
-            />
-          ) : action === 'reward' ? (
-            <RewardLayout
-              userId={userId}
-              username={username}
-              profilePicUrl={profilePicUrl}
-              action={action}
-              wordLevel={wordLevel}
-              xpReward={xpReward}
-              coinReward={coinReward}
-              displayedTime={displayedTime}
-              aiCard={aiCard}
-              content={content}
-              getRGBA={getRGBA}
-              getActionColor={getActionColor}
-              badgeStyle={badgeStyle}
-              rewardType={rewardType}
-              onWordMasterBreak={onWordMasterBreak}
-            />
-          ) : (
-            <DefaultLayout
-              userId={userId}
-              username={username}
-              profilePicUrl={profilePicUrl}
-              action={action}
-              content={content}
-              wordLevel={wordLevel}
-              xpReward={xpReward}
-              coinReward={coinReward}
-              totalPoints={totalPoints}
-              displayedTime={displayedTime}
-              getRGBA={getRGBA}
-              getActionColor={getActionColor}
-              badgeStyle={badgeStyle}
-              onWordMasterBreak={onWordMasterBreak}
-            />
-          )}
-        </div>
-      )}
-    </div>
+    <LazyContentHoldContext.Provider value={hold}>
+      <div ref={inViewRef} style={{ marginBottom: '1.5rem' }}>
+        {!feedShown ? (
+          <div style={{ width: '100%', height: placeholderHeight }} />
+        ) : (
+          <div ref={PanelRef}>
+            {isBreakFeed ? (
+              <BreakLayout
+                userId={userId}
+                username={username}
+                profilePicUrl={profilePicUrl}
+                action={action}
+                breakIndex={feed.breakIndex}
+                breakType={feed.breakType}
+                displayedTime={displayedTime}
+                getRGBA={getRGBA}
+                getActionColor={getActionColor}
+                getBreakTypeColor={getBreakTypeColor}
+                badgeStyle={badgeStyle}
+              />
+            ) : action === 'spell' ? (
+              <SpellLayout
+                userId={userId}
+                username={username}
+                profilePicUrl={profilePicUrl}
+                action={action}
+                wordLevel={wordLevel}
+                aiCard={aiCard}
+                content={content}
+                xpReward={xpReward}
+                coinReward={coinReward}
+                totalPoints={totalPoints}
+                displayedTime={displayedTime}
+                getRGBA={getRGBA}
+                getActionColor={getActionColor}
+                badgeStyle={badgeStyle}
+                onWordMasterBreak={onWordMasterBreak}
+              />
+            ) : action === 'reward' ? (
+              <RewardLayout
+                userId={userId}
+                username={username}
+                profilePicUrl={profilePicUrl}
+                action={action}
+                wordLevel={wordLevel}
+                xpReward={xpReward}
+                coinReward={coinReward}
+                displayedTime={displayedTime}
+                aiCard={aiCard}
+                content={content}
+                getRGBA={getRGBA}
+                getActionColor={getActionColor}
+                badgeStyle={badgeStyle}
+                rewardType={rewardType}
+                onWordMasterBreak={onWordMasterBreak}
+              />
+            ) : (
+              <DefaultLayout
+                userId={userId}
+                username={username}
+                profilePicUrl={profilePicUrl}
+                action={action}
+                content={content}
+                wordLevel={wordLevel}
+                xpReward={xpReward}
+                coinReward={coinReward}
+                totalPoints={totalPoints}
+                displayedTime={displayedTime}
+                getRGBA={getRGBA}
+                getActionColor={getActionColor}
+                badgeStyle={badgeStyle}
+                onWordMasterBreak={onWordMasterBreak}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </LazyContentHoldContext.Provider>
   );
 }
 

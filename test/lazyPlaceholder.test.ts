@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { lazyContentShown } from '../src/helpers/lazyPlaceholder';
+import {
+  createLazyContentHold,
+  lazyContentShown
+} from '../src/helpers/lazyPlaceholder';
 
 const base = {
   inView: false,
@@ -75,4 +78,46 @@ test('lazy list items use the measured-height rule and no guessed fallback', () 
       `${file} still falls back to a guessed placeholder height`
     );
   }
+});
+
+// 11-24: a word battle opened from a Word Master card closed when a new card
+// pushed that card off screen and it was swapped for its stand-in.
+test('an item holding an open window keeps its content off screen', () => {
+  const offScreen = {
+    ...base,
+    measuredHeight: 240,
+    standInReady: true,
+    heightCachedAtMount: 240
+  };
+  assert.equal(lazyContentShown(offScreen), false);
+  assert.equal(lazyContentShown({ ...offScreen, held: true }), true);
+});
+
+test('the hold lasts until every window inside the item has closed', () => {
+  const changes: boolean[] = [];
+  const hold = createLazyContentHold((held) => changes.push(held));
+  const releaseWordWindow = hold.acquire();
+  const releaseBattle = hold.acquire();
+  releaseBattle();
+  releaseBattle();
+  assert.deepEqual(changes, [true], 'a double release does not end the hold');
+  releaseWordWindow();
+  assert.deepEqual(changes, [true, false]);
+});
+
+test('every open Modal holds its item, and Word Master cards provide the hold', () => {
+  const modal = readFileSync(
+    new URL('../src/components/Modal/index.tsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(modal, /useHoldLazyContent\(isOpen\)/);
+  const feed = readFileSync(
+    new URL(
+      '../src/containers/Chat/Body/Collect/Vocabulary/FeedsContainer/Feed/index.tsx',
+      import.meta.url
+    ),
+    'utf8'
+  );
+  assert.match(feed, /<LazyContentHoldContext\.Provider value=\{hold\}>/);
+  assert.match(feed, /lazyContentShown\(\{[^}]*\bheld\b[^}]*\}\)/);
 });
