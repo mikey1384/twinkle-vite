@@ -37,7 +37,8 @@ import {
 import {
   askWebsiteAgentPermission,
   noteWebsiteAgentWorking,
-  showWebsiteAgentSpotlight
+  showWebsiteAgentSpotlight,
+  type WebsiteAgentPurchase
 } from '~/containers/App/WebsiteAgentSpotlight';
 import { chatRealtimeChannelNeedsCanonicalSummary } from '~/helpers/chatUnreadProjection';
 import useChatLastReadReconciler from '~/helpers/hooks/useChatLastReadReconciler';
@@ -367,6 +368,24 @@ export default function useAISocket({
     return value === 'Zero' || value === 'Ciel' ? value : null;
   }
 
+  // A coin purchase card, written by the server from the purchase itself.
+  function toAgentPurchase(value: any): WebsiteAgentPurchase | undefined {
+    const headline = String(value?.headline || '').slice(0, 300);
+    const price = Number(value?.price);
+    const balance = Number(value?.balance);
+    const left = Number(value?.left);
+    if (!headline || ![price, balance, left].every(Number.isFinite)) {
+      return undefined;
+    }
+    return {
+      headline,
+      note: String(value?.note || '').slice(0, 200) || undefined,
+      price,
+      balance,
+      left
+    };
+  }
+
   // During a call, the assistant learns about its own prompt or spotlight as
   // soon as it appears, so it can say where to tap.
   useEffect(() => {
@@ -534,6 +553,7 @@ export default function useAISocket({
                 summary: String(payload?.summary || ''),
                 details: String(payload?.details || ''),
                 confirmLabel: String(payload?.confirmLabel || '').slice(0, 60),
+                purchase: toAgentPurchase(payload?.purchase),
                 assistant: toAgentAssistant(payload?.assistant)
               });
             } else if (kind === 'highlight') {
