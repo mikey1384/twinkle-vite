@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import Toast from '~/components/Toast';
 import AchievementToast from '~/components/AchievementToast';
 import CompletionToast from '~/components/CompletionToast';
+import LumineFinishedToast from '~/components/LumineFinishedToast';
 import { useAppContext } from '~/contexts';
 
 interface MessageToastOptions {
@@ -47,8 +48,25 @@ interface CompletionToastOptions {
   onClick?: () => void | Promise<void>;
 }
 
+// Lumine finished a run the member started (App/LumineRunNotifications).
+interface LumineToastOptions {
+  kind: 'lumine';
+  ownerUserId: number;
+  title: string;
+  message: string;
+  success: boolean;
+  actionLabel: string;
+  linkTo: string;
+  duration?: number;
+  onShown?: () => void;
+  onClick?: () => void;
+}
+
 type ToastOptions =
-  MessageToastOptions | AchievementToastOptions | CompletionToastOptions;
+  | MessageToastOptions
+  | AchievementToastOptions
+  | CompletionToastOptions
+  | LumineToastOptions;
 type QueuedToast = ToastOptions & { id: number };
 
 type ShowToast = (options: ToastOptions) => void;
@@ -68,7 +86,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setQueue((items) =>
       items.filter(
         (item) =>
-          item.kind !== 'completion' || item.ownerUserId === Number(userId)
+          (item.kind !== 'completion' && item.kind !== 'lumine') ||
+          item.ownerUserId === Number(userId)
       )
     );
   }, [userId]);
@@ -82,7 +101,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const current =
     queue.find(
       (toast) =>
-        toast.kind !== 'completion' || toast.ownerUserId === Number(userId)
+        (toast.kind !== 'completion' && toast.kind !== 'lumine') ||
+        toast.ownerUserId === Number(userId)
     ) || null;
   const closeCurrent = useCallback(() => {
     setQueue((items) => items.filter((item) => item.id !== current?.id));
@@ -109,6 +129,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           {...current}
           onClose={closeCurrent}
           onClick={goLink}
+        />
+      );
+    }
+
+    if (current.kind === 'lumine') {
+      return (
+        <LumineFinishedToast
+          key={current.id}
+          title={current.title}
+          message={current.message}
+          success={current.success}
+          actionLabel={current.actionLabel}
+          duration={current.duration}
+          onShown={current.onShown}
+          onClose={closeCurrent}
+          onClick={() => navigate(current.linkTo)}
         />
       );
     }

@@ -65,6 +65,7 @@ import {
   UPDATE_FROM_MAIN_CONFLICT_MARKERS_MESSAGE,
   getContributionConflictMarkerPaths
 } from './CollaborationPanel/helpers/collaborationConflicts';
+import { resolveLumineRunActivity } from '../PreviewPanel/LumineAtWork/activity';
 import resolveCurrentBuildRunView from './helpers/resolveCurrentBuildRunView';
 import type {
   PreviewPanelHandle,
@@ -2099,6 +2100,12 @@ export default function BuildEditor({
     isOwner: canEditCurrentBuildProject,
     codeWorkspaceAvailable: canInspectCurrentBuildProject,
     lumineRunActive: currentBuildRunView.generating,
+    lumineActivity: resolveLumineRunActivity({
+      runEvents: currentBuildRunView.runEvents,
+      queue: currentBuildRunView.queue,
+      assistantStatusSteps: currentBuildRunView.assistantStatusSteps,
+      terminalState: currentBuildRunView.terminalState
+    }),
     capabilitySnapshot: build.capabilitySnapshot || null,
     maxProjectFileLines: copilotPolicy?.limits?.maxFileLines ?? null,
     runtimeExplorationPlan: currentBuildRunView.runtimeExplorationPlan,
