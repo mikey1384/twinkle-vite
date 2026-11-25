@@ -66,6 +66,28 @@ function storeSessionCredentials(session: AppSession | null) {
   }
 }
 
+// The member's picture for the badge menu: an https address, or a path on
+// Twinkle's picture CDN (older answers). Anything else gets the initial.
+function safePictureUrl(value: string | null) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (!text) return null;
+  try {
+    if (/^https:\/\//i.test(text)) {
+      const url = new URL(text);
+      return url.protocol === 'https:' ? url.href : null;
+    }
+    if (!text.startsWith('/') || text.startsWith('//')) return null;
+    const cdn = new URL(cloudFrontURL);
+    if (!/^[\w-]+\.cloudfront\.net$/.test(cdn.hostname) || cdn.hostname.startsWith('undefined.')) {
+      return null;
+    }
+    const url = new URL(text, cdn);
+    return url.origin === cdn.origin ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function basicViewer(id: number, username: string): LiteHostViewer {
   return {
     id,
@@ -234,11 +256,7 @@ async function start() {
     }, [userId]);
     const viewerPicture = viewer?.profilePicUrl || null;
     useEffect(() => {
-      viewerPictureRef.current = !viewerPicture
-        ? null
-        : /^https?:\/\//.test(viewerPicture)
-          ? viewerPicture
-          : `${cloudFrontURL}${viewerPicture}`;
+      viewerPictureRef.current = safePictureUrl(viewerPicture);
     }, [viewerPicture]);
     const info = useMemo(
       () => ({
