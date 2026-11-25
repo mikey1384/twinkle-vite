@@ -211,15 +211,23 @@ body {
 .lh-ai-banner-nudge { animation: lh-ai-nudge 0.5s ease; }
 @keyframes lh-ai-nudge { 0%, 100% { transform: translateX(-50%); } 25% { transform: translateX(calc(-50% - 6px)); } 75% { transform: translateX(calc(-50% + 6px)); } }
 @media (max-width: 520px) {
-  /* two short rows on a phone: the words (and ×), then the button */
+  /* A phone: a strip docked at the top (two short rows: the words and x,
+     then the button), and the app moved down below it, never covered. */
   .lh-ai-banner {
-    left: 16px; right: 16px; transform: none; width: auto; max-width: none; font-size: 13.5px;
-    flex-wrap: wrap; row-gap: 6px; padding: 8px 6px 10px 12px; border-radius: 18px;
+    top: 0; left: 0; right: 0; transform: none; width: auto; max-width: none; font-size: 13.5px;
+    flex-wrap: wrap; row-gap: 6px; border-radius: 0; box-shadow: none; background: #16161f;
+    padding: max(8px, env(safe-area-inset-top)) 8px 10px 14px;
   }
   .lh-ai-banner-text { flex: 1 1 calc(100% - 80px); }
   .lh-ai-banner-close { order: 2; width: 28px; height: 28px; }
   .lh-ai-banner-cta { order: 3; margin-left: 25px; padding: 6px 13px; }
+  body.lh-ai-banner-open #lumine-app-frame {
+    top: var(--lh-ai-banner-h, 0px);
+    height: calc(100% - var(--lh-ai-banner-h, 0px));
+    height: calc(100dvh - var(--lh-ai-banner-h, 0px));
+  }
   @keyframes lh-ai-nudge { 0%, 100% { transform: none; } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+}
 }
 @keyframes lh-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes lh-rise { from { transform: translateY(16px); opacity: 0.6; } to { transform: none; opacity: 1; } }

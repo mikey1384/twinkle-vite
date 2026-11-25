@@ -136,11 +136,24 @@ export function showAiBanner({
   });
   document.body.append(banner);
   aiBannerNode = banner;
+  // On a phone the bar is docked at the top and the app moves down below
+  // it (host.css), so it never covers the app's own UI.
+  const root = document.documentElement;
+  const measure = () => root.style.setProperty('--lh-ai-banner-h', `${Math.ceil(banner.getBoundingClientRect().height)}px`);
+  measure();
+  aiBannerResize = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+  aiBannerResize?.observe(banner);
+  document.body.classList.add('lh-ai-banner-open');
 }
+let aiBannerResize: ResizeObserver | null = null;
 
 export function hideAiBanner() {
   aiBannerNode?.remove();
   aiBannerNode = null;
+  aiBannerResize?.disconnect();
+  aiBannerResize = null;
+  document.body.classList.remove('lh-ai-banner-open');
+  document.documentElement.style.removeProperty('--lh-ai-banner-h');
 }
 
 // "Continue with Twinkle", drawn like the big sign-in buttons people know
