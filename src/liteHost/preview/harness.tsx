@@ -34,7 +34,8 @@ const FAKE_REQUESTS: any = {
   requestGuardianConsent: async ({ guardianEmail }: any) => ({ consentId: 1, secret: 's', guardianEmail, expiresAt: 0 }),
   getGuardianConsentStatus: async () => ({ status: params.get('consent') || 'pending', expiresAt: 0 })
 };
-const SITE_CONFIG: any = { buildId: 2, title: 'The Adventure of a Red Square', owner: { id: 1, username: 'mikey' }, thumbnailUrl: null, siteOrigin: 'https://www.twin-kle.com' };
+const RED_SQUARE_THUMB = 'https://d3jvoamd2k4p0s.cloudfront.net/thumbs/builds/5/2/9522c935-6f41-4c67-abd5-e745e7ee2eca.png';
+const SITE_CONFIG: any = { buildId: 2, title: 'The Adventure of a Red Square', owner: { id: 1, username: 'mikey' }, thumbnailUrl: RED_SQUARE_THUMB, siteOrigin: 'https://www.twin-kle.com' };
 
 const params = new URLSearchParams(window.location.search);
 const screen = params.get('screen') || 'card';
@@ -210,21 +211,21 @@ function Harness() {
     case 'signin':
       return (
         <LiteHostProviders requestHelpers={FAKE_REQUESTS} viewer={null} onOpenSignin={noop}>
-          <SignInCardView app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: null }} host="the-adventure-of-a-red-square.lumine.app" originAllowed error="" userId={1} username="lily" busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} />
+          <SignInCardView app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: RED_SQUARE_THUMB }} host="red-square.lumine.app" originAllowed error="" userId={1} username="lily" busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} />
         </LiteHostProviders>
       );
     case 'signin-new':
       return (
         <LiteHostProviders requestHelpers={FAKE_REQUESTS} viewer={null} onOpenSignin={noop}>
-        <SignInCardView app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: null }} host="the-adventure-of-a-red-square.lumine.app" originAllowed error="" userId={null} username={null} busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} onCreateAccount={() => { window.location.search = window.location.search.replace('signin-new', 'signup'); }} />
+        <SignInCardView app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: RED_SQUARE_THUMB }} host="red-square.lumine.app" originAllowed error="" userId={null} username={null} busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} onCreateAccount={() => { window.location.search = window.location.search.replace('signin-new', 'signup'); }} />
         </LiteHostProviders>
       );
     case 'signup': {
       return (
         <LiteHostProviders requestHelpers={FAKE_REQUESTS} viewer={null} onOpenSignin={noop}>
           <SignInCardView
-            app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: null }}
-            host="the-adventure-of-a-red-square.lumine.app"
+            app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: RED_SQUARE_THUMB }}
+            host="red-square.lumine.app"
             originAllowed
             error=""
             userId={null}
@@ -233,7 +234,7 @@ function Harness() {
             allow={noop}
             handBack={noop}
             onOpenSigninModal={noop}
-            signUp={<AppSignUp buildId={2} origin="https://the-adventure-of-a-red-square.lumine.app" appTitle="The Adventure of a Red Square" lang={signInLang()} t={SIGNIN_TEXT[signInLang()]} onBack={noop} onCreated={() => { document.body.dataset.created = '1'; }} />}
+            signUp={<AppSignUp buildId={2} origin="https://red-square.lumine.app" appTitle="The Adventure of a Red Square" lang={signInLang()} t={SIGNIN_TEXT[signInLang()]} onBack={noop} onCreated={() => { document.body.dataset.created = '1'; }} />}
           />
         </LiteHostProviders>
       );
@@ -323,7 +324,7 @@ function BadgeMenu() {
     };
     const config = {
       ...SITE_CONFIG,
-      thumbnailUrl: params.get('thumb') || null,
+      thumbnailUrl: params.get('thumb') === '0' ? null : RED_SQUARE_THUMB,
       owner: { id: 1, username: 'mikey' }
     };
     const badge = mountBadge({

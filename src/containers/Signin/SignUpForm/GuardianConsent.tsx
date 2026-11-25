@@ -80,7 +80,7 @@ const TEXT = {
     waitingTitle: '부모님 답장을 기다리고 있어요',
     waitingBody: (email: React.ReactNode) => (
       <>
-        <b>{email}</b>(으)로 이메일을 보냈어요. 트윈클에서 온 메일을 열어{' '}
+        <b>{email}</b> 주소로 이메일을 보냈어요. 트윈클에서 온 메일을 열어{' '}
         <b>확인하고 동의하기</b>를 눌러 달라고 부탁드려 보세요.
       </>
     ),

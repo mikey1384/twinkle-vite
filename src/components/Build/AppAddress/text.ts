@@ -213,7 +213,7 @@ export const PARENT_TEXT = {
     kicker: '트윈클 · 보호자 확인',
     title: (child: string) => `${child} 님이 앱 주소를 갖고 싶어 해요`,
     intro: (app: string, domain: string) =>
-      `트윈클에서 만든 앱 “${app}”을(를) ${domain} 주소로 열 수 있게 하고 싶어 해요.`,
+      `트윈클에서 만든 앱 “${app}”에 ${domain} 주소를 연결하고 싶어 해요.`,
     whatTitle: '도메인이 뭔가요?',
     whatBody:
       '웹사이트 주소예요. 이런 주소는 도메인 회사에서 1년 단위로 빌려 써요. 앱은 이미 무료 주소(lumine.app)가 있어서, 사지 않아도 계속 잘 열려요.',

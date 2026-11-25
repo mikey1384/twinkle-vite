@@ -22,10 +22,11 @@ import {
   type AppSession,
   type LiteHostConfig
 } from '../session';
-import { askSignIn, menuButton, mountBadge, showGuestHint, showReport, showToast } from '../ui';
+import { askSignIn, mountBadge, showGuestHint, showReport, showToast, type MenuExtra } from '../ui';
 import AppAccountSheet from './AppAccountSheet';
 import { createGuestStore } from '../guestStore';
 import { LITE_HOST_TEXT, liteHostLang } from '../text';
+import { cloudFrontURL } from '~/constants/defaultValues';
 import {
   createLiteFrameMetaRef,
   installLiteFrameReloadWatch,
@@ -228,6 +229,8 @@ async function start() {
   };
   // the app needed an account for something in the background
   const hintSignIn = () => showGuestHint({ t, onSignIn: () => void openSignIn() });
+  // The signed-in member's picture for the badge menu (from app-session/me).
+  const viewerPictureRef: { current: string | null } = { current: null };
 
   function Root() {
     const [current, setCurrent] = useState<AppSession | null>(session.get());
@@ -331,6 +334,14 @@ async function start() {
         cancelled = true;
       };
     }, [userId]);
+    const viewerPicture = viewer?.profilePicUrl || null;
+    useEffect(() => {
+      viewerPictureRef.current = !viewerPicture
+        ? null
+        : /^https?:\/\//.test(viewerPicture)
+          ? viewerPicture
+          : `${cloudFrontURL}${viewerPicture}`;
+    }, [viewerPicture]);
     const info = useMemo(
       () => ({
         buildId: config!.buildId,
@@ -409,30 +420,44 @@ async function start() {
     config,
     t,
     session,
-    onSignIn: openSignIn,
-    extraItems: () => {
+    onSignIn: () => void openSignIn(),
+    playerKindLabel: () => {
       const player = session.get()?.appPlayer;
-      if (player?.kind !== 'app') return [];
-      const emailItem = menuButton(t.menuResetEmail, () =>
-        accountSheetListeners.forEach((listener) => listener('email'))
-      );
+      if (!session.get()) return null;
+      return player?.kind === 'app' ? (player.linked ? t.kindLinked : t.kindApp) : t.kindMember;
+    },
+    extraItems: (): MenuExtra[] => {
+      const player = session.get()?.appPlayer;
+      if (!session.get() || player?.kind !== 'app') return [];
+      const emailItem: MenuExtra = {
+        iconName: 'mail',
+        label: t.menuResetEmail,
+        sub: t.menuResetEmailSub,
+        onClick: () => accountSheetListeners.forEach((listener) => listener('email'))
+      };
       if (player.linked) {
         return [
           emailItem,
-          menuButton(t.unlinkTwinkle, async () => {
-            try {
-              await session.unlinkTwinkle();
-              showToast(t.unlinkedTwinkle, 4000);
-            } catch (error: any) {
-              showToast(error?.message || t.accountFailed, 5000);
+          {
+            iconName: 'unlink',
+            label: t.unlinkTwinkle,
+            sub: t.unlinkTwinkleSub,
+            onClick: async () => {
+              try {
+                await session.unlinkTwinkle();
+                showToast(t.unlinkedTwinkle, 4000);
+              } catch (error: any) {
+                showToast(error?.message || t.accountFailed, 5000);
+              }
             }
-          })
+          }
         ];
       }
       return accountMode === 'both'
-        ? [emailItem, menuButton(t.linkTwinkle, () => void linkTwinkle())]
+        ? [emailItem, { iconName: 'link', label: t.linkTwinkle, sub: t.linkTwinkleSub, onClick: () => void linkTwinkle() }]
         : [emailItem];
     },
+    viewerPicture: () => viewerPictureRef.current,
     onReport: () =>
       showReport({
         config,
