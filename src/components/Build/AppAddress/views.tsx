@@ -135,14 +135,17 @@ export function AddressCardView({
   getOwnLabel,
   onRename,
   ownerDomains,
-  onRemoveDomain
+  onRemoveDomain,
+  removableSources = ['own']
 }: {
   t: AddressText;
   url: string;
   domains: string[];
   // owner only: every own address with its status, and Remove
-  ownerDomains?: Array<{ id: number; hostname: string; status: string; statusLine?: string }>;
+  ownerDomains?: Array<{ id: number; hostname: string; status: string; statusLine?: string; source?: string }>;
   onRemoveDomain?: (domainId: number) => void;
+  // which kinds can be removed here (a bought address can't, yet)
+  removableSources?: string[];
   isOwner: boolean;
   copied: boolean;
   onCopy: () => void;
@@ -206,7 +209,7 @@ export function AddressCardView({
         </div>
       </div>
       {ownerDomains && ownerDomains.length > 0 && onRemoveDomain && (
-        <OwnerDomainList t={t} domains={ownerDomains} onRemove={onRemoveDomain} />
+        <OwnerDomainList t={t} domains={ownerDomains} onRemove={onRemoveDomain} removable={removableSources} />
       )}
       {!ownerDomains && domains.length > 0 && (
         <div className={fine}>
@@ -238,11 +241,13 @@ export function AddressCardView({
 function OwnerDomainList({
   t,
   domains,
-  onRemove
+  onRemove,
+  removable
 }: {
   t: AddressText;
-  domains: Array<{ id: number; hostname: string; status: string; statusLine?: string }>;
+  domains: Array<{ id: number; hostname: string; status: string; statusLine?: string; source?: string }>;
   onRemove: (domainId: number) => void;
+  removable: string[];
 }) {
   const [confirming, setConfirming] = useState(0);
   return (
@@ -266,7 +271,7 @@ function OwnerDomainList({
             <span style={{ fontWeight: 600, overflowWrap: 'anywhere' }}>{domain.hostname}</span>
           )}
           {domain.status !== 'live' && domain.statusLine && <span className={fine}>{domain.statusLine}</span>}
-          <button
+          {removable.includes(String(domain.source || 'own')) && <button
             type="button"
             className={quiet}
             style={{ marginLeft: 'auto', color: confirming === domain.id ? '#b42318' : muted, fontSize: '0.95rem' }}
@@ -280,7 +285,7 @@ function OwnerDomainList({
             }}
           >
             {confirming === domain.id ? t.removeConfirm : t.remove}
-          </button>
+          </button>}
         </div>
       ))}
     </div>
@@ -345,7 +350,7 @@ export function IntroView({
         <strong>{t.introFree(freeHost)}</strong>
       </p>
       <p>{t.introRent(example)}</p>
-      <p>{onFind ? t.introChoice : t.introConnectOnly}</p>
+      <p>{onFind ? t.introChoice : onHaveOne ? t.introConnectOnly : t.notOpenYet}</p>
       <div className={row} style={{ marginTop: '1.2rem' }}>
         {onFind && (
           <button type="button" className={primary} onClick={onFind}>
@@ -1094,7 +1099,7 @@ export interface DomainOrderView {
   domain: string;
   priceCents: number;
   status: string;
-  stage: 'paying' | 'setting_up' | 'live' | 'refunded' | 'stopped';
+  stage: 'paying' | 'setting_up' | 'support' | 'live' | 'refunding' | 'refunded' | 'stopped';
   failureReason: string | null;
 }
 
@@ -1144,6 +1149,12 @@ export function OrderStatusView({
     return (
       <MessageView title={t.refundedTitle} body={t.refundedBody(order.domain, usd(order.priceCents), why)} primaryLabel={t.tryAgain} onPrimary={onTryAgain} secondaryLabel={t.close} onSecondary={onClose} />
     );
+  }
+  if (order.stage === 'refunding') {
+    return <MessageView title={t.refundingTitle} body={t.refundingBody(usd(order.priceCents))} primaryLabel={t.close} onPrimary={onClose} />;
+  }
+  if (order.stage === 'support') {
+    return <MessageView title={t.supportTitle(order.domain)} body={t.supportBody} primaryLabel={t.close} onPrimary={onClose} />;
   }
   if (order.stage !== 'setting_up') {
     // paying (Checkout left or cancelled) or stopped: nothing was charged

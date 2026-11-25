@@ -159,6 +159,11 @@ export const ADDRESS_TEXT = {
     close: 'Close',
     notAvailableHere: (domain: string) => `${domain} isn’t available here. These names are.`,
     remove: 'Remove',
+    notOpenYet: 'Getting your own address isn’t open yet. Your free address keeps working.',
+    refundingTitle: 'Refund on its way',
+    refundingBody: (price: string) => `We couldn’t register the address, so we’re refunding ${price}. You’ll get an email once Stripe has finished it.`,
+    supportTitle: (domain: string) => `We’re looking into ${domain}`,
+    supportBody: 'Your payment went through and something needs a person’s look before your address is ready. We’re on it; your free address keeps working meanwhile.',
     removeConfirm: 'Tap again to remove (the app stops opening there)'
   },
   ko: {
@@ -298,6 +303,11 @@ export const ADDRESS_TEXT = {
     close: '닫기',
     notAvailableHere: (domain: string) => `${domain}은(는) 여기서 살 수 없어요. 이 이름들은 살 수 있어요.`,
     remove: '삭제',
+    notOpenYet: '나만의 주소 갖기는 아직 열리지 않았어요. 무료 주소는 계속 쓸 수 있어요.',
+    refundingTitle: '환불하는 중이에요',
+    refundingBody: (price: string) => `주소를 등록하지 못해 ${price}을(를) 환불하고 있어요. Stripe에서 환불이 끝나면 이메일로 알려 드려요.`,
+    supportTitle: (domain: string) => `${domain}을(를) 확인하고 있어요`,
+    supportBody: '결제는 끝났고, 주소가 준비되기 전에 사람이 한 번 확인해야 할 일이 생겼어요. 처리하고 있으니 그동안 무료 주소는 계속 쓸 수 있어요.',
     removeConfirm: '한 번 더 누르면 삭제돼요 (이 주소로 앱이 열리지 않아요)'
   }
 };

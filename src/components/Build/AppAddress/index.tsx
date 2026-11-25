@@ -487,6 +487,7 @@ export default function AppAddress({
         url={info.url}
         domains={liveDomains}
         ownerDomains={isOwner ? info.domains : undefined}
+        removableSources={['own']}
         onRemoveDomain={isOwner && info.customDomainsEnabled ? (domainId) => void removeDomain(domainId) : undefined}
         isOwner={isOwner && Boolean(info.customDomainsEnabled || info.domainSalesEnabled)}
         copied={copied}
