@@ -132,9 +132,9 @@ export function createSessionStore(
     return false;
   }
 
-  async function refresh(): Promise<AppSession | null> {
+  async function refresh({ force = false }: { force?: boolean } = {}): Promise<AppSession | null> {
     if (!session) return null;
-    if (adoptStoredIfNewer() && session.expiresAt - 60 > Date.now() / 1000) return session;
+    if (!force && adoptStoredIfNewer() && session.expiresAt - 60 > Date.now() / 1000) return session;
     refreshing ||= (async () => {
       for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
@@ -191,49 +191,37 @@ export function createSessionStore(
     // Starts sign-in: a popup to twin-kle.com (or a full redirect when the
     // popup is blocked). Resolves with the session, or null if cancelled.
     async signIn(): Promise<AppSession | null> {
-      const { verifier, challenge } = await createPkcePair();
-      const state = base64Url(crypto.getRandomValues(new Uint8Array(12)));
-      // The code is bound to this exact page (the API checks it again when
-      // the code is traded).
-      const returnUrl = window.location.href.split('#')[0];
-      storageSet(PKCE_KEY(config.buildId), JSON.stringify({ verifier, state, returnUrl }));
-      const url = new URL('/lumine-app/signin', config.siteOrigin);
-      url.searchParams.set('app', String(config.buildId));
-      url.searchParams.set('origin', window.location.origin);
-      url.searchParams.set('challenge', challenge);
-      url.searchParams.set('state', state);
-      url.searchParams.set('return', returnUrl);
-      const popup = window.open(url.toString(), 'lumine-signin', 'width=460,height=640');
-      if (!popup) {
-        // Popup blocked: the sign-in page redirects back here with the code.
-        window.location.assign(url.toString());
-        return null;
-      }
-      return new Promise((resolve) => {
-        const siteOrigin = new URL(config.siteOrigin).origin;
-        const timer = window.setInterval(() => {
-          if (popup.closed) {
-            window.clearInterval(timer);
-            window.removeEventListener('message', onMessage);
-            resolve(session);
-          }
-        }, 500);
-        const onMessage = async (event: MessageEvent) => {
-          if (event.origin !== siteOrigin || event.source !== popup) return;
-          const data = event.data || {};
-          if (data.source !== 'lumine-signin') return;
-          window.removeEventListener('message', onMessage);
-          window.clearInterval(timer);
-          try {
-            popup.close();
-          } catch {
-            // ignore
-          }
-          if (!data.code || data.state !== state) return resolve(null);
-          resolve(await finish(String(data.code), verifier, returnUrl));
-        };
-        window.addEventListener('message', onMessage);
-      });
+      const result = await openTwinkleWindow({ link: false });
+      if (!result) return session;
+      return finish(result.code, result.verifier, result.returnUrl);
+    },
+    // "Link Twinkle" (an app account, in an app on both kinds of accounts):
+    // the same twin-kle.com window; its code links the member to this player
+    // (POST /build/:id/app-session/link), then a fresh pass carries the link.
+    // Throws with the API's message (e.g. that member already plays here).
+    async linkTwinkle(): Promise<AppSession | null> {
+      const result = await openTwinkleWindow({ link: true });
+      if (!result) return null;
+      return completeLink(result.code, result.verifier, result.returnUrl);
+    },
+    // App accounts (an app on its own accounts): checked on this page.
+    async signInAppAccount(input: { username: string; password: string }) {
+      const data = await post('/build/app-account/signin', { buildId: config.buildId, ...input });
+      await adopt(data);
+      return session;
+    },
+    async signUpAppAccount(input: {
+      username: string;
+      password: string;
+      birthYear: number;
+      birthMonth: number;
+      invite?: string;
+      guardianConsentId?: number;
+      guardianConsentSecret?: string;
+    }) {
+      const data = await post('/build/app-account/signup', { buildId: config.buildId, ...input });
+      await adopt(data);
+      return session;
     },
     // Called on load: a redirect sign-in returns with #lumine_code=…&state=…
     async completeRedirect(): Promise<AppSession | null> {
@@ -248,14 +236,16 @@ export function createSessionStore(
       } catch {
         /* the page still works with the old address */
       }
-      let saved: { verifier: string; state: string; returnUrl?: string } | null = null;
+      let saved: { verifier: string; state: string; returnUrl?: string; link?: boolean } | null = null;
       try {
         saved = JSON.parse(storageGet(PKCE_KEY(config.buildId)) || 'null');
       } catch {
         saved = null;
       }
       if (!saved || saved.state !== hash.get('state')) return null;
-      return finish(code, saved.verifier, saved.returnUrl || window.location.href.split('#')[0]);
+      const redirectUri = saved.returnUrl || window.location.href.split('#')[0];
+      if (saved.link) return completeLink(code, saved.verifier, redirectUri).catch(() => session);
+      return finish(code, saved.verifier, redirectUri);
     },
     async signOut() {
       const token = await this.accessToken();
@@ -265,6 +255,69 @@ export function createSessionStore(
       }
     }
   };
+
+  // twin-kle.com's sign-in window; resolves with its one-time code, or null
+  // when it was closed (or the page is leaving for the redirect fallback).
+  async function openTwinkleWindow({ link }: { link: boolean }) {
+    const { verifier, challenge } = await createPkcePair();
+    const state = base64Url(crypto.getRandomValues(new Uint8Array(12)));
+    // The code is bound to this exact page (the API checks it again when
+    // the code is traded).
+    const returnUrl = window.location.href.split('#')[0];
+    storageSet(PKCE_KEY(config.buildId), JSON.stringify({ verifier, state, returnUrl, link }));
+    const url = new URL('/lumine-app/signin', config.siteOrigin);
+    url.searchParams.set('app', String(config.buildId));
+    url.searchParams.set('origin', window.location.origin);
+    url.searchParams.set('challenge', challenge);
+    url.searchParams.set('state', state);
+    url.searchParams.set('return', returnUrl);
+    if (link) url.searchParams.set('link', '1');
+    const popup = window.open(url.toString(), 'lumine-signin', 'width=460,height=640');
+    if (!popup) {
+      // Popup blocked: the sign-in page redirects back here with the code.
+      window.location.assign(url.toString());
+      return null;
+    }
+    return new Promise<{ code: string; verifier: string; returnUrl: string } | null>((resolve) => {
+      const siteOrigin = new URL(config.siteOrigin).origin;
+      const timer = window.setInterval(() => {
+        if (popup.closed) {
+          window.clearInterval(timer);
+          window.removeEventListener('message', onMessage);
+          resolve(null);
+        }
+      }, 500);
+      const onMessage = (event: MessageEvent) => {
+        if (event.origin !== siteOrigin || event.source !== popup) return;
+        const data = event.data || {};
+        if (data.source !== 'lumine-signin') return;
+        window.removeEventListener('message', onMessage);
+        window.clearInterval(timer);
+        try {
+          popup.close();
+        } catch {
+          // ignore
+        }
+        if (!data.code || data.state !== state) return resolve(null);
+        resolve({ code: String(data.code), verifier, returnUrl });
+      };
+      window.addEventListener('message', onMessage);
+    });
+  }
+
+  async function completeLink(code: string, verifier: string, redirectUri: string) {
+    storageSet(PKCE_KEY(config.buildId), null);
+    const token = session?.accessToken;
+    if (!token) return null;
+    await post(
+      `/build/${config.buildId}/app-session/link`,
+      { code, codeVerifier: verifier, redirectUri },
+      token
+    );
+    // the link is in the next pass: refresh now
+    await refresh({ force: true });
+    return session;
+  }
 
   async function finish(code: string, verifier: string, redirectUri: string) {
     storageSet(PKCE_KEY(config.buildId), null);

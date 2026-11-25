@@ -25,6 +25,8 @@ export default function LumineAppSignIn() {
   const challenge = params.get('challenge') || '';
   const state = params.get('state') || '';
   const returnUrl = params.get('return') || '';
+  // an app account linking Twinkle (the code is traded at app-session/link)
+  const link = params.get('link') === '1';
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const onOpenSigninModal = useAppContext((v) => v.user.actions.onOpenSigninModal);
@@ -134,6 +136,7 @@ export default function LumineAppSignIn() {
       handBack={() => cancel()}
       onOpenSigninModal={() => onOpenSigninModal()}
       onCreateAccount={() => setSigningUp(true)}
+      link={link}
       signUp={
         signingUp && !userId && app ? (
           <AppSignUp

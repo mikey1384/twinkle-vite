@@ -23,6 +23,8 @@ import { SIGNIN_TEXT, signInLang } from '~/containers/LumineAppSignIn/text';
 import { LiteHostProviders } from '../react/LiteHost';
 import { askSignIn, showGuestHint } from '../ui';
 import { LITE_HOST_TEXT } from '../text';
+import AppAccountSheet from '../react/AppAccountSheet';
+import AppPlayers from '~/components/Build/AppAddress/AppPlayers';
 import '../host.css';
 
 // Stand-ins for the requests the sign-up window makes (nothing leaves the page).
@@ -235,6 +237,49 @@ function Harness() {
         </LiteHostProviders>
       );
     }
+    case 'account-app':
+    case 'account-both':
+      return (
+        <LiteHostProviders requestHelpers={FAKE_REQUESTS} viewer={null} onOpenSignin={noop}>
+          <div style={{ position: 'fixed', inset: 0, background: 'linear-gradient(#5aa9e6, #9fd7ff 60%, #6bbf59 60%)' }} />
+          <AppAccountSheet
+            config={{ ...SITE_CONFIG, apiOrigin: '', siteOrigin: 'https://www.twin-kle.com' } as any}
+            t={LITE_HOST_TEXT[lang]}
+            lang={lang}
+            session={{ post: async () => ({ token: 'a_preview.preview', expiresAt: Math.floor(Date.now() / 1000) + 86400 }), signInAppAccount: async () => null, signUpAppAccount: async () => null, signIn: async () => null } as any}
+            twinkleToo={screen === 'account-both'}
+            onClose={noop}
+          />
+        </LiteHostProviders>
+      );
+    case 'link':
+      return (
+        <SignInCardView app={{ title: 'Star Catcher', ownerUsername: 'mikey', thumbnailUrl: null }} host="star-catcher.lumine.app" originAllowed error="" userId={1} username="lily" busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} link />
+      );
+    case 'players':
+      return (
+        <LiteHostProviders
+          requestHelpers={{
+            loadAppPlayers: async () => ({
+              accountMode: 'both',
+              players: [
+                { id: 4, kind: 'app', name: 'speedy_sam', linkedTo: null, createdAt: 1764000000, lastSeenAt: 1764050000, disabled: false, guardianApproved: true },
+                { id: 3, kind: 'app', name: 'nova7', linkedTo: 'nova_builds', createdAt: 1763900000, lastSeenAt: 1764040000, disabled: false, guardianApproved: false },
+                { id: 2, kind: 'twinkle', name: 'lily', linkedTo: null, createdAt: 1763800000, lastSeenAt: 1764030000, disabled: false, guardianApproved: false },
+                { id: 1, kind: 'app', name: 'trollface', linkedTo: null, createdAt: 1763700000, lastSeenAt: 1763710000, disabled: true, guardianApproved: false }
+              ]
+            }),
+            setAppAccountMode: async ({ mode }: any) => ({ accountMode: mode }),
+            setAppPlayerDisabled: async ({ disabled }: any) => ({ disabled })
+          }}
+          viewer={null}
+          onOpenSignin={noop}
+        >
+          <Page>
+            <AppPlayers buildId={2} lang={lang} initialMode="both" />
+          </Page>
+        </LiteHostProviders>
+      );
     case 'host-sheet':
     case 'host-hint':
       return <HostSheet hint={screen === 'host-hint'} />;
@@ -267,5 +312,7 @@ const NAMECHEAP_STEPS = [
 document.documentElement.lang = lang;
 // the website's 10px root (src/styles.css), which the sign-up steps' shared
 // styles are sized for
-if (screen === 'signup' || screen === 'signin-new') document.documentElement.style.fontSize = '10px';
+if (['signup', 'signin-new', 'account-app', 'account-both', 'players'].includes(screen)) {
+  document.documentElement.style.fontSize = '10px';
+}
 createRoot(document.getElementById('root')!).render(<Harness />);

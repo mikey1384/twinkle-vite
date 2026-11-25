@@ -22,7 +22,8 @@ export default function SignInCardView({
   handBack,
   onOpenSigninModal,
   onCreateAccount,
-  signUp
+  signUp,
+  link = false
 }: {
   app: { title: string; ownerUsername: string; thumbnailUrl: string | null } | null;
   host: string;
@@ -36,6 +37,8 @@ export default function SignInCardView({
   onOpenSigninModal: () => void;
   onCreateAccount?: () => void;
   signUp?: React.ReactNode;
+  // opened by an app account's "Link a Twinkle account"
+  link?: boolean;
 }) {
   const t = SIGNIN_TEXT[signInLang()];
   const signedOutLanding = app && originAllowed && !userId && !signUp;
@@ -50,7 +53,13 @@ export default function SignInCardView({
           </div>
         )}
         <h2 className={titleClass}>
-          {app ? (signedOutLanding || signUp ? t.saveTitle(app.title) : t.titleFor(app.title)) : t.title}
+          {app
+            ? link
+              ? t.linkTitle(app.title)
+              : signedOutLanding || signUp
+                ? t.saveTitle(app.title)
+                : t.titleFor(app.title)
+            : t.title}
         </h2>
         {app && <p className={byClass}>{t.by(app.ownerUsername, host)}</p>}
         {error && <p className={errorClass}>{error}</p>}
@@ -58,7 +67,7 @@ export default function SignInCardView({
         {app && originAllowed && signUp}
         {signedOutLanding && (
           <>
-            <p className={introClass}>{t.newHere(app.title)}</p>
+            <p className={introClass}>{link ? t.linkIntro(app.title) : t.newHere(app.title)}</p>
             <button type="button" onClick={onCreateAccount} className={primaryClass}>
               {t.createAccount}
             </button>
@@ -72,6 +81,7 @@ export default function SignInCardView({
         )}
         {app && originAllowed && userId && !signUp && (
           <>
+            {link && <p className={introClass}>{t.linkIntro(app.title)}</p>}
             <ul className={listClass}>
               <li>{t.sees}</li>
               <li>{t.saves}</li>
@@ -79,7 +89,7 @@ export default function SignInCardView({
               <li>{t.cant}</li>
             </ul>
             <button type="button" disabled={busy} onClick={allow} className={primaryClass}>
-              {t.continueAs(String(username || ''))}
+              {link ? t.linkContinueAs(String(username || '')) : t.continueAs(String(username || ''))}
             </button>
             <button type="button" onClick={() => handBack(null)} className={secondaryClass}>
               {t.cancel}

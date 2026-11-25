@@ -32,6 +32,11 @@ export const SIGNIN_TEXT = {
     continueAs: (name: string) => `Continue as ${name}`,
     cancel: 'Cancel',
     signInFirst: 'Sign in to Twinkle',
+    // "Link Twinkle" from an app account
+    linkTitle: (app: string) => `Link Twinkle to ${app}`,
+    linkIntro: (app: string) =>
+      `Your ${app} account keeps all its progress. With your Twinkle account linked, you can also earn Coins and XP there from now on.`,
+    linkContinueAs: (name: string) => `Link ${name}`,
     // sign-up
     birthTitle: 'When were you born?',
     birthBody: 'If you’re under 14, we’ll ask a parent or guardian to say yes first.',
@@ -83,6 +88,10 @@ export const SIGNIN_TEXT = {
     continueAs: (name: string) => `${name}(으)로 계속하기`,
     cancel: '취소',
     signInFirst: '트윈클에 로그인하기',
+    linkTitle: (app: string) => `${app}에 트윈클 연결하기`,
+    linkIntro: (app: string) =>
+      `${app} 계정의 진행 상황은 그대로 남아요. 트윈클 계정을 연결하면 이제부터 그곳에서 코인과 XP도 받을 수 있어요.`,
+    linkContinueAs: (name: string) => `${name} 연결하기`,
     birthTitle: '언제 태어났나요?',
     birthBody: '만 14세 미만이면 먼저 부모님이나 보호자의 동의를 받아요.',
     month: '월',

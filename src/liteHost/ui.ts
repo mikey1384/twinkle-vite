@@ -43,6 +43,15 @@ function sheet(content: HTMLElement[], { onDismiss }: { onDismiss?: () => void }
   return panel;
 }
 
+export function menuButton(label: string, onClick: () => void) {
+  const button = el('button', { class: 'lh-menu-item', type: 'button' }, [label]);
+  button.addEventListener('click', () => {
+    closeSheet();
+    onClick();
+  });
+  return button;
+}
+
 export function showToast(text: string, ms = 3500) {
   const toast = el('div', { class: 'lh-toast', role: 'status' }, [text]);
   document.body.append(toast);
@@ -185,12 +194,18 @@ export function mountBadge({
   config,
   t,
   session,
-  onReport
+  onReport,
+  onSignIn,
+  extraItems
 }: {
   config: LiteHostConfig;
   t: LiteHostText;
   session: SessionStore;
   onReport: () => void;
+  // the app's sign-in (Twinkle's, or the app's own accounts)
+  onSignIn?: () => void;
+  // more menu items for the current player (e.g. "Link a Twinkle account")
+  extraItems?: () => HTMLElement[];
 }) {
   const badge = el('button', { class: 'lh-badge', type: 'button', 'aria-haspopup': 'menu' }, [
     el('span', { class: 'lh-badge-mark', 'aria-hidden': 'true' }, ['✦']),
@@ -232,6 +247,7 @@ export function mountBadge({
     signButton.addEventListener('click', async () => {
       closeSheet();
       if (session.get()) await session.signOut();
+      else if (onSignIn) onSignIn();
       else await askSignIn({ config, t, session });
     });
     const reportButton = el('button', { class: 'lh-menu-item lh-menu-quiet', type: 'button' }, [t.report]);
@@ -239,7 +255,8 @@ export function mountBadge({
       closeSheet();
       onReport();
     });
-    const panel = sheet([...items, signButton, reportButton]);
+    const extras = extraItems ? extraItems() : [];
+    const panel = sheet([...items, ...extras, signButton, reportButton]);
     panel.classList.add('lh-menu');
   });
   return badge;

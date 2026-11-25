@@ -119,6 +119,21 @@ body {
 .lh-primary { background: var(--lh-ink); color: #fff; }
 .lh-primary[disabled] { opacity: 0.5; cursor: default; }
 .lh-secondary { background: #f1f1f6; color: var(--lh-ink); }
+/* an app's own account sheet (react/AppAccountSheet.tsx) */
+.lh-account { max-height: 92vh; max-height: 92dvh; overflow-y: auto; }
+.lh-account-thumb { width: 56px; height: 56px; border-radius: 14.4px; object-fit: cover; margin-bottom: 12px; }
+.lh-field { display: flex; flex-direction: column; gap: 5px; margin: 0 0 12px; font-size: 15px; font-weight: 650; }
+.lh-field input, .lh-field select {
+  width: 100%; box-sizing: border-box; min-height: 46px; padding: 10px 12px; border: 1px solid #d6d6e0;
+  border-radius: 12px; background: #fff; color: var(--lh-ink); font: inherit; font-weight: 400; font-size: 16px;
+}
+.lh-field small { font-weight: 400; font-size: 13px; color: var(--lh-muted); }
+.lh-row { display: flex; gap: 10px; }
+.lh-row > * { flex: 1; }
+.lh-error { color: #b42318 !important; font-size: 14.4px !important; }
+.lh-or { text-align: center; color: var(--lh-muted); font-size: 14.4px; margin: 12px 0 8px; }
+.lh-wide { width: 100%; }
+.lh-guardian { padding-top: 4px; }
 .lh-fine { font-size: 14.4px !important; color: var(--lh-muted); margin: 14.4px 0 0 !important; }
 .lh-menu { padding-top: 17.6px; }
 .lh-menu-head { display: flex; gap: 12.8px; align-items: center; margin-bottom: 12.8px; }

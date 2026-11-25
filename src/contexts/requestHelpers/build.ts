@@ -624,6 +624,32 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    // The owner's players page and the app's account setting (Twinkle
+    // accounts, the app's own, or both)
+    async loadAppPlayers({ buildId, before }: { buildId: number; before?: number; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/app-players`, { ...auth(), params: { before } });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async setAppAccountMode({ buildId, mode }: { buildId: number; mode: string; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/account-mode`, { mode }, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async setAppPlayerDisabled({ buildId, playerId, disabled }: { buildId: number; playerId: number; disabled: boolean; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-players/${playerId}/disabled`, { disabled }, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     async addAppDomain({ buildId, hostname }: { buildId: number; hostname?: string; }) {
       try {
         const { data } = await request.post(`${URL}/build/${buildId}/app-domains`, { hostname }, auth());

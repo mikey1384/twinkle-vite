@@ -22,7 +22,8 @@ import {
   type AppSession,
   type LiteHostConfig
 } from '../session';
-import { askSignIn, mountBadge, showGuestHint, showReport, showToast } from '../ui';
+import { askSignIn, menuButton, mountBadge, showGuestHint, showReport, showToast } from '../ui';
+import AppAccountSheet from './AppAccountSheet';
 import { createGuestStore } from '../guestStore';
 import { LITE_HOST_TEXT, liteHostLang } from '../text';
 import {
@@ -154,8 +155,32 @@ async function start() {
     retiredRef
   });
 
+  // Which accounts the app's players use (the owner's setting; twinkle-api
+  // appAccounts.ts): Twinkle accounts (default), the app's own, or both.
+  let accountMode: 'twinkle' | 'app' | 'both' = 'twinkle';
+  const accountModeReady = fetch(
+    `${config.apiOrigin}/build/${config.buildId}/app-session/info?origin=${encodeURIComponent(window.location.origin)}`
+  )
+    .then((response) => (response.ok ? response.json() : null))
+    .then((data) => {
+      if (data?.accountMode === 'app' || data?.accountMode === 'both') accountMode = data.accountMode;
+    })
+    .catch(() => {});
+  const accountSheetListeners = new Set<(open: boolean) => void>();
   const openSignIn = () => {
-    void askSignIn({ config, t, session });
+    void accountModeReady.then(() => {
+      if (accountMode === 'twinkle') void askSignIn({ config, t, session });
+      else accountSheetListeners.forEach((listener) => listener(true));
+    });
+  };
+  // "Link a Twinkle account": an app account, in an app on both kinds
+  const linkTwinkle = async () => {
+    try {
+      const linked = await session.linkTwinkle();
+      if (linked?.appPlayer?.linked) showToast(t.linkedTwinkle, 5000);
+    } catch (error: any) {
+      showToast(error?.message || t.linkFailed, 6000);
+    }
   };
   // the app needed an account for something in the background
   const hintSignIn = () => showGuestHint({ t, onSignIn: openSignIn });
@@ -273,6 +298,13 @@ async function start() {
       []
     );
     const onGuestRestricted = useCallback(hintSignIn, []);
+    const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+    useEffect(() => {
+      accountSheetListeners.add(setAccountSheetOpen);
+      return () => {
+        accountSheetListeners.delete(setAccountSheetOpen);
+      };
+    }, []);
     return (
       <LiteHostProviders
         requestHelpers={requestHelpers}
@@ -291,6 +323,16 @@ async function start() {
             onReady={replayEarlyMessages}
           />
         ) : null}
+        {accountSheetOpen && !current ? (
+          <AppAccountSheet
+            config={config!}
+            t={t}
+            lang={liteHostLang()}
+            session={session}
+            twinkleToo={accountMode === 'both'}
+            onClose={() => setAccountSheetOpen(false)}
+          />
+        ) : null}
       </LiteHostProviders>
     );
   }
@@ -307,6 +349,13 @@ async function start() {
     config,
     t,
     session,
+    onSignIn: openSignIn,
+    extraItems: () => {
+      const player = session.get()?.appPlayer;
+      return accountMode === 'both' && player?.kind === 'app' && !player.linked
+        ? [menuButton(t.linkTwinkle, () => void linkTwinkle())]
+        : [];
+    },
     onReport: () =>
       showReport({
         config,

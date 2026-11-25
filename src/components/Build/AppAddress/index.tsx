@@ -3,6 +3,7 @@ import Modal from '~/components/Modal';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import { useAppContext } from '~/contexts';
 import { ADDRESS_TEXT, type AddressLang } from './text';
+import AppPlayers from './AppPlayers';
 import {
   AddressCardView,
   ConnectView,
@@ -26,6 +27,7 @@ interface AddressInfo {
   customDomainsEnabled?: boolean;
   domainSalesEnabled?: boolean;
   domains?: Array<{ id: number; hostname: string; status: string; source: string }>;
+  accountMode?: 'twinkle' | 'app' | 'both';
 }
 
 type Step =
@@ -217,6 +219,9 @@ export default function AppAddress({
         }}
         onGetOwn={() => setStep({ kind: 'intro' })}
       />
+      {isOwner && (
+        <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />
+      )}
       {step && (
         <Modal modalKey="AppAddressFlow" isOpen onClose={() => setStep(null)} size="md" hasHeader={false} closeOnBackdropClick>
           {error && <div style={{ color: '#b42318', marginBottom: '0.6rem' }}>{error}</div>}
