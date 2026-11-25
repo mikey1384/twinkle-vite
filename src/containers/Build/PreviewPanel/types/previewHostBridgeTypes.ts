@@ -173,6 +173,19 @@ export interface UsePreviewHostBridgeArgs {
   // An app's own address only: signed-out visitors read leaderboards but
   // don't post to them (a score posts once they sign in).
   guestLeaderboardsReadOnly?: boolean;
+  // An app's own address only: Twinkle.auth's sign-in, sign-up and sign-out
+  // open the lite host's own flows, and Twinkle.ai.getCoverage asks the API.
+  // Unset on twin-kle.com (sign-in opens the website's box; an app never signs
+  // a member out of the website).
+  authHostRef?: RefObject<LiteAuthHost | null>;
+}
+
+export interface LiteAuthHost {
+  surface: 'address' | 'domain';
+  signIn(): Promise<void>;
+  signUp(): Promise<void>;
+  signOut(): Promise<void>;
+  aiCoverage(): Promise<unknown>;
 }
 
 export interface GuestPrivateDb {

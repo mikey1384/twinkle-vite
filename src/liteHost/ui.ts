@@ -83,6 +83,20 @@ export function showGuestHint({ t, onSignIn }: { t: LiteHostText; onSignIn: () =
   window.setTimeout(remove, 6000);
 }
 
+// "Continue with Twinkle", drawn like the big sign-in buttons people know
+// (a solid pill with the brand's mark and label): Twinkle's icon, served
+// from twin-kle.com.
+export function twinkleButton(config: Pick<LiteHostConfig, 'siteOrigin'>, label: string) {
+  const icon = el('img', {
+    class: 'lh-twinkle-mark',
+    src: `${config.siteOrigin}/icon-192.png`,
+    alt: '',
+    width: '24',
+    height: '24'
+  });
+  return el('button', { class: 'lh-twinkle-button', type: 'button' }, [icon, el('span', {}, [label])]);
+}
+
 export function askSignIn({
   config,
   t,
@@ -93,11 +107,16 @@ export function askSignIn({
   session: SessionStore;
 }): Promise<boolean> {
   return new Promise((resolve) => {
-    const cta = el('button', { class: 'lh-primary', type: 'button' }, [t.signInCta]);
+    const cta = twinkleButton(config, t.signInCta);
     const later = el('button', { class: 'lh-secondary', type: 'button' }, [t.notNow]);
     const panel = sheet(
       [
-        el('div', { class: 'lh-sheet-mark', 'aria-hidden': 'true' }, ['✦']),
+        el('div', { class: 'lh-signin-head' }, [
+          config.thumbnailUrl
+            ? el('img', { class: 'lh-signin-thumb', src: config.thumbnailUrl, alt: '' })
+            : el('div', { class: 'lh-signin-thumb lh-sheet-mark', 'aria-hidden': 'true' }, ['✦']),
+          el('div', {}, [el('strong', {}, [config.title]), el('span', {}, [t.by(config.owner.username)])])
+        ]),
         el('h2', {}, [t.signInTitle]),
         el('p', {}, [t.signInBody(config.title)]),
         el('div', { class: 'lh-actions' }, [cta, later]),

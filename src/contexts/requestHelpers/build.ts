@@ -676,6 +676,19 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    // Twinkle.auth.describePlayers: member / app account / linked, and the
+    // name to show, for players an app shows (public)
+    async describeAppPlayers({ buildId, ids }: { buildId: number; ids: number[]; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/players/describe`, {
+          ...auth(),
+          params: { ids: (ids || []).join(',') }
+        });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     async addAppDomain({ buildId, hostname }: { buildId: number; hostname?: string; }) {
       try {
         const { data } = await request.post(`${URL}/build/${buildId}/app-domains`, { hostname }, auth());

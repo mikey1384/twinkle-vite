@@ -79,6 +79,7 @@ registerMethods('build', [
   'setAppAccountMode',
   'setAppPlayerDisabled',
   'loadAppConnections',
+  'describeAppPlayers',
   'unlinkAppConnection',
   'removeAppConnection',
   'addAppDomain',

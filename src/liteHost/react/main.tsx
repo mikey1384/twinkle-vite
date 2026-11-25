@@ -166,12 +166,56 @@ async function start() {
       if (data?.accountMode === 'app' || data?.accountMode === 'both') accountMode = data.accountMode;
     })
     .catch(() => {});
-  const accountSheetListeners = new Set<(open: boolean) => void>();
-  const openSignIn = () => {
-    void accountModeReady.then(() => {
-      if (accountMode === 'twinkle') void askSignIn({ config, t, session });
-      else accountSheetListeners.forEach((listener) => listener(true));
+  type SheetView = 'signin' | 'birth' | 'reset' | 'email';
+  const accountSheetListeners = new Set<(view: SheetView | null) => void>();
+  // a password-reset email opens the app with #lumine_reset=<token>
+  const resetToken = (() => {
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const token = hash.get('lumine_reset') || '';
+    if (token) {
+      try {
+        history.replaceState(null, '', window.location.href.split('#')[0]);
+      } catch {
+        /* the page still works */
+      }
+    }
+    return token;
+  })();
+  let sheetClosed: Array<() => void> = [];
+  const onAccountSheetClosed = () => {
+    const waiting = sheetClosed;
+    sheetClosed = [];
+    waiting.forEach((resolve) => resolve());
+  };
+  // The app's sign-in: Twinkle's sheet (popup to twin-kle.com) or the app's
+  // own accounts. Resolves when it closes.
+  const openSignIn = (view: SheetView = 'signin') =>
+    accountModeReady.then(async () => {
+      if (accountMode === 'twinkle') {
+        await askSignIn({ config, t, session });
+        return;
+      }
+      await new Promise<void>((resolve) => {
+        sheetClosed.push(resolve);
+        accountSheetListeners.forEach((listener) => listener(view));
+      });
     });
+  // Twinkle.auth on this page (useHostBridge authHostRef)
+  const authHost = {
+    surface: (/\.lumine\.app$|\.localhost$/.test(window.location.hostname) ? 'address' : 'domain') as
+      | 'address'
+      | 'domain',
+    signIn: () => openSignIn('signin'),
+    signUp: () => openSignIn('birth'),
+    signOut: () => session.signOut(),
+    async aiCoverage() {
+      const token = await session.accessToken();
+      if (!token) return { payer: 'none', reason: 'guest', message: null };
+      const response = await fetch(`${config.apiOrigin}/build/${config.buildId}/app-session/ai-coverage`, {
+        headers: { authorization: token }
+      });
+      return response.ok ? response.json() : { payer: 'none', message: null };
+    }
   };
   // "Link a Twinkle account": an app account, in an app on both kinds
   const linkTwinkle = async () => {
@@ -183,7 +227,7 @@ async function start() {
     }
   };
   // the app needed an account for something in the background
-  const hintSignIn = () => showGuestHint({ t, onSignIn: openSignIn });
+  const hintSignIn = () => showGuestHint({ t, onSignIn: () => void openSignIn() });
 
   function Root() {
     const [current, setCurrent] = useState<AppSession | null>(session.get());
@@ -298,13 +342,22 @@ async function start() {
       []
     );
     const onGuestRestricted = useCallback(hintSignIn, []);
-    const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+    const [accountSheetView, setAccountSheetView] = useState<SheetView | null>(
+      resetToken ? 'reset' : null
+    );
     useEffect(() => {
-      accountSheetListeners.add(setAccountSheetOpen);
+      accountSheetListeners.add(setAccountSheetView);
       return () => {
-        accountSheetListeners.delete(setAccountSheetOpen);
+        accountSheetListeners.delete(setAccountSheetView);
       };
     }, []);
+    const accountKind = !current
+      ? null
+      : current.appPlayer?.kind === 'app'
+        ? current.appPlayer.linked
+          ? 'linked'
+          : 'app'
+        : 'member';
     return (
       <LiteHostProviders
         requestHelpers={requestHelpers}
@@ -320,17 +373,24 @@ async function start() {
             retiredRef={retiredRef}
             onGuestRestricted={onGuestRestricted}
             guestStore={current ? null : guestStore}
+            accountKind={accountKind}
+            authHost={authHost}
             onReady={replayEarlyMessages}
           />
         ) : null}
-        {accountSheetOpen && !current ? (
+        {accountSheetView && (!current || accountSheetView === 'email') ? (
           <AppAccountSheet
+            initialView={accountSheetView}
+            resetToken={resetToken}
             config={config!}
             t={t}
             lang={liteHostLang()}
             session={session}
             twinkleToo={accountMode === 'both'}
-            onClose={() => setAccountSheetOpen(false)}
+            onClose={() => {
+              setAccountSheetView(null);
+              onAccountSheetClosed();
+            }}
           />
         ) : null}
       </LiteHostProviders>
@@ -353,8 +413,12 @@ async function start() {
     extraItems: () => {
       const player = session.get()?.appPlayer;
       if (player?.kind !== 'app') return [];
+      const emailItem = menuButton(t.menuResetEmail, () =>
+        accountSheetListeners.forEach((listener) => listener('email'))
+      );
       if (player.linked) {
         return [
+          emailItem,
           menuButton(t.unlinkTwinkle, async () => {
             try {
               await session.unlinkTwinkle();
@@ -365,7 +429,9 @@ async function start() {
           })
         ];
       }
-      return accountMode === 'both' ? [menuButton(t.linkTwinkle, () => void linkTwinkle())] : [];
+      return accountMode === 'both'
+        ? [emailItem, menuButton(t.linkTwinkle, () => void linkTwinkle())]
+        : [emailItem];
     },
     onReport: () =>
       showReport({

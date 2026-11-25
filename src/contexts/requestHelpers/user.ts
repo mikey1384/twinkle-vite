@@ -3268,6 +3268,7 @@ export default function userRequestHelpers({
       password,
       birthYear,
       birthMonth,
+      email,
       guardianConsent
     }: {
       invite: string;
@@ -3275,6 +3276,8 @@ export default function userRequestHelpers({
       password: string;
       birthYear: number;
       birthMonth: number;
+      // optional, for password resets
+      email?: string;
       guardianConsent?: { consentId: number; secret: string };
     }) {
       let data;
@@ -3287,6 +3290,7 @@ export default function userRequestHelpers({
             password,
             birthYear,
             birthMonth,
+            ...(email ? { email } : {}),
             guardianConsentId: guardianConsent?.consentId,
             guardianConsentSecret: guardianConsent?.secret
           },

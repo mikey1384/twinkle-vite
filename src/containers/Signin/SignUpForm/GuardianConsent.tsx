@@ -118,11 +118,14 @@ export default function GuardianConsent({
   birthMonth,
   initialFirstName,
   lang = 'en',
+  variant = 'step',
   approvedBody,
   onChangeBirth,
   onApproved
 }: {
   lang?: 'en' | 'ko';
+  // 'card': the app sign-in window's look (left-aligned, a full-width pill)
+  variant?: 'step' | 'card';
   // what comes after the approval (the website's form asks for an email too)
   approvedBody?: string;
   inviteToken: string;
@@ -137,6 +140,7 @@ export default function GuardianConsent({
   }) => void;
 }) {
   const t = TEXT[lang];
+  const sc = variant === 'card' ? CARD_STYLES : STEP_STYLES;
   const requestGuardianConsent = useAppContext(
     (v) => v.requestHelpers.requestGuardianConsent
   );
@@ -201,10 +205,10 @@ export default function GuardianConsent({
   if (phase === 'email') {
     const canSend = !!firstName.trim() && !!guardianEmail.trim() && !sending;
     return (
-      <div className={stepClass}>
-        <div className={titleClass}>{t.askTitle}</div>
-        <p className={bodyClass}>{t.askBody}</p>
-        <div className={fieldClass}>
+      <div className={sc.step}>
+        <div className={sc.title}>{t.askTitle}</div>
+        <p className={sc.body}>{t.askBody}</p>
+        <div className={sc.field}>
           <label htmlFor="guardian-child-name">{t.firstName}</label>
           <Input
             id="guardian-child-name"
@@ -219,7 +223,7 @@ export default function GuardianConsent({
             onKeyDown={handleKeyDown}
           />
         </div>
-        <div className={fieldClass}>
+        <div className={sc.field}>
           <label htmlFor="guardian-email">{t.guardianEmail}</label>
           <Input
             id="guardian-email"
@@ -235,7 +239,7 @@ export default function GuardianConsent({
           />
         </div>
         {errorMessage && (
-          <p role="alert" className={errorClass}>
+          <p role="alert" className={sc.error}>
             {errorMessage}
           </p>
         )}
@@ -243,7 +247,7 @@ export default function GuardianConsent({
           type="button"
           disabled={!canSend}
           onClick={handleSend}
-          className={primaryButtonClass}
+          className={sc.primary}
         >
           {sending ? (
             <>
@@ -257,7 +261,7 @@ export default function GuardianConsent({
         <button
           type="button"
           onClick={onChangeBirth}
-          className={linkButtonClass}
+          className={sc.link}
         >
           {t.wrongBirth}
         </button>
@@ -267,7 +271,7 @@ export default function GuardianConsent({
 
   if (phase === 'checking' || phase === 'pending') {
     return (
-      <div className={stepClass} aria-live="polite">
+      <div className={sc.step} aria-live="polite">
         <Icon
           icon="paper-plane"
           className={css`
@@ -279,11 +283,11 @@ export default function GuardianConsent({
             }
           `}
         />
-        <div className={titleClass}>{t.waitingTitle}</div>
-        <p className={bodyClass}>{t.waitingBody(stored?.guardianEmail)}</p>
+        <div className={sc.title}>{t.waitingTitle}</div>
+        <p className={sc.body}>{t.waitingBody(stored?.guardianEmail)}</p>
         <p
           className={cx(
-            noteClass,
+            sc.note,
             css`
               display: flex;
               align-items: center;
@@ -294,13 +298,13 @@ export default function GuardianConsent({
           <Icon icon="spinner" pulse />
           {t.updates}
         </p>
-        <p className={noteClass}>{t.canClose}</p>
+        <p className={sc.note}>{t.canClose}</p>
         {errorMessage && (
-          <p role="alert" className={errorClass}>
+          <p role="alert" className={sc.error}>
             {errorMessage}
           </p>
         )}
-        <button type="button" onClick={handleAskAgain} className={linkButtonClass}>
+        <button type="button" onClick={handleAskAgain} className={sc.link}>
           {t.sendAgain}
         </button>
       </div>
@@ -309,7 +313,7 @@ export default function GuardianConsent({
 
   if (phase === 'approved') {
     return (
-      <div className={stepClass} aria-live="polite">
+      <div className={sc.step} aria-live="polite">
         <Icon
           icon="check"
           className={css`
@@ -317,13 +321,13 @@ export default function GuardianConsent({
             color: ${Color.green()};
           `}
         />
-        <div className={titleClass}>{t.approvedTitle}</div>
-        <p className={bodyClass}>{approvedBody || t.approvedBody}</p>
+        <div className={sc.title}>{t.approvedTitle}</div>
+        <p className={sc.body}>{approvedBody || t.approvedBody}</p>
         <button
           type="button"
           autoFocus
           onClick={handleContinue}
-          className={primaryButtonClass}
+          className={sc.primary}
         >
           {t.continue}
         </button>
@@ -338,15 +342,15 @@ export default function GuardianConsent({
   };
   const [title, body] = ended[phase];
   return (
-    <div className={stepClass} aria-live="polite">
-      <div className={titleClass}>{title}</div>
-      <p className={bodyClass}>{body}</p>
+    <div className={sc.step} aria-live="polite">
+      <div className={sc.title}>{title}</div>
+      <p className={sc.body}>{body}</p>
       {phase !== 'used' && (
         <button
           type="button"
           autoFocus
           onClick={handleAskAgain}
-          className={primaryButtonClass}
+          className={sc.primary}
         >
           {t.askAgain}
         </button>
@@ -408,3 +412,96 @@ export default function GuardianConsent({
     });
   }
 }
+
+const STEP_STYLES = {
+  step: stepClass,
+  title: titleClass,
+  body: bodyClass,
+  primary: primaryButtonClass,
+  link: linkButtonClass,
+  note: noteClass,
+  field: fieldClass,
+  error: errorClass
+};
+
+// The app sign-in window (containers/LumineAppSignIn): its card's type and
+// buttons, px-sized like the rest of that window.
+const CARD_STYLES = {
+  step: css`
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    text-align: left;
+  `,
+  title: css`
+    font-size: 20px;
+    font-weight: 750;
+    color: #14151c;
+  `,
+  body: css`
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #3a3d4a;
+  `,
+  primary: css`
+    width: 100%;
+    min-height: 50px;
+    margin-top: 4px;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 18px;
+    background: #2f7be0;
+    color: #fff;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    &:hover:not(:disabled) {
+      background: #2468c4;
+    }
+    &:focus-visible {
+      outline: 3px solid rgba(47, 123, 224, 0.35);
+      outline-offset: 2px;
+    }
+    &:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+  `,
+  link: css`
+    align-self: center;
+    border: 0;
+    background: none;
+    padding: 6px;
+    color: #5f6270;
+    font: inherit;
+    font-size: 14px;
+    text-decoration: underline;
+    cursor: pointer;
+  `,
+  note: css`
+    margin: 0;
+    font-size: 14px;
+    color: #5f6270;
+  `,
+  field: css`
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 15px;
+    label {
+      font-weight: 650;
+    }
+    input {
+      font-size: 16px;
+      border-radius: 12px;
+    }
+  `,
+  error: css`
+    margin: 0;
+    font-size: 14px;
+    color: #b42318;
+  `
+};

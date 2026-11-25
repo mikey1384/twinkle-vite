@@ -3,15 +3,22 @@ import { Color } from '~/constants/css';
 import { css, cx } from '@emotion/css';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { isLumineHost } from '~/constants/siteBrand';
-import { useRootTheme } from '~/theme/RootThemeProvider';
+import { useOptionalRootTheme } from '~/theme/RootThemeProvider';
 import { noteClientReload } from '~/helpers/clientTraceBus';
 
 export default function TwinkleLogo({
-  style
+  style,
+  alwaysVisible = false,
+  linkHome = true
 }: {
   style?: React.CSSProperties;
+  // shown at every width (the header shows it on desktop only), e.g. the
+  // app sign-in window, which is a phone-sized popup
+  alwaysVisible?: boolean;
+  // false: a plain logo that doesn't leave the page when tapped
+  linkHome?: boolean;
 }) {
-  const { themeName } = useRootTheme();
+  const themeName = useOptionalRootTheme()?.themeName;
   const isPlatinum = themeName === 'platinum' && !isLumineHost;
   const logoTwinRole = useRoleColor('logoTwin', { fallback: 'logoBlue' });
   const logoKleRole = useRoleColor('logoKle', { fallback: 'logoGreen' });
@@ -27,19 +34,21 @@ export default function TwinkleLogo({
   return (
     <div
       style={style}
-      className={`desktop ${css`
-        cursor: pointer;
+      className={`${alwaysVisible ? '' : 'desktop '}${css`
+        cursor: ${linkHome ? 'pointer' : 'default'};
         position: relative;
         width: 10rem;
         height: 2rem;
       `}`}
       onClick={() => {
+        if (!linkHome) return;
         noteClientReload('logo-full-load');
         window.location.href = '/';
       }}
     >
       <div
         onClick={() => {
+          if (!linkHome) return;
           const appElement = document.getElementById('App');
           if (appElement) appElement.scrollTop = 0;
         }}

@@ -19,11 +19,12 @@ export const SIGNIN_TEXT = {
   en: {
     titleFor: (app: string) => `Sign in to ${app}`,
     title: 'Sign in with Twinkle',
-    saveTitle: (app: string) => `Save your progress in ${app}`,
+    // the app itself is named just below, in the card
+    saveTitle: (_app: string) => 'Save your progress',
     by: (owner: string, host: string) => `by ${owner} · ${host}`,
     wrongOrigin: 'This sign-in didn’t come from the app’s own address.',
     newHere: (app: string) =>
-      `Save your progress and get on the leaderboard with a free Twinkle account. Twinkle is where ${app} was made: a place where people make and share their own games and apps.`,
+      `A free Twinkle account saves your progress and puts you on the leaderboard. Twinkle is where ${app} was made: a place where people make and share their own games and apps.`,
     createAccount: 'Create a free account',
     haveAccount: 'I already have a Twinkle account',
     backToApp: 'Back to the app',
@@ -34,6 +35,11 @@ export const SIGNIN_TEXT = {
     continueAs: (name: string) => `Continue as ${name}`,
     cancel: 'Cancel',
     signInFirst: 'Sign in to Twinkle',
+    toContinue: 'to continue to',
+    byOwner: (owner: string) => `by ${owner}`,
+    passwordSafe: (app: string) => `Twinkle never shows your password to ${app}.`,
+    privacyLink: 'Privacy',
+    artCaption: 'Make games with Lumine. Think and play with Zero and Ciel.',
     // "Link Twinkle" from an app account
     linkTitle: (app: string) => `Link Twinkle to ${app}`,
     linkIntro: (app: string) =>
@@ -60,6 +66,9 @@ export const SIGNIN_TEXT = {
     usernameHint: '3 to 19 letters, numbers or _',
     password: 'Password',
     passwordHint: 'At least 5 characters',
+    email: 'Email for password reset (optional)',
+    emailHint: 'Only used if you forget your password. A parent’s approval email is separate.',
+    badEmail: 'That doesn’t look like an email address.',
     showPassword: 'Show',
     hidePassword: 'Hide',
     create: 'Create account',
@@ -75,7 +84,7 @@ export const SIGNIN_TEXT = {
   ko: {
     titleFor: (app: string) => `${app}에 로그인`,
     title: '트윈클로 로그인',
-    saveTitle: (app: string) => `${app} 진행 상황 저장하기`,
+    saveTitle: (_app: string) => '진행 상황 저장하기',
     by: (owner: string, host: string) => `만든 사람: ${owner} · ${host}`,
     wrongOrigin: '앱의 원래 주소에서 온 로그인 요청이 아니에요.',
     newHere: (app: string) =>
@@ -90,6 +99,11 @@ export const SIGNIN_TEXT = {
     continueAs: (name: string) => `${name}(으)로 계속하기`,
     cancel: '취소',
     signInFirst: '트윈클에 로그인하기',
+    toContinue: '로그인할 앱',
+    byOwner: (owner: string) => `만든 사람 ${owner}`,
+    passwordSafe: (app: string) => `트윈클은 비밀번호를 ${app}에 절대 보여 주지 않아요.`,
+    privacyLink: '개인정보 처리방침',
+    artCaption: 'Lumine과 게임을 만들고, Zero·Ciel과 함께 생각하고 놀아요.',
     linkTitle: (app: string) => `${app}에 트윈클 연결하기`,
     linkIntro: (app: string) =>
       `${app} 계정의 진행 상황은 그대로예요. 트윈클 계정을 연결하면 이제부터 거기서도 코인과 XP를 받을 수 있어요.`,
@@ -111,6 +125,9 @@ export const SIGNIN_TEXT = {
     usernameHint: '영문, 숫자, _ 3~19자',
     password: '비밀번호',
     passwordHint: '5자 이상',
+    email: '비밀번호 재설정용 이메일 (선택)',
+    emailHint: '비밀번호를 잊었을 때만 써요. 부모님 동의 이메일과는 따로예요.',
+    badEmail: '이메일 주소가 맞는지 확인해 주세요.',
     showPassword: '보기',
     hidePassword: '숨기기',
     create: '계정 만들기',

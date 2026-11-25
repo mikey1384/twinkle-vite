@@ -294,8 +294,15 @@ export function useHostBridge({
   appHelperEventsRef,
   onAppTextEntryRef,
   guestPrivateDbRef,
-  guestLeaderboardsReadOnly = false
+  guestLeaderboardsReadOnly = false,
+  authHostRef
 }: UsePreviewHostBridgeArgs) {
+  const onOpenSigninModal = useAppContext((v) => v.user.actions.onOpenSigninModal);
+  const onOpenSigninModalRef = useRef(onOpenSigninModal);
+  onOpenSigninModalRef.current = onOpenSigninModal;
+  const describeAppPlayers = useAppContext((v) => v.requestHelpers.describeAppPlayers);
+  const describeAppPlayersRef = useRef(describeAppPlayers);
+  describeAppPlayersRef.current = describeAppPlayers;
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetUserStateRef = useRef(onSetUserState);
   onSetUserStateRef.current = onSetUserState;
@@ -2683,6 +2690,9 @@ export function useHostBridge({
               title: activeBuild.title,
               username: activeBuild.username,
               viewer: getViewerInfo(previewAuth),
+              // Twinkle.auth.surface: twin-kle.com (and previews), or the
+              // app's own address or domain (the lite host)
+              surface: authHostRef?.current?.surface || 'twinkle',
               mount: mountContextRef.current,
               launchTarget: launchTargetRef.current,
               capabilities: capabilitySnapshotRef.current,
@@ -3403,6 +3413,56 @@ export function useHostBridge({
           case 'viewer:get':
             response = { viewer: getViewerInfo(previewAuth) };
             break;
+
+          // Twinkle.auth (sign-in for every Lumine app, every account mode)
+          case 'auth:sign-in':
+          case 'auth:sign-up': {
+            const liteAuth = authHostRef?.current;
+            if (getViewerInfo(previewAuth).isLoggedIn) {
+              response = { alreadySignedIn: true };
+            } else if (liteAuth) {
+              await (type === 'auth:sign-up' ? liteAuth.signUp() : liteAuth.signIn());
+              response = { opened: true };
+            } else {
+              // twin-kle.com: the website's own sign-in box
+              onOpenSigninModalRef.current?.();
+              response = { opened: true };
+            }
+            break;
+          }
+
+          case 'auth:sign-out': {
+            const liteAuth = authHostRef?.current;
+            if (!liteAuth) {
+              response = { signedOut: false, reason: 'twinkle_session' };
+            } else {
+              await liteAuth.signOut();
+              response = { signedOut: true };
+            }
+            break;
+          }
+
+          case 'auth:describe-players': {
+            const ids = Array.isArray(payload?.ids) ? payload.ids.slice(0, 100) : [];
+            response = await describeAppPlayersRef.current({
+              buildId: activeBuild.id,
+              ids
+            });
+            break;
+          }
+
+          case 'ai:coverage': {
+            const liteAuth = authHostRef?.current;
+            const viewer = getViewerInfo(previewAuth);
+            if (!viewer.isLoggedIn) {
+              response = { payer: 'none', reason: 'guest', message: 'Sign in to use AI here.' };
+            } else if (liteAuth && viewer.accountKind !== 'member') {
+              response = await liteAuth.aiCoverage();
+            } else {
+              response = { payer: 'member', message: null };
+            }
+            break;
+          }
 
           case 'app:get-info':
             // Host-computed app identity so a build can build its own canonical
@@ -6614,6 +6674,7 @@ export function useHostBridge({
     appMcpSessionId,
     appHelperBridgeRef,
     appHelperEventsRef,
+    authHostRef,
     guestLeaderboardsReadOnly,
     guestPrivateDbRef,
     appHelperRelayStateRef,

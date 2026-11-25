@@ -44,7 +44,10 @@ import type {
   AppHelperRelayState
 } from '~/containers/Build/PreviewPanel/types/appHelperTypes';
 import type { BuildRuntimeObservationState } from '~/containers/Build/types/runtimeObservationTypes';
-import type { GuestPrivateDb } from '~/containers/Build/PreviewPanel/types/previewHostBridgeTypes';
+import type {
+  GuestPrivateDb,
+  LiteAuthHost
+} from '~/containers/Build/PreviewPanel/types/previewHostBridgeTypes';
 import { createLiteCoinGate } from './liteCoins';
 
 export const LITE_HOST_BRIDGE_LOAD_ID = 'lumine-host';
@@ -228,6 +231,8 @@ export function LiteHostBridge({
   retiredRef,
   onGuestRestricted,
   guestStore,
+  accountKind,
+  authHost,
   onReady
 }: {
   info: LiteHostBuildInfo;
@@ -238,6 +243,10 @@ export function LiteHostBridge({
   onGuestRestricted: () => void;
   // A signed-out visitor's private storage on this device (guestStore.ts).
   guestStore: GuestPrivateDb | null;
+  // Twinkle.auth: the signed-in player's kind, and the lite host's own
+  // sign-in, sign-up and sign-out
+  accountKind: 'member' | 'app' | 'linked' | null;
+  authHost: LiteAuthHost;
   // Runs after the shared bridge listens (to replay messages that arrived
   // before this script).
   onReady?: () => void;
@@ -317,6 +326,10 @@ export function LiteHostBridge({
   const buildApiTokenRef = useRef<any>(null);
   const onGuestRestrictedRef = useRef(onGuestRestricted);
   onGuestRestrictedRef.current = onGuestRestricted;
+  const accountKindRef = useRef<'member' | 'app' | 'linked' | null>(accountKind);
+  accountKindRef.current = accountKind;
+  const authHostRef = useRef<LiteAuthHost | null>(authHost);
+  authHostRef.current = authHost;
   const previewAuth = useRef({
     buildRef,
     isOwnerRef,
@@ -328,6 +341,7 @@ export function LiteHostBridge({
     buildApiTokenRef,
     getBuildApiTokenRef,
     // twin-kle.com shows its guest banner; here Twinkle's sign-in sheet.
+    accountKindRef,
     setGuestRestrictionBannerVisible: ((visible: any) => {
       if (visible) onGuestRestrictedRef.current();
     }) as any
@@ -439,7 +453,8 @@ export function LiteHostBridge({
     requestBuildLiveSafetyStopRef,
     onAppTextEntryRef,
     guestPrivateDbRef,
-    guestLeaderboardsReadOnly: true
+    guestLeaderboardsReadOnly: true,
+    authHostRef
   });
 
   const onReadyRef = useRef(onReady);

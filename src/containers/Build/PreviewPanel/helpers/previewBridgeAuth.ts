@@ -39,6 +39,10 @@ export interface PreviewHostBridgeAuth {
   buildApiTokenRef: RefObject<BuildApiTokenState | null>;
   getBuildApiTokenRef: AsyncRequestRef;
   setGuestRestrictionBannerVisible: Dispatch<SetStateAction<boolean>>;
+  // An app's own address (src/liteHost): what kind of account the signed-in
+  // player has (Twinkle.auth). On twin-kle.com every signed-in viewer is a
+  // Twinkle member.
+  accountKindRef?: RefObject<'member' | 'app' | 'linked' | null>;
 }
 
 export function isGuestViewerActive(previewAuth: PreviewHostBridgeAuth) {
@@ -144,7 +148,8 @@ export function getViewerInfo(previewAuth: PreviewHostBridgeAuth) {
       isLoggedIn: true,
       isOwner: Boolean(previewAuth.isOwnerRef.current),
       isGuest: false,
-      ageTier: previewAuth.ageTierRef.current || 'kid'
+      ageTier: previewAuth.ageTierRef.current || 'kid',
+      accountKind: previewAuth.accountKindRef?.current || 'member'
     };
   }
 

@@ -102,6 +102,7 @@ export default function AppSignUp({
       <div className={stepWrapClass}>
         <GuardianConsent
           lang={lang}
+          variant="card"
           inviteToken={pass.token}
           birthYear={birth.birthYear}
           birthMonth={birth.birthMonth}
@@ -125,11 +126,12 @@ export default function AppSignUp({
         t={t}
         appTitle={appTitle}
         onBack={() => setStep(consent ? 'guardian' : 'birth')}
-        onSubmit={async ({ username, password }) => {
+        onSubmit={async ({ username, password, email }) => {
           const account = await signupFromApp({
             invite: pass.token,
             username,
             password,
+            email,
             birthYear: birth.birthYear,
             birthMonth: birth.birthMonth,
             guardianConsent: consent || undefined
@@ -240,11 +242,12 @@ function AccountStep({
   t: SignInText;
   appTitle: string;
   onBack: () => void;
-  onSubmit: (values: { username: string; password: string }) => Promise<void>;
+  onSubmit: (values: { username: string; password: string; email: string }) => Promise<void>;
 }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   return (
@@ -256,10 +259,11 @@ function AccountStep({
         const name = username.trim();
         if (!isValidUsername(name)) return setError(t.badUsername);
         if (password.trim().length < 5) return setError(t.shortPassword);
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError(t.badEmail);
         setBusy(true);
         setError('');
         try {
-          await onSubmit({ username: name, password });
+          await onSubmit({ username: name, password, email });
         } catch (err) {
           setError(getErrorMessage(err, t.failed));
           setBusy(false);
@@ -302,6 +306,11 @@ function AccountStep({
         </span>
         <small>{t.passwordHint}</small>
       </label>
+      <label className={fieldClass}>
+        <span>{t.email}</span>
+        <input type="email" value={email} autoComplete="email" onChange={(event) => setEmail(event.target.value.trim())} />
+        <small>{t.emailHint}</small>
+      </label>
       {error && <p className={errorClass}>{error}</p>}
       <button type="submit" disabled={busy || !username || !password} className={primaryClass}>
         {busy ? t.creating : t.create}
@@ -335,12 +344,12 @@ const formClass = css`
 const stepTitleClass = css`
   margin: 4px 0 0;
   font-size: 20px;
-  text-align: center;
+  font-weight: 750;
 `;
 const mutedClass = css`
   margin: 0 0 6px;
-  color: #5d5d6e;
-  text-align: center;
+  color: #5f6270;
+  font-size: 15px;
   line-height: 1.45;
 `;
 const rowClass = css`
@@ -369,6 +378,12 @@ const fieldClass = css`
     font: inherit;
     font-weight: 400;
     font-size: 16px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    &:focus {
+      outline: none;
+      border-color: #2f7be0;
+      box-shadow: 0 0 0 3px rgba(47, 123, 224, 0.18);
+    }
   }
   small {
     font-weight: 400;
@@ -399,16 +414,27 @@ const errorClass = css`
 `;
 const primaryClass = css`
   width: 100%;
+  min-height: 50px;
   margin-top: 6px;
   border: 0;
   border-radius: 999px;
-  padding: 14px;
-  background: #16161f;
+  padding: 12px 18px;
+  background: #2f7be0;
   color: #fff;
   font: inherit;
   font-weight: 700;
   font-size: 16px;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 60, 140, 0.25);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  &:hover:not(:disabled) {
+    background: #2468c4;
+    box-shadow: 0 4px 14px rgba(36, 104, 196, 0.3);
+  }
+  &:focus-visible {
+    outline: 3px solid rgba(47, 123, 224, 0.35);
+    outline-offset: 2px;
+  }
   &:disabled {
     opacity: 0.45;
     cursor: default;
@@ -416,15 +442,23 @@ const primaryClass = css`
 `;
 const secondaryClass = css`
   width: 100%;
-  border: 0;
+  min-height: 50px;
+  border: 1px solid #cfd3de;
   border-radius: 999px;
-  padding: 14px;
-  background: #f0f0f6;
-  color: #16161f;
+  padding: 12px 18px;
+  background: #fff;
+  color: #14151c;
   font: inherit;
   font-weight: 700;
   font-size: 16px;
   cursor: pointer;
+  &:hover:not(:disabled) {
+    background: #f6f7fb;
+  }
+  &:focus-visible {
+    outline: 3px solid rgba(47, 123, 224, 0.35);
+    outline-offset: 2px;
+  }
 `;
 const fineClass = css`
   margin: 2px 0 0;

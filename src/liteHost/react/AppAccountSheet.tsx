@@ -12,7 +12,7 @@ import { needsGuardianConsent, clearGuardianConsent, getGuardianConsent } from '
 import type { LiteHostConfig, SessionStore } from '../session';
 import type { LiteHostLang, LiteHostText } from '../text';
 
-type View = 'signin' | 'birth' | 'guardian' | 'account';
+type View = 'signin' | 'birth' | 'guardian' | 'account' | 'forgot' | 'reset' | 'email';
 const PASS_KEY = (buildId: number) => `lumine-app-account-pass:${buildId}`;
 
 function readPass(buildId: number): string | null {
@@ -30,6 +30,8 @@ export default function AppAccountSheet({
   lang,
   session,
   twinkleToo,
+  initialView = 'signin',
+  resetToken = '',
   onClose
 }: {
   config: LiteHostConfig;
@@ -38,11 +40,16 @@ export default function AppAccountSheet({
   session: SessionStore;
   // an app on both kinds of accounts: Twinkle members may continue with Twinkle
   twinkleToo: boolean;
+  // Twinkle.auth.signUp opens straight on "create an account"
+  // 'reset': opened from a password-reset email (#lumine_reset=…);
+  // 'email': a signed-in app account sets its reset email
+  initialView?: 'signin' | 'birth' | 'reset' | 'email';
+  resetToken?: string;
   onClose: () => void;
 }) {
   const resumedPass = readPass(config.buildId);
   const resumedConsent = resumedPass ? getGuardianConsent(resumedPass) : null;
-  const [view, setView] = useState<View>(resumedConsent ? 'guardian' : 'signin');
+  const [view, setView] = useState<View>(resumedConsent ? 'guardian' : initialView);
   const [pass, setPass] = useState<string | null>(resumedPass);
   const [birth, setBirth] = useState<{ birthYear: number; birthMonth: number } | null>(
     resumedConsent ? { birthYear: resumedConsent.birthYear, birthMonth: resumedConsent.birthMonth } : null
@@ -53,6 +60,8 @@ export default function AppAccountSheet({
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState('');
+  const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const years = useMemo(() => {
     const thisYear = new Date().getUTCFullYear();
@@ -94,7 +103,15 @@ export default function AppAccountSheet({
   }
 
   const title =
-    view === 'signin' ? t.accountSignInTitle(config.title) : t.accountSignUpTitle(config.title);
+    view === 'signin'
+      ? t.accountSignInTitle(config.title)
+      : view === 'forgot'
+        ? t.accountForgotTitle
+        : view === 'reset'
+          ? t.accountResetTitle
+          : view === 'email'
+            ? t.accountEmailTitle
+            : t.accountSignUpTitle(config.title);
   return (
     <div
       className="lh-backdrop"
@@ -127,6 +144,10 @@ export default function AppAccountSheet({
               <span>{t.accountPassword}</span>
               <input type="password" value={password} autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} />
             </label>
+            <button className="lh-text-button" type="button" onClick={() => { setError(''); setNotice(''); setView('forgot'); }}>
+              {t.accountForgot}
+            </button>
+            {notice && <p className="lh-fine">{notice}</p>}
             {error && <p className="lh-error">{error}</p>}
             <div className="lh-actions">
               <button className="lh-primary" type="submit" disabled={busy || !username || !password}>
@@ -140,14 +161,15 @@ export default function AppAccountSheet({
               <>
                 <div className="lh-or">{t.accountOr}</div>
                 <button
-                  className="lh-secondary lh-wide"
+                  className="lh-twinkle-button"
                   type="button"
                   onClick={() => {
                     onClose();
                     void session.signIn();
                   }}
                 >
-                  {t.accountTwinkle}
+                  <img className="lh-twinkle-mark" src={`${config.siteOrigin}/icon-192.png`} alt="" width={24} height={24} />
+                  <span>{t.accountTwinkle}</span>
                 </button>
               </>
             )}
@@ -217,6 +239,7 @@ export default function AppAccountSheet({
                   birthYear: birth.birthYear,
                   birthMonth: birth.birthMonth,
                   ...(pass ? { invite: pass } : {}),
+                  ...(email ? { email } : {}),
                   ...(consent ? { guardianConsentId: consent.consentId, guardianConsentSecret: consent.secret } : {})
                 });
                 try {
@@ -239,6 +262,11 @@ export default function AppAccountSheet({
               <input type="password" value={password} autoComplete="new-password" onChange={(event) => setPassword(event.target.value)} />
               <small>{t.accountPasswordHint}</small>
             </label>
+            <label className="lh-field">
+              <span>{t.accountEmail}</span>
+              <input type="email" value={email} autoComplete="email" onChange={(event) => setEmail(event.target.value.trim())} />
+              <small>{t.accountEmailHint}</small>
+            </label>
             {error && <p className="lh-error">{error}</p>}
             <div className="lh-actions">
               <button className="lh-primary" type="submit" disabled={busy || username.trim().length < 3 || password.length < 5}>
@@ -249,6 +277,85 @@ export default function AppAccountSheet({
             <p className="lh-fine">
               <a href={`${config.siteOrigin}/privacy`} target="_blank" rel="noopener noreferrer">{t.accountPrivacy}</a>
             </p>
+          </form>
+        )}
+        {view === 'forgot' && (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void run(async () => {
+                await session.post('/build/app-account/password-reset', {
+                  buildId: config.buildId,
+                  username: username.trim()
+                });
+                setNotice(t.accountForgotSent);
+                setView('signin');
+              });
+            }}
+          >
+            <p>{t.accountForgotBody}</p>
+            <label className="lh-field">
+              <span>{t.accountUsername}</span>
+              <input autoFocus value={username} autoComplete="username" autoCapitalize="none" spellCheck={false} onChange={(event) => setUsername(event.target.value.replace(/\s/g, ''))} />
+            </label>
+            {error && <p className="lh-error">{error}</p>}
+            <div className="lh-actions">
+              <button className="lh-primary" type="submit" disabled={busy || username.trim().length < 3}>{t.accountForgotSend}</button>
+              <button className="lh-secondary" type="button" onClick={() => setView('signin')}>{t.accountBack}</button>
+            </div>
+          </form>
+        )}
+        {view === 'reset' && (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void run(async () => {
+                const result = await session.post('/build/app-account/password-reset/confirm', {
+                  buildId: config.buildId,
+                  token: resetToken,
+                  password
+                });
+                setUsername(String(result?.username || ''));
+                setPassword('');
+                setNotice(t.accountResetDone);
+                setView('signin');
+              });
+            }}
+          >
+            <label className="lh-field">
+              <span>{t.accountPassword}</span>
+              <input autoFocus type="password" value={password} autoComplete="new-password" onChange={(event) => setPassword(event.target.value)} />
+              <small>{t.accountPasswordHint}</small>
+            </label>
+            {error && <p className="lh-error">{error}</p>}
+            <div className="lh-actions">
+              <button className="lh-primary" type="submit" disabled={busy || password.length < 5}>{t.accountResetSave}</button>
+            </div>
+          </form>
+        )}
+        {view === 'email' && (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void run(async () => {
+                const token = await session.accessToken();
+                await session.post(`/build/${config.buildId}/app-session/email`, { email }, token || undefined);
+                setNotice(t.accountEmailSaved);
+                window.setTimeout(onClose, 900);
+              });
+            }}
+          >
+            <p>{t.accountEmailBody}</p>
+            <label className="lh-field">
+              <span>{t.accountEmail}</span>
+              <input autoFocus type="email" value={email} autoComplete="email" onChange={(event) => setEmail(event.target.value.trim())} />
+            </label>
+            {notice && <p className="lh-fine">{notice}</p>}
+            {error && <p className="lh-error">{error}</p>}
+            <div className="lh-actions">
+              <button className="lh-primary" type="submit" disabled={busy}>{t.accountEmailSave}</button>
+              <button className="lh-secondary" type="button" onClick={onClose}>{t.accountBack}</button>
+            </div>
           </form>
         )}
       </div>

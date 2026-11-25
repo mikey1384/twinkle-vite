@@ -109,8 +109,14 @@ body {
 .lh-sheet p { margin: 0 0 16px; color: var(--lh-muted); font-size: 16.8px; }
 .lh-sheet-mark {
   width: 41.6px; height: 41.6px; border-radius: 14.4px; display: grid; place-items: center;
-  background: linear-gradient(135deg, #8b7bff, #4b3cf0); color: #fff; font-size: 19.2px; margin-bottom: 14.4px;
+  background: #4b3cf0; color: #fff; font-size: 19.2px; margin-bottom: 14.4px;
 }
+/* the Twinkle sign-in sheet's head: which app is asking */
+.lh-signin-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.lh-signin-head strong { display: block; font-size: 16px; line-height: 1.3; }
+.lh-signin-head span { display: block; font-size: 13.6px; color: var(--lh-muted); }
+.lh-signin-thumb { width: 48px; height: 48px; border-radius: 14px; object-fit: cover; margin: 0; flex: none; }
+.lh-signin h2 { font-size: 24px; letter-spacing: -0.01em; }
 .lh-actions { display: flex; flex-direction: column; gap: 8.8px; margin-top: 6.4px; }
 .lh-primary, .lh-secondary {
   appearance: none; border: 0; border-radius: 999px; padding: 13.6px 16px; font: inherit; font-size: 16.8px;
@@ -119,6 +125,21 @@ body {
 .lh-primary { background: var(--lh-ink); color: #fff; }
 .lh-primary[disabled] { opacity: 0.5; cursor: default; }
 .lh-secondary { background: #f1f1f6; color: var(--lh-ink); }
+/* "Continue with Twinkle" (ui.ts twinkleButton, AppAccountSheet): a solid
+   pill with Twinkle's mark, legible on the white sheet whatever game is
+   behind it. */
+.lh-twinkle-button {
+  appearance: none; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;
+  min-height: 52px; padding: 12px 20px; border: 1px solid #d3d6df; border-radius: 999px; background: #fff;
+  color: var(--lh-ink); font: inherit; font-size: 16.8px; font-weight: 650; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 20, 40, 0.08);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.lh-twinkle-button:hover:not([disabled]) { background: #f7f8fb; box-shadow: 0 4px 14px rgba(20, 20, 40, 0.12); }
+.lh-twinkle-button:active:not([disabled]) { transform: scale(0.985); }
+.lh-twinkle-button:focus-visible { outline: 3px solid rgba(47, 123, 224, 0.4); outline-offset: 2px; }
+.lh-twinkle-button[disabled] { opacity: 0.6; cursor: default; }
+.lh-twinkle-mark { width: 24px; height: 24px; border-radius: 7px; flex: none; }
 /* an app's own account sheet (react/AppAccountSheet.tsx) */
 .lh-account { max-height: 92vh; max-height: 92dvh; overflow-y: auto; }
 .lh-account-thumb { width: 56px; height: 56px; border-radius: 14.4px; object-fit: cover; margin-bottom: 12px; }
@@ -133,6 +154,7 @@ body {
 .lh-error { color: #b42318 !important; font-size: 14.4px !important; }
 .lh-or { text-align: center; color: var(--lh-muted); font-size: 14.4px; margin: 12px 0 8px; }
 .lh-wide { width: 100%; }
+.lh-text-button { appearance: none; border: 0; background: none; padding: 2px 0 10px; color: var(--lh-muted); font: inherit; font-size: 14.4px; text-decoration: underline; cursor: pointer; }
 .lh-guardian { padding-top: 4px; }
 .lh-fine { font-size: 14.4px !important; color: var(--lh-muted); margin: 14.4px 0 0 !important; }
 .lh-menu { padding-top: 17.6px; }

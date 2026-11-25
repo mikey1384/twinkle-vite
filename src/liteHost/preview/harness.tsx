@@ -209,13 +209,15 @@ function Harness() {
       );
     case 'signin':
       return (
-        <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
-          <SignInCardView app={{ title: 'Star Catcher', ownerUsername: 'mikey', thumbnailUrl: null }} host="star-catcher.lumine.app" originAllowed error="" userId={1} username="lily" busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} />
-        </div>
+        <LiteHostProviders requestHelpers={FAKE_REQUESTS} viewer={null} onOpenSignin={noop}>
+          <SignInCardView app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: null }} host="the-adventure-of-a-red-square.lumine.app" originAllowed error="" userId={1} username="lily" busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} />
+        </LiteHostProviders>
       );
     case 'signin-new':
       return (
+        <LiteHostProviders requestHelpers={FAKE_REQUESTS} viewer={null} onOpenSignin={noop}>
         <SignInCardView app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: null }} host="the-adventure-of-a-red-square.lumine.app" originAllowed error="" userId={null} username={null} busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} onCreateAccount={() => { window.location.search = window.location.search.replace('signin-new', 'signup'); }} />
+        </LiteHostProviders>
       );
     case 'signup': {
       return (
@@ -253,7 +255,9 @@ function Harness() {
       );
     case 'link':
       return (
+        <LiteHostProviders requestHelpers={FAKE_REQUESTS} viewer={null} onOpenSignin={noop}>
         <SignInCardView app={{ title: 'Star Catcher', ownerUsername: 'mikey', thumbnailUrl: null }} host="star-catcher.lumine.app" originAllowed error="" userId={1} username="lily" busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} link />
+        </LiteHostProviders>
       );
     case 'players':
       return (
