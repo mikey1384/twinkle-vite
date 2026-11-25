@@ -2,6 +2,7 @@
 // See twinkle-api helpers/build/appHosting/appSession.ts for the whole flow.
 // The app pass and refresh token live in this origin's localStorage (the
 // app's code runs on another origin and can never read them).
+import { getTwinkleDeviceId } from '~/helpers/userDataHelpers';
 
 export interface LiteHostConfig {
   v: number;
@@ -95,6 +96,8 @@ export function createSessionStore(
       method: 'POST',
       headers: {
         'content-type': 'application/json',
+        // sign-ups' under-14 marks and alt checks key on the device too
+        'x-twinkle-device-id': getTwinkleDeviceId(),
         ...(token ? { authorization: token } : {})
       },
       body: JSON.stringify(body)

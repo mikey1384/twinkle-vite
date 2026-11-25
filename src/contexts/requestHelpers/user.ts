@@ -3493,7 +3493,10 @@ export default function userRequestHelpers({
             // the guardian email leads with Korean for a Korean browser
             language:
               (typeof navigator !== 'undefined' && navigator.language) || ''
-          }
+          },
+          // an app sign-up's under-14 answer is remembered for this device
+          // too (appSignupAgeMarks.ts), not just the network
+          { headers: { 'x-twinkle-device-id': getTwinkleDeviceId() } }
         );
         trackEvent('guardian_consent_request');
         return data as {
