@@ -21,7 +21,7 @@ import SignInCardView from '~/containers/LumineAppSignIn/SignInCardView';
 import AppSignUp from '~/containers/LumineAppSignIn/AppSignUp';
 import { SIGNIN_TEXT, signInLang } from '~/containers/LumineAppSignIn/text';
 import { LiteHostProviders } from '../react/LiteHost';
-import { askSignIn, mountBadge, showGuestHint } from '../ui';
+import { askSignIn, mountBadge, showAiBanner, showGuestHint } from '../ui';
 import { LITE_HOST_TEXT } from '../text';
 import AppAccountSheet from '../react/AppAccountSheet';
 import AppPlayers from '~/components/Build/AppAddress/AppPlayers';
@@ -348,6 +348,17 @@ function BadgeMenu() {
       }
     });
     if (params.get('open') !== '0') window.setTimeout(() => badge.click(), 50);
+    // ?ai=1: the AI banner a guest (or an app-only player) sees
+    if (params.get('ai') === '1') {
+      const t = LITE_HOST_TEXT[lang];
+      showAiBanner({
+        t,
+        buildId: 2,
+        cta: signed && kind === 'app' ? t.aiBannerLinkCta : t.aiBannerCta,
+        force: true,
+        onAction: () => {}
+      });
+    }
   }, []);
   return null;
 }

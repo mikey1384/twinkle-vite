@@ -3456,7 +3456,13 @@ export function useHostBridge({
             const liteAuth = authHostRef?.current;
             const viewer = getViewerInfo(previewAuth);
             if (!viewer.isLoggedIn) {
-              response = { payer: 'none', reason: 'guest', message: 'Sign in to use AI here.' };
+              // Twinkle AI is for Twinkle members (the lite host shows the
+              // banner offering a free account)
+              response = {
+                payer: 'none',
+                reason: 'twinkle_account_required',
+                message: 'This app’s AI is for Twinkle members. Make a free Twinkle account to use it.'
+              };
             } else if (liteAuth && viewer.accountKind !== 'member') {
               response = await liteAuth.aiCoverage();
             } else {
@@ -6517,6 +6523,16 @@ export function useHostBridge({
           window.setTimeout(performHostUpdateReload, 0);
         }
       } catch (error: any) {
+        // Twinkle AI is for Twinkle members: on the lite host, a guest's or
+        // an app-only player's AI action shows the AI banner (before the
+        // generic sign-in hint, which then stays quiet)
+        if (
+          typeof type === 'string' &&
+          type.startsWith('ai:') &&
+          (error?.code === 'guest_restricted' || error?.code === 'twinkle_account_required')
+        ) {
+          previewAuth.onAiNeedsAccount?.();
+        }
         if (
           error?.code === 'guest_restricted' &&
           isGuestViewerActive(previewAuth)

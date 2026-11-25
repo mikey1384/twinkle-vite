@@ -22,7 +22,16 @@ import {
   type AppSession,
   type LiteHostConfig
 } from '../session';
-import { askSignIn, mountBadge, showGuestHint, showReport, showToast, type MenuExtra } from '../ui';
+import {
+  askSignIn,
+  hideAiBanner,
+  mountBadge,
+  showAiBanner,
+  showGuestHint,
+  showReport,
+  showToast,
+  type MenuExtra
+} from '../ui';
 import AppAccountSheet from './AppAccountSheet';
 import { createGuestStore } from '../guestStore';
 import { LITE_HOST_TEXT, liteHostLang } from '../text';
@@ -233,7 +242,7 @@ async function start() {
     signOut: () => session.signOut(),
     async aiCoverage() {
       const token = await session.accessToken();
-      if (!token) return { payer: 'none', reason: 'guest', message: null };
+      if (!token) return { payer: 'none', reason: 'twinkle_account_required', message: null };
       const response = await fetch(`${config.apiOrigin}/build/${config.buildId}/app-session/ai-coverage`, {
         headers: { authorization: token }
       });
@@ -251,6 +260,33 @@ async function start() {
   };
   // the app needed an account for something in the background
   const hintSignIn = () => showGuestHint({ t, onSignIn: () => void openSignIn() });
+  // Twinkle AI is for Twinkle members (Mikey 2026-11-26). A guest, or an
+  // app account not linked to Twinkle, sees the AI banner: up front when the
+  // app's code calls Twinkle.ai (config.usesAi), and again whenever the app
+  // tries an AI action. Only where a Twinkle account can be used here (not
+  // in an app on its own accounts only).
+  const isExternal = (signedIn: AppSession | null) =>
+    !signedIn || (signedIn.appPlayer?.kind === 'app' && !signedIn.appPlayer.linked);
+  const refreshAiBanner = ({ force = false }: { force?: boolean } = {}) =>
+    accountModeReady.then(() => {
+      const signedIn = session.get();
+      if (!isExternal(signedIn) || accountMode === 'app' || (!force && !config.usesAi)) {
+        hideAiBanner();
+        return;
+      }
+      const appAccount = Boolean(signedIn);
+      showAiBanner({
+        t,
+        buildId: config.buildId,
+        cta: appAccount ? t.aiBannerLinkCta : t.aiBannerCta,
+        force,
+        onAction: () => {
+          if (appAccount) void linkTwinkle();
+          else void session.signIn();
+        }
+      });
+    });
+  const onAiNeedsAccount = () => void refreshAiBanner({ force: true });
   // The signed-in member's picture for the badge menu (from app-session/me).
   const viewerPictureRef: { current: string | null } = { current: null };
 
@@ -268,7 +304,9 @@ async function start() {
       const unsubscribe = session.subscribe((next) => {
         storeSessionCredentials(next);
         setCurrent(next);
+        void refreshAiBanner();
       });
+      void refreshAiBanner();
       return () => {
         unsubscribe();
       };
@@ -401,6 +439,7 @@ async function start() {
             metaRef={metaRef}
             retiredRef={retiredRef}
             onGuestRestricted={onGuestRestricted}
+            onAiNeedsAccount={onAiNeedsAccount}
             guestStore={current ? null : guestStore}
             accountKind={accountKind}
             authHost={authHost}

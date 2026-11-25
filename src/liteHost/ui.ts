@@ -78,6 +78,71 @@ export function showGuestHint({ t, onSignIn }: { t: LiteHostText; onSignIn: () =
   window.setTimeout(remove, 6000);
 }
 
+// "This app uses AI. Make a free Twinkle account to use it." Twinkle AI is
+// for Twinkle members (Mikey 2026-11-26); guests and an app's own accounts
+// see this, with no work from the app's maker. A slim bar at the top:
+// dismissible (remembered for this tab and app), back whenever the app tries
+// an AI action (force). The button signs in or up on twin-kle.com (or links
+// Twinkle, for an app account).
+let aiBannerNode: HTMLElement | null = null;
+const aiBannerDismissKey = (buildId: number) => `lumine-ai-banner-dismissed:${buildId}`;
+export function showAiBanner({
+  t,
+  buildId,
+  cta,
+  onAction,
+  force = false
+}: {
+  t: LiteHostText;
+  buildId: number;
+  cta: string;
+  onAction: () => void;
+  force?: boolean;
+}) {
+  if (aiBannerNode) {
+    if (force) {
+      aiBannerNode.classList.remove('lh-ai-banner-nudge');
+      void aiBannerNode.offsetWidth;
+      aiBannerNode.classList.add('lh-ai-banner-nudge');
+    }
+    return;
+  }
+  if (!force) {
+    try {
+      if (window.sessionStorage.getItem(aiBannerDismissKey(buildId))) return;
+    } catch {
+      /* no storage: show it */
+    }
+  }
+  const action = el('button', { class: 'lh-ai-banner-cta', type: 'button' }, [cta]);
+  const close = el('button', { class: 'lh-ai-banner-close', type: 'button', 'aria-label': t.aiBannerClose }, ['×']);
+  const banner = el('div', { class: 'lh-ai-banner', role: 'status' }, [
+    el('span', { class: 'lh-ai-banner-mark', 'aria-hidden': 'true' }, ['✦']),
+    el('span', { class: 'lh-ai-banner-text' }, [t.aiBanner]),
+    action,
+    close
+  ]);
+  action.addEventListener('click', () => {
+    hideAiBanner();
+    onAction();
+  });
+  close.addEventListener('click', () => {
+    try {
+      window.sessionStorage.setItem(aiBannerDismissKey(buildId), '1');
+    } catch {
+      /* this page only */
+    }
+    hideAiBanner();
+  });
+  document.body.append(banner);
+  aiBannerNode = banner;
+}
+
+export function hideAiBanner() {
+  aiBannerNode?.remove();
+  aiBannerNode = null;
+}
+
 // "Continue with Twinkle", drawn like the big sign-in buttons people know
 // (a solid pill with the brand's mark and label): Twinkle's icon, served
 // from twin-kle.com.

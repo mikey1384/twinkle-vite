@@ -39,6 +39,9 @@ export interface PreviewHostBridgeAuth {
   buildApiTokenRef: RefObject<BuildApiTokenState | null>;
   getBuildApiTokenRef: AsyncRequestRef;
   setGuestRestrictionBannerVisible: Dispatch<SetStateAction<boolean>>;
+  // the lite host (an app's own address): an AI action a guest or an
+  // app-only player can't make shows "make a free Twinkle account"
+  onAiNeedsAccount?: () => void;
   // An app's own address (src/liteHost): what kind of account the signed-in
   // player has (Twinkle.auth). On twin-kle.com every signed-in viewer is a
   // Twinkle member.

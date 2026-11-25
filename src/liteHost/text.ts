@@ -45,6 +45,11 @@ export const LITE_HOST_TEXT = {
     neverPassword: 'You’ll sign in or sign up on twin-kle.com. Twinkle never asks for your password inside an app.',
     guestHint: 'Playing as a guest. Sign in to save your progress.',
     guestHintCta: 'Sign in',
+    // the AI banner (guests and app-only players in an app that uses AI)
+    aiBanner: 'This app uses AI. Make a free Twinkle account to use it.',
+    aiBannerCta: 'Make a free account',
+    aiBannerLinkCta: 'Link Twinkle',
+    aiBannerClose: 'Close',
     carriedOver: 'Your guest progress was saved to your account.',
     // app accounts (an app on its own accounts): the app's own words only
     accountSignInTitle: (title: string) => `Sign in to ${title}`,
@@ -141,6 +146,10 @@ export const LITE_HOST_TEXT = {
     neverPassword: '로그인과 가입은 twin-kle.com에서 해요. 트윈클은 앱 안에서 비밀번호를 묻지 않아요.',
     guestHint: '지금은 게스트예요. 로그인하면 진행 상황이 저장돼요.',
     guestHintCta: '로그인',
+    aiBanner: '이 앱은 AI를 사용해요. 무료 트윈클 계정을 만들면 쓸 수 있어요.',
+    aiBannerCta: '무료 계정 만들기',
+    aiBannerLinkCta: '트윈클 연결하기',
+    aiBannerClose: '닫기',
     carriedOver: '게스트로 하던 진행 상황을 계정으로 옮겼어요.',
     accountSignInTitle: (title: string) => `${title} 로그인`,
     accountSignUpTitle: (title: string) => `${title} 계정 만들기`,

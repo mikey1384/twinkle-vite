@@ -19,6 +19,9 @@ export interface LiteHostConfig {
   apiOrigin: string;
   siteOrigin: string;
   publishedAt: number;
+  // the app's code calls Twinkle.ai (the API scans it at publish): the AI
+  // banner shows up front for guests and app-only players
+  usesAi?: boolean;
 }
 
 export interface AppSession {

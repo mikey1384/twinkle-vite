@@ -230,6 +230,7 @@ export function LiteHostBridge({
   metaRef,
   retiredRef,
   onGuestRestricted,
+  onAiNeedsAccount,
   guestStore,
   accountKind,
   authHost,
@@ -241,6 +242,8 @@ export function LiteHostBridge({
   metaRef: LiteFrameMetaRef;
   retiredRef: MutableRefObject<PreviewFrameRetiredHandler | null>;
   onGuestRestricted: () => void;
+  // an AI action from a guest or an app-only player: the AI banner
+  onAiNeedsAccount?: () => void;
   // A signed-out visitor's private storage on this device (guestStore.ts).
   guestStore: GuestPrivateDb | null;
   // Twinkle.auth: the signed-in player's kind, and the lite host's own
@@ -326,6 +329,11 @@ export function LiteHostBridge({
   const buildApiTokenRef = useRef<any>(null);
   const onGuestRestrictedRef = useRef(onGuestRestricted);
   onGuestRestrictedRef.current = onGuestRestricted;
+  const onAiNeedsAccountRef = useRef(onAiNeedsAccount);
+  onAiNeedsAccountRef.current = onAiNeedsAccount;
+  // the sign-in hint waits a tick, so an AI action shows the AI banner
+  // instead (onAiNeedsAccount runs first, in the bridge's catch)
+  const aiBannerShownAtRef = useRef(0);
   const accountKindRef = useRef<'member' | 'app' | 'linked' | null>(accountKind);
   accountKindRef.current = accountKind;
   const authHostRef = useRef<LiteAuthHost | null>(authHost);
@@ -343,8 +351,17 @@ export function LiteHostBridge({
     // twin-kle.com shows its guest banner; here Twinkle's sign-in sheet.
     accountKindRef,
     setGuestRestrictionBannerVisible: ((visible: any) => {
-      if (visible) onGuestRestrictedRef.current();
-    }) as any
+      if (!visible) return;
+      // after the bridge's catch has run (a macrotask, past every await)
+      window.setTimeout(() => {
+        if (Date.now() - aiBannerShownAtRef.current < 1000) return;
+        onGuestRestrictedRef.current();
+      }, 0);
+    }) as any,
+    onAiNeedsAccount: () => {
+      aiBannerShownAtRef.current = Date.now();
+      onAiNeedsAccountRef.current?.();
+    }
   }).current;
 
   const frameSrc = frame.getAttribute('src') || frame.src;
