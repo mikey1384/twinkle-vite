@@ -52,7 +52,7 @@ export default function ArenaPage() {
 
   return (
     <ErrorBoundary componentPath="Arena/Page">
-      <div className={pageCls}>
+      <div className={pageCls} data-welcome-tour="arena">
         {activity !== 'ai-story' && (
           <div className={topBarCls}>
             <button

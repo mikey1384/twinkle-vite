@@ -73,7 +73,7 @@ export default function Earn() {
           </div>
           <ActivitySuggester />
         </section>
-        <section data-scroll-anchor-id="home-earn:bounties">
+        <section data-scroll-anchor-id="home-earn:bounties" data-welcome-tour="apps">
           <Bounties
             onOpenStandings={() => {
               setBoardTab('apps');

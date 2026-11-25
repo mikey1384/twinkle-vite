@@ -611,6 +611,7 @@ export default function Stories() {
         key={`${category}-${subFilter}`}
         style={containerStyle}
         ref={ContainerRef}
+        data-welcome-tour="rewards"
       >
         <TopMenu
           onInputModalButtonClick={(modalType) =>

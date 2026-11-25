@@ -71,6 +71,7 @@ export default function Explore({ category }: { category: string }) {
     <ErrorBoundary componentPath="Explore/index">
       <div
         ref={ContainerRef}
+        data-welcome-tour="videos"
         className={css`
           width: 100%;
           display: flex;

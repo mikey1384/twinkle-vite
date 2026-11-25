@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useWelcomeFocusSurface } from '~/containers/App/WelcomeTour/useWelcomeFocusSurface';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { useAppContext, useNotiContext } from '~/contexts';
@@ -51,6 +52,8 @@ export default function Drill({
   types: string[];
   onBack: () => void;
 }) {
+  // a drill in progress: the welcome tour waits until they leave it
+  useWelcomeFocusSurface();
   const startArenaDrill = useAppContext(
     (v) => v.requestHelpers.startArenaDrill
   );

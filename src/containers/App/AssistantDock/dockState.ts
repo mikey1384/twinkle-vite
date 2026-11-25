@@ -57,6 +57,10 @@ export interface AssistantAskContext {
   // a short excerpt of its text (the server re-reads the real thing; this is
   // only a fallback for things with no page of their own)
   excerpt?: string;
+  // a 'page' asked about from a welcome tour stop: the stop's key (the
+  // server pays for the first tour's questions, twinkle-api
+  // helpers/welcomeTour/freeAllowance.ts)
+  tourStop?: string;
 }
 let askContext: AssistantAskContext | null = null;
 export function getAssistantAskContext() {

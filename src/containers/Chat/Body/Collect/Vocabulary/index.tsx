@@ -316,6 +316,7 @@ export default function Vocabulary({
 
   return (
     <div
+      data-welcome-tour="words"
       style={{
         display: 'flex',
         width: '100%',
