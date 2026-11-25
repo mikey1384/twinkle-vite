@@ -687,6 +687,14 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    async loadDomainStatus({ buildId, hostname }: { buildId: number; hostname?: string; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/domain-status`, { ...auth(), params: { hostname } });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     async loadLatestDomainOrder({ buildId }: { buildId: number; }) {
       try {
         const { data } = await request.get(`${URL}/build/${buildId}/domain-orders/latest`, auth());
@@ -705,7 +713,8 @@ export default function buildRequestHelpers({
     },
     async loadDomainParentOrder({ token }: { token?: string; }) {
       try {
-        const { data } = await request.get(`${URL}/build/domain-orders/parent`, { ...auth(), params: { token } });
+        // the token goes in the body: never in a URL (logs, Referer)
+        const { data } = await request.post(`${URL}/build/domain-orders/parent/view`, { token }, auth());
         return data;
       } catch (error: any) {
         return throwLumineAppHostingError(error, handleError);

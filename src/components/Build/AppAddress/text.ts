@@ -157,7 +157,9 @@ export const ADDRESS_TEXT = {
     notPaidBody: 'Nothing was charged. You can try again anytime.',
     tryAgain: 'Try again',
     close: 'Close',
-    notAvailableHere: (domain: string) => `${domain} isn’t available here. These names are.`
+    notAvailableHere: (domain: string) => `${domain} isn’t available here. These names are.`,
+    remove: 'Remove',
+    removeConfirm: 'Tap again to remove (the app stops opening there)'
   },
   ko: {
     liveAt: '앱 주소',
@@ -294,7 +296,9 @@ export const ADDRESS_TEXT = {
     notPaidBody: '아무 돈도 나가지 않았어요. 언제든 다시 해 볼 수 있어요.',
     tryAgain: '다시 해 보기',
     close: '닫기',
-    notAvailableHere: (domain: string) => `${domain}은(는) 여기서 살 수 없어요. 이 이름들은 살 수 있어요.`
+    notAvailableHere: (domain: string) => `${domain}은(는) 여기서 살 수 없어요. 이 이름들은 살 수 있어요.`,
+    remove: '삭제',
+    removeConfirm: '한 번 더 누르면 삭제돼요 (이 주소로 앱이 열리지 않아요)'
   }
 };
 
@@ -342,7 +346,17 @@ export const PARENT_TEXT = {
     approvedTitle: '감사합니다!',
     approvedBody: (domain: string) => `결제가 끝나면 앱이 ${domain}에서 바로 열려요. 영수증을 이메일로 보내 드릴게요.`,
     declinedTitle: '알겠어요',
-    declinedBody: '아무것도 결제되지 않았어요. 앱은 무료 주소로 계속 열려요.'
+    declinedBody: '아무것도 결제되지 않았어요. 앱은 무료 주소로 계속 열려요.',
+    payingTitle: '결제를 기다리고 있어요',
+    payingBody: '결제 화면을 닫으셨다면 약 35분 뒤 이 페이지에서 다시 동의하고 결제하실 수 있어요.',
+    settingUpTitle: '결제 완료: 주소를 준비하고 있어요',
+    settingUpBody: (domain: string) => `${domain}을(를) 보호자님 이름으로 등록하고 앱에 연결하는 중이에요. 보통 몇 분 걸려요. Name.com에서 오는 이메일 확인 메일의 링크를 15일 안에 눌러 주세요.`,
+    liveTitle: '완료됐어요',
+    liveBody: (domain: string) => `이제 앱이 ${domain}에서 열려요.`,
+    refundTitle: '환불',
+    refundBody: '주소를 등록하지 못해 결제 금액을 전액 환불하고 있어요. Stripe에서 환불이 끝나면 이메일로 알려 드려요.',
+    expiredTitle: '이 링크는 만료됐어요',
+    expiredBody: '아무것도 결제되지 않았어요. 자녀가 새 요청을 보낼 수 있어요.'
   },
   en: {
     kicker: 'Twinkle · For parents',
@@ -383,6 +397,16 @@ export const PARENT_TEXT = {
     approvedTitle: 'Thank you!',
     approvedBody: (domain: string) => `Once payment finishes, the app opens at ${domain}. We’ll email your receipt.`,
     declinedTitle: 'Got it',
-    declinedBody: 'Nothing was charged. The app keeps opening at its free address.'
+    declinedBody: 'Nothing was charged. The app keeps opening at its free address.',
+    payingTitle: 'Waiting for payment',
+    payingBody: 'If you closed the payment page, you can approve and pay again here in about 35 minutes.',
+    settingUpTitle: 'Paid: setting up the address',
+    settingUpBody: (domain: string) => `We’re registering ${domain} in your name and connecting it to the app. This usually takes a few minutes. Please click the link in Name.com’s email-confirmation message within 15 days.`,
+    liveTitle: 'All done',
+    liveBody: (domain: string) => `The app now opens at ${domain}.`,
+    refundTitle: 'Refund',
+    refundBody: 'We couldn’t register the address, so the payment is being refunded in full. We’ll email you once Stripe has completed it.',
+    expiredTitle: 'This link has expired',
+    expiredBody: 'Nothing was charged. Your child can send a new request.'
   }
 };

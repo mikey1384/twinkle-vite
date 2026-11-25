@@ -9,11 +9,14 @@ import ParentConsentView, {
   type RegistrantInput
 } from './ParentConsentView';
 
-// /domain/parent?token=… : a parent approves (or declines) their child's
+// /domain/parent#token=… : a parent approves (or declines) their child's
 // domain purchase and pays (Stripe Checkout). No account needed; opening the
 // page changes nothing, only a button does (mail scanners open links).
 // Korean for a Korean browser, both languages when unknown, the 한국어 /
 // English switch remembered on this device (the guardian page's pattern).
+// The token lives in the #fragment and goes to the API in request bodies
+// only, so it never appears in a URL log or a Referer. The page shows the
+// order's real state and keeps it fresh while payment or setup is running.
 const LANG_KEY = 'twinkle-guardian-lang';
 
 function initialMode(param: string | null): ParentLangMode {
@@ -33,7 +36,8 @@ function initialMode(param: string | null): ParentLangMode {
 export default function DomainParentConsent() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const token = params.get('token') || '';
+  const hashParams = new URLSearchParams(String(location.hash || '').replace(/^#/, ''));
+  const token = hashParams.get('token') || '';
   const loadDomainParentOrder = useAppContext((v) => v.requestHelpers.loadDomainParentOrder);
   const decideDomainParentOrder = useAppContext((v) => v.requestHelpers.decideDomainParentOrder);
   const [mode, setMode] = useState<ParentLangMode>(() => initialMode(params.get('lang')));
@@ -44,9 +48,26 @@ export default function DomainParentConsent() {
 
   useEffect(() => {
     if (!token) return;
-    loadDomainParentOrder({ token })
-      .then((data: any) => setOrder(data?.order || null))
-      .catch((e: any) => setError(e?.message || 'error'));
+    let cancelled = false;
+    let timer = 0;
+    async function load() {
+      try {
+        const data = await loadDomainParentOrder({ token });
+        if (cancelled) return;
+        setOrder(data?.order || null);
+        const status = String(data?.order?.status || '');
+        if (['approved', 'approving', 'paid', 'registering', 'registered', 'failed'].includes(status)) {
+          timer = window.setTimeout(load, 8000);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || 'error');
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
@@ -73,6 +94,24 @@ export default function DomainParentConsent() {
   }
 
   const t = PARENT_TEXT[mode === 'both' ? 'ko' : mode];
+  const status = String(order?.status || '');
+  const stateMessage: { title: string; body: string } | null = !order
+    ? null
+    : done === 'approved'
+      ? { title: t.approvedTitle, body: t.approvedBody(order.domain) }
+      : done === 'declined' || status === 'parent_declined'
+        ? { title: t.declinedTitle, body: t.declinedBody }
+        : ['approved', 'approving'].includes(status)
+          ? { title: t.payingTitle, body: t.payingBody }
+          : ['paid', 'registering', 'registered', 'needs_support'].includes(status)
+            ? { title: t.settingUpTitle, body: t.settingUpBody(order.domain) }
+            : status === 'live'
+              ? { title: t.liveTitle, body: t.liveBody(order.domain) }
+              : ['failed', 'refunded'].includes(status)
+                ? { title: t.refundTitle, body: t.refundBody }
+                : status === 'awaiting_parent'
+                  ? null
+                  : { title: t.expiredTitle, body: t.expiredBody };
   return (
     <div
       className={css`
@@ -82,10 +121,10 @@ export default function DomainParentConsent() {
       `}
     >
       {error && <p style={{ textAlign: 'center', color: '#b42318' }}>{error}</p>}
-      {done && order ? (
+      {stateMessage ? (
         <div style={{ maxWidth: '34rem', margin: '0 auto', background: '#fff', borderRadius: '1.4rem', padding: '1.6rem' }}>
-          <h2>{done === 'approved' ? t.approvedTitle : t.declinedTitle}</h2>
-          <p>{done === 'approved' ? t.approvedBody(order.domain) : t.declinedBody}</p>
+          <h2>{stateMessage.title}</h2>
+          <p>{stateMessage.body}</p>
         </div>
       ) : order ? (
         <ParentConsentView

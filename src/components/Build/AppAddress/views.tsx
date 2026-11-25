@@ -133,11 +133,16 @@ export function AddressCardView({
   onShare,
   onGetOwn,
   getOwnLabel,
-  onRename
+  onRename,
+  ownerDomains,
+  onRemoveDomain
 }: {
   t: AddressText;
   url: string;
   domains: string[];
+  // owner only: every own address with its status, and Remove
+  ownerDomains?: Array<{ id: number; hostname: string; status: string; statusLine?: string }>;
+  onRemoveDomain?: (domainId: number) => void;
   isOwner: boolean;
   copied: boolean;
   onCopy: () => void;
@@ -200,7 +205,10 @@ export function AddressCardView({
           )}
         </div>
       </div>
-      {domains.length > 0 && (
+      {ownerDomains && ownerDomains.length > 0 && onRemoveDomain && (
+        <OwnerDomainList t={t} domains={ownerDomains} onRemove={onRemoveDomain} />
+      )}
+      {!ownerDomains && domains.length > 0 && (
         <div className={fine}>
           {t.alsoAt}:{' '}
           {domains.map((domain) => (
@@ -227,6 +235,58 @@ export function AddressCardView({
   );
 }
 
+function OwnerDomainList({
+  t,
+  domains,
+  onRemove
+}: {
+  t: AddressText;
+  domains: Array<{ id: number; hostname: string; status: string; statusLine?: string }>;
+  onRemove: (domainId: number) => void;
+}) {
+  const [confirming, setConfirming] = useState(0);
+  return (
+    <div style={{ display: 'grid', gap: '0.4rem' }}>
+      {domains.map((domain) => (
+        <div
+          key={domain.id}
+          className={css`
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            font-size: 1rem;
+          `}
+        >
+          {domain.status === 'live' ? (
+            <a href={`https://${domain.hostname}`} target="_blank" rel="noopener noreferrer" style={{ color: ink, fontWeight: 600, overflowWrap: 'anywhere' }}>
+              {domain.hostname} ✓
+            </a>
+          ) : (
+            <span style={{ fontWeight: 600, overflowWrap: 'anywhere' }}>{domain.hostname}</span>
+          )}
+          {domain.status !== 'live' && domain.statusLine && <span className={fine}>{domain.statusLine}</span>}
+          <button
+            type="button"
+            className={quiet}
+            style={{ marginLeft: 'auto', color: confirming === domain.id ? '#b42318' : muted, fontSize: '0.95rem' }}
+            onClick={() => {
+              if (confirming === domain.id) {
+                setConfirming(0);
+                onRemove(domain.id);
+              } else {
+                setConfirming(domain.id);
+              }
+            }}
+          >
+            {confirming === domain.id ? t.removeConfirm : t.remove}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function IntroView({
   t,
   freeHost,
@@ -240,7 +300,8 @@ export function IntroView({
   exampleDomain?: string;
   // absent while buying here is closed: connecting your own stays open
   onFind?: () => void;
-  onHaveOne: () => void;
+  // absent while connecting your own is switched off
+  onHaveOne?: () => void;
   ask?: React.ReactNode;
 }) {
   const example = exampleDomain || `${freeHost.split('.')[0].replace(/-/g, '')}.com`;
@@ -291,9 +352,11 @@ export function IntroView({
             {t.findOne}
           </button>
         )}
-        <button type="button" className={onFind ? secondary : primary} onClick={onHaveOne}>
-          {t.haveOne}
-        </button>
+        {onHaveOne && (
+          <button type="button" className={onFind ? secondary : primary} onClick={onHaveOne}>
+            {t.haveOne}
+          </button>
+        )}
       </div>
       {ask && <div style={{ marginTop: '1rem' }}>{ask}</div>}
     </div>
@@ -346,7 +409,7 @@ export function FindView({
   onQuery: (value: string) => void;
   onSearch: () => void;
   onBuy: (idea: DomainIdeaView) => void;
-  onUseOwn: () => void;
+  onUseOwn?: () => void;
   onMoreIdeas: () => void;
   ask?: React.ReactNode;
   showAdvanced?: boolean;
@@ -409,13 +472,15 @@ export function FindView({
       <div className={note}>
         <strong>{t.honestTitle}</strong>
         {t.honestBody}
-        <div style={{ marginTop: '0.6rem' }}>
-          <button type="button" className={secondary} style={{ padding: '0.6rem 1.1rem' }} onClick={onUseOwn}>
-            {t.useOwnLink}
-          </button>
-        </div>
+        {onUseOwn && (
+          <div style={{ marginTop: '0.6rem' }}>
+            <button type="button" className={secondary} style={{ padding: '0.6rem 1.1rem' }} onClick={onUseOwn}>
+              {t.useOwnLink}
+            </button>
+          </div>
+        )}
       </div>
-      {ideas[0] && <p className={fine} style={{ marginBottom: '0.3rem' }}>{t.renewLine(usd(ideas[0].priceCents))}</p>}
+      {ideas[0] && <p className={fine} style={{ marginBottom: '0.3rem' }}>{t.oneYearLine}</p>}
       <p className={fine}>{t.privacyLine}</p>
       <button type="button" className={quiet} onClick={() => setAdvanced(!advanced)} aria-expanded={advanced}>
         {t.advanced} {advanced ? '▴' : '▾'}

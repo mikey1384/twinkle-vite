@@ -32,7 +32,7 @@ interface AddressInfo {
   url?: string | null;
   customDomainsEnabled?: boolean;
   domainSalesEnabled?: boolean;
-  domains?: Array<{ id: number; hostname: string; status: string; source: string }>;
+  domains?: Array<{ id: number; hostname: string; status: string; source: string; statusLine?: string }>;
 }
 
 type Step =
@@ -41,6 +41,7 @@ type Step =
   | { kind: 'parent'; idea: DomainIdeaView }
   | { kind: 'owner'; idea: DomainIdeaView }
   | { kind: 'order'; orderId: number }
+  | { kind: 'live'; hostname: string }
   | { kind: 'sent'; idea: DomainIdeaView }
   | { kind: 'connect'; domainId?: number }
   | { kind: 'rename' }
@@ -86,7 +87,8 @@ export default function AppAddress({
   const loadDomainPurchase = useAppContext((v) => v.requestHelpers.loadDomainPurchase);
   const startSelfDomainOrder = useAppContext((v) => v.requestHelpers.startSelfDomainOrder);
   const loadDomainOrder = useAppContext((v) => v.requestHelpers.loadDomainOrder);
-  const loadLatestDomainOrder = useAppContext((v) => v.requestHelpers.loadLatestDomainOrder);
+  const loadDomainStatus = useAppContext((v) => v.requestHelpers.loadDomainStatus);
+  const removeAppDomain = useAppContext((v) => v.requestHelpers.removeAppDomain);
   const addAppDomain = useAppContext((v) => v.requestHelpers.addAppDomain);
   const loadAppDomainConnect = useAppContext((v) => v.requestHelpers.loadAppDomainConnect);
   const checkAppDomain = useAppContext((v) => v.requestHelpers.checkAppDomain);
@@ -164,15 +166,30 @@ export default function AppAddress({
   async function openFromWand(screen: string, domain: string) {
     setError('');
     if (screen === 'connect') {
+      if (!info?.customDomainsEnabled) {
+        setStep({ kind: 'intro' });
+        return;
+      }
       setHostname(domain);
       setConnect(null);
       setStep({ kind: 'connect' });
       return;
     }
     if (screen === 'status') {
-      const latest = await loadLatestDomainOrder({ buildId }).catch(() => null);
-      if (latest?.order?.orderId) {
-        setStep({ kind: 'order', orderId: latest.order.orderId });
+      // the named address (bought or connected), else the newest one
+      const status = await loadDomainStatus({ buildId, hostname: domain || undefined }).catch(() => null);
+      const row = status?.domains?.[0];
+      if (row && row.source === 'own' && row.status !== 'live' && info?.customDomainsEnabled) {
+        setHostname(row.hostname);
+        await showConnectSetup(row.id);
+        return;
+      }
+      if (row && row.status === 'live') {
+        setStep({ kind: 'live', hostname: row.hostname });
+        return;
+      }
+      if (status?.order?.orderId) {
+        setStep({ kind: 'order', orderId: status.order.orderId });
         return;
       }
       setStep({ kind: 'intro' });
@@ -226,7 +243,9 @@ export default function AppAddress({
           if (!cancelled && fresh) setInfo(fresh);
           return;
         }
-        if (data.order.stage === 'setting_up') timer = window.setTimeout(poll, 5000);
+        // keep asking while payment or setup is still going (a webhook can
+        // land after the buyer is back from Stripe)
+        if (['paying', 'setting_up', 'refunding'].includes(data.order.stage)) timer = window.setTimeout(poll, 5000);
       } catch (e: any) {
         if (!cancelled) setError(e?.message || '');
       }
@@ -356,19 +375,34 @@ export default function AppAddress({
     }
   }
 
+  async function showConnectSetup(domainId: number) {
+    const how = await loadAppDomainConnect({ buildId, domainId });
+    setConnect({
+      providerName: how?.provider?.name || how?.domainConnect?.providerName || null,
+      providerSteps: how?.provider?.steps || how?.instructions?.plainSteps || [],
+      domainConnectUrl: how?.domainConnect?.applyUrl || null,
+      records: how?.instructions?.records || [],
+      status: 'waiting'
+    });
+    setStep({ kind: 'connect', domainId });
+  }
+
   async function startConnect() {
     setError('');
     try {
       const added = await addAppDomain({ buildId, hostname });
-      const how = await loadAppDomainConnect({ buildId, domainId: added.domainId });
-      setConnect({
-        providerName: how?.provider?.name || how?.domainConnect?.providerName || null,
-        providerSteps: how?.provider?.steps || how?.instructions?.plainSteps || [],
-        domainConnectUrl: how?.domainConnect?.applyUrl || null,
-        records: how?.instructions?.records || [],
-        status: 'waiting'
-      });
-      setStep({ kind: 'connect', domainId: added.domainId });
+      await showConnectSetup(added.domainId);
+    } catch (e: any) {
+      setError(e?.message || '');
+    }
+  }
+
+  async function removeDomain(domainId: number) {
+    setError('');
+    try {
+      await removeAppDomain({ buildId, domainId });
+      const fresh = await loadAppAddress({ buildId }).catch(() => null);
+      if (fresh) setInfo(fresh);
     } catch (e: any) {
       setError(e?.message || '');
     }
@@ -452,6 +486,8 @@ export default function AppAddress({
         t={t}
         url={info.url}
         domains={liveDomains}
+        ownerDomains={isOwner ? info.domains : undefined}
+        onRemoveDomain={isOwner && info.customDomainsEnabled ? (domainId) => void removeDomain(domainId) : undefined}
         isOwner={isOwner && Boolean(info.customDomainsEnabled || info.domainSalesEnabled)}
         copied={copied}
         onCopy={() => {
@@ -505,7 +541,7 @@ export default function AppAddress({
                     }
                   : undefined
               }
-              onHaveOne={() => setStep({ kind: 'connect' })}
+              onHaveOne={info.customDomainsEnabled ? () => setStep({ kind: 'connect' }) : undefined}
               ask={<AskAgentButton context={askContext('getting my own web address', 'Step: what a domain is.')} />}
             />
           )}
@@ -521,7 +557,7 @@ export default function AppAddress({
                 setOwnerProblem('');
                 setStep(purchase?.buyer === 'self' ? { kind: 'owner', idea } : { kind: 'parent', idea });
               }}
-              onUseOwn={() => setStep({ kind: 'connect' })}
+              onUseOwn={info.customDomainsEnabled ? () => setStep({ kind: 'connect' }) : undefined}
               onMoreIdeas={() => loadIdeas({ more: true })}
               ask={
                 <AskAgentButton
@@ -573,6 +609,17 @@ export default function AppAddress({
                 openOwnFlow();
               }}
               onClose={closeFlow}
+            />
+          )}
+          {step.kind === 'live' && (
+            <MessageView
+              title={t.liveTitle(step.hostname)}
+              body={t.liveBody}
+              primaryLabel={t.openIt}
+              onPrimary={() => window.open(`https://${step.hostname}`, '_blank', 'noopener,noreferrer')}
+              secondaryLabel={t.done}
+              onSecondary={closeFlow}
+              celebrate
             />
           )}
           {step.kind === 'sent' && (
