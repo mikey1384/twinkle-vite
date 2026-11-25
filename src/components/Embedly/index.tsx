@@ -23,8 +23,8 @@ import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { SITE_NAME } from '~/constants/siteBrand';
 import useLinkPreviewBlocked from '~/components/PostedLinkGuard/useLinkPreviewBlocked';
+import BlockedLinkPreview from '~/components/PostedLinkGuard/BlockedLinkPreview';
 
 function Embedly({
   className,
@@ -489,10 +489,7 @@ function Embedly({
           `}
         >
           {previewBlocked ? (
-            <BlockedLinkPreview
-              url={directUrl || url}
-              unchecked={previewBlocked === 'unchecked'}
-            />
+            <BlockedLinkPreview url={directUrl || url} />
           ) : noLink ? (
             <div className={contentCss}>{InnerContent}</div>
           ) : twinkleVideoId ? (
@@ -510,50 +507,6 @@ function Embedly({
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-// In place of a blocked site's preview: its host as plain text, no link.
-function BlockedLinkPreview({
-  url,
-  unchecked
-}: {
-  url?: string;
-  // the server refused the list: not known to be blocked
-  unchecked?: boolean;
-}) {
-  let host = '';
-  try {
-    const raw = String(url || '').trim();
-    host = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`).hostname;
-  } catch {
-    host = '';
-  }
-  return (
-    <div
-      data-testid="blocked-link-preview"
-      className={css`
-        display: flex;
-        align-items: center;
-        gap: 0.8rem;
-        padding: 1rem 1.2rem;
-        border-radius: 8px;
-        border: 1px solid ${Color.borderGray()};
-        background: ${Color.wellGray()};
-        color: ${Color.darkerGray()};
-        font-size: 1.4rem;
-        line-height: 1.4;
-        overflow-wrap: anywhere;
-      `}
-    >
-      <Icon icon="ban" style={{ color: Color.gray() }} />
-      <span>
-        {unchecked
-          ? 'Link preview unavailable.'
-          : `This site is blocked on ${SITE_NAME}.`}
-        {host ? <span style={{ color: Color.gray() }}> {host}</span> : null}
-      </span>
     </div>
   );
 }

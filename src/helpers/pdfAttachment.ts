@@ -1,5 +1,7 @@
 const PDF_MAX_BYTES = 50 * 1024 * 1024;
-const FILE_HOSTS = new Set([
+// Twinkle's attachment hosts (also never checked against the blocked-site
+// list: helpers/twinkleOwnedHosts.ts).
+export const FILE_HOSTS = new Set([
   'd3jvoamd2k4p0s.cloudfront.net',
   'twinkle-network.s3.amazonaws.com'
 ]);

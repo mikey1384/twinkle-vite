@@ -15,9 +15,9 @@
 //   ever loaded. The sheet then shows as usual: it still names the real site
 //   and needs the viewer's tap. An older list is used when there is one.
 // One copy per page (helpers/pageLinkBlocklist.ts) serves the app link
-// sheet and posted links (helpers/postedLinkGuard.ts). `peek` answers at
-// once from what is in hand, for a click that has to be decided inside the
-// tap, and for link previews.
+// sheet and posted links (helpers/postedLinkGuard.ts). Posted links use
+// `match` (any list in hand, decided inside the tap) and `refresh` (keep the
+// copy from going stale); the app sheet uses `check`.
 export const LINK_BLOCKLIST_FRESH_MS = 10 * 60_000;
 export const LINK_BLOCKLIST_RETRY_MS = 10_000;
 export const LINK_BLOCKLIST_WAIT_MS = 4_000;
@@ -105,22 +105,28 @@ export function createLinkBlocklistClient({
     return 'unknown';
   }
 
-  function isFresh() {
-    return Boolean(hosts && now() - loadedAt < LINK_BLOCKLIST_FRESH_MS);
-  }
-
   return {
     /**
-     * The answer from what is in hand, without waiting. `fresh` says whether
-     * it came from a list loaded in the last LINK_BLOCKLIST_FRESH_MS;
-     * `settled` is false until the first load has finished either way.
+     * Posted links (helpers/postedLinkGuard.ts): the answer from any list in
+     * hand, whatever its age and even after a refused refresh, or null when
+     * no list has loaded on this page yet. Nothing on a page can make the
+     * list slow or refused on purpose, so an older list is good enough there
+     * (Mikey's rule via the coordinator, review S3); the app sheet keeps the
+     * stricter `check`.
      */
-    peek(host: string) {
-      return {
-        answer: answerFrom(host),
-        fresh: isFresh(),
-        settled: Boolean(hosts) || failedAt > 0
-      };
+    match(host: string): 'blocked' | 'allowed' | null {
+      if (!hosts) return null;
+      return matchBlockedLinkHost(host, hosts) ? 'blocked' : 'allowed';
+    },
+    /**
+     * Load the list again when the copy in hand is older than `olderThanMs`
+     * (or there is none), unless a load is running or just failed. Cheap to
+     * call on every press: it does nothing otherwise.
+     */
+    refresh(olderThanMs: number) {
+      if (hosts && now() - loadedAt < olderThanMs) return;
+      if (failedAt && now() - failedAt < LINK_BLOCKLIST_RETRY_MS) return;
+      void load();
     },
     /** Called after every load finishes (loaded or failed). */
     subscribe(listener: () => void) {

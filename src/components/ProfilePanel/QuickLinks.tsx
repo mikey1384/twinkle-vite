@@ -1,7 +1,7 @@
 import React from 'react';
 import Icon from '~/components/Icon';
 import { processedURL } from '~/helpers/stringHelpers';
-import { openOutsideLink } from '~/helpers/postedLinkGuard';
+import { openOutsideLink } from '~/helpers/pagePostedLinkGuard';
 import {
   quickLinkClass,
   quickLinksClass,

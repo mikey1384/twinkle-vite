@@ -41,6 +41,10 @@ function Fixture(){
     <p>Look at this: <a id="blocked" href="https://bad.example.com/free-stuff" target="_blank" rel="noopener noreferrer">bad.example.com/free-stuff</a></p>
     <p>And the Moon page: <a id="allowed" href="https://en.example.com/wiki/Moon" target="_blank" rel="noopener noreferrer">en.example.com/wiki/Moon</a></p>
     <p>Same tab: <a id="sametab" href="https://www.bad.example.com/x">www.bad.example.com/x</a> · <a id="internal" href="/subjects/3">a subject</a></p>
+    <p>Own handlers: <a id="pdf" href="https://testcdn.cloudfront.net/attachments/1/notes.pdf" target="_blank" onClick={(e)=>{e.preventDefault();window.pdfViewer=(window.pdfViewer||0)+1;}}>notes.pdf</a> · <a id="handled" href="https://en.example.com/handled" target="_blank" rel="noopener noreferrer" onClick={()=>{window.handlerRan=(window.handlerRan||0)+1;}}>handled link</a></p>
+    <p><svg width="120" height="24"><a id="svglink" href="https://bad.example.com/svg"><text x="0" y="18">svg link</text></a></svg>
+     <img id="mapimg" alt="map" width="120" height="24" useMap="#linkmap" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style={{background:'#dde'}}/>
+     <map name="linkmap"><area id="arealink" shape="rect" coords="0,0,120,24" href="https://bad.example.com/area" alt="area link"/></map></p>
    </div>
    <div className="preview" id="blockedPreview"><Embedly contentId={1} contentType="url"/></div>
    <div className="preview" id="allowedPreview"><Embedly contentId={2} contentType="url"/></div>
@@ -85,7 +89,7 @@ async function compileFixture() {
     platform: 'browser',
     alias: { '~': path.join(repo, 'src') },
     define: {
-      'import.meta.env': '{}',
+      'import.meta.env': '{"VITE_CLOUDFRONT_KEY":"testcdn"}',
       'process.env.NODE_ENV': '"development"'
     },
     plugins: [
@@ -143,7 +147,7 @@ async function open(browser, view, listConfig) {
     if (url.origin === HOST) {
       return route.fulfill({ contentType: 'text/html', body: HOST_PAGE.replace('__STYLES__', styles) });
     }
-    if (url.hostname.endsWith('example.com')) {
+    if (url.hostname.endsWith('example.com') || url.hostname.endsWith('cloudfront.net')) {
       return route.fulfill({ contentType: 'text/html', body: OUTSIDE_PAGE });
     }
     return route.abort();
@@ -223,8 +227,27 @@ for (const engine of ['chromium', 'webkit']) {
             await page.keyboard.press('Escape');
             await note(page).waitFor({ state: 'detached' });
           }
+          // the Enter key on a focused link, a real SVG link and an <area>
+          await page.locator('#blocked').focus();
+          await page.keyboard.press('Enter');
+          await note(page).waitFor();
+          await page.keyboard.press('Escape');
+          await note(page).waitFor({ state: 'detached' });
+          await page.locator('#svglink').click();
+          await note(page).waitFor();
+          assert.match(await note(page).innerText(), /bad\.example\.com/);
+          await page.keyboard.press('Escape');
+          await note(page).waitFor({ state: 'detached' });
+          await page.locator('#mapimg').click();
+          await note(page).waitFor();
+          await page.keyboard.press('Escape');
+          await note(page).waitFor({ state: 'detached' });
+          // Twinkle's own attachment host is never guarded: the in-app viewer runs
+          await page.locator('#pdf').click();
+          assert.equal(await page.evaluate(() => window.pdfViewer), 1);
           await settle(page, 300);
           assert.equal(popups(), 0);
+          assert.equal(await note(page).count(), 0);
 
           // an allowed link opens normally, in a new tab, with no referrer
           const popupPromise = context.waitForEvent('page');
@@ -243,7 +266,7 @@ for (const engine of ['chromium', 'webkit']) {
           const posts = await page.evaluate(() => window.posts || []);
           assert.equal(posts.length, 1);
           assert.equal(posts[0].keepalive, true);
-          assert.ok(posts[0].counts.blocked >= 2 && !posts[0].counts.unchecked, JSON.stringify(posts[0]));
+          assert.ok(posts[0].counts.blocked >= 5 && !posts[0].counts.unchecked, JSON.stringify(posts[0]));
           assert.deepEqual(errors, []);
         } finally {
           await browser.close();
@@ -253,19 +276,29 @@ for (const engine of ['chromium', 'webkit']) {
   }
 
   test(
-    `the list rules: a slow list is waited for, a 4xx never opens, a 503 opens unchecked (${engine})`,
+    `the list rules: a tap is held only before any list loads; a 4xx then refuses, a 503 opens (${engine})`,
     { skip, timeout: 120000 },
     async () => {
       const browser = await browsers[engine].launch();
       try {
-        // a list that takes 600 ms: the tap waits, then the tab still opens
-        // (inside the browser's tap window, iPhone Safari's engine included)
+        // a list that takes 600 ms, tapped at once. Playwright does not
+        // enforce the browser's popup tap window, so this shows the decision,
+        // not that iPhone Safari opens the tab (that is the real-device check
+        // in HANDOFF).
         let run = await open(browser, VIEWS[0], { hosts: ['bad.example.com'], delayMs: 600 });
+        // a Twinkle file link keeps its own handler even while the list loads
+        await run.page.locator('#pdf').click();
+        assert.equal(await run.page.evaluate(() => window.pdfViewer), 1);
+        // an outside link with its own handler: held, its handler skipped, one tab
         const popupPromise = run.context.waitForEvent('page');
-        await run.page.locator('#allowed').click();
+        await run.page.locator('#handled').click();
         const popup = await popupPromise;
         await popup.waitForLoadState();
+        assert.equal(new URL(popup.url()).pathname, '/handled');
         await popup.close();
+        await settle(run.page, 300);
+        assert.equal(run.popups(), 1, 'one tab');
+        assert.equal(await run.page.evaluate(() => window.handlerRan || 0), 0, 'a held tap skips the link handler');
         await run.context.close();
         // the same slow list, a blocked link: the note, no tab
         run = await open(browser, VIEWS[0], { hosts: ['bad.example.com'], delayMs: 600 });
@@ -274,7 +307,8 @@ for (const engine of ['chromium', 'webkit']) {
         assert.equal(run.popups(), 0);
         await run.context.close();
 
-        // the server refuses the list (400): never opened, "Couldn't check"
+        // no list ever loaded and the server refuses it (4xx): never opened,
+        // "Couldn't check"; previews still show
         for (const status of [400, 429]) {
           run = await open(browser, VIEWS[1], { status });
           await run.page.locator('#allowed').click();
@@ -284,9 +318,8 @@ for (const engine of ['chromium', 'webkit']) {
           if (status === 400) await shot(run.page, `posted-unchecked-${engine}-desktop`);
           await settle(run.page, 300);
           assert.equal(run.popups(), 0, `status ${status}`);
-          // its previews are hidden too
-          assert.equal(await run.page.locator('[data-testid="blocked-link-preview"]').count(), 2);
-          assert.match(await run.page.locator('#allowedPreview').innerText(), /Link preview unavailable\./);
+          assert.equal(await run.page.locator('[data-testid="blocked-link-preview"]').count(), 0);
+          assert.match(await run.page.locator('#allowedPreview').innerText(), /Moon - Wikipedia/);
           await run.context.close();
         }
 

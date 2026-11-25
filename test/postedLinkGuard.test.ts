@@ -7,7 +7,8 @@ import {
   findOutsideLink,
   linkPreviewHidden,
   markCheckedOutsideLink,
-  POSTED_LINK_COUNT_CAP
+  POSTED_LINK_COUNT_CAP,
+  POSTED_LINK_REFRESH_MS
 } from '../src/helpers/postedLinkGuard';
 
 // Twinkle's blocked-site list on posted links: the page's one click guard
@@ -74,6 +75,7 @@ function setup({
     blocklist,
     openUrl: (href, newTab) => opened.push({ href, newTab }),
     pageUrl: () => PAGE,
+    isOwnedHost: (host) => host === 'cdn.twinkle-files.net',
     waitMs
   });
   guard.onNotice((notice) => notices.push(notice));
@@ -113,13 +115,15 @@ test('only outside http(s) links are guarded', () => {
   assert.equal(findOutsideLink(click(svg), PAGE)?.url.hostname, 'example.com');
   assert.equal(findOutsideLink(click(anchor({ href: 'https://example.com' }), { type: 'auxclick', button: 1 }), PAGE)?.newTab, true);
   assert.equal(findOutsideLink(click(anchor({ href: 'https://example.com' }), { metaKey: true }), PAGE)?.newTab, true);
+  // Twinkle's own hosts are never guarded
+  assert.equal(findOutsideLink(click(anchor({ href: 'https://cdn.x.net/attachments/a.pdf' })), PAGE, (h) => h === 'cdn.x.net'), null);
   // the page's own checked links pass
   const checked = anchor({ href: 'https://blocked.com' });
   markCheckedOutsideLink(checked);
   assert.equal(findOutsideLink(click(checked), PAGE), null);
 });
 
-test('with a fresh list, a blocked link is stopped inside the tap and an allowed one is left alone', async () => {
+test('any list in hand decides inside the tap: blocked is stopped, allowed is left alone', async () => {
   const { blocklist, guard, opened, notices } = setup();
   blocklist.preload();
   await sleep(5);
@@ -133,12 +137,39 @@ test('with a fresh list, a blocked link is stopped inside the tap and an allowed
   const allowed = click(anchor({ href: 'https://notblocked.com/' }));
   assert.equal(guard.handleClick(allowed), false);
   assert.equal(allowed.prevented, false);
+  // Twinkle's own file host: never touched, its own handler runs
+  const owned = click(anchor({ href: 'https://cdn.twinkle-files.net/attachments/a.pdf' }));
+  assert.equal(guard.handleClick(owned), false);
+  assert.equal(owned.stopped, false);
   assert.deepEqual(opened, []);
   assert.deepEqual(guard.takeCounts(), { blocked: 2 });
   assert.deepEqual(guard.takeCounts(), {});
 });
 
-test('without a fresh list the tap waits briefly for it, then decides', async () => {
+test('a stale list still decides at once, and is refreshed in the background past 8 minutes', async () => {
+  const run = setup({ waitMs: 500 });
+  run.blocklist.preload();
+  await sleep(5);
+  assert.equal(run.config.loads, 1);
+  run.advance(POSTED_LINK_REFRESH_MS - 1000);
+  run.guard.handleClick(click(anchor({ href: 'https://ok.com/' })));
+  assert.equal(run.config.loads, 1, 'younger than 8 minutes: no reload');
+  // 25 minutes idle: the tap is decided from the old copy, not held
+  run.advance(25 * 60_000);
+  run.config.hosts = ['blocked.com', 'new-bad.com'];
+  const stale = click(anchor({ href: 'https://new-bad.com/' }));
+  assert.equal(run.guard.handleClick(stale), false, 'the old list allows it, at once');
+  assert.equal(stale.prevented, false);
+  const staleBlocked = click(anchor({ href: 'https://blocked.com/' }));
+  assert.equal(run.guard.handleClick(staleBlocked), true);
+  assert.equal(staleBlocked.prevented, true);
+  assert.equal(run.config.loads, 2, 'and a refresh started');
+  await sleep(5);
+  assert.equal(run.guard.handleClick(click(anchor({ href: 'https://new-bad.com/' }))), true);
+  assert.deepEqual(run.opened, []);
+});
+
+test('only before any list has loaded is a tap held, briefly', async () => {
   const slow = setup({ delayMs: 50, waitMs: 500 });
   const tap = click(anchor({ href: 'https://blocked.com/', target: '_blank' }));
   assert.equal(slow.guard.handleClick(tap), true);
@@ -149,7 +180,7 @@ test('without a fresh list the tap waits briefly for it, then decides', async ()
   assert.deepEqual(slow.notices.map((n) => n.kind), ['blocked']);
   assert.deepEqual(slow.opened, []);
   slow.guard.handleClick(click(anchor({ href: 'https://ok.com/', target: '_blank' })));
-  assert.deepEqual(slow.opened, [], 'fresh and allowed: the browser opens it');
+  assert.deepEqual(slow.opened, [], 'loaded and allowed: the browser opens it');
 
   const allowed = setup({ delayMs: 30, waitMs: 500 });
   allowed.guard.handleClick(click(anchor({ href: 'https://ok.com/a' }), { ctrlKey: true }));
@@ -165,7 +196,7 @@ test('without a fresh list the tap waits briefly for it, then decides', async ()
   await sleep(300);
 });
 
-test('a 4xx never opens the link; a network error or 5xx opens it only with no list, else the older list decides', async () => {
+test('a 4xx refuses only with no list ever loaded; otherwise the older list decides and previews stay', async () => {
   for (const status of [400, 404, 429]) {
     const refused = setup({ status });
     refused.guard.handleClick(click(anchor({ href: 'https://ok.com/' })));
@@ -173,7 +204,7 @@ test('a 4xx never opens the link; a network error or 5xx opens it only with no l
     assert.deepEqual(refused.opened, [], `status ${status}`);
     assert.deepEqual(refused.notices.map((n) => n.kind), ['unchecked']);
     assert.deepEqual(refused.guard.takeCounts(), { unchecked: 1 });
-    assert.equal(linkPreviewHidden('https://ok.com', refused.blocklist), 'unchecked');
+    assert.equal(linkPreviewHidden('https://ok.com', refused.blocklist), false, 'previews stay');
   }
   for (const status of [0, 503]) {
     const down = setup({ status });
@@ -181,16 +212,22 @@ test('a 4xx never opens the link; a network error or 5xx opens it only with no l
     await sleep(10);
     assert.deepEqual(down.opened, [{ href: 'https://blocked.com/', newTab: false }], `status ${status}`);
   }
-  // an older list is used when the refresh fails
-  const older = setup();
-  older.blocklist.preload();
-  await sleep(5);
-  older.advance(LINK_BLOCKLIST_FRESH_MS + 1);
-  older.config.status = 503;
-  older.guard.handleClick(click(anchor({ href: 'https://blocked.com/' })));
-  await sleep(10);
-  assert.deepEqual(older.notices.map((n) => n.kind), ['blocked']);
-  assert.deepEqual(older.opened, []);
+  // a refused or failed refresh keeps the older list
+  for (const status of [403, 503]) {
+    const older = setup();
+    older.blocklist.preload();
+    await sleep(5);
+    older.advance(LINK_BLOCKLIST_FRESH_MS + 1);
+    older.config.status = status;
+    older.blocklist.refresh(0);
+    await sleep(5);
+    older.guard.handleClick(click(anchor({ href: 'https://blocked.com/' })));
+    const ok = click(anchor({ href: 'https://ok.com/' }));
+    assert.equal(older.guard.handleClick(ok), false, `status ${status}: opens at once`);
+    assert.deepEqual(older.notices.map((n) => n.kind), ['blocked']);
+    assert.equal(linkPreviewHidden('https://blocked.com/', older.blocklist), true);
+    assert.equal(linkPreviewHidden('https://ok.com/', older.blocklist), false);
+  }
 });
 
 test('links opened from script are checked the same way', async () => {
@@ -200,8 +237,12 @@ test('links opened from script are checked the same way', async () => {
   guard.open('http://blocked.com/channel');
   guard.open('javascript:alert(1)');
   guard.open('https://youtube.com/@me');
+  guard.open('https://cdn.twinkle-files.net/x.pdf');
   assert.deepEqual(notices.map((n) => n.kind), ['blocked']);
-  assert.deepEqual(opened, [{ href: 'https://youtube.com/@me', newTab: true }]);
+  assert.deepEqual(opened, [
+    { href: 'https://youtube.com/@me', newTab: true },
+    { href: 'https://cdn.twinkle-files.net/x.pdf', newTab: true }
+  ]);
 });
 
 test('counts are capped per kind', async () => {
@@ -217,8 +258,8 @@ test('link previews hide for blocked sites, bare hosts included', async () => {
   assert.equal(linkPreviewHidden('https://blocked.com/a', blocklist), false, 'before the list loads');
   blocklist.preload();
   await sleep(5);
-  assert.equal(linkPreviewHidden('https://blocked.com/a', blocklist), 'blocked');
-  assert.equal(linkPreviewHidden('www.blocked.com/a', blocklist), 'blocked');
+  assert.equal(linkPreviewHidden('https://blocked.com/a', blocklist), true);
+  assert.equal(linkPreviewHidden('www.blocked.com/a', blocklist), true);
   assert.equal(linkPreviewHidden('https://ok.com', blocklist), false);
   assert.equal(linkPreviewHidden('', blocklist), false);
 });

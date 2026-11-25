@@ -2,21 +2,28 @@ import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { pageLinkBlocklist, setLinkBlocklistFetcher } from '~/helpers/pageLinkBlocklist';
-import { postedLinkGuard, type PostedLinkNotice as Notice } from '~/helpers/postedLinkGuard';
+import { postedLinkGuard } from '~/helpers/pagePostedLinkGuard';
+import {
+  POSTED_LINK_REFRESH_MS,
+  type PostedLinkNotice as Notice
+} from '~/helpers/postedLinkGuard';
 
 const PostedLinkNotice = lazyWithRetry(() => import('./PostedLinkNotice'));
 
 // Mounted once in App: Twinkle's blocked-site list on every outside link
 // the page shows (helpers/postedLinkGuard.ts). Listens on window in the
-// capture phase, before any link's own handler; loads the list soon after
-// the page starts, when the tab comes back, and when an outside link is
-// pressed, so a tap rarely waits for it.
+// capture phase, before any link's own handler. Loads the list as soon as
+// the page starts, and keeps it from going stale (review B1): on any press
+// or focus, when the tab comes back, and every POSTED_LINK_REFRESH_TICK_MS
+// while the tab is visible, it reloads a copy older than
+// POSTED_LINK_REFRESH_MS (each call does nothing otherwise). So a tap is
+// held only in the page's first moment, before any list has loaded.
 //
 // Counts (blocked / unchecked) are tallied on the page and sent together
 // at most every POSTED_LINK_FLUSH_MS and when the page hides, signed-in
 // viewers only, the same pattern as the app sheet's counts.
 export const POSTED_LINK_FLUSH_MS = 45_000;
-export const POSTED_LINK_PRELOAD_DELAY_MS = 1_500;
+export const POSTED_LINK_REFRESH_TICK_MS = 60_000;
 
 export default function PostedLinkGuard() {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -37,9 +44,10 @@ export default function PostedLinkGuard() {
     const onClick = (event: MouseEvent) => {
       postedLinkGuard.handleClick(event);
     };
-    const onPress = (event: Event) => postedLinkGuard.handlePress(event);
+    const refresh = () => pageLinkBlocklist.refresh(POSTED_LINK_REFRESH_MS);
+    const onPress = () => refresh();
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') pageLinkBlocklist.preload();
+      if (document.visibilityState === 'visible') refresh();
       else flush(true);
     };
     const onHide = () => flush(true);
@@ -53,10 +61,10 @@ export default function PostedLinkGuard() {
         }, POSTED_LINK_FLUSH_MS);
       }
     });
-    const preloadTimer = window.setTimeout(
-      () => pageLinkBlocklist.preload(),
-      POSTED_LINK_PRELOAD_DELAY_MS
-    );
+    refresh();
+    const refreshTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refresh();
+    }, POSTED_LINK_REFRESH_TICK_MS);
     window.addEventListener('click', onClick, true);
     window.addEventListener('auxclick', onClick, true);
     window.addEventListener('pointerdown', onPress, true);
@@ -64,7 +72,7 @@ export default function PostedLinkGuard() {
     window.addEventListener('pagehide', onHide);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      window.clearTimeout(preloadTimer);
+      window.clearInterval(refreshTimer);
       window.clearTimeout(flushTimerRef.current);
       flushTimerRef.current = 0;
       stopNotices();

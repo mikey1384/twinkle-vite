@@ -39,6 +39,8 @@ import { isRenderableHomeFeedTargetComment } from '../helpers/targetComment';
 import ProfilePanelPreview from './ProfilePanelPreview';
 import DailyGoalsPreview from './DailyGoalsPreview';
 import VideoPreview from './VideoPreview';
+import useLinkPreviewBlocked from '~/components/PostedLinkGuard/useLinkPreviewBlocked';
+import BlockedLinkPreview from '~/components/PostedLinkGuard/BlockedLinkPreview';
 
 function resolveTargetPreviewTheme({
   resolvedRootObj,
@@ -229,7 +231,7 @@ export default function TargetPreview({
   ) {
     return renderRootPanel(
       resolvedRootObj.loaded ? (
-        renderTargetUrlPreview(resolvedRootObj)
+        <TargetUrlPreview target={resolvedRootObj} />
       ) : (
         <Loading theme={theme} />
       )
@@ -672,47 +674,6 @@ export default function TargetPreview({
     );
   }
 
-  function renderTargetUrlPreview(target: any) {
-    const title =
-      target?.actualTitle ||
-      target?.linkTitle ||
-      target?.title ||
-      target?.content ||
-      'Link';
-    const description =
-      target?.actualDescription ||
-      target?.linkDescription ||
-      target?.description ||
-      '';
-    const siteLabel =
-      target?.siteUrl ||
-      target?.linkUrl ||
-      getTargetUrlSiteLabel(target?.content || target?.url);
-    const imageUrl = getTargetUrlImageUrl(target);
-
-    return (
-      <div className="home-feed-card__target-content home-feed-card__target-url has-media">
-        <LinkPreviewImage
-          className="home-feed-card__target-media"
-          src={imageUrl}
-          alt={`${title} preview`}
-          loading="lazy"
-        />
-        <div className="home-feed-card__target-copy">
-          <span className="home-feed-card__target-chip url">
-            <Icon icon="link" />
-            Link
-          </span>
-          <h4>{title}</h4>
-          {description ? <p>{description}</p> : null}
-          {siteLabel ? (
-            <span className="home-feed-card__target-site">{siteLabel}</span>
-          ) : null}
-        </div>
-      </div>
-    );
-  }
-
   function renderTargetAIStoryPreview(target: any) {
     const difficulty = target?.difficulty || target?.level;
     const difficultyStyle = getAIStoryDifficultyStyle(difficulty);
@@ -765,6 +726,56 @@ export default function TargetPreview({
       </div>
     );
   }
+}
+
+function TargetUrlPreview({ target }: { target: any }) {
+  // a site on Twinkle's blocked-site list: no title, text or picture from it
+  const blocked = useLinkPreviewBlocked(target?.content || target?.url);
+  if (blocked) {
+    return (
+      <div className="home-feed-card__target-content home-feed-card__target-url">
+        <BlockedLinkPreview url={target?.content || target?.url} />
+      </div>
+    );
+  }
+  const title =
+    target?.actualTitle ||
+    target?.linkTitle ||
+    target?.title ||
+    target?.content ||
+    'Link';
+  const description =
+    target?.actualDescription ||
+    target?.linkDescription ||
+    target?.description ||
+    '';
+  const siteLabel =
+    target?.siteUrl ||
+    target?.linkUrl ||
+    getTargetUrlSiteLabel(target?.content || target?.url);
+  const imageUrl = getTargetUrlImageUrl(target);
+
+  return (
+    <div className="home-feed-card__target-content home-feed-card__target-url has-media">
+      <LinkPreviewImage
+        className="home-feed-card__target-media"
+        src={imageUrl}
+        alt={`${title} preview`}
+        loading="lazy"
+      />
+      <div className="home-feed-card__target-copy">
+        <span className="home-feed-card__target-chip url">
+          <Icon icon="link" />
+          Link
+        </span>
+        <h4>{title}</h4>
+        {description ? <p>{description}</p> : null}
+        {siteLabel ? (
+          <span className="home-feed-card__target-site">{siteLabel}</span>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 function getTargetUrlImageUrl(target: any) {

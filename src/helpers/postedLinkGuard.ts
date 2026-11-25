@@ -1,5 +1,4 @@
 import type { LinkBlocklistAnswer } from './linkBlocklistClient';
-import { pageLinkBlocklist } from './pageLinkBlocklist';
 
 // Twinkle's blocked-site list on posted links (Mikey 11-25): posts,
 // subjects, comments, chat messages, bios, profile links and link previews.
@@ -8,24 +7,27 @@ import { pageLinkBlocklist } from './pageLinkBlocklist';
 // whatever renders the link): a tap on a link to another site whose host is
 // on the list does not leave Twinkle, and the page shows "This site is
 // blocked on Twinkle." Links opened from script (profile quick links) go
-// through `open`.
+// through `open`. Twinkle's own hosts (the API, file hosts, app previews,
+// the site's domains: helpers/twinkleOwnedHosts.ts) are never checked.
 //
-// The list is the page's one copy (helpers/pageLinkBlocklist.ts) with the
-// app sheet's reviewed rules (helpers/linkBlocklistClient.ts):
-// - a fresh list (under 10 minutes) decides the tap at once, inside it, so
-//   an allowed link opens exactly as before;
-// - without a fresh list the tap is held and the list is waited for, at
-//   most POSTED_LINK_WAIT_MS; then an older list is used if there is one;
-// - a 4xx for the list never opens the link ("Couldn't check this site");
-// - only a network error, a timeout or a 5xx with no list at all opens it
+// The list is the page's one copy (helpers/pageLinkBlocklist.ts):
+// - any list in hand decides the tap at once, inside it, whatever its age,
+//   and a refresh starts in the background when it is older than
+//   POSTED_LINK_REFRESH_MS (the page also refreshes on every press, on tab
+//   return and on a timer, so the copy is normally under 8 minutes old). An
+//   allowed link is left alone and opens exactly as before. A refused (4xx)
+//   refresh keeps the older list: nothing on a page can force one (review
+//   S3; the app sheet keeps its stricter rule);
+// - only when no list has loaded on this page yet (its first moment) is the
+//   tap held, for at most POSTED_LINK_WAIT_MS; then a 4xx refuses ("Couldn't
+//   check this site"), and a network error, timeout or 5xx opens the link
 //   unchecked.
-// POSTED_LINK_WAIT_MS is 1 s, not the app sheet's 4 s: nothing on the page
-// can make the list slow on purpose (unlike app code), so a slow list is
-// just a slow network and the link should still open; and a new tab opened
-// within about a second of the tap is still allowed by Safari on iPhone,
-// which a 4 s wait is not. The page loads the list soon after it starts and
-// again when a link is pressed, so the wait is rare.
-export const POSTED_LINK_WAIT_MS = 1_000;
+// POSTED_LINK_WAIT_MS is 650 ms: a held tap opens its tab from a later task,
+// and iPhone Safari allows that only within about a second of the tap, so
+// the wait leaves room for the open itself (review B1). Playwright does not
+// enforce that window; it needs a real iPhone (HANDOFF).
+export const POSTED_LINK_WAIT_MS = 650;
+export const POSTED_LINK_REFRESH_MS = 8 * 60_000;
 export const POSTED_LINK_COUNT_CAP = 50;
 
 export type PostedLinkNoticeKind = 'blocked' | 'unchecked';
@@ -40,9 +42,9 @@ export interface OutsideLink {
 type Counts = Partial<Record<PostedLinkNoticeKind, number>>;
 
 interface LinkBlocklistLike {
-  peek: (host: string) => { answer: LinkBlocklistAnswer; fresh: boolean; settled: boolean };
+  match: (host: string) => 'blocked' | 'allowed' | null;
   check: (host: string, wait?: number) => Promise<LinkBlocklistAnswer>;
-  preload: () => void;
+  refresh: (olderThanMs: number) => void;
 }
 
 interface NodeLike {
@@ -98,7 +100,11 @@ function linkFrom(event: ClickLike): NodeLike | null {
 }
 
 /** The outside http(s) link this click would follow, or null for anything else. */
-export function findOutsideLink(event: ClickLike, pageUrl: string): OutsideLink | null {
+export function findOutsideLink(
+  event: ClickLike,
+  pageUrl: string,
+  isOwnedHost: (host: string) => boolean = () => false
+): OutsideLink | null {
   if (event.defaultPrevented) return null;
   if (event.type === 'click' && (event.button ?? 0) !== 0) return null;
   if (event.type === 'auxclick' && event.button !== 1) return null;
@@ -115,7 +121,7 @@ export function findOutsideLink(event: ClickLike, pageUrl: string): OutsideLink 
     return null;
   }
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-  if (url.origin === page.origin) return null;
+  if (url.origin === page.origin || isOwnedHost(url.hostname)) return null;
   const target = String(link.getAttribute?.('target') || '').trim().toLowerCase();
   const newTab =
     event.type === 'auxclick' ||
@@ -150,11 +156,13 @@ export function createPostedLinkGuard({
   blocklist,
   openUrl,
   pageUrl,
+  isOwnedHost = () => false,
   waitMs = POSTED_LINK_WAIT_MS
 }: {
   blocklist: LinkBlocklistLike;
   openUrl: (href: string, newTab: boolean) => void;
   pageUrl: () => string;
+  isOwnedHost?: (host: string) => boolean;
   waitMs?: number;
 }) {
   const listeners = new Set<(notice: PostedLinkNotice) => void>();
@@ -185,16 +193,18 @@ export function createPostedLinkGuard({
 
   // true when the guard took the tap (blocked, or held for the list)
   function take(link: OutsideLink, stop: () => void, openWhenAllowed: boolean) {
-    const { answer, fresh } = blocklist.peek(link.url.hostname);
-    if (fresh) {
-      if (answer === 'blocked') {
-        stop();
-        report('blocked', link.url.href);
-        return true;
-      }
+    const answer = blocklist.match(link.url.hostname);
+    blocklist.refresh(POSTED_LINK_REFRESH_MS);
+    if (answer === 'blocked') {
+      stop();
+      report('blocked', link.url.href);
+      return true;
+    }
+    if (answer === 'allowed') {
       if (openWhenAllowed) openUrl(link.url.href, link.newTab);
       return false;
     }
+    // no list has loaded on this page yet
     stop();
     if (!holding) void hold(link);
     return true;
@@ -203,7 +213,7 @@ export function createPostedLinkGuard({
   return {
     /** For the page's click listener (capture phase). */
     handleClick(event: ClickLike) {
-      const link = findOutsideLink(event, pageUrl());
+      const link = findOutsideLink(event, pageUrl(), isOwnedHost);
       if (!link) return false;
       return take(
         link,
@@ -223,20 +233,11 @@ export function createPostedLinkGuard({
         return;
       }
       if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+      if (isOwnedHost(url.hostname)) {
+        openUrl(url.href, newTab);
+        return;
+      }
       take({ url, newTab }, () => null, true);
-    },
-    /** A press on an outside link: refresh a stale list before the click. */
-    handlePress(event: Pick<ClickLike, 'target' | 'composedPath'>) {
-      const press: ClickLike = {
-        type: 'click',
-        button: 0,
-        target: event.target,
-        composedPath:
-          typeof event.composedPath === 'function' ? () => event.composedPath!() : undefined,
-        preventDefault: () => null,
-        stopPropagation: () => null
-      };
-      if (findOutsideLink(press, pageUrl())) blocklist.preload();
     },
     onNotice(listener: (notice: PostedLinkNotice) => void) {
       listeners.add(listener);
@@ -254,35 +255,22 @@ export function createPostedLinkGuard({
 }
 
 /**
- * Whether a link preview (title, description, thumbnail) is hidden:
- * 'blocked' when its site is on the list, 'unchecked' when the server
- * refused the list (a 4xx never shows what it might have hidden), else
- * false. A bare "example.com" counts as https.
+ * Whether a link preview (title, description, thumbnail) is hidden: its
+ * site is on the list in hand. Before any list loads, or with no list after
+ * a failed load, previews show (a preview is not navigation, and its tap is
+ * still guarded; review S3). A bare "example.com" counts as https.
  */
 export function linkPreviewHidden(
   url: string | null | undefined,
-  blocklist: Pick<LinkBlocklistLike, 'peek'>
-): false | PostedLinkNoticeKind {
+  blocklist: Pick<LinkBlocklistLike, 'match'>
+) {
   const raw = String(url || '').trim();
   if (!raw) return false;
-  let parsed: URL;
   try {
-    parsed = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`);
+    const parsed = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    return blocklist.match(parsed.hostname) === 'blocked';
   } catch {
     return false;
   }
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
-  const { answer } = blocklist.peek(parsed.hostname);
-  if (answer === 'blocked') return 'blocked';
-  return answer === 'refused' ? 'unchecked' : false;
-}
-
-export const postedLinkGuard = createPostedLinkGuard({
-  blocklist: pageLinkBlocklist,
-  openUrl: (href, newTab) => openCheckedOutsideLink(href, newTab),
-  pageUrl: () => (typeof window === 'undefined' ? 'http://localhost/' : window.location.href)
-});
-
-export function openOutsideLink(href: string, options?: { newTab?: boolean }) {
-  postedLinkGuard.open(href, options);
 }

@@ -27,6 +27,7 @@ export default function PostedLinkNotice({
       site={site}
       unchecked={kind === 'unchecked'}
       blockedTitle={`This site is blocked on ${SITE_NAME}.`}
+      modalKey="PostedLinkBlockedModal"
       confirmColor={confirmColor}
       onClose={onClose}
     />

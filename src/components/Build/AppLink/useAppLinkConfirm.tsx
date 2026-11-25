@@ -456,6 +456,7 @@ export function AppLinkBlockedNote({
   site,
   unchecked = false,
   blockedTitle = `This site can't be opened from ${SITE_NAME} apps`,
+  modalKey = 'AppLinkBlockedModal',
   confirmColor,
   onClose
 }: {
@@ -464,6 +465,7 @@ export function AppLinkBlockedNote({
   unchecked?: boolean;
   // posted links say "This site is blocked on Twinkle." (PostedLinkGuard)
   blockedTitle?: string;
+  modalKey?: string;
   confirmColor: string;
   onClose: () => void;
 }) {
@@ -472,7 +474,7 @@ export function AppLinkBlockedNote({
     : blockedTitle;
   return (
     <Modal
-      modalKey="AppLinkBlockedModal"
+      modalKey={modalKey}
       isOpen
       onClose={onClose}
       hasHeader
