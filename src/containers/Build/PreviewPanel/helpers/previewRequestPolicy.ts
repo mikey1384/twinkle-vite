@@ -14,6 +14,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'content:word-master:puzzle-events',
   'content:word-master:puzzle-hint',
   'social:accept',
+  'social:decline',
   'social:joined',
   'social:together',
   'soundtracks:request-tag',

@@ -7278,7 +7278,7 @@ export default function buildRequestHelpers({
 
     async requestBuildSocial({ buildId, action, payload, token }: {
       buildId: number;
-      action: 'queue' | 'accept' | 'joined' | 'together';
+      action: 'queue' | 'accept' | 'decline' | 'joined' | 'together';
       payload: Record<string, unknown>;
       token?: string;
     }) {

@@ -253,7 +253,7 @@ test('host side: an arrival raises the banner; the banner follows its visitor', 
   assert.equal(applySocialWalkupEvent(state, { type: 'unknown' }), state);
 });
 
-test('visitor side: match ready and "they left" update the visit; nothing is ever "declined"', () => {
+test('visitor side: match ready and "they left" update the visit; nothing ever reads as a rejection', () => {
   const waiting: SocialVisit = { host: kengo, status: 'waiting', walkupId: 'w21', joinable: watchable };
   let state = { ...EMPTY_SOCIAL_STATE, visit: waiting };
   // someone else's walk-up being released is not ours
@@ -263,6 +263,10 @@ test('visitor side: match ready and "they left" update the visit; nothing is eve
   // the host's accept ended the walk-up without letting them in
   const missed = applySocialWalkupEvent(state, { type: 'released', walkupId: 'w21', missed: true });
   assert.equal(missed.visit?.status, 'missed');
+  // the host's app declined the challenge (Twinkle.social.decline)
+  const declined = applySocialWalkupEvent(state, { type: 'released', walkupId: 'w21', declined: true });
+  assert.equal(declined.visit?.status, 'declined');
+  assert.equal(applySocialWalkupEvent(state, { type: 'released', walkupId: 'w99', declined: true }), state);
   state = applySocialWalkupEvent(
     state,
     { type: 'matchReady', matchKey: 'meet-aa', mode: '1v1', host: kengo },
@@ -285,7 +289,10 @@ test('visitor side: match ready and "they left" update the visit; nothing is eve
   assert.equal(line('released'), "KenGo isn't here right now");
   assert.equal(line('missed'), "KenGo couldn't let you in this time. Try again later.");
   assert.equal(line('matched'), "You're playing with KenGo");
-  for (const status of ['waiting', 'later', 'watch', 'unavailable', 'released', 'missed', 'matched'] as const) {
+  // a decline is said gently, the same for a game or anything else
+  assert.equal(line('declined'), "KenGo can't play right now");
+  assert.equal(line('declined', open), "KenGo can't play right now");
+  for (const status of ['waiting', 'later', 'watch', 'unavailable', 'released', 'missed', 'matched', 'declined'] as const) {
     assert.doesNotMatch(line(status), /declin|reject|refus|denied|block/i);
   }
 });
@@ -307,6 +314,11 @@ test('a walk-up that ended stops the app\'s launch target saying waiting', () =>
     assert.deepEqual(settled, { ...launch, target: { ...launch.target, status: 'unavailable' } });
     assert.equal(launch.target.status, 'waiting');
   }
+  // the host's app declined it: the app can tell (status 'declined')
+  assert.deepEqual(settledSocialLaunchTarget(launch, visit('declined')), {
+    ...launch,
+    target: { ...launch.target, status: 'declined' }
+  });
   // another host's visit, a non-social target, a target already settled
   assert.equal(
     settledSocialLaunchTarget(launch, visit('missed', { ...kengo, id: kengo.id + 1 })),
