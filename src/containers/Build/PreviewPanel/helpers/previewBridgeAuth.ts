@@ -45,6 +45,8 @@ export interface PreviewHostBridgeAuth {
   // Coins/XP refused for an app player (lite host: a linked player can
   // continue with Twinkle)
   onRewardsNeedMember?: () => void;
+  // the lite host's words for Twinkle.coins answered locally to a guest
+  guestCoinsMessage?: string;
   // An app's own address (src/liteHost): what kind of account the signed-in
   // player has (Twinkle.auth). On twin-kle.com every signed-in viewer is a
   // Twinkle member.

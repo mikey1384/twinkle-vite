@@ -232,6 +232,24 @@ async function start() {
         accountSheetListeners.forEach((listener) => listener(view));
       });
     });
+  // An app that subscribed to Twinkle.auth.onChange follows sign-in and
+  // sign-out itself; any other (older apps) is reloaded when the player
+  // changes after the page loaded, so it shows the new state (F8). The
+  // guest's carry-over runs before a new session is published
+  // (beforeSignedIn), so the reloaded app already finds it.
+  let appWatchesAuth = false;
+  const identityOf = (signedIn: AppSession | null) => (signedIn ? `u${signedIn.user.id}` : 'guest');
+  let frameIdentity = identityOf(session.get());
+  const reloadFrameForIdentity = (signedIn: AppSession | null) => {
+    const next = identityOf(signedIn);
+    if (next === frameIdentity) return;
+    frameIdentity = next;
+    if (appWatchesAuth) return;
+    // after the bridge has the new viewer (this render and app-session/me)
+    window.setTimeout(() => {
+      frame.setAttribute('src', frame.getAttribute('src') || config.frameSrc);
+    }, 400);
+  };
   // Twinkle.auth on this page (useHostBridge authHostRef)
   const authHost = {
     surface: (/\.lumine\.app$|\.localhost$/.test(window.location.hostname) ? 'address' : 'domain') as
@@ -240,6 +258,9 @@ async function start() {
     signIn: () => openSignIn('signin'),
     signUp: () => openSignIn('birth'),
     signOut: () => session.signOut(),
+    markWatched: () => {
+      appWatchesAuth = true;
+    },
     async aiCoverage() {
       await accountModeReady;
       // an app on its own accounts only: no Twinkle account can help (G4)
@@ -337,6 +358,7 @@ async function start() {
         storeSessionCredentials(next);
         setCurrent(next);
         void refreshAiBanner();
+        reloadFrameForIdentity(next);
       });
       void refreshAiBanner();
       return () => {
@@ -473,6 +495,7 @@ async function start() {
             onGuestRestricted={onGuestRestricted}
             onAiNeedsAccount={onAiNeedsAccount}
             onRewardsNeedMember={onRewardsNeedMember}
+            guestCoinsMessage={t.coinsSignIn}
             guestStore={current ? null : guestStore}
             accountKind={accountKind}
             authHost={authHost}

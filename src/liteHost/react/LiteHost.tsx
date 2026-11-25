@@ -232,6 +232,7 @@ export function LiteHostBridge({
   onGuestRestricted,
   onAiNeedsAccount,
   onRewardsNeedMember,
+  guestCoinsMessage,
   guestStore,
   accountKind,
   authHost,
@@ -246,6 +247,8 @@ export function LiteHostBridge({
   // an AI action from a guest or an app-only player: the AI banner
   onAiNeedsAccount?: () => void;
   onRewardsNeedMember?: () => void;
+  // the host's words for Twinkle.coins answered locally to a guest
+  guestCoinsMessage?: string;
   // A signed-out visitor's private storage on this device (guestStore.ts).
   guestStore: GuestPrivateDb | null;
   // Twinkle.auth: the signed-in player's kind, and the lite host's own
@@ -304,17 +307,54 @@ export function LiteHostBridge({
   const coinConfirmRef = useRef(
     coinGate.current.wrapConfirm(() => requestBuildCoinConfirmationRef.current)
   );
-  const requestRefs = useMemo(
-    () => ({
+  // A guest refused for a shared-data request (not public, too many, a
+  // sign-in needed) gets that same answer from memory for 30 s: no request
+  // and no hint, so an app retrying every frame can't flood the API or use
+  // up the address's limit for every other app (standalone-compat F6).
+  const guestRefusalsRef = useRef(new Map<string, { error: any; until: number }>());
+  const viewerIdForRefusals = viewer?.id || 0;
+  useEffect(() => {
+    guestRefusalsRef.current.clear();
+  }, [viewerIdForRefusals]);
+  const requestRefs = useMemo(() => {
+    const refs: any = {
       ...previewRequestRefs,
       requestBuildCoinsRef: {
         current: coinGate.current!.wrapRequest(
           () => previewRequestRefs.requestBuildCoinsRef.current
         )
       }
-    }),
-    [previewRequestRefs]
-  );
+    };
+    for (const name of Object.keys(previewRequestRefs)) {
+      if (!/SharedDb/.test(name)) continue;
+      const source = (previewRequestRefs as any)[name];
+      refs[name] = {
+        current: async (...args: any[]) => {
+          const guest = !userIdRefForRefusals.current;
+          if (guest) {
+            const memo = guestRefusalsRef.current.get(name);
+            if (memo && memo.until > Date.now()) {
+              throw { ...memo.error, fromMemory: true };
+            }
+          }
+          try {
+            return await source.current(...args);
+          } catch (error: any) {
+            if (
+              guest &&
+              (error?.status === 403 || error?.status === 429 || error?.code === 'guest_restricted')
+            ) {
+              guestRefusalsRef.current.set(name, { error, until: Date.now() + 30_000 });
+            }
+            throw error;
+          }
+        }
+      };
+    }
+    return refs;
+  }, [previewRequestRefs]);
+  const userIdRefForRefusals = useRef<number | null>(viewer?.id || null);
+  userIdRefForRefusals.current = viewer?.id || null;
 
   const buildRef = useRef<any>(build);
   buildRef.current = build;
@@ -366,7 +406,8 @@ export function LiteHostBridge({
       aiBannerShownAtRef.current = Date.now();
       onAiNeedsAccountRef.current?.();
     },
-    onRewardsNeedMember: () => onRewardsNeedMemberRef.current?.()
+    onRewardsNeedMember: () => onRewardsNeedMemberRef.current?.(),
+    guestCoinsMessage
   }).current;
 
   const frameSrc = frame.getAttribute('src') || frame.src;

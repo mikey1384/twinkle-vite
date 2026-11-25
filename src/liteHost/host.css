@@ -219,10 +219,13 @@ body {
     flex-wrap: wrap; row-gap: 6px; border-radius: 0; box-shadow: none; background: #16161f;
     padding: max(8px, env(safe-area-inset-top)) 8px 10px 14px;
   }
-  .lh-ai-banner-text { flex: 1 1 calc(100% - 80px); }
-  .lh-ai-banner-note { flex-wrap: nowrap; padding-bottom: max(8px, env(safe-area-inset-top)); }
-  .lh-ai-banner-close { order: 2; width: 28px; height: 28px; }
-  .lh-ai-banner-cta { order: 3; margin-left: 25px; padding: 6px 13px; }
+  /* one line when it fits (the short "This app uses AI."), the button on
+     a second row only for longer words */
+  .lh-ai-banner { padding-bottom: max(8px, env(safe-area-inset-top)); }
+  .lh-ai-banner-text { flex: 1 1 auto; }
+  .lh-ai-banner-note { flex-wrap: nowrap; }
+  .lh-ai-banner-cta { order: 3; padding: 6px 13px; }
+  .lh-ai-banner-close { order: 4; width: 28px; height: 28px; }
   body.lh-ai-banner-open #lumine-app-frame {
     top: var(--lh-ai-banner-h, 0px);
     height: calc(100% - var(--lh-ai-banner-h, 0px));
