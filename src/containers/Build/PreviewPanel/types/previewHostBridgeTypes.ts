@@ -26,9 +26,9 @@ import type {
 } from './appHelperTypes';
 import type { PreviewHostBridgeRequestRefs } from '../helpers/previewBridgeRequestRefs';
 import type {
-  AppLinkRequest,
-  AppLinkResult
-} from '~/components/Build/AppLink/useAppLinkConfirm';
+  AppLinkBridgeHandlerRequest,
+  AppLinkBridgeResult
+} from '../helpers/appLinkBridge';
 import type {
   BuildRuntimeImageGenerationConfirmationRequest,
   BuildRuntimeMusicGenerationConfirmationRequest
@@ -142,7 +142,7 @@ export interface UsePreviewHostBridgeArgs {
   >;
   // Twinkle.app.openLink: the website's own "Open example.com?" sheet.
   requestBuildAppLinkRef?: RefObject<
-    ((request: AppLinkRequest) => Promise<AppLinkResult>) | null
+    ((request: AppLinkBridgeHandlerRequest) => Promise<AppLinkBridgeResult>) | null
   >;
   // Twinkle.coins: the website's own purchase / offer confirmation.
   requestBuildCoinConfirmationRef: RefObject<

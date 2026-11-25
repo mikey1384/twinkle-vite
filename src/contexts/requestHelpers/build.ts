@@ -559,24 +559,47 @@ export default function buildRequestHelpers({
   }
 
   return {
-    // Twinkle.app.openLink sheet counts (shown / opened / cancelled /
-    // rejected); counts only, never the link. Never fails the page.
-    async recordBuildAppLinkEvent({
+    // Twinkle.app.openLink sheet counts, tallied on the page and sent at
+    // most every 45 s or when the page hides (useAppLinkConfirm.tsx);
+    // counts only, never the link. keepalive lets the page-hide send finish
+    // after the page is gone. Never fails the page.
+    async recordBuildAppLinkEvents({
       buildId,
-      kind
+      counts,
+      keepalive = false
     }: {
       buildId: number;
-      kind: 'shown' | 'opened' | 'cancelled' | 'rejected';
+      counts: Partial<
+        Record<'shown' | 'opened' | 'cancelled' | 'rejected' | 'blocked', number>
+      >;
+      keepalive?: boolean;
     }) {
       try {
-        await request.post(
-          `${URL}/build/${buildId}/app-link-events`,
-          { kind },
-          auth()
-        );
+        const url = `${URL}/build/${buildId}/app-link-events`;
+        if (keepalive && typeof fetch === 'function') {
+          const { headers } = auth() as { headers?: Record<string, any> };
+          await fetch(url, {
+            method: 'POST',
+            keepalive: true,
+            headers: { ...(headers || {}), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ counts })
+          });
+          return;
+        }
+        await request.post(url, { counts }, auth());
       } catch {
         // telemetry
       }
+    },
+    // Is this site on Twinkle's blocked list? Only the host is sent. Throws
+    // when the answer is unknown (the caller then shows its sheet as usual).
+    async checkLinkHost(host: string) {
+      const { data } = await request.post(
+        `${URL}/build/link-check`,
+        { host },
+        { timeout: 4000, maxRetries: 0 } as any
+      );
+      return { blocked: data?.blocked === true };
     },
     async loadBuildRewardSettings(buildId: number) {
       const { data } = await request.get(

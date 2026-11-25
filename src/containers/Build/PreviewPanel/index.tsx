@@ -828,6 +828,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     // Twinkle.app.openLink: "Open example.com?" outside the app frame.
     const { appLinkModal, handleAppLinkRequest } = useAppLinkConfirm({
       buildId: build.id,
+      signedIn: Number(keyUserId || 0) > 0,
       frameRootRef: previewRootRef
     });
     const requestBuildAppLinkRef = useRef<

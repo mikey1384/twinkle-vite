@@ -31,12 +31,20 @@ const fixture = `
 import React, {useRef} from 'react';
 import {createRoot} from 'react-dom/client';
 import useAppLinkConfirm from './src/components/Build/AppLink/useAppLinkConfirm';
-window.recorded=[];
+import {runAppLinkBridgeRequest} from './src/containers/Build/PreviewPanel/helpers/appLinkBridge';
+import {normalizeAllowedBuildPreviewFrameSrc} from './src/helpers/buildPreviewOriginHelpers';
+window.posts=[];window.checks=[];window.blockedHosts=[];
 function Fixture(){
  const frameRootRef=useRef(null);
- const {appLinkModal,handleAppLinkRequest}=useAppLinkConfirm({buildId:884,frameRootRef});
- window.requestLink=(target,active=true)=>handleAppLinkRequest({target,userActivation:{isActive:active}})
-   .then(result=>({ok:result}),error=>({code:error.code,message:error.message}));
+ const {appLinkModal,handleAppLinkRequest}=useAppLinkConfirm({buildId:884,signedIn:true,frameRootRef});
+ // the bridge's own steps (useHostBridge 'app:open-link'), with the real
+ // preview-URL check
+ window.requestLink=(target,active=true,{capture=false}={})=>runAppLinkBridgeRequest({
+   payload:{url:target},capture,
+   userActivationApi:active===null?undefined:{isActive:active},
+   handleAppLink:handleAppLinkRequest,
+   isAppPreviewUrl:(url)=>Boolean(normalizeAllowedBuildPreviewFrameSrc(url.href))
+ }).then(result=>({ok:result}),error=>({code:error.code,message:error.message}));
  return <div className="page">
   <div ref={frameRootRef} id="frameRoot" className="app">
    <h1>Moon Facts</h1>
@@ -54,7 +62,7 @@ async function compileFixture() {
   if (bundle) return bundle;
   const stubs = {
     '~/contexts':
-      'const state={requestHelpers:{recordBuildAppLinkEvent:(event)=>{window.recorded.push(event);return Promise.resolve();}}};export const useAppContext=select=>select(state);',
+      'const state={requestHelpers:{recordBuildAppLinkEvents:(event)=>{window.posts.push(event);return Promise.resolve();},checkLinkHost:(host)=>{window.checks.push(host);if(host==="slow.example.com")return Promise.reject(new Error("offline"));return Promise.resolve({blocked:window.blockedHosts.some((b)=>host===b||host.endsWith("."+b))});}}};export const useAppContext=select=>select(state);',
     '~/theme/hooks/useRoleColor':
       'export const useRoleColor=()=>({getColor:()=>"#126bb5",color:"#126bb5",colorKey:"logoBlue",themeName:"logoBlue"});',
     '~/helpers':
@@ -150,18 +158,21 @@ const shot = async (page, name) => {
   await page.screenshot({ path: path.join(SHOTS, `${name}.png`) });
 };
 
+const settle = (page, ms) => page.waitForTimeout(ms);
+
 for (const engine of ['chromium', 'webkit']) {
   for (const view of VIEWS) {
     test(
-      `the open-link sheet names the site, opens a new tab only on Open, and cancels cleanly (${engine}, ${view.name})`,
-      { skip: !browsers && 'Install existing Playwright tooling or set PLAYWRIGHT_MODULE_PATH', timeout: 90000 },
+      `the open-link sheet names the site and opens a new tab only on a deliberate Open (${engine}, ${view.name})`,
+      { skip: !browsers && 'Install existing Playwright tooling or set PLAYWRIGHT_MODULE_PATH', timeout: 120000 },
       async () => {
         const browser = await browsers[engine].launch();
         try {
           const { context, page, errors } = await open(browser, view);
+          let popups = 0;
+          context.on('page', () => (popups += 1));
 
-          // Open: the sheet names the site; Open needs a moment, then opens a
-          // new tab with no referrer and no opener
+          // the sheet names the site, sits on screen, and the app is inert
           let pending = page.evaluate(() => window.requestLink('https://en.example.com/wiki/Moon?ref=app'));
           await sheet(page).waitFor();
           const text = (await sheet(page).innerText()).replace(/\s+/g, ' ');
@@ -170,7 +181,6 @@ for (const engine of ['chromium', 'webkit']) {
           assert.equal(await page.locator('#frameRoot').getAttribute('inert'), '', 'the app is inert under the sheet');
           const openButton = sheet(page).getByRole('button', { name: 'Open' });
           const cancelButton = sheet(page).getByRole('button', { name: 'Cancel' });
-          // the sheet fits the screen with both buttons reachable
           const box = await sheet(page).boundingBox();
           const viewport = page.viewportSize();
           assert.ok(box.x >= 0 && box.x + box.width <= viewport.width && box.y >= 0 && box.y + box.height <= viewport.height);
@@ -178,14 +188,15 @@ for (const engine of ['chromium', 'webkit']) {
             const b = await button.boundingBox();
             assert.ok(b && b.height >= 30 && b.x + b.width <= viewport.width, 'tappable');
           }
-          // a quick second tap meant for the app does nothing
-          let popups = 0;
-          context.on('page', () => (popups += 1));
-          await openButton.click({ force: true });
-          await page.waitForTimeout(100);
+          // steady tapping (a game's rhythm, or taps meant for the app) never
+          // lands on Open: every press before it turns on starts the wait again
+          for (let tap = 0; tap < 8; tap += 1) {
+            await openButton.click({ force: true });
+            await settle(page, 250);
+          }
           assert.equal(popups, 0);
           assert.equal(await sheet(page).count(), 1);
-          await page.waitForTimeout(500);
+          await settle(page, 1000);
           await shot(page, `sheet-${engine}-${view.name}`);
           const popupPromise = context.waitForEvent('page');
           await openButton.click();
@@ -202,7 +213,7 @@ for (const engine of ['chromium', 'webkit']) {
           await popup.close();
 
           // Cancel: no tab, opened false
-          await page.waitForTimeout(1600);
+          await settle(page, 1600);
           pending = page.evaluate(() => window.requestLink('https://example.com/'));
           await sheet(page).waitFor();
           const before = popups;
@@ -212,49 +223,116 @@ for (const engine of ['chromium', 'webkit']) {
 
           // right after: too soon for the same app; and one sheet at a time
           assert.equal((await page.evaluate(() => window.requestLink('https://example.com/again'))).code, 'LINK_RATE_LIMITED');
-          await page.waitForTimeout(1600);
+          await settle(page, 1600);
           pending = page.evaluate(() => window.requestLink('https://example.com/one'));
           await sheet(page).waitFor();
           assert.equal((await page.evaluate(() => window.requestLink('https://example.com/two'))).code, 'LINK_CONFIRM_IN_PROGRESS');
           await page.keyboard.press('Escape');
           assert.equal((await pending).ok.response.opened, false);
 
-          // refused before any sheet: no tap, bad schemes, credentials
+          // refused before any sheet: no tap, bad schemes, credentials, the
+          // app's own preview page (the real preview-URL check)
           const refused = await page.evaluate(async () => [
             (await window.requestLink('https://example.com/', false)).code,
             (await window.requestLink('javascript:alert(1)')).code,
             (await window.requestLink('data:text/html,hi')).code,
-            (await window.requestLink('https://a:b@example.com/')).code
+            (await window.requestLink('https://a:b@example.com/')).code,
+            (await window.requestLink('https://preview.lumine.app/build/preview/build/884/current?buildApiToken=t')).code
           ]);
-          assert.deepEqual(refused, ['USER_ACTIVATION_REQUIRED', 'LINK_SCHEME_NOT_ALLOWED', 'LINK_SCHEME_NOT_ALLOWED', 'LINK_HAS_CREDENTIALS']);
+          assert.deepEqual(refused, ['USER_ACTIVATION_REQUIRED', 'LINK_SCHEME_NOT_ALLOWED', 'LINK_SCHEME_NOT_ALLOWED', 'LINK_HAS_CREDENTIALS', 'INVALID_LINK_TARGET']);
           assert.equal(await sheet(page).count(), 0);
-
-          // a look-alike name: decoded, with the address-bar form and a warning
-          await page.waitForTimeout(1600);
-          pending = page.evaluate(() => window.requestLink('https://xn--pple-43d.com/login'));
-          await sheet(page).waitFor();
-          const warned = (await sheet(page).innerText()).replace(/\s+/g, ' ');
-          assert.match(warned, /Open аpple\.com\?/);
-          assert.match(warned, /Address bar: xn--pple-43d\.com/);
-          assert.match(warned, /mixes letters from different alphabets/);
-          await page.waitForTimeout(500);
-          await shot(page, `sheet-lookalike-${engine}-${view.name}`);
-          await sheet(page).getByRole('button', { name: 'Cancel' }).click();
-          await pending;
+          // a capture never shows a sheet
+          assert.deepEqual(await page.evaluate(() => window.requestLink('https://example.com/', true, { capture: true })), {
+            ok: { navigateUrl: null, response: { opened: false, target: 'external' } }
+          });
+          assert.equal(await sheet(page).count(), 0);
 
           // Twinkle content: no sheet, opened in place by the bridge
           assert.deepEqual(await page.evaluate(() => window.requestLink('https://www.twin-kle.com/subjects/432')), {
             ok: { navigateUrl: `${HOST}/subjects/432`, response: { opened: true, target: 'twinkle' } }
           });
 
-          // counts only
-          const recorded = await page.evaluate(() => window.recorded);
-          assert.ok(recorded.every((event) => event.buildId === 884 && Object.keys(event).length === 2));
-          const kinds = recorded.map((event) => event.kind);
-          assert.deepEqual(
-            ['shown', 'opened', 'cancelled', 'rejected'].map((kind) => kinds.filter((k) => k === kind).length),
-            [4, 1, 3, 6]
-          );
+          // a look-alike name leads with the address-bar form, then the
+          // decoded name and a warning
+          await settle(page, 1600);
+          pending = page.evaluate(() => window.requestLink('https://xn--pple-43d.com/login'));
+          await sheet(page).waitFor();
+          const warned = (await sheet(page).innerText()).replace(/\s+/g, ' ');
+          assert.match(warned, /Open xn--pple-43d\.com\?/);
+          assert.match(warned, /Shown in its own letters: аpple\.com/);
+          assert.match(warned, /mixes letters from different alphabets/);
+          await settle(page, 900);
+          await shot(page, `sheet-lookalike-${engine}-${view.name}`);
+          await sheet(page).getByRole('button', { name: 'Cancel' }).click();
+          await pending;
+
+          assert.deepEqual(errors, []);
+          await context.close();
+        } finally {
+          await browser.close();
+        }
+      }
+    );
+
+    test(
+      `blocked sites get a short note; a thousand calls in one tap make one request (${engine}, ${view.name})`,
+      { skip: !browsers && 'Install existing Playwright tooling or set PLAYWRIGHT_MODULE_PATH', timeout: 120000 },
+      async () => {
+        const browser = await browsers[engine].launch();
+        try {
+          // a fresh page: the 5-sheets-a-minute limit starts again
+          const { context, page, errors } = await open(browser, view);
+          let popups = 0;
+          context.on('page', () => (popups += 1));
+          let pending;
+          // a blocked site (and its subdomains): a short note, OK, LINK_BLOCKED, no tab
+          await page.evaluate(() => { window.blockedHosts = ['example.org']; });
+          pending = page.evaluate(() => window.requestLink('https://www.example.org/games'));
+          await sheet(page).waitFor();
+          const blockedText = (await sheet(page).innerText()).replace(/\s+/g, ' ');
+          assert.match(blockedText, /This site can't be opened from Twinkle apps/);
+          assert.match(blockedText, /www\.example\.org/);
+          assert.equal(await sheet(page).getByRole('button', { name: 'Open' }).count(), 0);
+          await settle(page, 700);
+          await shot(page, `blocked-${engine}-${view.name}`);
+          const popupsBeforeBlocked = popups;
+          await sheet(page).getByRole('button', { name: 'OK' }).click();
+          assert.equal((await pending).code, 'LINK_BLOCKED');
+          assert.equal(popups, popupsBeforeBlocked);
+          // the check could not be answered: the sheet shows as usual
+          await settle(page, 1600);
+          pending = page.evaluate(() => window.requestLink('https://slow.example.com/'));
+          await sheet(page).waitFor();
+          assert.match(await sheet(page).innerText(), /Open slow\.example\.com\?/);
+          await page.keyboard.press('Escape');
+          await pending;
+          assert.deepEqual(await page.evaluate(() => window.checks.filter((h) => h.includes('example.org'))), ['www.example.org'], 'only the host was asked, once');
+
+          // a browser without the user-activation API still gets the sheet
+          await settle(page, 1600);
+          pending = page.evaluate(() => window.requestLink('https://example.net/', null));
+          await sheet(page).waitFor();
+          await page.keyboard.press('Escape');
+          assert.equal((await pending).ok.response.opened, false);
+
+          // an app calling openLink 1,000 times in one tap: no request until
+          // the page sends its tally, then one, capped per kind
+          await settle(page, 1600);
+          pending = page.evaluate(() => window.requestLink('https://example.com/flood'));
+          await sheet(page).waitFor();
+          const flood = await page.evaluate(async () => {
+            const codes = await Promise.all(Array.from({ length: 1000 }, () => window.requestLink('https://example.com/flood')));
+            return { refused: codes.filter((r) => r.code === 'LINK_CONFIRM_IN_PROGRESS').length, posts: window.posts.length };
+          });
+          assert.deepEqual(flood, { refused: 1000, posts: 0 });
+          await page.keyboard.press('Escape');
+          await pending;
+          await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+          const posts = await page.evaluate(() => window.posts);
+          assert.equal(posts.length, 1, 'one request for everything');
+          assert.equal(posts[0].buildId, 884);
+          assert.equal(posts[0].keepalive, true);
+          assert.deepEqual(posts[0].counts, { rejected: 50, blocked: 1, shown: 3, cancelled: 3 });
           assert.deepEqual(errors, []);
         } finally {
           await browser.close();

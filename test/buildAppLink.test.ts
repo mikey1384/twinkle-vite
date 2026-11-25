@@ -10,6 +10,7 @@ import {
   labelMixesScripts
 } from '../src/containers/Build/PreviewPanel/helpers/appLinkPolicy';
 import { isMutatingPreviewRequestType } from '../src/containers/Build/PreviewPanel/helpers/previewRequestPolicy';
+import { runAppLinkBridgeRequest } from '../src/containers/Build/PreviewPanel/helpers/appLinkBridge';
 
 // Twinkle.app.openLink: the Twinkle page's own check of the link an app asks
 // to open, the site name its sheet shows, and one sheet at a time.
@@ -18,16 +19,27 @@ const tap = { isActive: true };
 const decide = (target: unknown, extra: Record<string, any> = {}) =>
   authorizeAppLinkRequest({ currentOrigin: ORIGIN, target, userActivation: tap, ...extra });
 
-test('only a tap opens a link', () => {
-  for (const userActivation of [{ isActive: false }, null, undefined]) {
-    const decision = authorizeAppLinkRequest({
-      currentOrigin: ORIGIN,
-      target: 'https://example.com',
-      userActivation
-    });
-    assert.equal(decision.allowed, false);
-    assert.equal(!decision.allowed && decision.code, 'USER_ACTIVATION_REQUIRED');
-  }
+test('only a tap opens a link; a browser that cannot tell still gets the sheet for outside sites', () => {
+  const refused = authorizeAppLinkRequest({
+    currentOrigin: ORIGIN,
+    target: 'https://example.com',
+    userActivation: { isActive: false }
+  });
+  assert.equal(!refused.allowed && refused.code, 'USER_ACTIVATION_REQUIRED');
+  // no user-activation API (Safari before 16.4): outside links still reach
+  // the sheet, whose own tap is the consent; Twinkle pages (no sheet) do not
+  const unknown = authorizeAppLinkRequest({
+    currentOrigin: ORIGIN,
+    target: 'https://example.com',
+    userActivation: null
+  });
+  assert.equal(unknown.allowed && unknown.kind, 'external');
+  const unknownTwinkle = authorizeAppLinkRequest({
+    currentOrigin: ORIGIN,
+    target: `${ORIGIN}/subjects/1`,
+    userActivation: null
+  });
+  assert.equal(!unknownTwinkle.allowed && unknownTwinkle.code, 'USER_ACTIVATION_REQUIRED');
 });
 
 test('only full http(s) addresses, without credentials, up to 2048 characters', () => {
@@ -131,14 +143,31 @@ test('one sheet at a time, a short pause after each, and a few per minute per ap
   assert.deepEqual(gate.begin('1', 61_000), { allowed: true });
 });
 
-test('the bridge sends app:open-link to the website sheet and navigates Twinkle content after answering', () => {
+test('the bridge: captures answer "not opened" with no sheet; the tap is read as this page sees it', async () => {
   assert.equal(isMutatingPreviewRequestType('app:open-link'), true);
+  const calls: any[] = [];
+  const handleAppLink = async (request: any) => {
+    calls.push(request);
+    return { navigateUrl: null, response: { opened: true, target: 'external' as const } };
+  };
+  assert.deepEqual(
+    await runAppLinkBridgeRequest({ payload: { url: 'https://example.com' }, capture: true, userActivationApi: { isActive: true }, handleAppLink }),
+    { navigateUrl: null, response: { opened: false, target: 'external' } }
+  );
+  assert.equal(calls.length, 0, 'no sheet, no count in a capture');
+  await runAppLinkBridgeRequest({ payload: { url: 'https://example.com' }, capture: false, userActivationApi: { isActive: true }, handleAppLink });
+  await runAppLinkBridgeRequest({ payload: { url: 'https://example.com' }, capture: false, userActivationApi: undefined, handleAppLink });
+  assert.deepEqual(calls.map((call) => call.userActivation), [{ isActive: true }, null]);
+  await assert.rejects(
+    runAppLinkBridgeRequest({ payload: {}, capture: false, userActivationApi: { isActive: true }, handleAppLink: null }),
+    (error: any) => error.code === 'LINK_UNAVAILABLE'
+  );
   const source = readFileSync(
     new URL('../src/containers/Build/PreviewPanel/hooks/useHostBridge.ts', import.meta.url),
     'utf8'
   );
   assert.match(
     source,
-    /case 'app:open-link': \{[\s\S]*?requestBuildAppLinkRef\?\.current[\s\S]*?navigator\.userActivation\?\.isActive === true[\s\S]*?normalizeAllowedBuildPreviewFrameSrc[\s\S]*?pendingHostNavigationUrl = linkResult\.navigateUrl[\s\S]*?response = linkResult\.response;/
+    /case 'app:open-link': \{[\s\S]*?runAppLinkBridgeRequest\(\{[\s\S]*?capture: Boolean\(captureScratchStore\)[\s\S]*?userActivationApi: navigator\.userActivation[\s\S]*?requestBuildAppLinkRef\?\.current[\s\S]*?normalizeAllowedBuildPreviewFrameSrc[\s\S]*?pendingHostNavigationUrl = linkResult\.navigateUrl[\s\S]*?response = linkResult\.response;/
   );
 });

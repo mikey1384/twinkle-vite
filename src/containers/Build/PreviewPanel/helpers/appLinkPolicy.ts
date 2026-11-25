@@ -10,9 +10,15 @@
 //    other Twinkle address, and the app's own preview pages, are refused;
 //  - everything else is an outside site: the sheet names its real host,
 //    decoded from punycode, and warns when one name mixes alphabets.
-// Twinkle has no list of blocked sites for posted links (they open directly
-// from profiles and comments), so there is none to reuse here; the sheet is
-// the check, and the viewer always sees where the link goes.
+// Sites on Twinkle's blocked list (twinkle-api helpers/linkBlocklist.ts,
+// managed with `lumine admin link-block`) are checked after this, before the
+// sheet shows (useAppLinkConfirm.tsx, POST /build/link-check).
+//
+// A browser without the user-activation API (Safari before 16.4) cannot
+// tell whether the app was tapped (review S6). There an outside link still
+// gets the sheet, whose own tap is the consent and opens the tab, so older
+// iPads keep a way out; a Twinkle page, which opens in place with no sheet,
+// still needs a known tap.
 import {
   isTwinklePublicHost,
   normalizeTwinkleContentNavigationUrl
@@ -25,7 +31,8 @@ export interface AppLinkSite {
   displayHost: string;
   // the address-bar form when it differs (an international name)
   asciiHost: string | null;
-  // one part of the name mixes alphabets (e.g. Latin with Cyrillic)
+  // one part of the name mixes alphabets (e.g. Latin with Cyrillic), or a
+  // name does not decode: the sheet then leads with asciiHost
   mixedScripts: boolean;
 }
 
@@ -46,11 +53,13 @@ export function authorizeAppLinkRequest({
 }: {
   currentOrigin: string;
   target: unknown;
-  userActivation: { isActive?: boolean } | null | undefined;
+  // null: this browser has no user-activation API (see above)
+  userActivation: { isActive?: boolean } | null;
   // the app's own Build preview pages (they carry preview tokens)
   isAppPreviewUrl?: (url: URL) => boolean;
 }): AppLinkDecision {
-  if (userActivation?.isActive !== true) {
+  const activationUnknown = userActivation === null;
+  if (!activationUnknown && userActivation?.isActive !== true) {
     return refuse(
       'USER_ACTIVATION_REQUIRED',
       'Links can only be opened from a tap or click.'
@@ -103,6 +112,12 @@ export function authorizeAppLinkRequest({
       currentOrigin,
       target: url.href
     });
+    if (activationUnknown) {
+      return refuse(
+        'USER_ACTIVATION_REQUIRED',
+        'Links can only be opened from a tap or click.'
+      );
+    }
     if (!contentUrl) {
       return refuse(
         'UNSUPPORTED_TWINKLE_LINK',
@@ -239,6 +254,10 @@ export function labelMixesScripts(label: string) {
 export const APP_LINK_SHEETS_PER_MINUTE = 5;
 // after a sheet closes, the same app waits this long before the next one
 export const APP_LINK_COOLDOWN_MS = 1500;
+
+// One gate for the whole page (review S5): two app frames on one page
+// (Build Studio and a reward play-through) still show one sheet at a time.
+export const appLinkGate = createAppLinkGate();
 
 export function createAppLinkGate({
   perMinute = APP_LINK_SHEETS_PER_MINUTE,
