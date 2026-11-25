@@ -42,6 +42,8 @@ import {
 
 const PIXEL_FONT = "'Press Start 2P', monospace";
 const TYPE_MS = 24;
+// How long a card effect or stun line stays readable after it finishes typing.
+const READ_HOLD_MS = 2000;
 
 export interface BattleQuestion {
   index: number;
@@ -216,6 +218,29 @@ export default function BattleScreen({
   const [phase, setPhase] = useState<Phase>('loading');
   const [line, setLine] = useState('');
   const [typed, setTyped] = useState('');
+  // Tapping the battle text finishes the current line and skips its hold
+  // (card effects and stuns stay up long enough to read; a tap moves on).
+  const skipTap = useRef(0);
+  const skipWaiters = useRef(new Set<() => void>());
+  const holdOrTap = useCallback(
+    (ms: number) =>
+      new Promise<void>((resolve) => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          skipWaiters.current.delete(finish);
+          resolve();
+        };
+        skipWaiters.current.add(finish);
+        wait(ms).then(finish);
+      }),
+    []
+  );
+  const skipLine = useCallback(() => {
+    skipTap.current++;
+    for (const finish of [...skipWaiters.current]) finish();
+  }, []);
   const [pose, setPose] = useState<MonsterPose>('idle');
   const [entered, setEntered] = useState(false);
   const [ranAway, setRanAway] = useState(false);
@@ -269,14 +294,19 @@ export default function BattleScreen({
       setLine(text);
       setTyped('');
       const step = Math.max(4, TYPE_MS / speed);
+      const tapAtStart = skipTap.current;
       for (let i = 1; i <= text.length; i++) {
         if (!mounted.current) return;
+        if (skipTap.current !== tapAtStart) {
+          setTyped(text);
+          break;
+        }
         setTyped(text.slice(0, i));
         await wait(step);
       }
-      await wait(hold / speed);
+      if (hold > 0) await holdOrTap(hold / speed);
     },
-    [speed]
+    [speed, holdOrTap]
   );
 
   const finish = useCallback(
@@ -506,6 +536,7 @@ export default function BattleScreen({
       const cardKo = event.kind === 'card' && !!event.damage && !!local && local.mhp <= 0;
       const line =
         cardKo && event.kind === 'card' ? cardKoLine(event, word) : eventLine(event, { word, attacker, focus: focusAfter });
+      let narrated = false;
       switch (event.kind) {
         case 'attack':
         case 'glancing': {
@@ -544,6 +575,10 @@ export default function BattleScreen({
           setCardLeaving(false);
           setCardEvent(event);
           playBattleSound('cardFlip');
+          // The words explain the card while it is on screen (Mikey 11-25:
+          // the line used to appear after the card left and vanish in 0.3 s).
+          const narration = line ? say(line, 0) : Promise.resolve();
+          narrated = true;
           await wait(pace(1000));
           if (!mounted.current) return;
           if (event.outcome === 'block') playBattleSound('block');
@@ -559,6 +594,10 @@ export default function BattleScreen({
             }
           }
           await wait(pace(eventHoldMs(event) - 1000));
+          if (!mounted.current) return;
+          await narration;
+          if (!mounted.current) return;
+          await holdOrTap(pace(READ_HOLD_MS));
           if (!mounted.current) return;
           setCardLeaving(true);
           await wait(pace(350));
@@ -576,7 +615,8 @@ export default function BattleScreen({
         default:
           break;
       }
-      if (line) await say(line, event.kind === 'card' ? 300 : eventHoldMs(event));
+      if (line && !narrated)
+        await say(line, event.kind === 'stun' ? Math.max(eventHoldMs(event), READ_HOLD_MS) : eventHoldMs(event));
       setStunStamp(false);
       if (!mounted.current) return;
       setBurst(null);
@@ -760,7 +800,7 @@ export default function BattleScreen({
       </div>
 
       <div className={windowCls} aria-live="polite">
-        <div className={textCls}>
+        <div className={textCls} onClick={skipLine}>
           {phase === 'error' ? errorText : typed}
           {phase !== 'error' && typed.length < line.length && <span className={caretCls}>▌</span>}
         </div>
