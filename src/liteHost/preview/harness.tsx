@@ -19,7 +19,7 @@ import {
 import ParentConsentView from '~/containers/DomainParentConsent/ParentConsentView';
 import SignInCardView from '~/containers/LumineAppSignIn/SignInCardView';
 import AppSignUp from '~/containers/LumineAppSignIn/AppSignUp';
-import { SIGNIN_TEXT, signInLang } from '~/containers/LumineAppSignIn/text';
+import { SIGNIN_TEXT } from '~/containers/LumineAppSignIn/text';
 import { LiteHostProviders } from '../react/LiteHost';
 import { askSignIn, showGuestHint } from '../ui';
 import { LITE_HOST_TEXT } from '../text';
@@ -218,7 +218,6 @@ function Harness() {
         <SignInCardView app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: null }} host="the-adventure-of-a-red-square.lumine.app" originAllowed error="" userId={null} username={null} busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} onCreateAccount={() => { window.location.search = window.location.search.replace('signin-new', 'signup'); }} />
       );
     case 'signup': {
-      const signInL = signInLang();
       return (
         <LiteHostProviders requestHelpers={FAKE_REQUESTS} viewer={null} onOpenSignin={noop}>
           <SignInCardView
@@ -232,7 +231,7 @@ function Harness() {
             allow={noop}
             handBack={noop}
             onOpenSigninModal={noop}
-            signUp={<AppSignUp buildId={2} origin="https://the-adventure-of-a-red-square.lumine.app" appTitle="The Adventure of a Red Square" lang={signInL} t={SIGNIN_TEXT[signInL]} onBack={noop} onCreated={() => { document.body.dataset.created = '1'; }} />}
+            signUp={<AppSignUp buildId={2} origin="https://the-adventure-of-a-red-square.lumine.app" appTitle="The Adventure of a Red Square" t={SIGNIN_TEXT} onBack={noop} onCreated={() => { document.body.dataset.created = '1'; }} />}
           />
         </LiteHostProviders>
       );
@@ -245,7 +244,6 @@ function Harness() {
           <AppAccountSheet
             config={{ ...SITE_CONFIG, apiOrigin: '', siteOrigin: 'https://www.twin-kle.com' } as any}
             t={LITE_HOST_TEXT[lang]}
-            lang={lang}
             session={{ post: async () => ({ token: 'a_preview.preview', expiresAt: Math.floor(Date.now() / 1000) + 86400 }), signInAppAccount: async () => null, signUpAppAccount: async () => null, signIn: async () => null } as any}
             twinkleToo={screen === 'account-both'}
             onClose={noop}

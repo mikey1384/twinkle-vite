@@ -10,7 +10,7 @@ import React, { useMemo, useState } from 'react';
 import GuardianConsent from '~/containers/Signin/SignUpForm/GuardianConsent';
 import { needsGuardianConsent, clearGuardianConsent, getGuardianConsent } from '~/helpers/signupPasses';
 import type { LiteHostConfig, SessionStore } from '../session';
-import type { LiteHostLang, LiteHostText } from '../text';
+import type { LiteHostText } from '../text';
 
 type View = 'signin' | 'birth' | 'guardian' | 'account';
 const PASS_KEY = (buildId: number) => `lumine-app-account-pass:${buildId}`;
@@ -27,14 +27,12 @@ function readPass(buildId: number): string | null {
 export default function AppAccountSheet({
   config,
   t,
-  lang,
   session,
   twinkleToo,
   onClose
 }: {
   config: LiteHostConfig;
   t: LiteHostText;
-  lang: LiteHostLang;
   session: SessionStore;
   // an app on both kinds of accounts: Twinkle members may continue with Twinkle
   twinkleToo: boolean;
@@ -193,7 +191,6 @@ export default function AppAccountSheet({
         {view === 'guardian' && pass && birth && (
           <div className="lh-guardian">
             <GuardianConsent
-              lang={lang}
               inviteToken={pass}
               birthYear={birth.birthYear}
               birthMonth={birth.birthMonth}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import SignInCardView from './SignInCardView';
 import AppSignUp from './AppSignUp';
-import { SIGNIN_TEXT, signInLang } from './text';
+import { SIGNIN_TEXT } from './text';
 import { trackEvent } from '~/helpers/analytics';
 import { useLocation } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -35,7 +35,6 @@ export default function LumineAppSignIn() {
   const [signingUp, setSigningUp] = useState(false);
   // a new account made here goes straight on to the app (they chose it there)
   const [allowWhenSignedIn, setAllowWhenSignedIn] = useState(false);
-  const lang = signInLang();
   const loadAppSigninInfo = useAppContext((v) => v.requestHelpers.loadAppSigninInfo);
   const authorizeAppSignin = useAppContext((v) => v.requestHelpers.authorizeAppSignin);
   const [app, setApp] = useState<{ title: string; ownerUsername: string; thumbnailUrl: string | null } | null>(null);
@@ -143,8 +142,7 @@ export default function LumineAppSignIn() {
             buildId={buildId}
             origin={origin}
             appTitle={app.title}
-            lang={lang}
-            t={SIGNIN_TEXT[lang]}
+            t={SIGNIN_TEXT}
             onBack={() => setSigningUp(false)}
             onCreated={(account) => {
               onSignup(account);

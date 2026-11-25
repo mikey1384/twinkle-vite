@@ -19,7 +19,7 @@ type Status = 'pending' | 'approved' | 'declined' | 'expired' | 'used';
 interface ConsentView {
   status: Status;
   childFirstName: string;
-  inviteSource: 'guest' | 'minecraft' | 'app';
+  inviteSource: 'guest' | 'minecraft' | 'app' | 'app-account';
   inviterName: string;
   minecraftName?: string;
   expiresAt: number;
@@ -38,6 +38,11 @@ const TEXT: Record<
     invitedByGuest: (inviter: string) => string;
     invitedByMinecraft: (inviter: string, minecraftName?: string) => string;
     invitedByApp: (inviter: string) => string;
+    // an account for one app only (not a Twinkle membership)
+    appAccountTitle: (child: string) => string;
+    appAccountWhat: (inviter: string) => string;
+    // sign-ups from an app have no email unless the child adds one
+    collectBodyApp: string;
     whatTitle: string;
     whatBody: string;
     collectTitle: string;
@@ -67,6 +72,11 @@ const TEXT: Record<
     kicker: 'Parent or guardian consent',
     loading: 'Loading...',
     title: (child) => `${child} would like to join Twinkle`,
+    appAccountTitle: (child) => `${child} would like to make an account in a game`,
+    appAccountWhat: (inviter) =>
+      `The game was made on Twinkle by ${inviter}, a Twinkle member. The account works only in that game and is not a Twinkle membership. The game's maker can see and manage its players, and Twinkle keeps the account's data.`,
+    collectBodyApp:
+      'The first name your child gave, the username they choose, their birth month and their activity. We have no email address for them unless they choose to add one for password resets.',
     intro:
       'They said they are under 14 and gave your email as their parent or guardian. We need your approval before we make their account.',
     invitedByGuest: (inviter) =>
@@ -114,6 +124,11 @@ const TEXT: Record<
     kicker: '보호자 동의',
     loading: '불러오는 중...',
     title: (child) => `자녀분(${child})이 Twinkle 가입을 요청했습니다`,
+    appAccountTitle: (child) => `자녀분(${child})이 게임 계정 만들기를 요청했습니다`,
+    appAccountWhat: (inviter) =>
+      `이 게임은 Twinkle 회원 ${inviter} 님이 Twinkle에서 만들었습니다. 이 계정은 그 게임에서만 쓰이며 Twinkle 회원 가입이 아닙니다. 게임을 만든 회원은 게임의 플레이어를 보고 관리할 수 있으며, 계정 정보는 Twinkle이 보관합니다.`,
+    collectBodyApp:
+      '자녀분이 입력한 이름, 정한 아이디, 태어난 달, 이용 기록입니다. 자녀분이 비밀번호 재설정용 이메일을 직접 추가하지 않는 한 이메일 주소는 받지 않습니다.',
     intro:
       '자녀분이 만 14세 미만이라고 답하고, 부모님 또는 법정대리인의 이메일로 이 주소를 입력했습니다. 계정을 만들기 전에 보호자님의 동의가 필요합니다.',
     invitedByGuest: (inviter) =>
@@ -398,20 +413,29 @@ export default function GuardianConsentPage() {
     }
     return (
       <>
-        <h1>{t.title(child)}</h1>
+        <h1>
+          {consent.inviteSource === 'app-account'
+            ? t.appAccountTitle(child)
+            : t.title(child)}
+        </h1>
         <p>{t.intro}</p>
         <p>
           {consent.inviteSource === 'minecraft'
             ? t.invitedByMinecraft(consent.inviterName, consent.minecraftName)
             : consent.inviteSource === 'app'
               ? t.invitedByApp(consent.inviterName)
+              : consent.inviteSource === 'app-account'
+                ? t.appAccountWhat(consent.inviterName)
               : t.invitedByGuest(consent.inviterName)}
         </p>
         <h2>{t.whatTitle}</h2>
         <p>{t.whatBody}</p>
         <h2>{t.collectTitle}</h2>
         <p>
-          {t.collectBody}{' '}
+          {consent.inviteSource === 'app' ||
+          consent.inviteSource === 'app-account'
+            ? t.collectBodyApp
+            : t.collectBody}{' '}
           <a href="/privacy" target="_blank" rel="noopener">
             {t.privacyLink}
           </a>
