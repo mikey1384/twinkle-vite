@@ -25,6 +25,8 @@ export default function ActionBlock({
     if (action === 'buildSale') return 'was paid for something in a Lumine app';
     if (action === 'buildPurchaseRefund') return 'got a Lumine app purchase refunded';
     if (action === 'buildSaleRefund') return 'returned Coins for a refunded Lumine app purchase';
+    // "Maker pays" AI: the maker covered AI for their app's own players
+    if (action === 'appMakerAi') return 'covered AI for players of their app';
     if (action === 'grammarChallenge' && target === 'grammarbles_question') {
       return 'challenged a Grammarbles question';
     }
