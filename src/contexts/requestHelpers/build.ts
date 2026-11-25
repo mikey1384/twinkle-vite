@@ -614,6 +614,16 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    // "Create a free account" in an app's sign-in window: the app's sign-up
+    // pass (the app's maker invites the new member)
+    async loadAppSignupPass({ buildId, origin }: { buildId: number; origin?: string; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-session/signup-pass`, { origin });
+        return data as { token: string; expiresAt: number; inviterName: string; appTitle: string };
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     async addAppDomain({ buildId, hostname }: { buildId: number; hostname?: string; }) {
       try {
         const { data } = await request.post(`${URL}/build/${buildId}/app-domains`, { hostname }, auth());

@@ -19,7 +19,7 @@ type Status = 'pending' | 'approved' | 'declined' | 'expired' | 'used';
 interface ConsentView {
   status: Status;
   childFirstName: string;
-  inviteSource: 'guest' | 'minecraft';
+  inviteSource: 'guest' | 'minecraft' | 'app';
   inviterName: string;
   minecraftName?: string;
   expiresAt: number;
@@ -37,6 +37,7 @@ const TEXT: Record<
     intro: string;
     invitedByGuest: (inviter: string) => string;
     invitedByMinecraft: (inviter: string, minecraftName?: string) => string;
+    invitedByApp: (inviter: string) => string;
     whatTitle: string;
     whatBody: string;
     collectTitle: string;
@@ -74,6 +75,8 @@ const TEXT: Record<
       `${inviter || 'A moderator'}, a moderator of our Minecraft server, vouched for them${
         minecraftName ? ` (Minecraft name: ${minecraftName})` : ''
       }.`,
+    invitedByApp: (inviter) =>
+      `They want to save their progress in a game that ${inviter}, a Twinkle member, made on Twinkle.`,
     whatTitle: 'What Twinkle is',
     whatBody:
       'A community website that began at Twinkle English Academy in Korea. Members chat, play and make games and apps, and practise English together. Anyone can report or block another member in chat, and our team reviews every report.',
@@ -119,6 +122,8 @@ const TEXT: Record<
       `저희 마인크래프트 서버의 관리자 ${inviter || '관리자'} 님이 자녀분을 추천했습니다${
         minecraftName ? ` (마인크래프트 이름: ${minecraftName})` : ''
       }.`,
+    invitedByApp: (inviter) =>
+      `Twinkle 회원 ${inviter} 님이 Twinkle에서 만든 게임에서 진행 상황을 저장하려고 합니다.`,
     whatTitle: 'Twinkle은 어떤 곳인가요?',
     whatBody:
       '한국의 트윈클 어학원에서 시작된 커뮤니티 웹사이트입니다. 회원들은 함께 대화하고, 게임과 앱을 즐기거나 직접 만들며, 영어를 연습합니다. 채팅에서 누구든 다른 회원을 신고하거나 차단할 수 있으며, 모든 신고는 저희 팀이 확인합니다.',
@@ -398,7 +403,9 @@ export default function GuardianConsentPage() {
         <p>
           {consent.inviteSource === 'minecraft'
             ? t.invitedByMinecraft(consent.inviterName, consent.minecraftName)
-            : t.invitedByGuest(consent.inviterName)}
+            : consent.inviteSource === 'app'
+              ? t.invitedByApp(consent.inviterName)
+              : t.invitedByGuest(consent.inviterName)}
         </p>
         <h2>{t.whatTitle}</h2>
         <p>{t.whatBody}</p>

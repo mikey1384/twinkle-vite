@@ -19,15 +19,18 @@ import {
 const DARK_CITADEL_PRIVATE_ROOM_PATH = '/app/2610/vigil/megacitadel/private';
 
 // How a friend joined: a Minecraft vouch, Join Twinkle on a Bridge Builder
-// check-in code, or (guest) a private Dark Citadel room.
+// check-in code, signing up from one of this member's apps on its own
+// address, or (guest) a private Dark Citadel room.
 function referralSourceLabel(source: string) {
   if (source === 'minecraft') return 'Minecraft';
   if (source === 'checkin') return 'Bridge Builder';
+  if (source === 'app') return 'Their app';
   return 'The Dark Citadel';
 }
 function referralSourceIcon(source: string) {
   if (source === 'minecraft') return 'cubes';
   if (source === 'checkin') return 'qrcode';
+  if (source === 'app') return 'rocket';
   return 'fire';
 }
 const PLAQUE_BG = '#10142a';

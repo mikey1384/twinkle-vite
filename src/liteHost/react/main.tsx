@@ -22,7 +22,8 @@ import {
   type AppSession,
   type LiteHostConfig
 } from '../session';
-import { askSignIn, mountBadge, showReport } from '../ui';
+import { askSignIn, mountBadge, showGuestHint, showReport, showToast } from '../ui';
+import { createGuestStore } from '../guestStore';
 import { LITE_HOST_TEXT, liteHostLang } from '../text';
 import {
   createLiteFrameMetaRef,
@@ -100,7 +101,37 @@ async function start() {
   if (!config || !frame) return;
   const t = LITE_HOST_TEXT[liteHostLang()];
   document.documentElement.lang = liteHostLang();
-  const session = createSessionStore(config);
+  // A guest's private storage lives on this device until they sign in; then
+  // it is carried into their account before the app hears they signed in.
+  const guestStore = createGuestStore(
+    config.buildId,
+    () =>
+      `guest_${
+        window.crypto?.randomUUID?.() ||
+        `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`
+      }`
+  );
+  const session = createSessionStore(config, {
+    beforeSignedIn: async (accessToken) => {
+      const pending = guestStore.takeForCarryover();
+      if (!pending) return;
+      const response = await fetch(
+        `${config.apiOrigin}/build/${config.buildId}/app-session/carryover`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            authorization: accessToken
+          },
+          body: JSON.stringify(pending)
+        }
+      );
+      if (!response.ok) return;
+      const data = await response.json().catch(() => ({}));
+      guestStore.clear();
+      if (Number(data?.carried) > 0) showToast(t.carriedOver);
+    }
+  });
   // A sign-in that came back by redirect, and an expired pass, are settled
   // before the bridge answers anything (the app's early messages wait in
   // window.__lumineEarly meanwhile).
@@ -126,6 +157,8 @@ async function start() {
   const openSignIn = () => {
     void askSignIn({ config, t, session });
   };
+  // the app needed an account for something in the background
+  const hintSignIn = () => showGuestHint({ t, onSignIn: openSignIn });
 
   function Root() {
     const [current, setCurrent] = useState<AppSession | null>(session.get());
@@ -239,7 +272,7 @@ async function start() {
       }),
       []
     );
-    const onGuestRestricted = useCallback(openSignIn, []);
+    const onGuestRestricted = useCallback(hintSignIn, []);
     return (
       <LiteHostProviders
         requestHelpers={requestHelpers}
@@ -254,6 +287,7 @@ async function start() {
             metaRef={metaRef}
             retiredRef={retiredRef}
             onGuestRestricted={onGuestRestricted}
+            guestStore={current ? null : guestStore}
             onReady={replayEarlyMessages}
           />
         ) : null}

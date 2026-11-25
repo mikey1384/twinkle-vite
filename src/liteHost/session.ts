@@ -26,6 +26,8 @@ export interface AppSession {
   refreshToken: string;
   user: { id: number; username: string };
   scopes: string[];
+  // who this is inside the app (twinkle-api appHosting/appPlayers.ts)
+  appPlayer?: { id: number; kind: 'twinkle' | 'app'; linked: boolean } | null;
 }
 
 const SESSION_KEY = (buildId: number) => `lumine-app-session:${buildId}`;
@@ -61,7 +63,17 @@ export async function createPkcePair() {
   return { verifier, challenge: base64Url(new Uint8Array(digest)) };
 }
 
-export function createSessionStore(config: LiteHostConfig) {
+export function createSessionStore(
+  config: LiteHostConfig,
+  {
+    beforeSignedIn
+  }: {
+    // Runs with a new session's pass before the app hears about it (the
+    // guest's on-device progress is carried over first, so the app's first
+    // read as the member already finds it). Never blocks for long.
+    beforeSignedIn?: (accessToken: string) => Promise<void>;
+  } = {}
+) {
   let session: AppSession | null = null;
   let refreshing: Promise<AppSession | null> | null = null;
   const listeners = new Set<(session: AppSession | null) => void>();
@@ -135,7 +147,8 @@ export function createSessionStore(config: LiteHostConfig) {
             expiresAt: data.expiresAt,
             refreshToken: data.refreshToken,
             user: data.user,
-            scopes: data.scopes
+            scopes: data.scopes,
+            appPlayer: data.appPlayer || session?.appPlayer || null
           });
           return session;
         } catch (error: any) {
@@ -159,6 +172,12 @@ export function createSessionStore(config: LiteHostConfig) {
 
   return {
     get: () => session,
+    // app accounts (phase B) start their session on this page
+    adopt: async (data: any) => {
+      await adopt(data);
+      return session;
+    },
+    post,
     subscribe(listener: (session: AppSession | null) => void) {
       listeners.add(listener);
       return () => listeners.delete(listener);
@@ -256,17 +275,30 @@ export function createSessionStore(config: LiteHostConfig) {
         codeVerifier: verifier,
         redirectUri
       });
-      set({
-        accessToken: data.accessToken,
-        expiresAt: data.expiresAt,
-        refreshToken: data.refreshToken,
-        user: data.user,
-        scopes: data.scopes
-      });
+      await adopt(data);
       return session;
     } catch {
       return null;
     }
+  }
+
+  // A new session (sign-in, or an app account's sign-in/sign-up): carry the
+  // guest's progress over first, then tell the page.
+  async function adopt(data: any) {
+    if (beforeSignedIn) {
+      await Promise.race([
+        beforeSignedIn(String(data.accessToken)).catch(() => {}),
+        new Promise((resolve) => window.setTimeout(resolve, 4000))
+      ]);
+    }
+    set({
+      accessToken: data.accessToken,
+      expiresAt: data.expiresAt,
+      refreshToken: data.refreshToken,
+      user: data.user,
+      scopes: data.scopes,
+      appPlayer: data.appPlayer || null
+    });
   }
 }
 

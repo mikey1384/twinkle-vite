@@ -292,7 +292,9 @@ export function useHostBridge({
   appHelperRelayStateRef,
   appHelperBridgeRef,
   appHelperEventsRef,
-  onAppTextEntryRef
+  onAppTextEntryRef,
+  guestPrivateDbRef,
+  guestLeaderboardsReadOnly = false
 }: UsePreviewHostBridgeArgs) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetUserStateRef = useRef(onSetUserState);
@@ -4925,6 +4927,9 @@ export function useHostBridge({
 
           case 'leaderboards:submit': {
             const viewer = getViewerInfo(previewAuth);
+            if (guestLeaderboardsReadOnly && viewer.isGuest) {
+              triggerGuestRestriction(previewAuth);
+            }
             response = await requestRefs.submitBuildLeaderboardScoreRef.current(
               {
                 buildId: activeBuild.id,
@@ -5212,6 +5217,18 @@ export function useHostBridge({
           }
 
           case 'private-db:compare-and-set': {
+            const guestDb = isGuestViewerActive(previewAuth)
+              ? guestPrivateDbRef?.current
+              : null;
+            if (guestDb) {
+              response = guestDb.compareAndSet({
+                key: payload?.key,
+                expectedValue: payload?.expectedValue,
+                value: payload?.value,
+                operationId: payload?.operationId
+              });
+              break;
+            }
             const token = await ensureBuildApiToken(
               ['privateDb:write'],
               previewAuth
@@ -5436,6 +5453,13 @@ export function useHostBridge({
           }
 
           case 'private-db:get': {
+            const guestDb = isGuestViewerActive(previewAuth)
+              ? guestPrivateDbRef?.current
+              : null;
+            if (guestDb) {
+              response = guestDb.get(payload?.key);
+              break;
+            }
             const privateDbReadToken = await ensureBuildApiToken(
               ['privateDb:read'],
               previewAuth
@@ -5449,6 +5473,17 @@ export function useHostBridge({
           }
 
           case 'private-db:list': {
+            const guestDb = isGuestViewerActive(previewAuth)
+              ? guestPrivateDbRef?.current
+              : null;
+            if (guestDb) {
+              response = guestDb.list({
+                prefix: payload?.prefix,
+                limit: payload?.limit,
+                cursor: payload?.cursor
+              });
+              break;
+            }
             const privateDbListToken = await ensureBuildApiToken(
               ['privateDb:read'],
               previewAuth
@@ -5464,6 +5499,13 @@ export function useHostBridge({
           }
 
           case 'private-db:set': {
+            const guestDb = isGuestViewerActive(previewAuth)
+              ? guestPrivateDbRef?.current
+              : null;
+            if (guestDb) {
+              response = guestDb.set(payload?.key, payload?.value);
+              break;
+            }
             const privateDbWriteToken = await ensureBuildApiToken(
               ['privateDb:write'],
               previewAuth
@@ -5478,6 +5520,13 @@ export function useHostBridge({
           }
 
           case 'private-db:remove': {
+            const guestDb = isGuestViewerActive(previewAuth)
+              ? guestPrivateDbRef?.current
+              : null;
+            if (guestDb) {
+              response = guestDb.remove(payload?.key);
+              break;
+            }
             const privateDbDeleteToken = await ensureBuildApiToken(
               ['privateDb:write'],
               previewAuth

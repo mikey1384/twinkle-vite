@@ -166,4 +166,24 @@ export interface UsePreviewHostBridgeArgs {
   onAppTextEntryRef: RefObject<
     ((editing: boolean, sourceWindow: Window) => void) | null
   >;
+  // An app's own address only (src/liteHost): a signed-out visitor's
+  // Twinkle.privateDb answers from this device (liteHost/guestStore.ts)
+  // instead of asking them to sign in. Unset on twin-kle.com.
+  guestPrivateDbRef?: RefObject<GuestPrivateDb | null>;
+  // An app's own address only: signed-out visitors read leaderboards but
+  // don't post to them (a score posts once they sign in).
+  guestLeaderboardsReadOnly?: boolean;
+}
+
+export interface GuestPrivateDb {
+  get(key: unknown): unknown;
+  list(options: { prefix?: unknown; limit?: unknown; cursor?: any }): unknown;
+  set(key: unknown, value: unknown): unknown;
+  remove(key: unknown): unknown;
+  compareAndSet(options: {
+    key: unknown;
+    expectedValue: unknown;
+    value: unknown;
+    operationId?: unknown;
+  }): unknown;
 }

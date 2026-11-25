@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import SignInCardView from './SignInCardView';
+import AppSignUp from './AppSignUp';
+import { SIGNIN_TEXT, signInLang } from './text';
+import { trackEvent } from '~/helpers/analytics';
 import { useLocation } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { cancelRedirectTarget, codeRedirectTarget, parsedOrigin } from './handBack';
@@ -25,6 +28,12 @@ export default function LumineAppSignIn() {
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const onOpenSigninModal = useAppContext((v) => v.user.actions.onOpenSigninModal);
+  const onSignup = useAppContext((v) => v.user.actions.onSignup);
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const [signingUp, setSigningUp] = useState(false);
+  // a new account made here goes straight on to the app (they chose it there)
+  const [allowWhenSignedIn, setAllowWhenSignedIn] = useState(false);
+  const lang = signInLang();
   const loadAppSigninInfo = useAppContext((v) => v.requestHelpers.loadAppSigninInfo);
   const authorizeAppSignin = useAppContext((v) => v.requestHelpers.authorizeAppSignin);
   const [app, setApp] = useState<{ title: string; ownerUsername: string; thumbnailUrl: string | null } | null>(null);
@@ -98,6 +107,13 @@ export default function LumineAppSignIn() {
     }
   }
 
+  useEffect(() => {
+    if (!allowWhenSignedIn || !userId || busy) return;
+    setAllowWhenSignedIn(false);
+    void allow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowWhenSignedIn, userId]);
+
   const host = (() => {
     try {
       return new URL(origin).host;
@@ -117,6 +133,26 @@ export default function LumineAppSignIn() {
       allow={allow}
       handBack={() => cancel()}
       onOpenSigninModal={() => onOpenSigninModal()}
+      onCreateAccount={() => setSigningUp(true)}
+      signUp={
+        signingUp && !userId && app ? (
+          <AppSignUp
+            buildId={buildId}
+            origin={origin}
+            appTitle={app.title}
+            lang={lang}
+            t={SIGNIN_TEXT[lang]}
+            onBack={() => setSigningUp(false)}
+            onCreated={(account) => {
+              onSignup(account);
+              onSetUserState({ userId: account.id, newState: account });
+              trackEvent('sign_up', { method: 'lumine_app', user_type: 'student' });
+              setSigningUp(false);
+              setAllowWhenSignedIn(true);
+            }}
+          />
+        ) : null
+      }
     />
   );
 }

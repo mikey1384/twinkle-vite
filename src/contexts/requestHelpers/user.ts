@@ -3259,6 +3259,49 @@ export default function userRequestHelpers({
       persistReturnedSessionToken(data.token);
       return data;
     },
+    // a free account from an app's sign-in window: the app's sign-up pass,
+    // a username, a password and a birth month (and a guardian's approval
+    // under 14)
+    async signupFromApp({
+      invite,
+      username,
+      password,
+      birthYear,
+      birthMonth,
+      guardianConsent
+    }: {
+      invite: string;
+      username: string;
+      password: string;
+      birthYear: number;
+      birthMonth: number;
+      guardianConsent?: { consentId: number; secret: string };
+    }) {
+      let data;
+      try {
+        ({ data } = await request.post(
+          `${URL}/user/signup/app`,
+          {
+            invite,
+            username,
+            password,
+            birthYear,
+            birthMonth,
+            guardianConsentId: guardianConsent?.consentId,
+            guardianConsentSecret: guardianConsent?.secret
+          },
+          {
+            headers: {
+              'x-twinkle-device-id': getTwinkleDeviceId()
+            }
+          }
+        ));
+      } catch (error) {
+        return handleError(error);
+      }
+      persistReturnedSessionToken(data.token);
+      return data;
+    },
     // ---- "Ask my teacher for an account" (sign-up, no account yet) ----
     // approved teachers by username or name; username and picture only
     async searchTeachersForAsk(text: string) {

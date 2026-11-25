@@ -44,6 +44,7 @@ import type {
   AppHelperRelayState
 } from '~/containers/Build/PreviewPanel/types/appHelperTypes';
 import type { BuildRuntimeObservationState } from '~/containers/Build/types/runtimeObservationTypes';
+import type { GuestPrivateDb } from '~/containers/Build/PreviewPanel/types/previewHostBridgeTypes';
 import { createLiteCoinGate } from './liteCoins';
 
 export const LITE_HOST_BRIDGE_LOAD_ID = 'lumine-host';
@@ -226,6 +227,7 @@ export function LiteHostBridge({
   metaRef,
   retiredRef,
   onGuestRestricted,
+  guestStore,
   onReady
 }: {
   info: LiteHostBuildInfo;
@@ -234,6 +236,8 @@ export function LiteHostBridge({
   metaRef: LiteFrameMetaRef;
   retiredRef: MutableRefObject<PreviewFrameRetiredHandler | null>;
   onGuestRestricted: () => void;
+  // A signed-out visitor's private storage on this device (guestStore.ts).
+  guestStore: GuestPrivateDb | null;
   // Runs after the shared bridge listens (to replay messages that arrived
   // before this script).
   onReady?: () => void;
@@ -379,6 +383,9 @@ export function LiteHostBridge({
     ((editing: boolean, sourceWindow: Window) => void) | null
   >(null);
 
+  const guestPrivateDbRef = useRef<GuestPrivateDb | null>(guestStore);
+  guestPrivateDbRef.current = guestStore;
+
   // The frame's viewer key follows the signed-in member (useFrameManager).
   metaRef.current.primary.viewerKey = viewer ? `user:${viewer.id}` : 'guest';
 
@@ -430,7 +437,9 @@ export function LiteHostBridge({
     requestCardCraftSelectionRef,
     onBuildLiveSafetyHostSessionsChange: setActiveBuildLiveSafetyHostSessions,
     requestBuildLiveSafetyStopRef,
-    onAppTextEntryRef
+    onAppTextEntryRef,
+    guestPrivateDbRef,
+    guestLeaderboardsReadOnly: true
   });
 
   const onReadyRef = useRef(onReady);

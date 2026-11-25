@@ -49,6 +49,31 @@ export function showToast(text: string, ms = 3500) {
   window.setTimeout(() => toast.remove(), ms);
 }
 
+// A guest reached something that needs an account (the app asked for it in
+// the background, e.g. saving or an AI move): a small bar at the top with a
+// Sign in button, never a box over the game. At most once a minute; it goes
+// away by itself.
+let hintShownAt = 0;
+let hintNode: HTMLElement | null = null;
+export function showGuestHint({ t, onSignIn }: { t: LiteHostText; onSignIn: () => void }) {
+  const now = Date.now();
+  if (hintNode || openSheet || now - hintShownAt < 60_000) return;
+  hintShownAt = now;
+  const button = el('button', { type: 'button' }, [t.guestHintCta]);
+  const hint = el('div', { class: 'lh-hint', role: 'status' }, [el('span', {}, [t.guestHint]), button]);
+  const remove = () => {
+    hint.remove();
+    if (hintNode === hint) hintNode = null;
+  };
+  button.addEventListener('click', () => {
+    remove();
+    onSignIn();
+  });
+  document.body.append(hint);
+  hintNode = hint;
+  window.setTimeout(remove, 6000);
+}
+
 export function askSignIn({
   config,
   t,

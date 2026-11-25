@@ -31,6 +31,79 @@ type Phase =
 
 const POLL_MS = 5000;
 
+// English on the website's sign-up; an app's sign-in window (Lumine app
+// sign-up, containers/LumineAppSignIn) passes lang 'ko' for a Korean browser.
+const TEXT = {
+  en: {
+    askTitle: 'Ask a parent or guardian',
+    askBody:
+      "Because you're under 14, a parent or guardian needs to say yes before we make your account. We'll email them what Twinkle is and who invited you.",
+    firstName: 'Your first name',
+    guardianEmail: "Your parent's or guardian's email",
+    sending: 'Sending...',
+    send: 'Email my parent or guardian',
+    wrongBirth: 'I entered the wrong birth date',
+    waitingTitle: 'Waiting for your parent or guardian',
+    waitingBody: (email: React.ReactNode) => (
+      <>
+        We emailed <b>{email}</b>. Ask them to open the email from Twinkle and
+        choose <b>Review and approve</b>.
+      </>
+    ),
+    updates: 'This page updates by itself.',
+    canClose:
+      "You can close this page. When you come back on this device, you'll pick up right here.",
+    sendAgain: 'Send it again or use a different email',
+    approvedTitle: 'Your parent or guardian said yes!',
+    approvedBody: 'Next, pick a username and password and verify your email.',
+    continue: 'Continue',
+    declinedTitle: "Your parent or guardian didn't approve",
+    declinedBody:
+      "We can't make your account without their approval. If you think that was a mistake, talk with them and ask again.",
+    expiredTitle: 'This request has expired',
+    expiredBody:
+      "Your parent or guardian didn't answer within 7 days, or a newer request replaced this one. You can send a new one.",
+    usedTitle: 'This approval was already used',
+    usedBody: 'An account was already made with it. Try logging in instead.',
+    askAgain: 'Ask again',
+    sendFailed: "We couldn't send the email. Please try again."
+  },
+  ko: {
+    askTitle: '부모님께 허락받기',
+    askBody:
+      '만 14세 미만은 계정을 만들기 전에 부모님이나 보호자의 동의가 필요해요. 트윈클이 어떤 곳인지 이메일로 알려 드릴게요.',
+    firstName: '내 이름',
+    guardianEmail: '부모님 또는 보호자의 이메일',
+    sending: '보내는 중...',
+    send: '부모님께 이메일 보내기',
+    wrongBirth: '생년월을 잘못 입력했어요',
+    waitingTitle: '부모님의 답을 기다리는 중',
+    waitingBody: (email: React.ReactNode) => (
+      <>
+        <b>{email}</b>(으)로 이메일을 보냈어요. 트윈클에서 온 이메일을 열고{' '}
+        <b>확인하고 동의하기</b>를 눌러 달라고 말씀드려 주세요.
+      </>
+    ),
+    updates: '이 화면은 저절로 바뀌어요.',
+    canClose:
+      '이 창을 닫아도 괜찮아요. 이 기기에서 다시 오면 여기서 이어서 할 수 있어요.',
+    sendAgain: '다시 보내거나 다른 이메일 쓰기',
+    approvedTitle: '부모님이 허락해 주셨어요!',
+    approvedBody: '이제 아이디와 비밀번호를 정해 주세요.',
+    continue: '계속',
+    declinedTitle: '부모님이 동의하지 않으셨어요',
+    declinedBody:
+      '동의 없이는 계정을 만들 수 없어요. 실수라고 생각되면 부모님과 이야기한 뒤 다시 요청해 주세요.',
+    expiredTitle: '요청이 만료되었어요',
+    expiredBody:
+      '7일 안에 답이 없었거나 새 요청으로 바뀌었어요. 다시 보낼 수 있어요.',
+    usedTitle: '이미 사용된 동의예요',
+    usedBody: '이 동의로 이미 계정이 만들어졌어요. 로그인해 보세요.',
+    askAgain: '다시 요청하기',
+    sendFailed: '이메일을 보내지 못했어요. 다시 시도해 주세요.'
+  }
+};
+
 const float = keyframes`
   0%, 100% { transform: translateY(0) rotate(-8deg); }
   50% { transform: translateY(-6px) rotate(4deg); }
@@ -44,9 +117,14 @@ export default function GuardianConsent({
   birthYear,
   birthMonth,
   initialFirstName,
+  lang = 'en',
+  approvedBody,
   onChangeBirth,
   onApproved
 }: {
+  lang?: 'en' | 'ko';
+  // what comes after the approval (the website's form asks for an email too)
+  approvedBody?: string;
   inviteToken: string;
   birthYear: number;
   birthMonth: number;
@@ -58,6 +136,7 @@ export default function GuardianConsent({
     childFirstName: string;
   }) => void;
 }) {
+  const t = TEXT[lang];
   const requestGuardianConsent = useAppContext(
     (v) => v.requestHelpers.requestGuardianConsent
   );
@@ -123,14 +202,10 @@ export default function GuardianConsent({
     const canSend = !!firstName.trim() && !!guardianEmail.trim() && !sending;
     return (
       <div className={stepClass}>
-        <div className={titleClass}>Ask a parent or guardian</div>
-        <p className={bodyClass}>
-          Because you're under 14, a parent or guardian needs to say yes before
-          we make your account. We'll email them what Twinkle is and who
-          invited you.
-        </p>
+        <div className={titleClass}>{t.askTitle}</div>
+        <p className={bodyClass}>{t.askBody}</p>
         <div className={fieldClass}>
-          <label htmlFor="guardian-child-name">Your first name</label>
+          <label htmlFor="guardian-child-name">{t.firstName}</label>
           <Input
             id="guardian-child-name"
             autoFocus={!firstName}
@@ -145,9 +220,7 @@ export default function GuardianConsent({
           />
         </div>
         <div className={fieldClass}>
-          <label htmlFor="guardian-email">
-            Your parent's or guardian's email
-          </label>
+          <label htmlFor="guardian-email">{t.guardianEmail}</label>
           <Input
             id="guardian-email"
             type="email"
@@ -175,10 +248,10 @@ export default function GuardianConsent({
           {sending ? (
             <>
               <Icon icon="spinner" pulse style={{ marginRight: '0.7rem' }} />
-              Sending...
+              {t.sending}
             </>
           ) : (
-            'Email my parent or guardian'
+            t.send
           )}
         </button>
         <button
@@ -186,7 +259,7 @@ export default function GuardianConsent({
           onClick={onChangeBirth}
           className={linkButtonClass}
         >
-          I entered the wrong birth date
+          {t.wrongBirth}
         </button>
       </div>
     );
@@ -206,11 +279,8 @@ export default function GuardianConsent({
             }
           `}
         />
-        <div className={titleClass}>Waiting for your parent or guardian</div>
-        <p className={bodyClass}>
-          We emailed <b>{stored?.guardianEmail}</b>. Ask them to open the email
-          from Twinkle and choose <b>Review and approve</b>.
-        </p>
+        <div className={titleClass}>{t.waitingTitle}</div>
+        <p className={bodyClass}>{t.waitingBody(stored?.guardianEmail)}</p>
         <p
           className={cx(
             noteClass,
@@ -222,19 +292,16 @@ export default function GuardianConsent({
           )}
         >
           <Icon icon="spinner" pulse />
-          This page updates by itself.
+          {t.updates}
         </p>
-        <p className={noteClass}>
-          You can close this page. When you come back on this device, you'll
-          pick up right here.
-        </p>
+        <p className={noteClass}>{t.canClose}</p>
         {errorMessage && (
           <p role="alert" className={errorClass}>
             {errorMessage}
           </p>
         )}
         <button type="button" onClick={handleAskAgain} className={linkButtonClass}>
-          Send it again or use a different email
+          {t.sendAgain}
         </button>
       </div>
     );
@@ -250,35 +317,24 @@ export default function GuardianConsent({
             color: ${Color.green()};
           `}
         />
-        <div className={titleClass}>Your parent or guardian said yes!</div>
-        <p className={bodyClass}>
-          Next, pick a username and password and verify your email.
-        </p>
+        <div className={titleClass}>{t.approvedTitle}</div>
+        <p className={bodyClass}>{approvedBody || t.approvedBody}</p>
         <button
           type="button"
           autoFocus
           onClick={handleContinue}
           className={primaryButtonClass}
         >
-          Continue
+          {t.continue}
         </button>
       </div>
     );
   }
 
   const ended: Record<'declined' | 'expired' | 'used', [string, string]> = {
-    declined: [
-      "Your parent or guardian didn't approve",
-      "We can't make your account without their approval. If you think that was a mistake, talk with them and ask again."
-    ],
-    expired: [
-      'This request has expired',
-      "Your parent or guardian didn't answer within 7 days, or a newer request replaced this one. You can send a new one."
-    ],
-    used: [
-      'This approval was already used',
-      'An account was already made with it. Try logging in instead.'
-    ]
+    declined: [t.declinedTitle, t.declinedBody],
+    expired: [t.expiredTitle, t.expiredBody],
+    used: [t.usedTitle, t.usedBody]
   };
   const [title, body] = ended[phase];
   return (
@@ -292,7 +348,7 @@ export default function GuardianConsent({
           onClick={handleAskAgain}
           className={primaryButtonClass}
         >
-          Ask again
+          {t.askAgain}
         </button>
       )}
     </div>
@@ -331,7 +387,7 @@ export default function GuardianConsent({
       setPhase('pending');
     } catch (error: any) {
       setErrorMessage(
-        error?.message || "We couldn't send the email. Please try again."
+        error?.message || t.sendFailed
       );
     } finally {
       setSending(false);
