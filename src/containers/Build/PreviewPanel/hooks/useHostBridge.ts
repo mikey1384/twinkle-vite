@@ -2698,8 +2698,9 @@ export function useHostBridge({
               capabilities: capabilitySnapshotRef.current,
               explorationPlan: runtimeExplorationPlanRef.current,
               // What this page can do beyond the messages every page knows.
-              // The SDK keeps Twinkle.social quietly off without 'social'.
-              hostFeatures: isSocialAvailable() ? ['social'] : [],
+              // The SDK keeps Twinkle.social quietly off without 'social';
+              // 'social-decline': this page passes social.decline on.
+              hostFeatures: isSocialAvailable() ? ['social', 'social-decline'] : [],
               // The viewer's saved place in this app (Twinkle.app.lifecycle):
               // { kind: 'return' | 'new_visit', state, savedAt, ageMs, reason }
               // or null; a new visit carries only the app's unfinished work.
@@ -5389,6 +5390,7 @@ export function useHostBridge({
           }
 
           case 'social:accept':
+          case 'social:decline':
           case 'social:joined':
           case 'social:together': {
             if (!isSocialAvailable()) {
@@ -5397,7 +5399,8 @@ export function useHostBridge({
                 'social_unavailable'
               );
             }
-            const action = type.slice('social:'.length) as 'accept' | 'joined' | 'together';
+            const action = type.slice('social:'.length) as
+              'accept' | 'decline' | 'joined' | 'together';
             const token = await ensureBuildApiToken(['social:write'], previewAuth);
             try {
               response = await requestRefs.requestBuildSocialRef.current({
@@ -5418,7 +5421,12 @@ export function useHostBridge({
               }
               throw error;
             }
-            if (action === 'accept' && Array.isArray(response?.waiting)) {
+            // The page's queue follows: an accepted or declined visitor
+            // leaves the chip and the banner at once.
+            if (
+              (action === 'accept' || action === 'decline') &&
+              Array.isArray(response?.waiting)
+            ) {
               socialWalkupStore.setWaiting(activeBuild.id, response.waiting);
             }
             break;

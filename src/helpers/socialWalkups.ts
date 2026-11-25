@@ -111,17 +111,22 @@ export interface JoinAction {
 //
 //   state           mode                     verb    tap
 //   open            'room' (drop-in)         Join    walk straight in
-//   open            any queue mode           Play    walk up (you're next)
+//   open            '1v1' (head-to-head)     Challenge walk up; the member answers it
+//   open            any other queue mode     Play    walk up (you're next)
 //   busy-watchable  any, incl. room/watch    Watch   watch, never queued
 //   busy            any                      -       nothing to tap
 //   open / busy     'watch'                  -       (read as closed)
 //   closed / none   -                        -       nothing to tap
-export type JoinVerb = 'join' | 'play' | 'watch';
+export type JoinVerb = 'join' | 'play' | 'challenge' | 'watch';
 export const JOIN_VERB_LABELS: Record<JoinVerb, string> = {
   join: 'Join',
   play: 'Play',
+  challenge: 'Challenge',
   watch: 'Watch'
 };
+// A head-to-head game (mode '1v1') is a challenge the member accepts or
+// declines (Baduk, 11-25); other queue modes stay Play.
+export const CHALLENGE_MODE = '1v1';
 export interface PrimaryJoinAction {
   verb: JoinVerb;
   intent: 'play' | 'watch';
@@ -132,12 +137,13 @@ export function primaryJoinAction(
   if (!joinable) return null;
   if (joinable.state === 'busy-watchable') return { verb: 'watch', intent: 'watch' };
   if (joinable.state !== 'open' || isWatchOnly(joinable)) return null;
-  return isRoom(joinable)
-    ? { verb: 'join', intent: 'play' }
+  if (isRoom(joinable)) return { verb: 'join', intent: 'play' };
+  return joinable.mode === CHALLENGE_MODE
+    ? { verb: 'challenge', intent: 'play' }
     : { verb: 'play', intent: 'play' };
 }
 
-const VERB_RANK: Record<JoinVerb, number> = { join: 0, play: 1, watch: 2 };
+const VERB_RANK: Record<JoinVerb, number> = { join: 0, play: 1, challenge: 1, watch: 2 };
 
 /**
  * The row's one button when several members are in the same app: the best
@@ -189,6 +195,8 @@ export function joinActions({
   }
   if (primary?.verb === 'play')
     return [{ intent: 'play', label: `Play ${appTitle} with ${username}` }];
+  if (primary?.verb === 'challenge')
+    return [{ intent: 'play', label: `Challenge ${username} to ${appTitle}` }];
   const next: JoinAction = { intent: 'next', label: 'Play next' };
   return primary?.verb === 'watch'
     ? [{ intent: 'watch', label: 'Watch' }, next]
@@ -271,7 +279,8 @@ export interface SocialVisit {
   // matched: playing together. released: the host left while you waited.
   // missed: the host's accept ended your walk-up without letting you in
   // (you weren't in the app in time, or a refusal whose reason is never
-  // shown).
+  // shown). declined: the host's app answered a 1v1 challenge with no
+  // (Twinkle.social.decline); worded gently, and they may ask again soon.
   status:
     | 'waiting'
     | 'later'
@@ -279,7 +288,8 @@ export interface SocialVisit {
     | 'unavailable'
     | 'matched'
     | 'released'
-    | 'missed';
+    | 'missed'
+    | 'declined';
   walkupId: string | null;
   expiresAt?: number;
   joinable: Joinable | null;
@@ -297,7 +307,8 @@ export function socialLaunchTarget(buildId: number, visit: SocialVisit) {
       kind: 'social',
       hostUserId: visit.host.id,
       hostUsername: visit.host.username,
-      // waiting | later | watch | unavailable
+      // waiting | later | watch | unavailable (then 'unavailable' or
+      // 'declined' once the walk-up ended, settledSocialLaunchTarget)
       status: visit.status,
       hostJoinable: visit.joinable,
       // the host's private watch room (status 'watch' only)
@@ -418,7 +429,12 @@ export function applySocialWalkupEvent(
       ...state,
       visit: {
         ...state.visit,
-        status: event.missed === true ? 'missed' : 'released'
+        status:
+          event.declined === true
+            ? 'declined'
+            : event.missed === true
+              ? 'missed'
+              : 'released'
       }
     };
   }
@@ -533,7 +549,10 @@ export function visitorBannerText({
     : `${username} wants to join next`;
 }
 
-/** The visitor's line. Never "declined": only where things stand. */
+/**
+ * The visitor's line: only where things stand. Even a host's decline reads
+ * gently ("can't play right now"), never as a rejection.
+ */
 export function visitLine(visit: SocialVisit) {
   const name = visit.host.username;
   const game = isGameMode(visit.joinable?.mode || '');
@@ -553,6 +572,8 @@ export function visitLine(visit: SocialVisit) {
       return `${name} isn't here right now`;
     case 'missed':
       return `${name} couldn't let you in this time. Try again later.`;
+    case 'declined':
+      return `${name} can't play right now`;
     case 'matched':
       return game ? `You're playing with ${name}` : `You're with ${name}`;
   }
@@ -561,8 +582,9 @@ export function visitLine(visit: SocialVisit) {
 /**
  * The launch target the app sees (Twinkle.notifications.getLaunchTarget and
  * its listener) once the walk-up it was opened for has ended: a 'waiting'
- * social target becomes 'unavailable', so the app stops showing a wait
- * nobody can end. Anything else comes back unchanged (the same object).
+ * social target becomes 'unavailable' ('declined' when the host's app
+ * declined it), so the app stops showing a wait nobody can end. Anything
+ * else comes back unchanged (the same object).
  */
 export function settledSocialLaunchTarget<T extends Record<string, any> | null>(
   launchTarget: T,
@@ -575,12 +597,17 @@ export function settledSocialLaunchTarget<T extends Record<string, any> | null>(
     target.status !== 'waiting' ||
     !visit ||
     Number(target.hostUserId) !== visit.host.id ||
-    (visit.status !== 'released' && visit.status !== 'missed')
+    (visit.status !== 'released' &&
+      visit.status !== 'missed' &&
+      visit.status !== 'declined')
   )
     return launchTarget;
   return {
     ...launchTarget,
-    target: { ...target, status: 'unavailable' }
+    target: {
+      ...target,
+      status: visit.status === 'declined' ? 'declined' : 'unavailable'
+    }
   };
 }
 

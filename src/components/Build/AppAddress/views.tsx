@@ -132,7 +132,8 @@ export function AddressCardView({
   onCopy,
   onShare,
   onGetOwn,
-  getOwnLabel
+  getOwnLabel,
+  onRename
 }: {
   t: AddressText;
   url: string;
@@ -143,6 +144,8 @@ export function AddressCardView({
   onShare: () => void;
   onGetOwn: () => void;
   getOwnLabel?: string;
+  // owner only: change the free lumine.app address
+  onRename?: () => void;
 }) {
   const host = url.replace(/^https:\/\//, '');
   return (
@@ -190,6 +193,11 @@ export function AddressCardView({
           <button type="button" className={secondary} style={{ padding: '0.55rem 1rem' }} onClick={onShare}>
             {t.share}
           </button>
+          {onRename && (
+            <button type="button" className={secondary} style={{ padding: '0.55rem 1rem' }} onClick={onRename}>
+              {t.change}
+            </button>
+          )}
         </div>
       </div>
       {domains.length > 0 && (
@@ -650,6 +658,103 @@ export function ConnectView({
             ))}
         </>
       )}
+    </div>
+  );
+}
+
+export function RenameView({
+  t,
+  root,
+  value,
+  status,
+  message,
+  saving,
+  onChange,
+  onSave,
+  onCancel
+}: {
+  t: AddressText;
+  root: string;
+  value: string;
+  status: 'idle' | 'checking' | 'available' | 'taken';
+  message: string;
+  saving: boolean;
+  onChange: (value: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div
+      className={css`
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        color: ${ink};
+      `}
+    >
+      <h2 style={{ margin: 0, fontSize: '1.5rem' }}>{t.renameTitle}</h2>
+      <label
+        className={css`
+          display: flex;
+          align-items: center;
+          border: 1px solid ${line};
+          border-radius: 0.8rem;
+          padding: 0 0.8rem;
+          font-size: 1.15rem;
+          &:focus-within {
+            border-color: ${ink};
+          }
+        `}
+      >
+        <input
+          autoFocus
+          value={value}
+          maxLength={40}
+          spellCheck={false}
+          autoCapitalize="none"
+          autoCorrect="off"
+          onChange={(event) =>
+            onChange(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+          }
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && status === 'available' && !saving) onSave();
+          }}
+          className={css`
+            flex: 1;
+            min-width: 0;
+            border: 0;
+            outline: none;
+            padding: 0.7rem 0;
+            font: inherit;
+            background: transparent;
+          `}
+        />
+        <span style={{ color: '#6b6b78', whiteSpace: 'nowrap' }}>.{root}</span>
+      </label>
+      <div className={fine} style={{ minHeight: '1.3em', color: status === 'available' ? good : status === 'taken' ? '#b42318' : undefined }}>
+        {status === 'checking'
+          ? t.renameChecking
+          : status === 'available'
+            ? t.renameAvailable
+            : status === 'taken'
+              ? message
+              : t.renameHint}
+      </div>
+      <div className={fine}>{t.renameOldWorks}</div>
+      <div className={row}>
+        <button
+          type="button"
+          className={primary}
+          disabled={status !== 'available' || saving}
+          style={{ opacity: status !== 'available' || saving ? 0.5 : 1 }}
+          onClick={onSave}
+        >
+          {saving ? t.renameSaving : t.renameSave}
+        </button>
+        <button type="button" className={secondary} onClick={onCancel}>
+          {t.renameCancel}
+        </button>
+      </div>
     </div>
   );
 }

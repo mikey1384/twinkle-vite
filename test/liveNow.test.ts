@@ -8,7 +8,9 @@ import {
   rowVerb,
   LIVE_NOW_MAX_APPS,
   LIVE_NOW_MAX_CHOICES,
-  LIVE_NOW_MAX_FACES
+  LIVE_NOW_MAX_FACES,
+  LIVE_NOW_GONE_NOTES,
+  LIVE_NOW_PICKER_TITLES
 } from '../src/helpers/liveNow';
 
 const ME = 7;
@@ -332,8 +334,8 @@ test('row choice with mixed verbs: the best verb decides; one of it walks, two o
   assert.ok(walk.kind === 'walk');
   assert.equal(walk.verb, 'join');
   assert.equal(walk.member.id, 33);
-  // Two people ready for a game and one watchable: Play, picker lists all
-  // three, Play lines first.
+  // Two people ready for a head-to-head game and one watchable: Challenge,
+  // picker lists all three, Challenge lines first.
   const [twoReady] = group(
     statusOf(
       member(41, inApp(watching())),
@@ -343,7 +345,7 @@ test('row choice with mixed verbs: the best verb decides; one of it walks, two o
   );
   const pick = liveNowRowChoice(twoReady);
   assert.ok(pick.kind === 'pick');
-  assert.equal(pick.verb, 'play');
+  assert.equal(pick.verb, 'challenge');
   assert.deepEqual(pick.members.map((entry) => entry.id), [42, 43, 41]);
 });
 
@@ -375,11 +377,11 @@ test('a tap does what the button said: a held Play opens the app even if people 
 test('a tap does what the button said: a held Watch whose people all left is gone, never another verb', () => {
   // Everyone left the app.
   assert.deepEqual(liveNowTapChoice('watch', null), { kind: 'gone', verb: 'watch' });
-  // Still there, but now only someone ready to play: not a Play picker or walk.
+  // Still there, but now only someone ready to play: not a Challenge picker or walk.
   const [now] = group(
     statusOf(member(71, inApp(queueOpen)), member(72, inApp(queueOpen)), member(73, inApp()))
   );
-  assert.equal(rowVerb(now), 'play');
+  assert.equal(rowVerb(now), 'challenge');
   assert.deepEqual(liveNowTapChoice('watch', now), { kind: 'gone', verb: 'watch' });
 });
 
@@ -446,4 +448,24 @@ test('picker live state: someone who left the app, went offline or was blocked r
     Object.fromEntries(Object.entries(live).map(([id, value]) => [id, value ? 'here' : null])),
     { 91: null, 92: null, 93: null, 94: 'here', 95: null }
   );
+});
+
+test('a member ready for a head-to-head game (mode 1v1) is challenged; other queue modes stay Play', () => {
+  const coopOpen = { state: 'open', label: 'Come build', mode: 'coop' };
+  const [one] = group(statusOf(member(91, inApp(queueOpen))));
+  assert.equal(rowVerb(one), 'challenge');
+  const walk = liveNowRowChoice(one);
+  assert.ok(walk.kind === 'walk');
+  assert.equal(walk.verb, 'challenge');
+  assert.equal(walk.intent, 'play'); // still a walk-up: the app shows the invitation
+  const [two] = group(statusOf(member(92, inApp(queueOpen)), member(93, inApp(queueOpen))));
+  const pick = liveNowRowChoice(two);
+  assert.ok(pick.kind === 'pick');
+  assert.equal(LIVE_NOW_PICKER_TITLES[pick.verb], 'Who do you want to challenge?');
+  assert.equal(LIVE_NOW_GONE_NOTES.challenge, "Nobody's ready for a challenge right now");
+  const [coop] = group(statusOf(member(94, inApp(coopOpen)), member(95, inApp(coopOpen))));
+  const coopPick = liveNowRowChoice(coop);
+  assert.ok(coopPick.kind === 'pick');
+  assert.equal(coopPick.verb, 'play');
+  assert.equal(LIVE_NOW_PICKER_TITLES[coopPick.verb], 'Who do you want to play with?');
 });
