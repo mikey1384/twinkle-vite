@@ -10,6 +10,7 @@ import {
   IntroView,
   MessageView,
   ParentRequestView,
+  RenameView,
   type DnsRecordView,
   type DomainIdeaView
 } from './views';
@@ -34,6 +35,7 @@ type Step =
   | { kind: 'parent'; idea: DomainIdeaView }
   | { kind: 'sent'; idea: DomainIdeaView }
   | { kind: 'connect'; domainId?: number }
+  | { kind: 'rename' }
   | null;
 
 function pageLang(): AddressLang {
@@ -66,6 +68,12 @@ export default function AppAddress({
   const addAppDomain = useAppContext((v) => v.requestHelpers.addAppDomain);
   const loadAppDomainConnect = useAppContext((v) => v.requestHelpers.loadAppDomainConnect);
   const checkAppDomain = useAppContext((v) => v.requestHelpers.checkAppDomain);
+  const checkAppAddressSlug = useAppContext((v) => v.requestHelpers.checkAppAddressSlug);
+  const renameAppAddress = useAppContext((v) => v.requestHelpers.renameAppAddress);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameStatus, setRenameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [renameMessage, setRenameMessage] = useState('');
+  const [renaming, setRenaming] = useState(false);
   const [info, setInfo] = useState<AddressInfo | null>(null);
   const [copied, setCopied] = useState(false);
   const [step, setStep] = useState<Step>(null);
@@ -183,6 +191,49 @@ export default function AppAddress({
     }
   }
 
+  // Live "is this name free?" while the rename screen is open (debounced).
+  useEffect(() => {
+    if (step?.kind !== 'rename') return;
+    const slug = renameValue.trim();
+    if (!slug || slug === info?.slug || slug.length < 3) {
+      setRenameStatus('idle');
+      return;
+    }
+    setRenameStatus('checking');
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const result = await checkAppAddressSlug({ buildId, slug });
+        if (cancelled) return;
+        setRenameStatus(result?.available ? 'available' : 'taken');
+        setRenameMessage(result?.message || '');
+      } catch (e: any) {
+        if (cancelled) return;
+        setRenameStatus('taken');
+        setRenameMessage(e?.message || '');
+      }
+    }, 450);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renameValue, step?.kind]);
+
+  async function saveRename() {
+    setRenaming(true);
+    try {
+      const result = await renameAppAddress({ buildId, slug: renameValue.trim() });
+      setInfo((prev) => (prev ? { ...prev, slug: result.slug, url: result.url } : prev));
+      setStep(null);
+    } catch (e: any) {
+      setRenameStatus('taken');
+      setRenameMessage(e?.message || '');
+    } finally {
+      setRenaming(false);
+    }
+  }
+
   // Re-check every 20 s while the connect screen is open (turns green by
   // itself once the member's settings reach us).
   useConnectPolling(step, connect?.status, checkConnect);
@@ -216,10 +267,34 @@ export default function AppAddress({
           else void navigator.clipboard?.writeText(info.url || '').catch(() => {});
         }}
         onGetOwn={() => setStep({ kind: 'intro' })}
+        onRename={
+          isOwner
+            ? () => {
+                setRenameValue(info.slug || '');
+                setRenameStatus('idle');
+                setRenameMessage('');
+                setError('');
+                setStep({ kind: 'rename' });
+              }
+            : undefined
+        }
       />
       {step && (
         <Modal modalKey="AppAddressFlow" isOpen onClose={() => setStep(null)} size="md" hasHeader={false} closeOnBackdropClick>
           {error && <div style={{ color: '#b42318', marginBottom: '0.6rem' }}>{error}</div>}
+          {step.kind === 'rename' && (
+            <RenameView
+              t={t}
+              root={freeHost.replace(/^[^.]+\./, '')}
+              value={renameValue}
+              status={renameStatus}
+              message={renameMessage}
+              saving={renaming}
+              onChange={setRenameValue}
+              onSave={() => void saveRename()}
+              onCancel={() => setStep(null)}
+            />
+          )}
           {step.kind === 'intro' && (
             <IntroView
               t={t}
