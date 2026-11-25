@@ -145,8 +145,8 @@ body {
 }
 .lh-hint {
   position: fixed; left: 50%; top: max(14px, env(safe-area-inset-top)); transform: translateX(-50%); z-index: 30;
-  display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 32px); box-sizing: border-box;
-  padding: 8px 8px 8px 16px; border-radius: 999px; background: rgba(22, 22, 31, 0.9); color: #fff; font-size: 14.4px;
+  display: flex; align-items: center; gap: 12px; width: max-content; max-width: calc(100vw - 32px); box-sizing: border-box;
+  padding: 8px 8px 8px 16px; border-radius: 24px; background: rgba(22, 22, 31, 0.9); color: #fff; font-size: 14.4px;
   animation: lh-fade 0.2s ease;
 }
 .lh-hint span { overflow: hidden; text-overflow: ellipsis; }

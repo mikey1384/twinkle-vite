@@ -5852,18 +5852,38 @@ export function useHostBridge({
                         ? { id: payload?.id }
                         : {};
             const appMcpControlled = appMcpControlsThisTab();
+            // A signed-out visitor of the published app: rewards need an
+            // account, not a published app. They get the empty preview with
+            // signedIn: false (no server call that can only refuse them), and
+            // trying to earn one asks them to sign in.
+            const guestOnPublishedApp =
+              runtimeOnly && !appMcpControlled && isGuestViewerActive(previewAuth);
+            if (guestOnPublishedApp && !['rewards:status', 'rewards:receipt', 'rewards:leaderboard', 'rewards:challenge-board', 'rewards:timeline'].includes(type)) {
+              triggerGuestRestriction(previewAuth);
+            }
             if (!runtimeOnly || !runtimeGrant || appMcpControlled) {
               // Drafts: the owner sees their own declaration and question
               // sheet simulated by the server (never paid). Anyone else, or an
               // app with no declaration yet, gets the empty preview.
-              const stub = {
-                mode: 'preview',
-                rules: [],
-                challenges: [],
-                history: [],
-                message: 'Real rewards require the approved published app.'
-              };
-              const preview = requestRefs.requestBuildRewardPreviewRef?.current;
+              const stub = guestOnPublishedApp
+                ? {
+                    mode: 'preview',
+                    signedIn: false,
+                    rules: [],
+                    challenges: [],
+                    history: [],
+                    message: 'Sign in to earn XP and Coins.'
+                  }
+                : {
+                    mode: 'preview',
+                    rules: [],
+                    challenges: [],
+                    history: [],
+                    message: 'Real rewards require the approved published app.'
+                  };
+              const preview = guestOnPublishedApp
+                ? null
+                : requestRefs.requestBuildRewardPreviewRef?.current;
               let previewFailure = '';
               if (preview && !appMcpControlled) {
                 try {

@@ -18,6 +18,21 @@ import {
 } from '~/components/Build/AppAddress/views';
 import ParentConsentView from '~/containers/DomainParentConsent/ParentConsentView';
 import SignInCardView from '~/containers/LumineAppSignIn/SignInCardView';
+import AppSignUp from '~/containers/LumineAppSignIn/AppSignUp';
+import { SIGNIN_TEXT, signInLang } from '~/containers/LumineAppSignIn/text';
+import { LiteHostProviders } from '../react/LiteHost';
+import { askSignIn, showGuestHint } from '../ui';
+import { LITE_HOST_TEXT } from '../text';
+import '../host.css';
+
+// Stand-ins for the requests the sign-up window makes (nothing leaves the page).
+const FAKE_REQUESTS: any = {
+  loadAppSignupPass: async () => ({ token: 'a_preview.preview', expiresAt: Math.floor(Date.now() / 1000) + 86400 }),
+  signupFromApp: async () => ({ id: 1, username: 'lily' }),
+  requestGuardianConsent: async ({ guardianEmail }: any) => ({ consentId: 1, secret: 's', guardianEmail, expiresAt: 0 }),
+  getGuardianConsentStatus: async () => ({ status: params.get('consent') || 'pending', expiresAt: 0 })
+};
+const SITE_CONFIG: any = { buildId: 2, title: 'The Adventure of a Red Square', owner: { id: 1, username: 'mikey' }, thumbnailUrl: null, siteOrigin: 'https://www.twin-kle.com' };
 
 const params = new URLSearchParams(window.location.search);
 const screen = params.get('screen') || 'card';
@@ -196,9 +211,46 @@ function Harness() {
           <SignInCardView app={{ title: 'Star Catcher', ownerUsername: 'mikey', thumbnailUrl: null }} host="star-catcher.lumine.app" originAllowed error="" userId={1} username="lily" busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} />
         </div>
       );
+    case 'signin-new':
+      return (
+        <SignInCardView app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: null }} host="the-adventure-of-a-red-square.lumine.app" originAllowed error="" userId={null} username={null} busy={false} allow={noop} handBack={noop} onOpenSigninModal={noop} onCreateAccount={() => { window.location.search = window.location.search.replace('signin-new', 'signup'); }} />
+      );
+    case 'signup': {
+      const signInL = signInLang();
+      return (
+        <LiteHostProviders requestHelpers={FAKE_REQUESTS} viewer={null} onOpenSignin={noop}>
+          <SignInCardView
+            app={{ title: 'The Adventure of a Red Square', ownerUsername: 'mikey', thumbnailUrl: null }}
+            host="the-adventure-of-a-red-square.lumine.app"
+            originAllowed
+            error=""
+            userId={null}
+            username={null}
+            busy={false}
+            allow={noop}
+            handBack={noop}
+            onOpenSigninModal={noop}
+            signUp={<AppSignUp buildId={2} origin="https://the-adventure-of-a-red-square.lumine.app" appTitle="The Adventure of a Red Square" lang={signInL} t={SIGNIN_TEXT[signInL]} onBack={noop} onCreated={() => { document.body.dataset.created = '1'; }} />}
+          />
+        </LiteHostProviders>
+      );
+    }
+    case 'host-sheet':
+    case 'host-hint':
+      return <HostSheet hint={screen === 'host-hint'} />;
     default:
       return <Page>Unknown screen</Page>;
   }
+}
+
+// The lite host's own sheet and guest bar over a stand-in game.
+function HostSheet({ hint }: { hint: boolean }) {
+  React.useEffect(() => {
+    const t = LITE_HOST_TEXT[lang];
+    if (hint) showGuestHint({ t, onSignIn: () => {} });
+    else void askSignIn({ config: SITE_CONFIG, t, session: { signIn: async () => null } as any });
+  }, [hint]);
+  return <div style={{ position: 'fixed', inset: 0, background: 'linear-gradient(#5aa9e6, #9fd7ff 60%, #6bbf59 60%)' }} />;
 }
 
 const RECORDS = [
@@ -213,4 +265,7 @@ const NAMECHEAP_STEPS = [
 ];
 
 document.documentElement.lang = lang;
+// the website's 10px root (src/styles.css), which the sign-up steps' shared
+// styles are sized for
+if (screen === 'signup' || screen === 'signin-new') document.documentElement.style.fontSize = '10px';
 createRoot(document.getElementById('root')!).render(<Harness />);
