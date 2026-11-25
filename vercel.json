@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)test' ':(exclude)docs' ':(exclude)*.md' ':(exclude)**/*.md' ':(exclude).claude'",
   "headers": [
     {
       "source": "/assets/(.*)",
