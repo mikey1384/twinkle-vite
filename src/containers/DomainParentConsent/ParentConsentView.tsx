@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { PARENT_TEXT } from '~/components/Build/AppAddress/text';
-import { panelClass, usd, krw } from '~/components/Build/AppAddress/views';
+import { CountrySelect, panelClass, usd, krw } from '~/components/Build/AppAddress/views';
 
 export interface ParentOrderView {
   domain: string;
@@ -100,10 +100,12 @@ export default function ParentConsentView({
     registrant.firstName &&
     registrant.lastName &&
     registrant.email.includes('@') &&
-    /^\+\d{1,3}\.\d{4,14}$/.test(registrant.phone) &&
+    /^\+[1-9][\d\s.\-()]{7,20}$/.test(registrant.phone.trim()) &&
     registrant.address1 &&
     registrant.city &&
-    registrant.country.length === 2;
+    registrant.state &&
+    registrant.zip &&
+    /^[A-Za-z]{2}$/.test(registrant.country);
   const section = css`
     margin: 1.1rem 0 0;
     h3 {
@@ -184,7 +186,9 @@ export default function ParentConsentView({
           <input className={input} placeholder={main.phone} value={registrant.phone} onChange={set('phone')} aria-label={main.phone} />
           <input className={input} placeholder={main.address} value={registrant.address1} onChange={set('address1')} aria-label={main.address} style={{ gridColumn: '1 / -1' }} />
           <input className={input} placeholder={main.city} value={registrant.city} onChange={set('city')} aria-label={main.city} />
+          <input className={input} placeholder={main.state} value={registrant.state} onChange={set('state')} aria-label={main.state} />
           <input className={input} placeholder={main.zip} value={registrant.zip} onChange={set('zip')} aria-label={main.zip} />
+          <CountrySelect className={input} label={main.country} value={registrant.country} onChange={(country) => setRegistrant((prev) => ({ ...prev, country }))} />
         </div>
       </div>
       <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', margin: '1.1rem 0 0.4rem', cursor: 'pointer' }}>

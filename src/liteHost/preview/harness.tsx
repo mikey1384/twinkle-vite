@@ -13,8 +13,12 @@ import {
   FindView,
   IntroView,
   MessageView,
+  OrderStatusView,
+  OwnerDetailsView,
   ParentRequestView,
-  type DomainIdeaView
+  emptyOwnerDetails,
+  type DomainIdeaView,
+  type OwnerDetails
 } from '~/components/Build/AppAddress/views';
 import ParentConsentView from '~/containers/DomainParentConsent/ParentConsentView';
 import SignInCardView from '~/containers/LumineAppSignIn/SignInCardView';
@@ -172,6 +176,26 @@ function Harness() {
           <MessageView title={t.liveTitle('starcatcher.com')} body={t.liveBody} primaryLabel={t.openIt} onPrimary={noop} secondaryLabel={t.done} onSecondary={noop} celebrate />
         </Page>
       );
+    case 'owner':
+    case 'owner-filled':
+      return (
+        <Page>
+          <OwnerHarness filled={screen === 'owner-filled'} />
+        </Page>
+      );
+    case 'order-setting-up':
+    case 'order-registered':
+    case 'order-live':
+    case 'order-refunded':
+    case 'order-not-paid': {
+      const status = { 'order-setting-up': 'registering', 'order-registered': 'registered', 'order-live': 'live', 'order-refunded': 'refunded', 'order-not-paid': 'cancelled' }[screen]!;
+      const stage = ({ registering: 'setting_up', registered: 'setting_up', live: 'live', refunded: 'refunded', cancelled: 'stopped' } as const)[status as 'live'];
+      return (
+        <Page>
+          <OrderStatusView t={t} order={{ domain: 'redsquaregame.com', priceCents: 1399, status, stage, failureReason: screen === 'order-refunded' ? 'taken' : null }} onOpen={noop} onTryAgain={noop} onClose={noop} />
+        </Page>
+      );
+    }
     case 'connect-enter':
       return (
         <Page>
@@ -203,8 +227,17 @@ function Harness() {
 
 const RECORDS = [
   { type: 'ALIAS', host: '@', fullName: 'starcatcher.games', value: 'connect.lumine.app', note: null },
-  { type: 'TXT', host: '_lumine-verify', fullName: '_lumine-verify.starcatcher.games', value: 'lumine-verify=8f3c1a9b2d7e4f60a1b2c3d4e5f60718', note: null }
+  { type: 'TXT', host: '_lumine-verify', fullName: '_lumine-verify.starcatcher.games', value: 'lumine-verify=8f3c1a9b2d7e4f60a1b2c3d4e5f60718', note: null },
+  { type: 'TXT', host: '_cf-challenge', fullName: '_cf-challenge.starcatcher.games', value: 'd242u2zbv0mtzc.cloudfront.net', note: 'Lets our web host make the secure (https) certificate for your main address.' }
 ];
+const RED_SQUARE: DomainIdeaView = { domain: 'redsquaregame.com', priceCents: 1399, breakdown: { registryCents: 1121, cardFeeCents: 92, twinkleCents: 186 }, approxKrw: 20000 };
+const FILLED_OWNER: OwnerDetails = { firstName: 'Mikey', lastName: 'Lee', email: 'mikey@example.com', phone: '+82 10 1234 5678', address1: '1 Sejong-daero, Jung-gu', city: 'Seoul', state: 'Seoul', zip: '04524', country: 'KR' };
+
+function OwnerHarness({ filled }: { filled: boolean }) {
+  const [details, setDetails] = useState<OwnerDetails>(filled ? FILLED_OWNER : emptyOwnerDetails('KR'));
+  const [agreed, setAgreed] = useState(filled);
+  return <OwnerDetailsView t={t} idea={RED_SQUARE} details={details} agreed={agreed} renews={false} busy={false} problem="" onDetails={setDetails} onAgree={setAgreed} onPay={() => {}} onBack={() => {}} />;
+}
 const NAMECHEAP_STEPS = [
   'Sign in to Namecheap and open Domain List.',
   'Next to your domain, tap Manage, then the Advanced DNS tab.',

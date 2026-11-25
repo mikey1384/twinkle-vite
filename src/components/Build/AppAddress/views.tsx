@@ -238,7 +238,8 @@ export function IntroView({
   t: AddressText;
   freeHost: string;
   exampleDomain?: string;
-  onFind: () => void;
+  // absent while buying here is closed: connecting your own stays open
+  onFind?: () => void;
   onHaveOne: () => void;
   ask?: React.ReactNode;
 }) {
@@ -283,12 +284,14 @@ export function IntroView({
         <strong>{t.introFree(freeHost)}</strong>
       </p>
       <p>{t.introRent(example)}</p>
-      <p>{t.introChoice}</p>
+      <p>{onFind ? t.introChoice : t.introConnectOnly}</p>
       <div className={row} style={{ marginTop: '1.2rem' }}>
-        <button type="button" className={primary} onClick={onFind}>
-          {t.findOne}
-        </button>
-        <button type="button" className={secondary} onClick={onHaveOne}>
+        {onFind && (
+          <button type="button" className={primary} onClick={onFind}>
+            {t.findOne}
+          </button>
+        )}
+        <button type="button" className={onFind ? secondary : primary} onClick={onHaveOne}>
           {t.haveOne}
         </button>
       </div>
@@ -755,6 +758,386 @@ export function RenameView({
           {t.renameCancel}
         </button>
       </div>
+    </div>
+  );
+}
+
+// Countries most Twinkle members live in first; "Other" takes any ISO code.
+const COUNTRIES: Array<[string, string]> = [
+  ['KR', 'South Korea'],
+  ['US', 'United States'],
+  ['CA', 'Canada'],
+  ['GB', 'United Kingdom'],
+  ['AU', 'Australia'],
+  ['NZ', 'New Zealand'],
+  ['JP', 'Japan'],
+  ['CN', 'China'],
+  ['TW', 'Taiwan'],
+  ['HK', 'Hong Kong'],
+  ['SG', 'Singapore'],
+  ['PH', 'Philippines'],
+  ['VN', 'Vietnam'],
+  ['TH', 'Thailand'],
+  ['MY', 'Malaysia'],
+  ['ID', 'Indonesia'],
+  ['IN', 'India'],
+  ['DE', 'Germany'],
+  ['FR', 'France'],
+  ['ES', 'Spain'],
+  ['IT', 'Italy'],
+  ['NL', 'Netherlands'],
+  ['SE', 'Sweden'],
+  ['BR', 'Brazil'],
+  ['MX', 'Mexico']
+];
+
+export function CountrySelect({
+  value,
+  onChange,
+  label,
+  otherLabel = 'Other (type the 2-letter code)',
+  className
+}: {
+  value: string;
+  onChange: (country: string) => void;
+  label: string;
+  otherLabel?: string;
+  className?: string;
+}) {
+  const known = COUNTRIES.some(([code]) => code === value.toUpperCase());
+  const [other, setOther] = useState(!known && value !== '');
+  return (
+    <div style={{ display: 'flex', gap: '0.5rem', minWidth: 0 }}>
+      <select
+        className={className || field}
+        aria-label={label}
+        value={other ? 'OTHER' : value.toUpperCase()}
+        onChange={(event) => {
+          if (event.target.value === 'OTHER') {
+            setOther(true);
+            onChange('');
+          } else {
+            setOther(false);
+            onChange(event.target.value);
+          }
+        }}
+        style={{ flex: 1, minWidth: 0 }}
+      >
+        {COUNTRIES.map(([code, name]) => (
+          <option key={code} value={code}>
+            {name}
+          </option>
+        ))}
+        <option value="OTHER">{otherLabel}</option>
+      </select>
+      {other && (
+        <input
+          className={className || field}
+          aria-label={otherLabel}
+          value={value}
+          maxLength={2}
+          placeholder="FR"
+          onChange={(event) => onChange(event.target.value.replace(/[^a-z]/gi, '').toUpperCase())}
+          style={{ width: '4.5rem', flex: 'none', textTransform: 'uppercase' }}
+        />
+      )}
+    </div>
+  );
+}
+
+export interface OwnerDetails {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address1: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+}
+
+export function emptyOwnerDetails(country = 'KR'): OwnerDetails {
+  return { firstName: '', lastName: '', email: '', phone: '', address1: '', city: '', state: '', zip: '', country };
+}
+
+export function ownerDetailsProblem(t: AddressText, details: OwnerDetails) {
+  const required: Array<keyof OwnerDetails> = ['firstName', 'lastName', 'email', 'phone', 'address1', 'city', 'state', 'zip', 'country'];
+  if (required.some((key) => !details[key].trim())) return t.fillAll;
+  if (!/^\+[1-9][\d\s.\-()]{7,20}$/.test(details.phone.trim())) return t.phoneNeedsPlus;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim())) return t.fillAll;
+  if (!/^[A-Za-z]{2}$/.test(details.country)) return t.fillAll;
+  return '';
+}
+
+const labelled = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: ${muted};
+`;
+
+// Adults buying for their own app: they are the legal owner, so they type
+// their own details here, then pay on Stripe. One price, its breakdown, the
+// honest "cheaper elsewhere", nothing pre-ticked.
+export function OwnerDetailsView({
+  t,
+  idea,
+  details,
+  agreed,
+  renews,
+  busy,
+  problem,
+  onDetails,
+  onAgree,
+  onPay,
+  onBack
+}: {
+  t: AddressText;
+  idea: DomainIdeaView;
+  details: OwnerDetails;
+  agreed: boolean;
+  renews: boolean;
+  busy: boolean;
+  problem: string;
+  onDetails: (details: OwnerDetails) => void;
+  onAgree: (agreed: boolean) => void;
+  onPay: () => void;
+  onBack: () => void;
+}) {
+  const set = (key: keyof OwnerDetails) => (event: React.ChangeEvent<HTMLInputElement>) =>
+    onDetails({ ...details, [key]: event.target.value });
+  const input = (key: keyof OwnerDetails, label: string, props: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
+    <label className={labelled}>
+      {label}
+      <input className={field} value={details[key]} onChange={set(key)} {...props} />
+    </label>
+  );
+  const missing = ownerDetailsProblem(t, details);
+  return (
+    <div className={panelClass}>
+      <h2 style={{ overflowWrap: 'anywhere' }}>{t.ownerTitle(idea.domain)}</h2>
+      <div
+        className={css`
+          display: grid;
+          grid-template-columns: 1fr auto;
+          align-items: center;
+          gap: 0.2rem 1rem;
+          margin: 0.2rem 0 1rem;
+          padding: 1rem 1.1rem;
+          border: 1px solid ${accent};
+          border-radius: 1rem;
+          background: #faf9ff;
+          @media (max-width: 520px) {
+            grid-template-columns: 1fr;
+          }
+        `}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 800, fontSize: '1.2rem', overflowWrap: 'break-word' }}>{idea.domain}</div>
+          <div className={fine}>{renews ? t.renewsLine(usd(idea.priceCents)) : t.oneYearLine}</div>
+        </div>
+        <div
+          className={css`
+            text-align: right;
+            @media (max-width: 520px) {
+              text-align: left;
+              display: flex;
+              align-items: baseline;
+              gap: 0.5rem;
+            }
+          `}
+        >
+          <div style={{ fontWeight: 800, fontSize: '1.35rem' }}>{usd(idea.priceCents)}</div>
+          {idea.approxKrw ? (
+            <div className={fine} style={{ fontSize: '0.9rem' }}>
+              {t.approxKrw(krw(idea.approxKrw))}
+            </div>
+          ) : null}
+        </div>
+        <div style={{ gridColumn: '1 / -1' }}>
+          <PriceBreakdown t={t} idea={idea} />
+        </div>
+      </div>
+      <p>{t.ownerIntro}</p>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!missing && agreed && !busy) onPay();
+        }}
+      >
+        <div
+          className={css`
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.7rem;
+            @media (max-width: 520px) {
+              grid-template-columns: 1fr;
+            }
+          `}
+        >
+          {input('firstName', t.firstName, { autoComplete: 'given-name' })}
+          {input('lastName', t.lastName, { autoComplete: 'family-name' })}
+          {input('email', t.email, { type: 'email', autoComplete: 'email' })}
+          <label className={labelled}>
+            {t.phone}
+            <input className={field} value={details.phone} onChange={set('phone')} type="tel" autoComplete="tel" placeholder="+82 10 1234 5678" />
+            <span style={{ fontWeight: 400, fontSize: '0.88rem' }}>{t.phoneHint}</span>
+          </label>
+          <div style={{ gridColumn: '1 / -1' }}>{input('address1', t.address1, { autoComplete: 'street-address' })}</div>
+          {input('city', t.city, { autoComplete: 'address-level2' })}
+          {input('state', t.state, { autoComplete: 'address-level1' })}
+          {input('zip', t.zip, { autoComplete: 'postal-code' })}
+          <label className={labelled}>
+            {t.country}
+            <CountrySelect value={details.country} onChange={(country) => onDetails({ ...details, country })} label={t.country} otherLabel={t.countryOther} />
+          </label>
+        </div>
+        <p className={fine} style={{ margin: '0.6rem 0 0' }}>
+          {t.ownerPrivate}
+        </p>
+        <div className={note}>{t.cheaperElsewhere}</div>
+        <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', cursor: 'pointer', margin: '0.2rem 0 1rem' }}>
+          <input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} style={{ width: '1.2rem', height: '1.2rem', marginTop: '0.2rem', flex: 'none' }} />
+          <span>{t.confirmOwner}</span>
+        </label>
+        {problem && (
+          <div role="alert" style={{ color: '#b42318', marginBottom: '0.7rem' }}>
+            {problem}
+          </div>
+        )}
+        <div className={row} style={{ alignItems: 'center' }}>
+          <button type="submit" className={primary} disabled={Boolean(missing) || !agreed || busy}>
+            {busy ? t.opening : t.payButton(usd(idea.priceCents))}
+          </button>
+          <button type="button" className={secondary} onClick={onBack}>
+            {t.back}
+          </button>
+        </div>
+        <p className={fine} style={{ margin: '0.8rem 0 0' }}>
+          {t.payNote}
+        </p>
+      </form>
+    </div>
+  );
+}
+
+export interface DomainOrderView {
+  domain: string;
+  priceCents: number;
+  status: string;
+  stage: 'paying' | 'setting_up' | 'live' | 'refunded' | 'stopped';
+  failureReason: string | null;
+}
+
+// After Stripe: where the order is, in four plain steps.
+export function OrderStatusView({
+  t,
+  order,
+  onOpen,
+  onTryAgain,
+  onClose
+}: {
+  t: AddressText;
+  order: DomainOrderView;
+  onOpen: () => void;
+  onTryAgain: () => void;
+  onClose: () => void;
+}) {
+  if (order.stage === 'live') {
+    return (
+      <div className={panelClass} style={{ textAlign: 'center' }}>
+        <div aria-hidden="true" style={{ fontSize: '2.6rem', marginBottom: '0.4rem' }}>
+          🎉
+        </div>
+        <h2 style={{ overflowWrap: 'anywhere' }}>{t.liveTitle(order.domain)}</h2>
+        <p>{t.liveBody}</p>
+        <p className={fine} style={{ textAlign: 'left', background: '#fff8e6', borderRadius: '0.9rem', padding: '0.8rem 0.95rem', color: ink }}>
+          {t.confirmEmailNote}
+        </p>
+        <div className={row} style={{ justifyContent: 'center', marginTop: '1rem' }}>
+          <button type="button" className={primary} onClick={onOpen}>
+            {t.openIt}
+          </button>
+          <button type="button" className={secondary} onClick={onClose}>
+            {t.done}
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (order.stage === 'refunded') {
+    const why =
+      order.failureReason === 'taken'
+        ? t.whyTaken(order.domain)
+        : order.failureReason === 'registrar_price_changed'
+          ? t.whyPrice(order.domain)
+          : t.whyOther(order.domain);
+    return (
+      <MessageView title={t.refundedTitle} body={t.refundedBody(order.domain, usd(order.priceCents), why)} primaryLabel={t.tryAgain} onPrimary={onTryAgain} secondaryLabel={t.close} onSecondary={onClose} />
+    );
+  }
+  if (order.stage !== 'setting_up') {
+    // paying (Checkout left or cancelled) or stopped: nothing was charged
+    return <MessageView title={t.notPaidTitle} body={t.notPaidBody} primaryLabel={t.tryAgain} onPrimary={onTryAgain} secondaryLabel={t.close} onSecondary={onClose} />;
+  }
+  const reached = order.status === 'registered' ? 2 : 1;
+  const steps = [t.stepPaid, t.stepRegistered, t.stepSecure, t.stepLive];
+  return (
+    <div className={panelClass}>
+      <h2 style={{ overflowWrap: 'anywhere' }}>{t.settingUpTitle(order.domain)}</h2>
+      <ol
+        aria-label={t.settingUpTitle(order.domain)}
+        className={css`
+          list-style: none;
+          margin: 0.6rem 0 1rem;
+          padding: 0;
+          display: grid;
+          gap: 0.55rem;
+        `}
+      >
+        {steps.map((label, index) => {
+          const done = index < reached;
+          const current = index === reached;
+          return (
+            <li key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', fontWeight: current ? 700 : 500, color: done || current ? ink : muted }}>
+              <span
+                aria-hidden="true"
+                className={css`
+                  width: 1.6rem;
+                  height: 1.6rem;
+                  border-radius: 50%;
+                  display: grid;
+                  place-items: center;
+                  flex: none;
+                  font-size: 0.9rem;
+                  font-weight: 800;
+                  color: #fff;
+                  background: ${done ? good : current ? accent : '#d9d9e3'};
+                  ${current
+                    ? `animation: lumineOrderPulse 1.6s ease-in-out infinite;
+                  @keyframes lumineOrderPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(75,60,240,0.35); } 50% { box-shadow: 0 0 0 7px rgba(75,60,240,0); } }
+                  @media (prefers-reduced-motion: reduce) { animation: none; }`
+                    : ''}
+                `}
+              >
+                {done ? '✓' : index + 1}
+              </span>
+              {label}
+            </li>
+          );
+        })}
+      </ol>
+      <p>{t.settingUpBody}</p>
+      <p className={fine} style={{ background: '#fff8e6', borderRadius: '0.9rem', padding: '0.8rem 0.95rem', color: ink }}>
+        {t.confirmEmailNote}
+      </p>
+      <button type="button" className={secondary} onClick={onClose}>
+        {t.close}
+      </button>
     </div>
   );
 }

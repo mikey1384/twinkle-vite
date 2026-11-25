@@ -670,6 +670,31 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    // Adults buy a domain for their own app (twinkle-api routes/appDomainPurchases.ts).
+    async loadDomainPurchase({ buildId }: { buildId: number; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/domain-purchase`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async startSelfDomainOrder({ buildId, domain, registrant, agreed, priceCents }: { buildId: number; domain?: string; registrant?: Record<string, string>; agreed?: boolean; priceCents?: number; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/domain-orders/self`, { domain, registrant, agreed, priceCents }, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async loadDomainOrder({ buildId, orderId }: { buildId: number; orderId: number; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/domain-orders/${orderId}`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     async loadDomainParentOrder({ token }: { token?: string; }) {
       try {
         const { data } = await request.get(`${URL}/build/domain-orders/parent`, { ...auth(), params: { token } });

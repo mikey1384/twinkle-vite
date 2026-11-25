@@ -9,10 +9,16 @@ import {
   FindView,
   IntroView,
   MessageView,
+  OrderStatusView,
+  OwnerDetailsView,
   ParentRequestView,
   RenameView,
+  emptyOwnerDetails,
+  ownerDetailsProblem,
   type DnsRecordView,
-  type DomainIdeaView
+  type DomainIdeaView,
+  type DomainOrderView,
+  type OwnerDetails
 } from './views';
 
 // The app's lumine.app address on its page, with Copy / Share and, for the
@@ -33,10 +39,22 @@ type Step =
   | { kind: 'intro' }
   | { kind: 'find' }
   | { kind: 'parent'; idea: DomainIdeaView }
+  | { kind: 'owner'; idea: DomainIdeaView }
+  | { kind: 'order'; orderId: number }
   | { kind: 'sent'; idea: DomainIdeaView }
   | { kind: 'connect'; domainId?: number }
   | { kind: 'rename' }
   | null;
+
+// The buyer's country guess for the form (they can change it).
+function guessCountry() {
+  try {
+    const region = new Intl.Locale(navigator.language).maximize().region || '';
+    return /^[A-Z]{2}$/.test(region) ? region : 'KR';
+  } catch {
+    return 'KR';
+  }
+}
 
 function pageLang(): AddressLang {
   try {
@@ -65,6 +83,9 @@ export default function AppAddress({
   const loadDomainIdeas = useAppContext((v) => v.requestHelpers.loadDomainIdeas);
   const searchDomains = useAppContext((v) => v.requestHelpers.searchDomains);
   const startDomainOrder = useAppContext((v) => v.requestHelpers.startDomainOrder);
+  const loadDomainPurchase = useAppContext((v) => v.requestHelpers.loadDomainPurchase);
+  const startSelfDomainOrder = useAppContext((v) => v.requestHelpers.startSelfDomainOrder);
+  const loadDomainOrder = useAppContext((v) => v.requestHelpers.loadDomainOrder);
   const addAppDomain = useAppContext((v) => v.requestHelpers.addAppDomain);
   const loadAppDomainConnect = useAppContext((v) => v.requestHelpers.loadAppDomainConnect);
   const checkAppDomain = useAppContext((v) => v.requestHelpers.checkAppDomain);
@@ -91,7 +112,107 @@ export default function AppAddress({
     status: 'waiting' | 'checking' | 'securing' | 'connected';
   } | null>(null);
   const [error, setError] = useState('');
+  // Buying here: open for this member? who pays? (server decides)
+  const [purchase, setPurchase] = useState<{ open: boolean; buyer?: 'self' | 'parent'; renews?: boolean } | null>(null);
+  const [owner, setOwner] = useState<OwnerDetails>(() => emptyOwnerDetails(guessCountry()));
+  const [ownerAgreed, setOwnerAgreed] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [ownerProblem, setOwnerProblem] = useState('');
+  const [order, setOrder] = useState<DomainOrderView | null>(null);
   const t = ADDRESS_TEXT[pageLang()];
+
+  // Back from Stripe Checkout: ?domainOrder=<id> opens the order's status.
+  useEffect(() => {
+    if (!isOwner) return;
+    let orderId = 0;
+    try {
+      orderId = Number(new URLSearchParams(window.location.search).get('domainOrder') || 0);
+    } catch {
+      orderId = 0;
+    }
+    if (orderId > 0) setStep({ kind: 'order', orderId });
+  }, [buildId, isOwner]);
+
+  // While an order is being set up, ask again every 5 s (each ask may move
+  // it forward on the server); stop once it is live or refunded.
+  const orderId = step?.kind === 'order' ? step.orderId : 0;
+  useEffect(() => {
+    if (!orderId) return;
+    let cancelled = false;
+    let timer = 0;
+    async function poll() {
+      try {
+        const data = await loadDomainOrder({ buildId, orderId });
+        if (cancelled || !data?.order) return;
+        setOrder(data.order);
+        if (data.order.stage === 'live') {
+          const fresh = await loadAppAddress({ buildId }).catch(() => null);
+          if (!cancelled && fresh) setInfo(fresh);
+          return;
+        }
+        if (data.order.stage === 'setting_up') timer = window.setTimeout(poll, 5000);
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || '');
+      }
+    }
+    void poll();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, buildId]);
+
+  function openOwnFlow() {
+    setError('');
+    setStep({ kind: 'intro' });
+    if (purchase) return;
+    loadDomainPurchase({ buildId })
+      .then((data: any) => setPurchase(data || { open: false }))
+      .catch(() => setPurchase({ open: false }));
+  }
+
+  async function payAsOwner(idea: DomainIdeaView) {
+    const problem = ownerDetailsProblem(t, owner);
+    if (problem) {
+      setOwnerProblem(problem);
+      return;
+    }
+    setOwnerProblem('');
+    setPaying(true);
+    try {
+      const result = await startSelfDomainOrder({
+        buildId,
+        domain: idea.domain,
+        registrant: { ...owner, phone: owner.phone.trim() },
+        agreed: ownerAgreed,
+        priceCents: idea.priceCents
+      });
+      if (result?.checkoutUrl) {
+        window.location.assign(result.checkoutUrl);
+        return;
+      }
+      setOwnerProblem(t.whyOther(idea.domain));
+    } catch (e: any) {
+      setOwnerProblem(e?.message || '');
+    }
+    setPaying(false);
+  }
+
+  function closeFlow() {
+    setStep(null);
+    setOrder(null);
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('domainOrder')) {
+        url.searchParams.delete('domainOrder');
+        url.searchParams.delete('cancelled');
+        window.history.replaceState(window.history.state, '', url.toString());
+      }
+    } catch {
+      // nothing to tidy
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -266,7 +387,7 @@ export default function AppAddress({
           if (navigator.share) void navigator.share({ title: appTitle, url: info.url || '' }).catch(() => {});
           else void navigator.clipboard?.writeText(info.url || '').catch(() => {});
         }}
-        onGetOwn={() => setStep({ kind: 'intro' })}
+        onGetOwn={openOwnFlow}
         onRename={
           isOwner
             ? () => {
@@ -280,7 +401,7 @@ export default function AppAddress({
         }
       />
       {step && (
-        <Modal modalKey="AppAddressFlow" isOpen onClose={() => setStep(null)} size="md" hasHeader={false} closeOnBackdropClick>
+        <Modal modalKey="AppAddressFlow" isOpen onClose={closeFlow} size="md" hasHeader={false} closeOnBackdropClick>
           {error && <div style={{ color: '#b42318', marginBottom: '0.6rem' }}>{error}</div>}
           {step.kind === 'rename' && (
             <RenameView
@@ -299,11 +420,15 @@ export default function AppAddress({
             <IntroView
               t={t}
               freeHost={freeHost}
-              onFind={() => {
-                setStep({ kind: 'find' });
-                setQuery(appTitle);
-                void loadIdeas();
-              }}
+              onFind={
+                purchase?.open && info.domainSalesEnabled
+                  ? () => {
+                      setStep({ kind: 'find' });
+                      setQuery(appTitle);
+                      void loadIdeas();
+                    }
+                  : undefined
+              }
               onHaveOne={() => setStep({ kind: 'connect' })}
               ask={<AskAgentButton context={askContext('getting my own web address', 'Step: what a domain is.')} />}
             />
@@ -316,7 +441,10 @@ export default function AppAddress({
               loading={loading}
               onQuery={setQuery}
               onSearch={search}
-              onBuy={(idea) => setStep({ kind: 'parent', idea })}
+              onBuy={(idea) => {
+                setOwnerProblem('');
+                setStep(purchase?.buyer === 'self' ? { kind: 'owner', idea } : { kind: 'parent', idea });
+              }}
               onUseOwn={() => setStep({ kind: 'connect' })}
               onMoreIdeas={() => loadIdeas({ more: true })}
               ask={
@@ -342,6 +470,33 @@ export default function AppAddress({
               onEmail={setParentEmail}
               onSend={() => sendToParent(step.idea)}
               onBack={() => setStep({ kind: 'find' })}
+            />
+          )}
+          {step.kind === 'owner' && (
+            <OwnerDetailsView
+              t={t}
+              idea={step.idea}
+              details={owner}
+              agreed={ownerAgreed}
+              renews={Boolean(purchase?.renews)}
+              busy={paying}
+              problem={ownerProblem}
+              onDetails={setOwner}
+              onAgree={setOwnerAgreed}
+              onPay={() => void payAsOwner(step.idea)}
+              onBack={() => setStep({ kind: 'find' })}
+            />
+          )}
+          {step.kind === 'order' && order && (
+            <OrderStatusView
+              t={t}
+              order={order}
+              onOpen={() => window.open(`https://${order.domain}`, '_blank', 'noopener,noreferrer')}
+              onTryAgain={() => {
+                closeFlow();
+                openOwnFlow();
+              }}
+              onClose={closeFlow}
             />
           )}
           {step.kind === 'sent' && (
