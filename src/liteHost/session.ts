@@ -221,7 +221,14 @@ export function createSessionStore(config: LiteHostConfig) {
       const hash = new URLSearchParams(window.location.hash.slice(1));
       const code = hash.get('lumine_code');
       if (!code) return null;
-      history.replaceState(null, '', window.location.pathname + window.location.search);
+      // Drop the code from the address bar. A path like //x would make
+      // replaceState throw (cross-origin), so use the full URL and never let
+      // it stop the page from starting (re-review nit 1).
+      try {
+        history.replaceState(null, '', window.location.href.split('#')[0]);
+      } catch {
+        /* the page still works with the old address */
+      }
       let saved: { verifier: string; state: string; returnUrl?: string } | null = null;
       try {
         saved = JSON.parse(storageGet(PKCE_KEY(config.buildId)) || 'null');
