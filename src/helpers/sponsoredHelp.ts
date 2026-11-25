@@ -171,6 +171,9 @@ export interface SponsoredHelpObjectiveView {
   attempts: number;
   isAgain: boolean;
   againAvailable?: boolean;
+  // a session objective's follow-up: whether the sender's leftover share is
+  // paying the member's next text and voice turns
+  followUp?: 'sponsored' | 'low' | 'used_up' | 'none';
   question?: MemberChoiceQuestion | null;
   questionsLeft?: number;
   summary?: string;
@@ -202,6 +205,8 @@ export interface SponsoredHelpCardView {
   canConfirmAll?: boolean;
   runAll?: boolean;
   viewer: 'recipient' | 'sender' | 'bystander';
+  // on a secret post this viewer hasn't unlocked: no text, plans or amounts
+  locked?: boolean;
 }
 
 export interface SponsoredHelpPreview {
@@ -356,6 +361,8 @@ export function objectiveActions(
     case 'completed':
       return [
         ...(objective.result?.buildId || objective.result?.path ? (['open_result'] as const) : []),
+        // a finished session goes on: text or voice, the share pays first
+        ...(place === 'assistant' && objective.followUp && objective.followUp !== 'none' ? (['talk'] as const) : []),
         ...(full && objective.againAvailable ? (['again'] as const) : [])
       ];
     case 'declined':
@@ -417,4 +424,22 @@ export function wandViewerFor(card: Pick<SponsoredHelpCardView, 'senderId' | 're
   if (myId > 0 && myId === Number(card.recipientId)) return 'recipient' as const;
   if (myId > 0 && myId === Number(card.senderId)) return 'sender' as const;
   return 'bystander' as const;
+}
+
+// Who pays the member's next turn with Zero/Ciel on a running or finished
+// session objective, said the way the welcome tour says its free talk.
+export function followUpNotice(
+  objective: Pick<SponsoredHelpObjectiveView, 'followUp'>,
+  senderUsername: string
+) {
+  switch (objective.followUp) {
+    case 'sponsored':
+      return `${senderUsername}’s Energy covers this · text or call`;
+    case 'low':
+      return `${senderUsername}’s Energy for this is nearly used`;
+    case 'used_up':
+      return `${senderUsername}’s Energy for this is used up · now uses yours`;
+    default:
+      return '';
+  }
 }

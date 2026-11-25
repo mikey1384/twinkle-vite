@@ -17,6 +17,7 @@ import {
   cardActions,
   cardIsBusy,
   confirmAllPlanHashes,
+  followUpNotice,
   objectiveActions,
   objectiveStateLabel,
   sponsoredHelpPersonaName,
@@ -193,7 +194,9 @@ export default function WandCard({
         </span>
         <div className={objectiveMainClass}>
           <div className={objectiveTopClass}>
-            <p className={objectiveTextClass}>{objective.text}</p>
+            <p className={objectiveTextClass}>
+              {card.locked ? <span className={mutedInlineClass}>Answer the post to see this</span> : objective.text}
+            </p>
             {label ? (
               <span className={cx(stateChipClass, stateTone[objective.state])}>
                 {objective.state === 'working' ? <Icon icon="spinner" pulse /> : null}
@@ -295,7 +298,7 @@ export default function WandCard({
               {ideaShownId === objective.requestId ? <p className={ideaClass}>{project.idea}</p> : null}
             </div>
           ) : null}
-          {objective.status === 'running' ? (
+          {objective.status === 'running' || (objective.followUp && objective.followUp !== 'none') ? (
             <p className={mutedClass}>Keep going here, or switch to a call with {persona} any time.</p>
           ) : null}
           {objective.status === 'completed' && objective.result?.buildTitle ? (
@@ -403,17 +406,26 @@ export default function WandCard({
             {objective.result?.buildId ? `Open “${objective.result.buildTitle}”` : 'Open the page'}
           </GameCTAButton>
         );
-      case 'talk':
+      case 'talk': {
+        const notice = followUpNotice(objective, card.senderUsername);
         return (
-          <div key={key} className={talkClass} role="group" aria-label={`Talk with ${persona}`}>
-            <button type="button" onClick={() => handleTalk(objective, 'text')}>
-              <Icon icon="comment" /> Type
-            </button>
-            <button type="button" onClick={() => handleTalk(objective, 'voice')}>
-              <Icon icon="phone-volume" /> Call {persona}
-            </button>
+          <div key={key} className={talkRowClass}>
+            <div className={talkClass} role="group" aria-label={`Talk with ${persona}`}>
+              <button type="button" onClick={() => handleTalk(objective, 'text')}>
+                <Icon icon="comment" /> Type
+              </button>
+              <button type="button" onClick={() => handleTalk(objective, 'voice')}>
+                <Icon icon="phone-volume" /> Call {persona}
+              </button>
+            </div>
+            {notice ? (
+              <small className={objective.followUp === 'used_up' ? noticeSpentClass : noticeClass} data-wand-follow-up={objective.followUp}>
+                {notice}
+              </small>
+            ) : null}
           </div>
         );
+      }
       default:
         return null;
     }
@@ -967,6 +979,32 @@ const talkClass = css`
   button + button {
     border-left: 1px solid ${Color.borderGray()};
   }
+`;
+
+const talkRowClass = css`
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.8rem;
+`;
+
+const noticeClass = css`
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: ${Color.logoBlue()};
+`;
+
+const noticeSpentClass = css`
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: ${Color.darkerGray()};
+  opacity: 0.8;
+`;
+
+const mutedInlineClass = css`
+  font-weight: 500;
+  font-style: italic;
+  color: ${Color.gray()};
 `;
 
 const errorClass = css`

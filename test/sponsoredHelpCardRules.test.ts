@@ -6,6 +6,7 @@ import {
   cardActions,
   confirmAllPlanHashes,
   energyPercentLabel,
+  followUpNotice,
   objectiveActions,
   objectiveStateLabel,
   readCommentWandCardId,
@@ -122,6 +123,12 @@ test('the Zero/Ciel chat card holds the question, the plan, the run and Do it ag
     ['open_result', 'again']
   );
   assert.deepEqual(objectiveActions(objective({ status: 'declined', state: 'declined', againAvailable: true }), at), ['again']);
+  // a finished session goes on while the sender's share pays (or just ran out)
+  assert.deepEqual(
+    objectiveActions(objective({ status: 'completed', state: 'done', followUp: 'sponsored', againAvailable: true }), at),
+    ['talk', 'again']
+  );
+  assert.deepEqual(objectiveActions(objective({ status: 'completed', state: 'done', followUp: 'none' }), at), []);
   // elsewhere the in-between steps send them to their chat
   assert.deepEqual(objectiveActions(objective({ status: 'asking', state: 'asking' }), { viewer: 'recipient', place: 'dm' }), ['open_chat']);
   // the DM message has no Do it again (that lives where the plan does)
@@ -170,4 +177,12 @@ test('the text/voice switch tells Zero/Ciel which card and objective', () => {
     label: 'help card: Make a game'
   });
   assert.deepEqual(wandTalkContext(CARD), { kind: 'sponsoredHelp', id: 9, label: 'this help card' });
+});
+
+test('the member is told who pays their next turn, and when the sponsored part runs out', () => {
+  assert.equal(followUpNotice({ followUp: 'sponsored' }, 'mikey'), 'mikey’s Energy covers this · text or call');
+  assert.equal(followUpNotice({ followUp: 'low' }, 'mikey'), 'mikey’s Energy for this is nearly used');
+  assert.equal(followUpNotice({ followUp: 'used_up' }, 'mikey'), 'mikey’s Energy for this is used up · now uses yours');
+  assert.equal(followUpNotice({ followUp: 'none' }, 'mikey'), '');
+  assert.equal(followUpNotice({}, 'mikey'), '');
 });
