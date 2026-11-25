@@ -21,7 +21,8 @@ import {
   koLines,
   monsterTurnLine,
   TIER_TAGS,
-  turnFlagText
+  turnFlagText,
+  answerVerdict
 } from './turns';
 import { ServerLoot, summarizeLoot } from './loot';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -253,6 +254,7 @@ export default function BattleScreen({
   const [claimPicks, setClaimPicks] = useState<(boolean | null)[]>([null, null, null]);
   const [spellInput, setSpellInput] = useState('');
   const [answerReveal, setAnswerReveal] = useState<BattleState['answered'] | null>(null);
+  const [verdict, setVerdict] = useState<{ correct: boolean; text: string } | null>(null);
   const [remainingMs, setRemainingMs] = useState(0);
   const [burst, setBurst] = useState<string | null>(null);
   const [burstTone, setBurstTone] = useState<'gold' | 'white' | 'big'>('gold');
@@ -356,6 +358,7 @@ export default function BattleScreen({
       setClaimPicks((q.claims || [null, null, null]).map(() => null));
       setSpellInput('');
       setAnswerReveal(null);
+      setVerdict(null);
       submittingRef.current = false;
       setPhase('talk');
       if (q.side) setTurnFlag(q.side);
@@ -517,7 +520,13 @@ export default function BattleScreen({
   async function playTurn(state: BattleState, q: BattleQuestion) {
     const reduced = prefersReducedMotion();
     const pace = (ms: number) => (reduced ? Math.min(ms, 900) : ms) / speed;
-    if (state.answered) setAnswerReveal(state.answered);
+    if (state.answered) {
+      setAnswerReveal(state.answered);
+      const rightAnswer =
+        state.answered.spelling ||
+        (typeof state.answered.correctIndex === 'number' ? q.choices?.[state.answered.correctIndex] || '' : '');
+      setVerdict(answerVerdict({ correct: !!state.answered.correct, rightAnswer, events: state.events || [], side: q.side }));
+    }
     setTip('');
     // The command window stays up with the right answer marked while the
     // turn plays: the card saves hearts, not learning.
@@ -827,6 +836,11 @@ export default function BattleScreen({
           </div>
           <div className={promptCls}>{renderPrompt(question.prompt)}</div>
           {question.hint && <div className={hintCls}>Hint: it's a {question.hint}.</div>}
+          {verdict && (
+            <div className={cx(verdictCls, verdict.correct ? verdictRightCls : verdictWrongCls)} aria-live="polite">
+              {verdict.text}
+            </div>
+          )}
           {revealed && question.choices && (
             <div className={cx(choicesCls, shortChoices && choicesGridCls)}>
               {question.choices.map((choice, i) => {
@@ -842,13 +856,16 @@ export default function BattleScreen({
                       choiceCls,
                       isPicked && choicePickedCls,
                       answerReveal && isRight && choiceRightCls,
-                      isWrongPick && choiceWrongCls
+                      isWrongPick && choiceWrongCls,
+                      answerReveal && !isRight && !isWrongPick && choiceDimCls
                     )}
                     disabled={phase !== 'question' || picked !== null}
                     onClick={() => handlePick(i)}
                   >
                     <span className={cursorCls}>{isPicked ? '▶' : ''}</span>
                     <span className={choiceTextCls}>{choice}</span>
+                    {answerReveal && isRight && <span className={choiceMarkCls} aria-label="right answer">✓</span>}
+                    {isWrongPick && <span className={choiceMarkCls} aria-label="your pick, wrong">✗</span>}
                   </button>
                 );
               })}
@@ -1343,6 +1360,36 @@ const choicePickedCls = css`
 const choiceRightCls = css`
   border-color: #3ad16f !important;
   background: #173d2a !important;
+`;
+
+const choiceDimCls = css`
+  opacity: 0.45;
+`;
+
+const choiceMarkCls = css`
+  margin-left: auto;
+  padding-left: 8px;
+  font-weight: 700;
+`;
+
+const verdictCls = css`
+  margin: 6px 0 8px;
+  padding: 6px 10px;
+  font-weight: 700;
+  font-size: 14px;
+  border: 2px solid;
+`;
+
+const verdictRightCls = css`
+  color: #b8f5c9;
+  border-color: #3ad16f;
+  background: #173d2a;
+`;
+
+const verdictWrongCls = css`
+  color: #ffd0d8;
+  border-color: #ff3b5c;
+  background: #4a1626;
 `;
 
 const choiceWrongCls = css`

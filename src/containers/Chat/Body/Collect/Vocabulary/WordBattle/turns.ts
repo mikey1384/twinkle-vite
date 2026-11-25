@@ -223,3 +223,41 @@ export function turnFlagText(turn: 'player' | 'monster', word: string, free = fa
   if (turn === 'player') return free ? 'FREE STRIKE!' : 'YOUR TURN';
   return word.length <= 12 ? `${word.toUpperCase()}'S TURN` : 'ITS TURN';
 }
+
+// The verdict under the question once the answer is in (Mikey 11-25, like
+// Grammar Quest): say plainly whether the pick was right, show the right
+// answer when it wasn't, and tie it to what happens next ("so you dodged",
+// "your card blocked it anyway").
+export function answerVerdict({
+  correct,
+  rightAnswer,
+  events,
+  side
+}: {
+  correct: boolean;
+  rightAnswer: string;
+  events: BattleEvent[];
+  side?: 'player' | 'monster';
+}): { correct: boolean; text: string } {
+  const card = events.find((e) => e.kind === 'card') as Extract<BattleEvent, { kind: 'card' }> | undefined;
+  const cardName = card ? `${card.card.word.toUpperCase()} card` : '';
+  let tail = '';
+  if (card && card.job === 'defense') {
+    if (card.outcome === 'counter') tail = `Your ${cardName} countered!`;
+    else if (card.outcome === 'parry') tail = `Your ${cardName} parried!`;
+    else if (card.outcome === 'block') tail = card.reduced ? `Your ${cardName} took half the hit.` : `Your ${cardName} blocked it.`;
+  } else if (card && card.job === 'attack' && card.outcome === 'boost') {
+    tail = `Your ${cardName} powered it up!`;
+  }
+  if (!tail) {
+    const first = events.find((e) => ['dodge', 'attack', 'glancing', 'miss', 'hit'].includes(e.kind));
+    if (first?.kind === 'dodge') tail = 'So you dodged!';
+    else if (first?.kind === 'attack') tail = `So you hit for ${first.damage}!`;
+    else if (first?.kind === 'glancing') tail = 'Only a glancing hit.';
+    else if (first?.kind === 'miss') tail = side === 'player' ? 'So your attack missed.' : '';
+    else if (first?.kind === 'hit') tail = 'So it hit you.';
+  }
+  if (correct) return { correct, text: `✓ Right! ${tail}`.trim() };
+  const answerPart = rightAnswer ? ` The answer was ${rightAnswer}.` : '';
+  return { correct, text: `✗ Not this time.${answerPart} ${tail}`.trim() };
+}
