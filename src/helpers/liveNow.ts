@@ -9,12 +9,22 @@
 //
 // Kept free of app imports so node tests can load it.
 import { isActivityShown, type PresenceFlags } from './presenceVisibility';
-import { bestJoinAction, readJoinable, type Joinable } from './socialWalkups';
+import {
+  bestJoinAction,
+  primaryJoinAction,
+  readJoinable,
+  type Joinable,
+  type JoinVerb,
+  type PrimaryJoinAction
+} from './socialWalkups';
 
 export const LIVE_NOW_COLLAPSED_APPS = 2;
 // Hard bound for the expanded list and for the faces per app.
 export const LIVE_NOW_MAX_APPS = 12;
 export const LIVE_NOW_MAX_FACES = 3;
+// Hard bound for the "Who do you want to watch?" picker: everyone in an app
+// who offers Join / Play / Watch, up to this many, apart from the face cap.
+export const LIVE_NOW_MAX_CHOICES = 10;
 
 export interface LiveNowMember {
   id: number;
@@ -34,6 +44,97 @@ export interface LiveNowApp {
   members: LiveNowMember[];
   // Members shown here that someone can join right now or next.
   joinable: number;
+  // Everyone in the app the viewer can Join / Play with / Watch right now
+  // (not only the faces): best verb first (Join, Play, Watch), then by user
+  // id so lines keep their places. At most LIVE_NOW_MAX_CHOICES.
+  choices: LiveNowMember[];
+}
+
+/**
+ * One presence entry as Live now sees it: the app they are in and the member
+ * (with what they can be joined for), or null when Live now leaves them out
+ * (the viewer, blocked, not shown by the badge rule, no name).
+ */
+export function readLiveNowEntry(
+  key: string,
+  entry: any,
+  {
+    myId,
+    hiddenUserIds,
+    blockedUserIds
+  }: {
+    myId: number;
+    hiddenUserIds: readonly number[];
+    blockedUserIds?: ReadonlySet<number>;
+  }
+): { activity: any; member: LiveNowMember } | null {
+  const userId = Number(entry?.id ?? key);
+  const activity = entry?.activity;
+  // The viewer is left out: the row is for joining other people, and an app
+  // only the viewer is in (another tab) is not something to join.
+  if (!Number.isSafeInteger(userId) || userId <= 0 || userId === myId)
+    return null;
+  if (blockedUserIds?.has(userId)) return null;
+  if (
+    activity?.kind !== 'app' ||
+    !Number.isSafeInteger(activity.id) ||
+    activity.id <= 0
+  )
+    return null;
+  const presence: PresenceFlags = {
+    isOnline: entry.isOnline,
+    isAway: entry.isAway
+  };
+  if (!isActivityShown({ userId, activity, presence, hiddenUserIds }))
+    return null;
+  const username = String(entry.username || '').trim();
+  if (!username) return null;
+  // Hidden-presence accounts (Zero and Ciel) are never walked up to.
+  const joinable = hiddenUserIds.includes(userId)
+    ? null
+    : readJoinable(activity);
+  return {
+    activity,
+    member: {
+      id: userId,
+      username,
+      profilePicUrl: String(entry.profilePicUrl || ''),
+      ...(joinable ? { joinable } : {})
+    }
+  };
+}
+
+/**
+ * The picker's people as they are right now, read straight from presence
+ * (not from app.choices, which is capped): each id maps to the member while
+ * they are still in that app, else null. A JSON string, so a selector can
+ * return it and re-render only when one of them changes.
+ */
+export function readLiveNowPickerSignature({
+  chatStatus,
+  appId,
+  ids,
+  myId,
+  hiddenUserIds,
+  blockedUserIds
+}: {
+  chatStatus: Record<string, any> | null | undefined;
+  appId: number;
+  ids: readonly number[];
+  myId: number;
+  hiddenUserIds: readonly number[];
+  blockedUserIds?: ReadonlySet<number>;
+}) {
+  const out: Record<number, LiveNowMember | null> = {};
+  for (const id of ids) {
+    const read = readLiveNowEntry(String(id), chatStatus?.[id], {
+      myId,
+      hiddenUserIds,
+      blockedUserIds
+    });
+    out[id] = read && read.activity.id === appId ? read.member : null;
+  }
+  return JSON.stringify(out);
 }
 
 export function groupLiveNowApps({
@@ -51,34 +152,13 @@ export function groupLiveNowApps({
 }): LiveNowApp[] {
   const byApp = new Map<number, LiveNowApp>();
   for (const [key, entry] of Object.entries(chatStatus || {})) {
-    const userId = Number(entry?.id ?? key);
-    const activity = entry?.activity;
-    // The viewer is left out: the row is for joining other people, and an app
-    // only the viewer is in (another tab) is not something to join.
-    if (!Number.isSafeInteger(userId) || userId <= 0 || userId === myId)
-      continue;
-    if (blockedUserIds?.has(userId)) continue;
-    if (
-      activity?.kind !== 'app' ||
-      !Number.isSafeInteger(activity.id) ||
-      activity.id <= 0
-    )
-      continue;
-    const presence: PresenceFlags = {
-      isOnline: entry.isOnline,
-      isAway: entry.isAway
-    };
-    if (
-      !isActivityShown({
-        userId,
-        activity,
-        presence,
-        hiddenUserIds
-      })
-    )
-      continue;
-    const username = String(entry.username || '').trim();
-    if (!username) continue;
+    const read = readLiveNowEntry(key, entry, {
+      myId,
+      hiddenUserIds,
+      blockedUserIds
+    });
+    if (!read) continue;
+    const { activity, member } = read;
     let app = byApp.get(activity.id);
     if (!app) {
       app = {
@@ -88,24 +168,27 @@ export function groupLiveNowApps({
         multiplayer: activity.multiplayer === true,
         count: 0,
         members: [],
-        joinable: 0
+        joinable: 0,
+        choices: []
       };
       byApp.set(activity.id, app);
     }
     app.count++;
-    // Hidden-presence accounts (Zero and Ciel) are never walked up to.
-    const joinable = hiddenUserIds.includes(userId)
-      ? null
-      : readJoinable(activity);
-    app.members.push({
-      id: userId,
-      username,
-      profilePicUrl: String(entry.profilePicUrl || ''),
-      ...(joinable ? { joinable } : {})
-    });
+    app.members.push(member);
   }
   const apps = [...byApp.values()];
   for (const app of apps) {
+    // Who the picker lists: everyone with something to tap. The app's label
+    // ("Playing level 12") is free text, so there is no reliable "furthest
+    // along" order; lines stay in a stable order instead.
+    app.choices = app.members
+      .filter((member) => primaryJoinAction(member.joinable))
+      .sort(
+        (a, b) =>
+          verbRank(primaryJoinAction(a.joinable)) -
+            verbRank(primaryJoinAction(b.joinable)) || a.id - b.id
+      )
+      .slice(0, LIVE_NOW_MAX_CHOICES);
     // People you can join come first (ready now, then busy); within each
     // group faces are stable: the same people keep their places.
     app.members.sort(
@@ -117,7 +200,9 @@ export function groupLiveNowApps({
   // Apps where the row's button really does something with someone (Join,
   // Play with someone, Watch) come first; rows that only open the app ("Play")
   // follow. Mikey 11-24.
-  const actionable = new Map(apps.map((app) => [app, bestJoinAction(app.members) ? 1 : 0]));
+  const actionable = new Map(
+    apps.map((app) => [app, bestJoinAction(app.choices) ? 1 : 0])
+  );
   apps.sort(
     (a, b) =>
       (actionable.get(b) || 0) - (actionable.get(a) || 0) ||
@@ -128,6 +213,76 @@ export function groupLiveNowApps({
   );
   return apps.slice(0, LIVE_NOW_MAX_APPS);
 }
+
+const VERB_ORDER: Record<JoinVerb, number> = { join: 0, play: 1, watch: 2 };
+function verbRank(action: PrimaryJoinAction | null) {
+  return action ? VERB_ORDER[action.verb] : 3;
+}
+
+// The picker's title, in the row verb's words.
+export const LIVE_NOW_PICKER_TITLES: Record<JoinVerb, string> = {
+  join: 'Which room?',
+  play: 'Who do you want to play with?',
+  watch: 'Who do you want to watch?'
+};
+
+export type LiveNowRowChoice =
+  // nobody to join: the row opens the app
+  | { kind: 'open' }
+  // exactly one person offers the row's verb: one tap walks up to them
+  | { kind: 'walk'; verb: JoinVerb; intent: 'play' | 'watch'; member: LiveNowMember }
+  // two or more offer it: "Who do you want to watch?" lists everyone
+  // actionable (app.choices), each line with its own verb
+  | { kind: 'pick'; verb: JoinVerb; members: LiveNowMember[] };
+
+/**
+ * What tapping a Live now row (or its button) does. The row's verb is the
+ * best one anyone offers (bestJoinAction). With two or more members offering
+ * that verb the member chooses whom (Mikey, 11-25); with one, one tap.
+ */
+export function liveNowRowChoice(
+  app: Pick<LiveNowApp, 'choices'>
+): LiveNowRowChoice {
+  const choice = liveNowTapChoice(rowVerb(app), app);
+  return choice.kind === 'gone' ? { kind: 'open' } : choice;
+}
+
+/** The word on a row's button: the best verb anyone offers, or null (Play). */
+export function rowVerb(app: Pick<LiveNowApp, 'choices'>): JoinVerb | null {
+  return bestJoinAction(app.choices || [])?.verb || null;
+}
+
+/**
+ * What a tap does, given the word the button showed (it may come from rows
+ * held still under the pointer) and who is in the app right now. The tap
+ * always does what the word said: the default Play opens the app; a verb
+ * walks up to the one person still offering it, or lets the member pick
+ * from two or more; nobody offering it any more is 'gone' (open the app with
+ * a quiet note), never a different verb's picker.
+ */
+export function liveNowTapChoice(
+  verb: JoinVerb | null,
+  live: Pick<LiveNowApp, 'choices'> | null | undefined
+): LiveNowRowChoice | { kind: 'gone'; verb: JoinVerb } {
+  if (!verb) return { kind: 'open' };
+  const choices = live?.choices || [];
+  const sameVerb = choices.filter(
+    (member) => primaryJoinAction(member.joinable)?.verb === verb
+  );
+  if (sameVerb.length >= 2) return { kind: 'pick', verb, members: choices };
+  const [only] = sameVerb;
+  const action = only ? primaryJoinAction(only.joinable) : null;
+  if (!only || !action) return { kind: 'gone', verb };
+  return { kind: 'walk', verb, intent: action.intent, member: only };
+}
+
+// The quiet note when the button's people have all gone by the time of the
+// tap (the app opens anyway).
+export const LIVE_NOW_GONE_NOTES: Record<JoinVerb, string> = {
+  join: "That room isn't open right now",
+  play: "Nobody's ready to play right now",
+  watch: 'Nobody to watch right now'
+};
 
 function joinableRank(joinable: Joinable | undefined) {
   if (!joinable) return 3;
