@@ -650,6 +650,32 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    // The member's connected apps (settings): apps they let sign in with
+    // Twinkle, an app account linked to them, Unlink and Remove
+    async loadAppConnections() {
+      try {
+        const { data } = await request.get(`${URL}/build/app-connections`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async unlinkAppConnection({ buildId }: { buildId: number; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-connections/unlink`, {}, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async removeAppConnection({ buildId }: { buildId: number; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-session/remove`, {}, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     async addAppDomain({ buildId, hostname }: { buildId: number; hostname?: string; }) {
       try {
         const { data } = await request.post(`${URL}/build/${buildId}/app-domains`, { hostname }, auth());

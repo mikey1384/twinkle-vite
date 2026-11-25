@@ -63,6 +63,8 @@ const BASE_TEXT = {
     linkTwinkle: 'Link a Twinkle account',
     linkedTwinkle: 'Twinkle account linked: you can earn Coins and XP here now.',
     linkFailed: 'Couldn’t link that Twinkle account.',
+    unlinkTwinkle: 'Unlink my Twinkle account',
+    unlinkedTwinkle: 'Your Twinkle account is no longer linked to this player.',
     linkTitle: (host: string) => `Open ${host}?`,
     linkBody: 'This link leaves the app and opens another website in a new tab.',
     linkOpen: 'Open',
@@ -114,7 +116,7 @@ const BASE_TEXT = {
 };
 
 // English for every sign-in and account word, in every language
-const SIGN_IN_KEYS = ['signIn', 'signOut', 'signedInAs', 'signInTitle', 'signInBody', 'signInCta', 'notNow', 'neverPassword', 'guestHint', 'guestHintCta', 'carriedOver', 'accountSignInTitle', 'accountSignUpTitle', 'accountSignInBody', 'accountUsername', 'accountPassword', 'accountSignIn', 'accountSigningIn', 'accountNew', 'accountHave', 'accountBirth', 'accountBirthNote', 'accountMonth', 'accountYear', 'accountMonths', 'accountNext', 'accountBack', 'accountUsernameHint', 'accountPasswordHint', 'accountCreate', 'accountCreating', 'accountApprovedNext', 'accountFailed', 'accountOr', 'accountTwinkle', 'accountPrivacy', 'linkTwinkle', 'linkedTwinkle', 'linkFailed'] as const;
+const SIGN_IN_KEYS = ['signIn', 'signOut', 'signedInAs', 'signInTitle', 'signInBody', 'signInCta', 'notNow', 'neverPassword', 'guestHint', 'guestHintCta', 'carriedOver', 'accountSignInTitle', 'accountSignUpTitle', 'accountSignInBody', 'accountUsername', 'accountPassword', 'accountSignIn', 'accountSigningIn', 'accountNew', 'accountHave', 'accountBirth', 'accountBirthNote', 'accountMonth', 'accountYear', 'accountMonths', 'accountNext', 'accountBack', 'accountUsernameHint', 'accountPasswordHint', 'accountCreate', 'accountCreating', 'accountApprovedNext', 'accountFailed', 'accountOr', 'accountTwinkle', 'accountPrivacy', 'linkTwinkle', 'linkedTwinkle', 'linkFailed', 'unlinkTwinkle', 'unlinkedTwinkle'] as const;
 const englishSignIn = Object.fromEntries(
   SIGN_IN_KEYS.map((key) => [key, BASE_TEXT.en[key]])
 ) as Pick<(typeof BASE_TEXT)['en'], (typeof SIGN_IN_KEYS)[number]>;

@@ -72,8 +72,8 @@ export default function AppAccountSheet({
 
   async function afterBirth(value: { birthYear: number; birthMonth: number }) {
     setBirth(value);
-    if (!needsGuardianConsent(value.birthYear, value.birthMonth)) return setView('account');
-    // the approval is bound to an app-account pass from the API
+    // every sign-up carries an app-account pass from the API (a parent's
+    // approval, under 14, is bound to it)
     let token = pass;
     if (!token) {
       const data = await session.post(`/build/${config.buildId}/app-session/signup-pass`, {
@@ -88,7 +88,7 @@ export default function AppAccountSheet({
       }
       setPass(token);
     }
-    setView('guardian');
+    setView(needsGuardianConsent(value.birthYear, value.birthMonth) ? 'guardian' : 'account');
   }
 
   const title =

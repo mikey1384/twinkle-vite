@@ -204,6 +204,14 @@ export function createSessionStore(
       if (!result) return null;
       return completeLink(result.code, result.verifier, result.returnUrl);
     },
+    // Unlink: this app account stops being linked to its Twinkle member
+    async unlinkTwinkle() {
+      const token = await this.accessToken();
+      if (!token) return session;
+      await post(`/build/${config.buildId}/app-session/unlink`, {}, token);
+      await refresh({ force: true });
+      return session;
+    },
     // App accounts (an app on its own accounts): checked on this page.
     async signInAppAccount(input: { username: string; password: string }) {
       const data = await post('/build/app-account/signin', { buildId: config.buildId, ...input });

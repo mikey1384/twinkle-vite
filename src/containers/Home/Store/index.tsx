@@ -6,6 +6,7 @@ import ChangeUsername from './ChangeUsername';
 import ChatNotificationsItem from './ChatNotificationsItem';
 import BlockedUsersItem from './BlockedUsersItem';
 import WalkupsItem from './WalkupsItem';
+import ConnectedAppsItem from './ConnectedAppsItem';
 import FileSizeItem from './FileSizeItem';
 import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
@@ -180,6 +181,7 @@ export default function Store() {
           <ChatNotificationsItem loading={!myDataLoaded} />
           <BlockedUsersItem />
           <WalkupsItem loading={!myDataLoaded} />
+          <ConnectedAppsItem loading={!myDataLoaded} />
           <div data-scroll-anchor-id="home-settings:change-password">
             <ItemPanel
               itemKey="changePassword"

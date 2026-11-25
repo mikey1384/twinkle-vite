@@ -351,9 +351,20 @@ async function start() {
     onSignIn: openSignIn,
     extraItems: () => {
       const player = session.get()?.appPlayer;
-      return accountMode === 'both' && player?.kind === 'app' && !player.linked
-        ? [menuButton(t.linkTwinkle, () => void linkTwinkle())]
-        : [];
+      if (player?.kind !== 'app') return [];
+      if (player.linked) {
+        return [
+          menuButton(t.unlinkTwinkle, async () => {
+            try {
+              await session.unlinkTwinkle();
+              showToast(t.unlinkedTwinkle, 4000);
+            } catch (error: any) {
+              showToast(error?.message || t.accountFailed, 5000);
+            }
+          })
+        ];
+      }
+      return accountMode === 'both' ? [menuButton(t.linkTwinkle, () => void linkTwinkle())] : [];
     },
     onReport: () =>
       showReport({
