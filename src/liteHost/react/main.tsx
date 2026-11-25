@@ -24,6 +24,7 @@ import {
 } from '../session';
 import { askSignIn, mountBadge, showReport } from '../ui';
 import { LITE_HOST_TEXT, liteHostLang } from '../text';
+import { cloudFrontURL } from '~/constants/defaultValues';
 import {
   createLiteFrameMetaRef,
   installLiteFrameReloadWatch,
@@ -126,6 +127,8 @@ async function start() {
   const openSignIn = () => {
     void askSignIn({ config, t, session });
   };
+  // The signed-in member's picture for the badge menu (from app-session/me).
+  const viewerPictureRef: { current: string | null } = { current: null };
 
   function Root() {
     const [current, setCurrent] = useState<AppSession | null>(session.get());
@@ -229,6 +232,14 @@ async function start() {
         cancelled = true;
       };
     }, [userId]);
+    const viewerPicture = viewer?.profilePicUrl || null;
+    useEffect(() => {
+      viewerPictureRef.current = !viewerPicture
+        ? null
+        : /^https?:\/\//.test(viewerPicture)
+          ? viewerPicture
+          : `${cloudFrontURL}${viewerPicture}`;
+    }, [viewerPicture]);
     const info = useMemo(
       () => ({
         buildId: config!.buildId,
@@ -273,6 +284,7 @@ async function start() {
     config,
     t,
     session,
+    viewerPicture: () => viewerPictureRef.current,
     onReport: () =>
       showReport({
         config,
