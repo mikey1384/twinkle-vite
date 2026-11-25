@@ -372,6 +372,9 @@ const noticeSubCls = css`
 
 const bonusCls = css`
   position: relative;
+  /* The results modal stacks its content in a fixed-height column; with
+     overflow: hidden this panel could be squeezed and crop its buttons. */
+  flex-shrink: 0;
   width: 100%;
   box-sizing: border-box;
   margin-top: 2.4rem;
