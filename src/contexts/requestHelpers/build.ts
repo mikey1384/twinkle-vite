@@ -642,6 +642,15 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    // "Maker pays" AI: on/off and the daily caps (Coins)
+    async setMakerAi({ buildId, on, dailyCoins, playerDailyCoins }: { buildId: number; on: boolean; dailyCoins: number; playerDailyCoins: number; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/maker-ai`, { on, dailyCoins, playerDailyCoins }, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     async setAppPlayerDisabled({ buildId, playerId, disabled }: { buildId: number; playerId: number; disabled: boolean; }) {
       try {
         const { data } = await request.post(`${URL}/build/${buildId}/app-players/${playerId}/disabled`, { disabled }, auth());

@@ -270,8 +270,13 @@ function Harness() {
                 { id: 3, kind: 'app', name: 'nova7', linkedTo: 'nova_builds', createdAt: 1763900000, lastSeenAt: 1764040000, disabled: false, guardianApproved: false },
                 { id: 2, kind: 'twinkle', name: 'lily', linkedTo: null, createdAt: 1763800000, lastSeenAt: 1764030000, disabled: false, guardianApproved: false },
                 { id: 1, kind: 'app', name: 'trollface', linkedTo: null, createdAt: 1763700000, lastSeenAt: 1763710000, disabled: true, guardianApproved: false }
-              ]
+              ],
+              makerAi: {
+                settings: { on: true, dailyCoins: 20000, playerDailyCoins: 2000 },
+                today: { dayKey: '2026-11-26', coins: 3417, players: { 4: { coins: 1830, requests: 6 } } }
+              }
             }),
+            setMakerAi: async (input: any) => ({ settings: { on: input.on, dailyCoins: input.dailyCoins, playerDailyCoins: input.playerDailyCoins }, today: { coins: 3417, players: {} } }),
             setAppAccountMode: async ({ mode }: any) => ({ accountMode: mode }),
             setAppPlayerDisabled: async ({ disabled }: any) => ({ disabled })
           }}

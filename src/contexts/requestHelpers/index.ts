@@ -78,6 +78,7 @@ registerMethods('build', [
   'loadAppPlayers',
   'setAppAccountMode',
   'setAppPlayerDisabled',
+  'setMakerAi',
   'loadAppConnections',
   'describeAppPlayers',
   'unlinkAppConnection',

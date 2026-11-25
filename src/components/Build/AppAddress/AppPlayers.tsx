@@ -46,6 +46,15 @@ const TEXT = {
     turnOff: 'Turn off',
     turnOn: 'Turn on',
     lastSeen: (date: string) => `Last played ${date}`,
+    aiTitle: 'AI for players without Twinkle',
+    aiBody:
+      'Cover the AI your app uses for its own accounts, from your Coins (the same price as a member’s AI Energy recharge). Twinkle members always use their own AI Energy.',
+    aiOn: 'Cover their AI',
+    aiDaily: 'Your Coins a day, at most',
+    aiPlayer: 'Coins per player a day, at most',
+    aiSave: 'Save',
+    aiToday: (coins: string, cap: string) => `Today: ${coins} of ${cap} Coins`,
+    aiPlayerToday: (coins: string) => `AI today: ${coins} Coins`,
     close: 'Close',
     failed: 'That didn’t work. Please try again.'
   },
@@ -68,6 +77,15 @@ const TEXT = {
     turnOff: '끄기',
     turnOn: '켜기',
     lastSeen: (date: string) => `마지막 플레이 ${date}`,
+    aiTitle: '트윈클 계정이 없는 플레이어의 AI',
+    aiBody:
+      '앱 계정이 쓰는 AI 비용을 내 코인으로 대신 내 줘요 (회원의 AI 에너지 충전과 같은 가격). 트윈클 회원은 언제나 자기 AI 에너지를 써요.',
+    aiOn: 'AI 비용 대신 내기',
+    aiDaily: '하루 최대 코인',
+    aiPlayer: '플레이어 한 명당 하루 최대 코인',
+    aiSave: '저장',
+    aiToday: (coins: string, cap: string) => `오늘 ${cap}코인 중 ${coins}코인 사용`,
+    aiPlayerToday: (coins: string) => `오늘 AI ${coins}코인`,
     close: '닫기',
     failed: '잘 되지 않았어요. 다시 시도해 주세요.'
   }
@@ -85,6 +103,12 @@ export default function AppPlayers({
   const loadAppPlayers = useAppContext((v) => v.requestHelpers.loadAppPlayers);
   const setAppAccountMode = useAppContext((v) => v.requestHelpers.setAppAccountMode);
   const setAppPlayerDisabled = useAppContext((v) => v.requestHelpers.setAppPlayerDisabled);
+  const setMakerAi = useAppContext((v) => v.requestHelpers.setMakerAi);
+  const [makerAi, setMakerAiState] = useState<{
+    settings: { on: boolean; dailyCoins: number; playerDailyCoins: number };
+    today: { coins: number; players: Record<number, { coins: number }> };
+  } | null>(null);
+  const [aiDraft, setAiDraft] = useState({ on: false, dailyCoins: 20000, playerDailyCoins: 2000 });
   const t = TEXT[lang];
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -100,6 +124,10 @@ export default function AppPlayers({
         if (cancelled) return;
         setPlayers(Array.isArray(data?.players) ? data.players : []);
         if (data?.accountMode) setMode(data.accountMode);
+        if (data?.makerAi?.settings) {
+          setMakerAiState(data.makerAi);
+          setAiDraft(data.makerAi.settings);
+        }
       })
       .catch(() => !cancelled && setError(t.failed));
     return () => {
@@ -115,6 +143,23 @@ export default function AppPlayers({
     try {
       const data = await setAppAccountMode({ buildId, mode: next });
       setMode(data?.accountMode || next);
+    } catch (e: any) {
+      setError(e?.message || t.failed);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveAi() {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const data = await setMakerAi({ buildId, ...aiDraft });
+      if (data?.settings) {
+        setMakerAiState(data);
+        setAiDraft(data.settings);
+      }
     } catch (e: any) {
       setError(e?.message || t.failed);
     } finally {
@@ -169,6 +214,32 @@ export default function AppPlayers({
               ))}
               <p>{t.switchNote}</p>
             </fieldset>
+            {mode !== 'twinkle' && makerAi && (
+              <fieldset className={modesClass} disabled={busy}>
+                <legend>{t.aiTitle}</legend>
+                <p style={{ marginTop: 0 }}>{t.aiBody}</p>
+                <label className={aiDraft.on ? 'on' : ''}>
+                  <input type="checkbox" checked={aiDraft.on} onChange={(event) => setAiDraft({ ...aiDraft, on: event.target.checked })} />
+                  <span>
+                    <b>{t.aiOn}</b>
+                    <small>{t.aiToday(makerAi.today.coins.toLocaleString(), makerAi.settings.dailyCoins.toLocaleString())}</small>
+                  </span>
+                </label>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <label style={{ flex: 1, minWidth: '14rem', flexDirection: 'column', gap: '0.4rem' }}>
+                    <small>{t.aiDaily}</small>
+                    <input type="number" min={1} value={aiDraft.dailyCoins} onChange={(event) => setAiDraft({ ...aiDraft, dailyCoins: Number(event.target.value) })} />
+                  </label>
+                  <label style={{ flex: 1, minWidth: '14rem', flexDirection: 'column', gap: '0.4rem' }}>
+                    <small>{t.aiPlayer}</small>
+                    <input type="number" min={1} value={aiDraft.playerDailyCoins} onChange={(event) => setAiDraft({ ...aiDraft, playerDailyCoins: Number(event.target.value) })} />
+                  </label>
+                </div>
+                <button type="button" className={closeClass} style={{ marginTop: '0.6rem' }} onClick={() => void saveAi()}>
+                  {t.aiSave}
+                </button>
+              </fieldset>
+            )}
             {error && <p className={errorClass}>{error}</p>}
             {players && players.length === 0 && <p className={mutedClass}>{t.none}</p>}
             {players && players.length > 0 && (
@@ -181,6 +252,11 @@ export default function AppPlayers({
                       {player.linkedTo && <span className={tagClass}>{t.linked(player.linkedTo)}</span>}
                       {player.guardianApproved && <span className={tagClass}>{t.parent}</span>}
                       {player.disabled && <span className={tagClass}>{t.disabledTag}</span>}
+                      {makerAi?.today.players[player.id]?.coins ? (
+                        <span className={tagClass}>
+                          {t.aiPlayerToday(makerAi.today.players[player.id].coins.toLocaleString())}
+                        </span>
+                      ) : null}
                       <small>{t.lastSeen(dateText(player.lastSeenAt || player.createdAt))}</small>
                     </div>
                     {player.kind === 'app' && (
