@@ -40,6 +40,7 @@ import {
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { css } from '@emotion/css';
 import { SITE_NAME } from '~/constants/siteBrand';
+import useLinkPreviewBlocked from '~/components/PostedLinkGuard/useLinkPreviewBlocked';
 
 interface CompactCommentEmbedPreviewProps {
   className?: string;
@@ -814,8 +815,12 @@ function MarkdownBuildPreview({
 }
 
 function MarkdownLinkPreview({ embed }: { embed: MarkdownMediaEmbed }) {
+  // no picture from a site on Twinkle's blocked-site list
+  const previewBlocked = useLinkPreviewBlocked(embed.src);
   const videoCode =
-    embed.type === 'video' ? fetchedVideoCodeFromURL(embed.src) : '';
+    embed.type === 'video' && !previewBlocked
+      ? fetchedVideoCodeFromURL(embed.src)
+      : '';
   const icon = getMarkdownLinkPreviewIcon(embed);
 
   if (videoCode) {

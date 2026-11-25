@@ -1,6 +1,7 @@
 import React from 'react';
 import Icon from '~/components/Icon';
 import { processedURL } from '~/helpers/stringHelpers';
+import { openOutsideLink } from '~/helpers/postedLinkGuard';
 import {
   quickLinkClass,
   quickLinksClass,
@@ -60,7 +61,8 @@ export default function QuickLinks({
   function handleExternalLink(url: string) {
     const externalUrl = processedURL(url);
     if (!externalUrl) return;
-    window.open(externalUrl, '_blank', 'noopener,noreferrer');
+    // checked against Twinkle's blocked-site list, like every posted link
+    openOutsideLink(externalUrl);
   }
 }
 

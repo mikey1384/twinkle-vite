@@ -15,7 +15,11 @@ import type {
   AppLinkBridgeHandlerRequest,
   AppLinkBridgeResult
 } from '~/containers/Build/PreviewPanel/helpers/appLinkBridge';
-import { createLinkBlocklistClient } from '~/helpers/linkBlocklistClient';
+import { markCheckedOutsideLink } from '~/helpers/postedLinkGuard';
+import {
+  pageLinkBlocklist,
+  setLinkBlocklistFetcher
+} from '~/helpers/pageLinkBlocklist';
 import {
   isFullscreen,
   leaveFullscreenAndPointerLock,
@@ -111,18 +115,9 @@ export type AppLinkRequest = AppLinkBridgeHandlerRequest;
 export type AppLinkResult = AppLinkBridgeResult;
 
 let nextSessionId = 0;
-// One list for the whole page, loaded through whichever panel asked last.
-const blocklistFetch: { current: (() => Promise<{ hosts?: unknown }>) | null } = {
-  current: null
-};
-const blocklist = createLinkBlocklistClient({
-  fetchList: () => {
-    if (!blocklistFetch.current) {
-      return Promise.reject(Object.assign(new Error('unavailable'), { status: 0 }));
-    }
-    return blocklistFetch.current();
-  }
-});
+// One list for the whole page, shared with posted links
+// (helpers/pageLinkBlocklist.ts).
+const blocklist = pageLinkBlocklist;
 
 function appLinkError(message: string, code: string) {
   const error = new Error(message) as Error & { code?: string };
@@ -140,6 +135,9 @@ export function openAppLinkInNewTab(url: string, doc: Document = document) {
   link.rel = 'noopener noreferrer';
   link.referrerPolicy = 'no-referrer';
   link.style.display = 'none';
+  // already checked against the blocked-site list: the page's posted-link
+  // guard lets this click through
+  markCheckedOutsideLink(link);
   doc.body.appendChild(link);
   try {
     link.click();
@@ -165,7 +163,7 @@ export default function useAppLinkConfirm({
   const loadLinkBlocklist = useAppContext((v) => v.requestHelpers.loadLinkBlocklist);
   const recordRef = useRef(recordBuildAppLinkEvents);
   recordRef.current = recordBuildAppLinkEvents;
-  if (loadLinkBlocklist) blocklistFetch.current = loadLinkBlocklist;
+  setLinkBlocklistFetcher(loadLinkBlocklist);
   const flushTargetRef = useRef({ buildId, signedIn });
   flushTargetRef.current = { buildId, signedIn };
   const tallyRef = useRef<Tally>({});
@@ -457,18 +455,21 @@ export function AppLinkSheet({
 export function AppLinkBlockedNote({
   site,
   unchecked = false,
+  blockedTitle = `This site can't be opened from ${SITE_NAME} apps`,
   confirmColor,
   onClose
 }: {
   site: AppLinkSite;
   // the list could not be checked (the server refused it), not a block
   unchecked?: boolean;
+  // posted links say "This site is blocked on Twinkle." (PostedLinkGuard)
+  blockedTitle?: string;
   confirmColor: string;
   onClose: () => void;
 }) {
   const title = unchecked
     ? "Couldn't check this site. Try again in a moment."
-    : `This site can't be opened from ${SITE_NAME} apps`;
+    : blockedTitle;
   return (
     <Modal
       modalKey="AppLinkBlockedModal"
