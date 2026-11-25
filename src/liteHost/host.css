@@ -254,8 +254,8 @@ body {
     --pop-tint: #272635;
     --pop-hover: #2b2a3b;
     --pop-edge: rgba(255, 255, 255, 0.11);
-    --pop-accent: #6655ff;
-    --pop-accent-hover: #7465ff;
+    --pop-accent: #5b4bff;
+    --pop-accent-hover: #4b3cf0;
     --pop-violet-bg: #2e2a52;
     --pop-violet: #b9b1ff;
     --pop-amber-bg: #3b2f1d;
@@ -431,7 +431,8 @@ body {
   line-height: 1;
 }
 .lh-pop-signin-label { font-size: 16px; font-weight: 700; }
-.lh-pop-signin-sub { font-size: 13px; opacity: 0.82; }
+/* Opaque, at least 4.7:1 on the button at rest and on hover. */
+.lh-pop-signin-sub { font-size: 13px; color: #f0eeff; }
 .lh-pop-foot { display: flex; justify-content: center; padding: 6px 0 0; }
 .lh-pop-report {
   appearance: none;
@@ -460,6 +461,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .lh-pop-layer, .lh-pop-enter > * { animation: none; }
   .lh-badge-mark, .lh-row-go { transition: none; }
+  .lh-pop-signin { transition: background-color 0.15s ease; }
+  .lh-pop-signin:active, .lh-badge:active .lh-badge-mark { transform: none; }
 }
 
 /* Twinkle's own boxes (website components rendered into #modal) expect the

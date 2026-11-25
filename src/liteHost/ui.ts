@@ -20,6 +20,9 @@ function el<K extends keyof HTMLElementTagNameMap>(
 }
 
 let openSheet: HTMLElement | null = null;
+// The badge menu registers its closer here, so a sheet (sign-in, link,
+// report) always takes over from it: one overlay owns keys and focus.
+let dismissMenu: (() => void) | null = null;
 
 export function closeSheet() {
   openSheet?.remove();
@@ -27,6 +30,7 @@ export function closeSheet() {
 }
 
 function sheet(content: HTMLElement[], { onDismiss }: { onDismiss?: () => void } = {}) {
+  dismissMenu?.();
   closeSheet();
   const backdrop = el('div', { class: 'lh-backdrop', role: 'presentation' });
   const panel = el('div', { class: 'lh-sheet', role: 'dialog', 'aria-modal': 'true' }, content);
@@ -246,7 +250,7 @@ function avatar(name: string, pictureUrl: string | null | undefined, className: 
   const letter = el('span', { class: `${className} lh-avatar-letter`, 'aria-hidden': 'true' }, [
     (Array.from(name.trim())[0] || '✦').toUpperCase()
   ]);
-  if (!pictureUrl) return letter;
+  if (!pictureUrl || !/^https:\/\/[^/\s]+\/\S*$/i.test(pictureUrl)) return letter;
   const img = el('img', { class: className, src: pictureUrl, alt: '' });
   img.addEventListener('error', () => img.replaceWith(letter), { once: true });
   return img;
@@ -293,19 +297,41 @@ export function mountBadge({
     ])
   ]);
   document.body.append(badge);
-  window.setTimeout(() => badge.classList.add('lh-badge-compact'), 4000);
-
-  let menu: { layer: HTMLElement; card: HTMLElement; closing: boolean } | null = null;
+  let menu: { layer: HTMLElement; card: HTMLElement } | null = null;
+  let closingLayer: HTMLElement | null = null;
+  // The badge tucks into the edge after a few seconds, but never moves away
+  // from its open menu: then it waits until the menu closes.
+  let compactWaiting = false;
+  window.setTimeout(() => {
+    if (menu) compactWaiting = true;
+    else badge.classList.add('lh-badge-compact');
+  }, 4000);
 
   function closeMenu({ restoreFocus = true } = {}) {
     const current = menu;
-    if (!current || current.closing) return;
-    current.closing = true;
+    if (!current) return;
     menu = null;
+    if (dismissMenu === dismiss) dismissMenu = null;
     badge.setAttribute('aria-expanded', 'false');
     badge.classList.remove('lh-badge-open');
     document.removeEventListener('keydown', onKey, true);
-    const remove = () => current.layer.remove();
+    window.removeEventListener('resize', onViewportChange);
+    window.visualViewport?.removeEventListener('resize', onViewportChange);
+    window.visualViewport?.removeEventListener('scroll', onViewportChange);
+    if (compactWaiting) {
+      compactWaiting = false;
+      badge.classList.add('lh-badge-compact');
+    }
+    // Out of reach at once (keys, taps, screen readers) while it fades.
+    current.layer.setAttribute('inert', '');
+    current.layer.setAttribute('aria-hidden', 'true');
+    current.card.removeAttribute('id');
+    current.card.querySelector('#lh-pop-title')?.removeAttribute('id');
+    closingLayer = current.layer;
+    const remove = () => {
+      current.layer.remove();
+      if (closingLayer === current.layer) closingLayer = null;
+    };
     if (reducedMotion() || !current.card.animate) {
       remove();
     } else {
@@ -321,6 +347,25 @@ export function mountBadge({
         .finished.then(remove, remove);
     }
     if (restoreFocus) badge.focus({ preventScroll: true });
+  }
+  // A sheet taking over: the menu goes; the sheet owns focus from here.
+  const dismiss = () => closeMenu({ restoreFocus: false });
+
+  // After a sheet opened from the menu (sign-in, report) goes away, focus
+  // comes back to the ✦ instead of being lost on the page.
+  function returnFocusAfterSheet() {
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('.lh-backdrop')) return;
+      observer.disconnect();
+      if (!menu && (!document.activeElement || document.activeElement === document.body)) {
+        badge.focus({ preventScroll: true });
+      }
+    });
+    observer.observe(document.body, { childList: true });
+  }
+
+  function onViewportChange() {
+    if (menu) placeCard(menu.card);
   }
 
   function items() {
@@ -372,16 +417,20 @@ export function mountBadge({
     const node = href
       ? el('a', { class: 'lh-row', role: 'menuitem', href, target: '_blank', rel: 'noopener' }, content)
       : el('button', { class: 'lh-row', role: 'menuitem', type: 'button' }, content);
-    node.addEventListener('click', () => {
-      // Links open in a new tab; the menu folds away behind them.
-      closeMenu({ restoreFocus: !href });
-      onClick?.();
-    });
+    if (onClick) {
+      node.addEventListener('click', () => {
+        closeMenu({ restoreFocus: false });
+        onClick();
+      });
+    }
+    // Links open in a new tab and leave the menu, and its focus, as it was.
     return node;
   }
 
   function openMenu() {
     closeSheet();
+    closingLayer?.remove();
+    closingLayer = null;
     const current = session.get();
     const head = el('div', { class: 'lh-pop-head' }, [
       config.thumbnailUrl
@@ -440,8 +489,10 @@ export function mountBadge({
       signIn.addEventListener('click', async () => {
         closeMenu({ restoreFocus: false });
         if (session.get()) return;
-        if (onSignIn) onSignIn();
-        else await askSignIn({ config, t, session });
+        // the app's own sign-in (app accounts) or Twinkle's sheet
+        const signedIn = onSignIn ? Promise.resolve(onSignIn()) : askSignIn({ config, t, session });
+        returnFocusAfterSheet();
+        await signedIn;
       });
       account = el('div', { class: 'lh-pop-account lh-pop-account-out' }, [signIn]);
     }
@@ -453,6 +504,7 @@ export function mountBadge({
     report.addEventListener('click', () => {
       closeMenu({ restoreFocus: false });
       onReport();
+      returnFocusAfterSheet();
     });
 
     const parts = [head, rows, account, el('div', { class: 'lh-pop-foot' }, [report])];
@@ -467,11 +519,15 @@ export function mountBadge({
       if (event.target === layer) closeMenu();
     });
     document.body.append(layer);
-    menu = { layer, card, closing: false };
+    menu = { layer, card };
+    dismissMenu = dismiss;
     placeCard(card);
     badge.setAttribute('aria-expanded', 'true');
     badge.classList.add('lh-badge-open');
     document.addEventListener('keydown', onKey, true);
+    window.addEventListener('resize', onViewportChange);
+    window.visualViewport?.addEventListener('resize', onViewportChange);
+    window.visualViewport?.addEventListener('scroll', onViewportChange);
     if (!reducedMotion() && card.animate) {
       card.classList.add('lh-pop-enter');
       card.animate(
@@ -486,29 +542,41 @@ export function mountBadge({
   }
 
   // The card sits beside the badge: left of the edge tab, or above the
-  // corner pill, inside the screen; it grows out of the badge's ✦.
+  // corner pill; it grows out of the badge's ✦. It is sized and kept inside
+  // the visible part of the page (the visual viewport: pinch zoom and an
+  // on-screen keyboard shrink it), in the page's fixed coordinates.
   function placeCard(card: HTMLElement) {
     const gap = 10;
     const margin = 12;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const viewport = window.visualViewport;
+    const vx = viewport ? viewport.offsetLeft : 0;
+    const vy = viewport ? viewport.offsetTop : 0;
+    const vw = viewport ? viewport.width : window.innerWidth;
+    const vh = viewport ? viewport.height : window.innerHeight;
+    // Room for the edge tab beside it when the screen allows.
+    const room = vw - 64 >= 240 ? vw - 64 : vw - 2 * margin;
+    card.style.width = `${Math.max(0, Math.min(360, room))}px`;
+    card.style.maxHeight = `${Math.max(0, vh - 2 * margin)}px`;
     const mark = (badge.querySelector('.lh-badge-mark') || badge).getBoundingClientRect();
     const box = badge.getBoundingClientRect();
     const width = card.offsetWidth;
     const height = card.offsetHeight;
     const compact = badge.classList.contains('lh-badge-compact');
+    const minLeft = vx + margin;
+    const maxLeft = vx + vw - margin - width;
+    const minTop = vy + margin;
+    const maxTop = vy + vh - margin - height;
     let left: number;
     let top: number;
-    if (compact && box.left - gap - width >= margin) {
+    if (compact && box.left - gap - width >= minLeft) {
       left = box.left - gap - width;
       top = mark.top + mark.height / 2 - height * 0.38;
     } else {
-      left = Math.min(box.right, vw - margin) - width;
-      top = (compact ? box.bottom + gap : box.top - gap - height);
-      if (!compact && top < margin) top = margin;
+      left = Math.min(box.right, vx + vw - margin) - width;
+      top = compact ? box.bottom + gap : box.top - gap - height;
     }
-    left = Math.max(margin, Math.min(left, vw - margin - width));
-    top = Math.max(margin, Math.min(top, vh - margin - height));
+    left = Math.max(minLeft, Math.min(left, maxLeft));
+    top = Math.max(minTop, Math.min(top, maxTop));
     card.style.left = `${Math.round(left)}px`;
     card.style.top = `${Math.round(top)}px`;
     const originX = mark.left + mark.width / 2 - left;
@@ -519,9 +587,6 @@ export function mountBadge({
   badge.addEventListener('click', () => {
     if (menu) closeMenu();
     else openMenu();
-  });
-  window.addEventListener('resize', () => {
-    if (menu) placeCard(menu.card);
   });
   return badge;
 }
