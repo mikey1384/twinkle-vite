@@ -31,6 +31,7 @@ const fixture = `
 import React, {useRef} from 'react';
 import {createRoot} from 'react-dom/client';
 import useAppLinkConfirm from './src/components/Build/AppLink/useAppLinkConfirm';
+import PostedLinkGuard from './src/components/PostedLinkGuard';
 import {runAppLinkBridgeRequest} from './src/containers/Build/PreviewPanel/helpers/appLinkBridge';
 import {normalizeAllowedBuildPreviewFrameSrc} from './src/helpers/buildPreviewOriginHelpers';
 window.posts=[];
@@ -52,6 +53,9 @@ function Fixture(){
    <button className="app-link">Read on Wikipedia</button>
   </div>
   {appLinkModal}
+  {/* the page's posted-link guard is mounted on every page: the sheet's
+      own Open link must pass it */}
+  <PostedLinkGuard/>
  </div>;
 }
 createRoot(document.getElementById('root')).render(<Fixture/>);
@@ -62,7 +66,7 @@ async function compileFixture() {
   if (bundle) return bundle;
   const stubs = {
     '~/contexts':
-      'const state={requestHelpers:{recordBuildAppLinkEvents:(event)=>{window.posts.push(event);return Promise.resolve();},loadLinkBlocklist:()=>{window.listLoads=(window.listLoads||0)+1;const c=window.listConfig||{};return new Promise((resolve,reject)=>setTimeout(()=>c.status!==undefined?reject(Object.assign(new Error("list"),{status:c.status})):resolve({hosts:c.hosts||[]}),c.delayMs||0));}}};export const useAppContext=select=>select(state);',
+      'const state={requestHelpers:{recordPostedLinkEvents:()=>Promise.resolve(),recordBuildAppLinkEvents:(event)=>{window.posts.push(event);return Promise.resolve();},loadLinkBlocklist:()=>{window.listLoads=(window.listLoads||0)+1;const c=window.listConfig||{};return new Promise((resolve,reject)=>setTimeout(()=>c.status!==undefined?reject(Object.assign(new Error("list"),{status:c.status})):resolve({hosts:c.hosts||[]}),c.delayMs||0));}}};export const useAppContext=select=>select(state);export const useKeyContext=select=>select({myState:{userId:5}});',
     '~/theme/hooks/useRoleColor':
       'export const useRoleColor=()=>({getColor:()=>"#126bb5",color:"#126bb5",colorKey:"logoBlue",themeName:"logoBlue"});',
     '~/helpers':

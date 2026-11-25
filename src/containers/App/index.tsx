@@ -12,6 +12,7 @@ import { isLuminePreviewCaptureContext } from '~/helpers/luminePreviewCapture';
 import Header from './Header';
 import SocketManager, { CaptureSocketIdentity } from './SocketManager';
 import DailyPictureNotifications from './DailyPictureNotifications';
+import PostedLinkGuard from '~/components/PostedLinkGuard';
 import LumineRunNotifications from './LumineRunNotifications';
 import OnboardingNavTracker from './OnboardingNavTracker';
 import InvalidPage from '~/components/InvalidPage';
@@ -1494,6 +1495,7 @@ export default function App() {
         )}
         <DailyPictureNotifications />
         <LumineRunNotifications />
+        <PostedLinkGuard />
         <OnboardingNavTracker />
         {mobileMenuShown && !sessionAccessBlocked && (
           <Suspense fallback={null}>

@@ -591,6 +591,34 @@ export default function buildRequestHelpers({
         // telemetry
       }
     },
+    // Blocked-site taps on posted links (helpers/postedLinkGuard.ts):
+    // blocked / unchecked, tallied on the page and sent at most every 45 s
+    // or when the page hides (components/PostedLinkGuard). Counts only,
+    // never the link. Never fails the page.
+    async recordPostedLinkEvents({
+      counts,
+      keepalive = false
+    }: {
+      counts: Partial<Record<'blocked' | 'unchecked', number>>;
+      keepalive?: boolean;
+    }) {
+      try {
+        const url = `${URL}/build/posted-link-events`;
+        if (keepalive && typeof fetch === 'function') {
+          const { headers } = auth() as { headers?: Record<string, any> };
+          await fetch(url, {
+            method: 'POST',
+            keepalive: true,
+            headers: { ...(headers || {}), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ counts })
+          });
+          return;
+        }
+        await request.post(url, { counts }, auth());
+      } catch {
+        // telemetry
+      }
+    },
     // Twinkle's whole blocked-site list for the page to match links against
     // (helpers/linkBlocklistClient.ts). No sign-in; the server and the
     // browser cache it. Errors carry the HTTP status (0 for no answer).

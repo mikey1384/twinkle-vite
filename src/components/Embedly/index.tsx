@@ -23,6 +23,8 @@ import { useNavigate } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
+import useLinkPreviewBlocked from '~/components/PostedLinkGuard/useLinkPreviewBlocked';
+import BlockedLinkPreview from '~/components/PostedLinkGuard/BlockedLinkPreview';
 
 function Embedly({
   className,
@@ -107,6 +109,9 @@ function Embedly({
   const url = useMemo(() => {
     return contentStateUrl || extractedUrl;
   }, [contentStateUrl, extractedUrl]);
+  // a site on Twinkle's blocked-site list gets no preview (no title,
+  // description or picture from it), and its preview is never fetched
+  const previewBlocked = useLinkPreviewBlocked(directUrl || url);
 
   const appliedRawThumbUrl = useMemo(
     () => rawThumbUrl || defaultThumbUrl,
@@ -165,6 +170,7 @@ function Embedly({
       setTwinkleVideoId(extractedVideoId);
     } else if (
       !loadingRef.current &&
+      !previewBlocked &&
       contentType !== 'url' &&
       userCanEditThis &&
       url &&
@@ -214,7 +220,8 @@ function Embedly({
     loaded,
     rawThumbUrl,
     siteUrl,
-    thumbUrl
+    thumbUrl,
+    previewBlocked
   ]);
 
   useEffect(() => {
@@ -481,7 +488,9 @@ function Embedly({
             }
           `}
         >
-          {noLink ? (
+          {previewBlocked ? (
+            <BlockedLinkPreview url={directUrl || url} />
+          ) : noLink ? (
             <div className={contentCss}>{InnerContent}</div>
           ) : twinkleVideoId ? (
             <TwinkleVideo

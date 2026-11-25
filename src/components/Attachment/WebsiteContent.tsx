@@ -8,6 +8,8 @@ import LinkPreviewImage, {
   LINK_PREVIEW_FALLBACK_IMAGE
 } from '~/components/LinkPreviewImage';
 import { Attachment } from '~/types';
+import useLinkPreviewBlocked from '~/components/PostedLinkGuard/useLinkPreviewBlocked';
+import BlockedLinkPreview from '~/components/PostedLinkGuard/BlockedLinkPreview';
 
 export default function WebsiteContent({
   attachment
@@ -20,6 +22,11 @@ export default function WebsiteContent({
     contentType: attachment.contentType || '',
     contentId: attachment.id
   });
+  // a link attachment to a site on Twinkle's blocked-site list shows no
+  // title or picture from it
+  const blocked = useLinkPreviewBlocked(
+    attachment.contentType === 'url' ? content : null
+  );
   useEffect(() => {
     setImageUrl(
       attachment.contentType === 'video'
@@ -27,6 +34,14 @@ export default function WebsiteContent({
         : thumbUrl || LINK_PREVIEW_FALLBACK_IMAGE
     );
   }, [attachment.contentType, content, thumbUrl]);
+
+  if (blocked) {
+    return (
+      <ErrorBoundary componentPath="Attachment/WebsiteContent">
+        <BlockedLinkPreview compact url={content} />
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <ErrorBoundary componentPath="Attachment/WebsiteContent">

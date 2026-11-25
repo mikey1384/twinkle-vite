@@ -161,6 +161,7 @@ registerMethods('build', [
   'callBuildRuntimeAiChat',
   'callBuildRuntimeAiImage',
   'recordBuildAppLinkEvents',
+  'recordPostedLinkEvents',
   'loadLinkBlocklist',
   'loadBuildRuntimeAiImageStatus',
   'callBuildRuntimeAiMusic',
