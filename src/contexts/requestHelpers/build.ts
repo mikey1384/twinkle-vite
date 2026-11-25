@@ -687,6 +687,14 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    async loadLatestDomainOrder({ buildId }: { buildId: number; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/domain-orders/latest`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     async loadDomainOrder({ buildId, orderId }: { buildId: number; orderId: number; }) {
       try {
         const { data } = await request.get(`${URL}/build/${buildId}/domain-orders/${orderId}`, auth());

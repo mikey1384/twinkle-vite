@@ -84,6 +84,7 @@ registerMethods('build', [
   'loadDomainPurchase',
   'startSelfDomainOrder',
   'loadDomainOrder',
+  'loadLatestDomainOrder',
   'loadDomainParentOrder',
   'decideDomainParentOrder',
   'createLumineAppCoinConfirmation',

@@ -86,6 +86,7 @@ export default function AppAddress({
   const loadDomainPurchase = useAppContext((v) => v.requestHelpers.loadDomainPurchase);
   const startSelfDomainOrder = useAppContext((v) => v.requestHelpers.startSelfDomainOrder);
   const loadDomainOrder = useAppContext((v) => v.requestHelpers.loadDomainOrder);
+  const loadLatestDomainOrder = useAppContext((v) => v.requestHelpers.loadLatestDomainOrder);
   const addAppDomain = useAppContext((v) => v.requestHelpers.addAppDomain);
   const loadAppDomainConnect = useAppContext((v) => v.requestHelpers.loadAppDomainConnect);
   const checkAppDomain = useAppContext((v) => v.requestHelpers.checkAppDomain);
@@ -132,6 +133,81 @@ export default function AppAddress({
     }
     if (orderId > 0) setStep({ kind: 'order', orderId });
   }, [buildId, isOwner]);
+
+  // A wand plan (Zero/Ciel, twinkle-api sponsoredHelp open_app_address)
+  // opens ?appAddress=find|buy|connect|status[&domain=…] on the owner's app
+  // page. Only the domain choice comes in; the member does every buying step.
+  const [deepLink, setDeepLink] = useState<{ screen: string; domain: string } | null>(null);
+  useEffect(() => {
+    if (!isOwner) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const screen = params.get('appAddress') || '';
+      if (!['find', 'buy', 'connect', 'status'].includes(screen)) return;
+      setDeepLink({ screen, domain: String(params.get('domain') || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 253) });
+      const url = new URL(window.location.href);
+      url.searchParams.delete('appAddress');
+      url.searchParams.delete('domain');
+      window.history.replaceState(window.history.state, '', url.toString());
+    } catch {
+      // no deep link
+    }
+  }, [buildId, isOwner]);
+  useEffect(() => {
+    if (!deepLink || !info?.enabled) return;
+    const { screen, domain } = deepLink;
+    setDeepLink(null);
+    void openFromWand(screen, domain);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLink, info?.enabled]);
+
+  async function openFromWand(screen: string, domain: string) {
+    setError('');
+    if (screen === 'connect') {
+      setHostname(domain);
+      setConnect(null);
+      setStep({ kind: 'connect' });
+      return;
+    }
+    if (screen === 'status') {
+      const latest = await loadLatestDomainOrder({ buildId }).catch(() => null);
+      if (latest?.order?.orderId) {
+        setStep({ kind: 'order', orderId: latest.order.orderId });
+        return;
+      }
+      setStep({ kind: 'intro' });
+      return;
+    }
+    const purchaseInfo = purchase || (await loadDomainPurchase({ buildId }).catch(() => ({ open: false })));
+    setPurchase(purchaseInfo);
+    if (!purchaseInfo?.open || !info?.domainSalesEnabled) {
+      // buying here is closed: connecting your own still works
+      setStep({ kind: 'intro' });
+      return;
+    }
+    const label = domain.replace(/\.[a-z.]+$/, '') || appTitle;
+    setQuery(label);
+    setStep({ kind: 'find' });
+    if (screen === 'find' && !domain) {
+      void loadIdeas();
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await searchDomains({ q: label });
+      const found = (data?.results || []).filter((row: any) => row.available && row.price).map((row: any) => row.price);
+      setIdeas(found);
+      const exact = found.find((idea: DomainIdeaView) => idea.domain === domain);
+      if (screen === 'buy' && exact) {
+        setOwnerProblem('');
+        setStep(purchaseInfo.buyer === 'self' ? { kind: 'owner', idea: exact } : { kind: 'parent', idea: exact });
+      } else if (screen === 'buy') {
+        setError(t.notAvailableHere(domain));
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // While an order is being set up, ask again every 5 s (each ask may move
   // it forward on the server); stop once it is live or refunded.

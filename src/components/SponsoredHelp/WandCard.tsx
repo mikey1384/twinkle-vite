@@ -21,6 +21,7 @@ import {
   objectiveActions,
   objectiveStateLabel,
   sponsoredHelpPersonaName,
+  sponsoredHelpResultLabel,
   sponsoredHelpStepLabel,
   wandTalkContext,
   wandViewerFor,
@@ -403,7 +404,7 @@ export default function WandCard({
                 : navigate(String(objective.result?.path || '/'))
             }
           >
-            {objective.result?.buildId ? `Open “${objective.result.buildTitle}”` : 'Open the page'}
+            {objective.result?.buildId ? `Open “${objective.result.buildTitle}”` : sponsoredHelpResultLabel(objective.result)}
           </GameCTAButton>
         );
       case 'talk': {

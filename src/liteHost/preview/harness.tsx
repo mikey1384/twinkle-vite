@@ -22,6 +22,12 @@ import {
 } from '~/components/Build/AppAddress/views';
 import ParentConsentView from '~/containers/DomainParentConsent/ParentConsentView';
 import SignInCardView from '~/containers/LumineAppSignIn/SignInCardView';
+import { MemoryRouter } from 'react-router-dom';
+import WandCard from '~/components/SponsoredHelp/WandCard';
+import { AppContext } from '~/contexts/AppContext';
+import { KeyContext } from '~/contexts/KeyContext';
+import { ChatContext } from '~/contexts/Chat';
+import type { SponsoredHelpCardView, SponsoredHelpObjectiveView } from '~/helpers/sponsoredHelp';
 
 const params = new URLSearchParams(window.location.search);
 const screen = params.get('screen') || 'card';
@@ -176,6 +182,20 @@ function Harness() {
           <MessageView title={t.liveTitle('starcatcher.com')} body={t.liveBody} primaryLabel={t.openIt} onPrimary={noop} secondaryLabel={t.done} onSecondary={noop} celebrate />
         </Page>
       );
+    case 'wand-sent':
+    case 'wand-plan':
+    case 'wand-done':
+      return (
+        <Page>
+          <WandHarness stage={screen.slice(5)} />
+        </Page>
+      );
+    case 'wand-plan-zero':
+      return (
+        <Page>
+          <WandHarness stage="plan" place="assistant" />
+        </Page>
+      );
     case 'owner':
     case 'owner-filled':
       return (
@@ -232,6 +252,87 @@ const RECORDS = [
 ];
 const RED_SQUARE: DomainIdeaView = { domain: 'redsquaregame.com', priceCents: 1399, breakdown: { registryCents: 1121, cardFeeCents: 92, twinkleCents: 186 }, approxKrw: 20000 };
 const FILLED_OWNER: OwnerDetails = { firstName: 'Mikey', lastName: 'Lee', email: 'mikey@example.com', phone: '+82 10 1234 5678', address1: '1 Sejong-daero, Jung-gu', city: 'Seoul', state: 'Seoul', zip: '04524', country: 'KR' };
+
+// The wand card Mikey sends ("get a domain for my app"), as the member sees
+// it in chat: waiting, Zero's plan to confirm, and done (the real WandCard,
+// with request stubs).
+const LILY = 42;
+function wandCard(stage: string): SponsoredHelpCardView {
+  const steps = [
+    { action: 'start_chat_session' as const, opening_message: 'Help me pick a good web address for my game The Adventure of a Red Square' },
+    { action: 'open_app_address' as const, build_id: 2, screen: 'buy' as const, domain: 'redsquaregame.com' }
+  ];
+  const objective: SponsoredHelpObjectiveView = {
+    index: 0,
+    text: 'Help you get your own .com for The Adventure of a Red Square',
+    requestId: 901,
+    status: stage === 'sent' ? 'sent' : stage === 'plan' ? 'awaiting_confirm' : 'completed',
+    state: stage === 'sent' ? 'pending' : stage === 'plan' ? 'deciding' : 'done',
+    energyPercent: 8,
+    attempts: stage === 'sent' ? 0 : 1,
+    isAgain: false,
+    ...(stage !== 'sent'
+      ? {
+          summary:
+            'mikey asked me to help you get your own web address. First we’ll pick a name together in this chat, and I’ll check real prices. Then I’ll open the buy screen for redsquaregame.com on your app. Other sites like Cloudflare are often cheaper, and you type your own details and pay yourself.',
+          steps,
+          cannotDo: [],
+          planHash: 'x',
+          planRevision: 1,
+          changesLeft: 2
+        }
+      : {}),
+    ...(stage === 'done'
+      ? { result: { path: '/app/2?appAddress=buy&domain=redsquaregame.com', appAddress: { buildId: 2, title: 'The Adventure of a Red Square', screen: 'buy', domain: 'redsquaregame.com' } } }
+      : {})
+  };
+  return {
+    cardId: 77,
+    surface: 'dm',
+    persona: 'zero',
+    senderId: 5,
+    senderUsername: 'mikey',
+    recipientId: LILY,
+    recipientUsername: 'lily',
+    createdAt: Math.floor(Date.now() / 1000) - 600,
+    expiresAt: Math.floor(Date.now() / 1000) + 6 * 86400,
+    energyPercent: 8,
+    objectives: [objective],
+    viewer: 'recipient'
+  };
+}
+
+function WandHarness({ stage, place = 'dm' }: { stage: string; place?: 'dm' | 'assistant' }) {
+  const card = wandCard(stage);
+  const stub = async () => ({ card });
+  const appValue = React.useMemo(
+    () => ({
+      user: { state: {}, actions: {} },
+      requestHelpers: new Proxy({}, { get: () => stub })
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stage]
+  );
+  return (
+    <MemoryRouter>
+      <AppContext.Provider value={appValue}>
+        <KeyContext.Provider value={{ myState: { userId: LILY, username: 'lily' }, theme: {}, helpers: {} } as any}>
+          <ChatContext.Provider value={{ state: { zeroChannelId: 0, cielChannelId: 0 }, actions: {} } as any}>
+          <div style={{ background: '#fff', borderRadius: 18, padding: 16, boxShadow: '0 6px 24px rgba(20,20,40,0.06)' }}>
+            <div style={{ color: '#5d5d6e', fontSize: 14, marginBottom: 8 }}>{place === 'dm' ? 'Chat with mikey' : 'Chat with Zero'}</div>
+            {place === 'dm' && (
+              <div style={{ background: '#f1f1f6', borderRadius: 14, padding: '10px 12px', marginBottom: 12, maxWidth: 420 }}>
+                Here you go: press it and Zero will help you get your own web address for your game.
+              </div>
+            )}
+            <WandCard card={card} place={place} />
+          </div>
+          </ChatContext.Provider>
+        </KeyContext.Provider>
+      </AppContext.Provider>
+    </MemoryRouter>
+  );
+}
 
 function OwnerHarness({ filled }: { filled: boolean }) {
   const [details, setDetails] = useState<OwnerDetails>(filled ? FILLED_OWNER : emptyOwnerDetails('KR'));

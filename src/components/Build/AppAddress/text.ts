@@ -156,7 +156,8 @@ export const ADDRESS_TEXT = {
     notPaidTitle: 'Payment not finished',
     notPaidBody: 'Nothing was charged. You can try again anytime.',
     tryAgain: 'Try again',
-    close: 'Close'
+    close: 'Close',
+    notAvailableHere: (domain: string) => `${domain} isn’t available here. These names are.`
   },
   ko: {
     liveAt: '앱 주소',
@@ -292,7 +293,8 @@ export const ADDRESS_TEXT = {
     notPaidTitle: '결제가 끝나지 않았어요',
     notPaidBody: '아무 돈도 나가지 않았어요. 언제든 다시 해 볼 수 있어요.',
     tryAgain: '다시 해 보기',
-    close: '닫기'
+    close: '닫기',
+    notAvailableHere: (domain: string) => `${domain}은(는) 여기서 살 수 없어요. 이 이름들은 살 수 있어요.`
   }
 };
 
