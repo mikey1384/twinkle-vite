@@ -45,9 +45,12 @@ import Reactions from './Reactions';
 import AICardOfferMessage from './AICardOfferMessage';
 import SponsoredHelpCard, { SponsoredHelpStartChip } from './SponsoredHelpCard';
 import {
+  SPONSORED_HELP_GROUP_ROOT_TYPE,
   SPONSORED_HELP_ROOT_TYPE,
+  readSponsoredHelpCardView,
   readSponsoredHelpView
 } from '~/helpers/sponsoredHelp';
+import WandCard from '~/components/SponsoredHelp/WandCard';
 import { parseMessageSettings } from './messageSettings';
 import AskedAboutChip from './AskedAboutChip';
 import AlertActions from './AlertActions';
@@ -244,7 +247,9 @@ function MessageBody({
     !!myId &&
     Number(userId) > 0 &&
     Number(userId) !== Number(myId) &&
-    (genericActionsAllowed || message?.rootType === SPONSORED_HELP_ROOT_TYPE);
+    (genericActionsAllowed ||
+      message?.rootType === SPONSORED_HELP_ROOT_TYPE ||
+      message?.rootType === SPONSORED_HELP_GROUP_ROOT_TYPE);
 
   useEffect(() => {
     if (isLastMsg && isNewMessage && !userIsUploader) {
@@ -836,6 +841,7 @@ function MessageBody({
   // message row with the author's picture, name and time, in place of the
   // text, keeping the row's actions and its reactions.
   const sponsoredHelp = readSponsoredHelpView(message);
+  const wandCard = readSponsoredHelpCardView(message);
 
   if (transferDetails) {
     return withCardFrame(
@@ -1020,7 +1026,16 @@ function MessageBody({
               settings={message?.settings}
               isAIChat={isAIChat}
             />
-            {sponsoredHelp ? (
+            {wandCard ? (
+              <>
+                <WandCard
+                  card={wandCard.view}
+                  place={wandCard.variant}
+                  inMessageRow
+                />
+                {cardReactions}
+              </>
+            ) : sponsoredHelp ? (
               <>
                 <SponsoredHelpCard
                   request={sponsoredHelp.view}

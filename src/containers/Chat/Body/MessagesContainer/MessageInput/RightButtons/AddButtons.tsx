@@ -171,10 +171,12 @@ export default function AddButtons({
       )}
       {sponsoredHelpShown && partner?.username && (
         <SponsoredHelpModal
-          channelId={channelId}
-          partnerUsername={partner.username}
+          target={{ channelId }}
+          recipientUsername={partner.username}
           percents={sponsoredHelpConfig?.percents}
-          taskMaxLength={sponsoredHelpConfig?.taskMaxLength}
+          maxObjectives={sponsoredHelpConfig?.maxObjectives}
+          objectiveMaxLength={sponsoredHelpConfig?.objectiveMaxLength}
+          cardsSupported={sponsoredHelpConfig?.cards === true}
           onHide={() => setSponsoredHelpShown(false)}
         />
       )}

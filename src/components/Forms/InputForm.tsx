@@ -69,8 +69,11 @@ function InputForm({
   style = {},
   submitButtonLabel,
   theme,
-  targetCommentId
+  targetCommentId,
+  extraButton
 }: {
+  // a button shown beside the upload button (the comment box's magic wand)
+  extraButton?: React.ReactNode;
   isComment?: boolean;
   autoFocus?: boolean;
   className?: string;
@@ -575,7 +578,8 @@ function InputForm({
           }}
         />
       ) : (
-        <div>
+        <div style={extraButton ? { display: 'flex', alignItems: 'flex-start' } : undefined}>
+          {extraButton}
           {userId && (
             <UploadButton
               onFileSelect={handleUploadButtonFileSelect}

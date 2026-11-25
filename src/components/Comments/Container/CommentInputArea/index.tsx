@@ -9,6 +9,7 @@ import { expectedResponseLength } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import RewardLevelExpectation from './RewardLevelExpectation';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
+import CommentWandButton from '~/components/SponsoredHelp/CommentWandButton';
 
 export default function CommentInputArea({
   autoFocus,
@@ -143,6 +144,18 @@ export default function CommentInputArea({
             submitButtonLabel={submitButtonLabel}
             targetCommentId={targetCommentId}
             theme={theme}
+            extraButton={
+              disableReason ? null : (
+                <CommentWandButton
+                  parent={parent}
+                  rootCommentId={rootCommentId}
+                  targetCommentId={targetCommentId}
+                  subjectId={subjectId}
+                  addressee={inputTypeLabel === 'reply' ? parent.uploader : null}
+                  theme={theme}
+                />
+              )
+            }
           />
           {uploading && (
             <Loading

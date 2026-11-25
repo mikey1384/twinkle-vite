@@ -77,6 +77,8 @@ import { getCommentActionPermissions } from '~/components/Comments/permissions';
 import useSubjectSecretVisibility from '~/helpers/hooks/useSubjectSecretVisibility';
 import { useLumineCommentMenuItem } from '../LumineCommentContext';
 import { useFeatureOnProfileMenuItem } from '~/components/Comments/useFeatureOnProfileMenuItem';
+import { CommentWandCard } from '~/components/SponsoredHelp/WandCard';
+import { readCommentWandCardId } from '~/helpers/sponsoredHelp';
 
 const commentWasDeletedLabel = 'this comment was deleted';
 const editLabel = 'Edit';
@@ -497,6 +499,8 @@ function Comment({
     () => stringIsEmpty(comment.content),
     [comment.content]
   );
+  // a wand card this comment carries (server-written settings only)
+  const wandCardId = useMemo(() => readCommentWandCardId(comment), [comment]);
 
   const timeSincePost = useMemo(
     () => timeSince(comment.timeStamp),
@@ -756,6 +760,22 @@ function Comment({
                           <AiEnergySponsorButton
                             comment={comment}
                             theme={theme}
+                          />
+                        ) : wandCardId ? (
+                          <CommentWandCard
+                            cardId={wandCardId}
+                            commentId={commentId}
+                            fallback={
+                              <RichText
+                                theme={theme}
+                                contentId={commentId}
+                                contentType="comment"
+                                section="comment"
+                                className="comment__content"
+                              >
+                                {(comment.content || '').trimEnd()}
+                              </RichText>
+                            }
                           />
                         ) : !commentIsEmpty ? (
                           <RichText

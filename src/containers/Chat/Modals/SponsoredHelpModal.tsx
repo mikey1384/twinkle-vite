@@ -5,71 +5,173 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import {
+  SPONSORED_HELP_MAX_OBJECTIVES,
+  SPONSORED_HELP_OBJECTIVE_MAX,
+  energyPercentLabel,
+  type SponsoredHelpPreview
+} from '~/helpers/sponsoredHelp';
 
-// "Have Zero/Ciel do this": the sender writes what they want done for the
-// other person, picks Zero or Ciel, and gives some of their own AI Energy
-// (twinkle-api helpers/sponsoredHelp/service.ts). The server decides what is
-// possible; this only collects the request.
+export type SponsoredHelpTarget =
+  | { channelId: number }
+  | {
+      parentType: string;
+      parentId: number;
+      rootCommentId?: number | null;
+      targetCommentId?: number | null;
+      subjectId?: number | null;
+    };
+
+const KIND_ICON: Record<string, string> = {
+  lumine_build: 'code-branch',
+  chat_session: 'comment',
+  open_page: 'arrow-right',
+  not_possible: 'ban',
+  not_right: 'exclamation-triangle'
+};
+
+// The magic wand (twinkle-api helpers/sponsoredHelp/cards.ts): the sender
+// writes 1 to 3 short things for Zero/Ciel to do for the other person,
+// picks Zero or Ciel and some of their own AI Energy, then reads
+// Zero/Ciel's plan for every objective and the total estimate before
+// sending. In a one-on-one chat it becomes a message; by a comment box it
+// becomes a comment addressed to the person being replied to. The server
+// decides what is possible; this only collects the request and shows the
+// preview it wrote.
 export default function SponsoredHelpModal({
-  channelId,
-  partnerUsername,
+  target,
+  recipientUsername,
   percents = [5, 10, 25],
-  taskMaxLength = 1000,
+  maxObjectives = SPONSORED_HELP_MAX_OBJECTIVES,
+  objectiveMaxLength = SPONSORED_HELP_OBJECTIVE_MAX,
+  cardsSupported = true,
   onHide,
   onSent
 }: {
-  channelId: number;
-  partnerUsername: string;
+  target: SponsoredHelpTarget;
+  recipientUsername: string;
   percents?: number[];
-  taskMaxLength?: number;
+  maxObjectives?: number;
+  objectiveMaxLength?: number;
+  // false: an API from before wand cards (one task, DMs only)
+  cardsSupported?: boolean;
   onHide: () => void;
   onSent?: (result: any) => void;
 }) {
+  const previewSponsoredHelp = useAppContext((v) => v.requestHelpers.previewSponsoredHelp);
+  const sendSponsoredHelpCard = useAppContext((v) => v.requestHelpers.sendSponsoredHelpCard);
   const sendSponsoredHelp = useAppContext((v) => v.requestHelpers.sendSponsoredHelp);
-  const [task, setTask] = useState('');
+  const [objectives, setObjectives] = useState<string[]>(['']);
   const [persona, setPersona] = useState<'zero' | 'ciel'>('zero');
   const [percent, setPercent] = useState(percents.includes(10) ? 10 : percents[0]);
-  const [sending, setSending] = useState(false);
+  const [preview, setPreview] = useState<SponsoredHelpPreview | null>(null);
+  const [working, setWorking] = useState('');
   const [error, setError] = useState('');
   const personaName = persona === 'ciel' ? 'Ciel' : 'Zero';
-  const canSend = task.trim().length >= 3 && !sending;
+  const isComment = !('channelId' in target);
+  const filled = objectives.map((text) => text.trim()).filter(Boolean);
+  const canCheck =
+    filled.length > 0 && filled.every((text) => text.length >= 3) && !working;
+  const who = recipientUsername || preview?.recipientUsername || 'them';
+  const max = cardsSupported ? Math.max(1, Math.min(maxObjectives, SPONSORED_HELP_MAX_OBJECTIVES)) : 1;
 
   return (
     <Modal
       modalKey="SponsoredHelpModal"
       isOpen
       onClose={onHide}
-      title={`Have ${personaName} help ${partnerUsername}`}
+      title={preview ? `${personaName}’s plan for ${who}` : `Have ${personaName} help ${who}`}
       size="md"
       footer={
-        <>
-          <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
-            Cancel
-          </Button>
-          <Button
-            color={persona === 'ciel' ? 'pink' : 'logoBlue'}
-            loading={sending}
-            disabled={!canSend}
-            onClick={handleSend}
-          >
-            <Icon icon="wand-magic-sparkles" style={{ marginRight: '0.7rem' }} />
-            Send the button
-          </Button>
-        </>
+        preview ? (
+          <>
+            <Button variant="ghost" onClick={() => setPreview(null)} style={{ marginRight: '0.7rem' }}>
+              <Icon icon="arrow-left" style={{ marginRight: '0.5rem' }} />
+              Edit
+            </Button>
+            <Button
+              color={persona === 'ciel' ? 'pink' : 'logoBlue'}
+              loading={working === 'send'}
+              disabled={!preview.canSend || !!working}
+              onClick={handleSend}
+            >
+              <Icon icon="wand-magic-sparkles" style={{ marginRight: '0.7rem' }} />
+              {isComment ? 'Post the card' : 'Send the card'}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
+              Cancel
+            </Button>
+            <Button
+              color={persona === 'ciel' ? 'pink' : 'logoBlue'}
+              loading={working === 'check'}
+              disabled={!canCheck}
+              onClick={cardsSupported ? handleCheck : handleLegacySend}
+            >
+              <Icon icon="wand-magic-sparkles" style={{ marginRight: '0.7rem' }} />
+              {cardsSupported ? 'Check the plan' : 'Send the button'}
+            </Button>
+          </>
+        )
       }
     >
-      <div className={bodyClass}>
-        <label className={labelClass} htmlFor="sponsored-help-task">
-          What should {personaName} do for {partnerUsername}?
-        </label>
-        <textarea
-          id="sponsored-help-task"
-          className={taskClass}
-          value={task}
-          maxLength={taskMaxLength}
-          placeholder={`For example: Start a Lumine project called "krillion" and give Lumine this idea: …`}
-          onChange={(event) => setTask(event.target.value)}
-        />
+      {preview ? renderPreview(preview) : renderCompose()}
+    </Modal>
+  );
+
+  function renderCompose() {
+    return (
+      <div className={bodyClass} data-wand-compose>
+        <span className={labelClass}>
+          What should {personaName} do for {who}?
+          {max > 1 ? <span className={hintClass}>Up to {max} things, one per line</span> : null}
+        </span>
+        <ol className={objectiveListClass}>
+          {objectives.map((text, index) => (
+            <li key={index}>
+              <span className={numberClass}>{index + 1}</span>
+              <input
+                aria-label={`Thing ${index + 1}`}
+                value={text}
+                maxLength={objectiveMaxLength}
+                autoFocus={index === objectives.length - 1}
+                placeholder={
+                  index === 0
+                    ? 'For example: Make a game with Lumine'
+                    : index === 1
+                      ? 'For example: Quiz me on fractions'
+                      : 'For example: Show me the Arena'
+                }
+                onChange={(event) =>
+                  setObjectives((current) =>
+                    current.map((value, i) => (i === index ? event.target.value : value))
+                  )
+                }
+              />
+              {objectives.length > 1 ? (
+                <button
+                  type="button"
+                  className={removeClass}
+                  aria-label={`Remove thing ${index + 1}`}
+                  onClick={() => setObjectives((current) => current.filter((_, i) => i !== index))}
+                >
+                  <Icon icon="times" />
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+        {objectives.length < max ? (
+          <button
+            type="button"
+            className={addClass}
+            onClick={() => setObjectives((current) => [...current, ''])}
+          >
+            <Icon icon="plus" /> Add another
+          </button>
+        ) : null}
         <div className={rowClass}>
           <span className={labelClass}>Who helps</span>
           <div className={choiceRowClass} role="radiogroup" aria-label="Who helps">
@@ -108,27 +210,106 @@ export default function SponsoredHelpModal({
           </div>
         </div>
         <p className={noteClass}>
-          {partnerUsername} gets a button. When they press it, {personaName} shows them exactly
-          what it will do and waits for their OK. Only what {personaName} actually uses comes out
-          of your Energy, and whatever is left stays yours. The button lasts 7 days.
+          {isComment
+            ? `The card goes on your comment for everyone to see; only ${who} can press it.`
+            : `${who} gets a card.`}{' '}
+          {personaName} shows them a plan and waits for their OK before doing anything. Only what{' '}
+          {personaName} actually uses comes out of your Energy. The card lasts 7 days.
         </p>
         {error ? <p className={errorClass}>{error}</p> : null}
       </div>
-    </Modal>
-  );
+    );
+  }
 
-  async function handleSend() {
-    if (!canSend) return;
-    setSending(true);
+  function renderPreview(current: SponsoredHelpPreview) {
+    const over = !current.enough;
+    return (
+      <div className={bodyClass} data-wand-preview>
+        <p className={summaryClass}>{current.summary}</p>
+        <ol className={previewListClass}>
+          {current.objectives.map((objective, index) => (
+            <li key={index} data-kind={objective.kind}>
+              <span className={numberClass}>{index + 1}</span>
+              <div>
+                <p className={previewTextClass}>{objective.text}</p>
+                <p className={previewLineClass}>
+                  <Icon icon={KIND_ICON[objective.kind] || 'arrow-right'} />
+                  <span>{objective.line}</span>
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div className={estimateClass} data-over={over || undefined}>
+          <Icon icon="bolt" />
+          <div>
+            <strong>Uses {energyPercentLabel(current.estimatePercent)} of your AI Energy in all</strong>
+            <span>
+              You’re giving up to {Math.round(current.budgetPercent)}%, shared equally between the{' '}
+              {current.objectives.length === 1 ? 'one thing' : `${current.objectives.length} things`}. What
+              isn’t used stays yours.
+            </span>
+            {over ? (
+              <span className={overClass}>
+                That may not be enough for everything. Pick a bigger amount, or {personaName} does what fits.
+              </span>
+            ) : null}
+          </div>
+        </div>
+        {!current.canSend ? (
+          <p className={errorClass}>{personaName} can’t do one of these. Tap Edit to change or remove it.</p>
+        ) : null}
+        {error ? <p className={errorClass}>{error}</p> : null}
+      </div>
+    );
+  }
+
+  async function handleCheck() {
+    if (!canCheck) return;
+    setWorking('check');
     setError('');
     try {
-      const result = await sendSponsoredHelp({ channelId, task: task.trim(), persona, percent });
+      const result = await previewSponsoredHelp({ objectives: filled, persona, percent, target });
+      setPreview(result);
+    } catch (checkError: any) {
+      setError(checkError?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setWorking('');
+    }
+  }
+
+  async function handleSend() {
+    if (!preview || working) return;
+    setWorking('send');
+    setError('');
+    try {
+      const result = await sendSponsoredHelpCard(preview.previewId);
       onSent?.(result);
       onHide();
     } catch (sendError: any) {
       setError(sendError?.message || 'Something went wrong. Please try again.');
     } finally {
-      setSending(false);
+      setWorking('');
+    }
+  }
+
+  async function handleLegacySend() {
+    if (!canCheck || !('channelId' in target)) return;
+    setWorking('check');
+    setError('');
+    try {
+      const result = await sendSponsoredHelp({
+        channelId: target.channelId,
+        task: filled[0],
+        persona,
+        percent
+      });
+      onSent?.(result);
+      onHide();
+    } catch (sendError: any) {
+      setError(sendError?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setWorking('');
     }
   }
 }
@@ -137,31 +318,100 @@ const bodyClass = css`
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
+  gap: 1.3rem;
 `;
 
 const labelClass = css`
   font-size: 1.45rem;
-  font-weight: 600;
+  font-weight: 700;
   color: ${Color.darkerGray()};
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.8rem;
 `;
 
-const taskClass = css`
-  width: 100%;
-  min-height: 11rem;
-  font-size: 1.5rem;
-  line-height: 1.5;
-  padding: 1rem;
-  border-radius: 1rem;
-  border: 1px solid ${Color.borderGray()};
-  font-family: inherit;
-  resize: vertical;
-  &:focus {
-    outline: none;
+const hintClass = css`
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: ${Color.gray()};
+`;
+
+const objectiveListClass = css`
+  list-style: none;
+  margin: -0.3rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  input {
+    flex: 1;
+    min-width: 0;
+    font-size: 1.5rem;
+    padding: 0.9rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid ${Color.borderGray()};
+    font-family: inherit;
+    &:focus {
+      outline: none;
+      border-color: ${Color.logoBlue()};
+      box-shadow: 0 0 0 3px ${Color.logoBlue(0.15)};
+    }
+  }
+`;
+
+const numberClass = css`
+  flex-shrink: 0;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 800;
+  background: ${Color.highlightGray()};
+  color: ${Color.darkerGray()};
+`;
+
+const removeClass = css`
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: ${Color.gray()};
+  cursor: pointer;
+  font-size: 1.4rem;
+  &:hover {
+    background: ${Color.highlightGray()};
+    color: ${Color.darkerGray()};
+  }
+`;
+
+const addClass = css`
+  align-self: flex-start;
+  margin: -0.4rem 0 0 3.4rem;
+  border: 1px dashed ${Color.borderGray()};
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.5rem 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: ${Color.darkerGray()};
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  &:hover {
     border-color: ${Color.logoBlue()};
-    box-shadow: 0 0 0 3px ${Color.logoBlue(0.15)};
+    color: ${Color.logoBlue()};
   }
 `;
 
@@ -221,6 +471,93 @@ const noteClass = css`
   font-size: 1.3rem;
   line-height: 1.5;
   color: ${Color.gray()};
+`;
+
+const summaryClass = css`
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1.55;
+  color: ${Color.black()};
+`;
+
+const previewListClass = css`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 0.9rem 1rem;
+    border-radius: 1rem;
+    background: ${Color.highlightGray()};
+  }
+  li[data-kind='not_right'],
+  li[data-kind='not_possible'] {
+    background: ${Color.rose(0.05)};
+  }
+  li > span {
+    background: #fff;
+  }
+`;
+
+const previewTextClass = css`
+  margin: 0.15rem 0 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: ${Color.black()};
+  word-break: break-word;
+`;
+
+const previewLineClass = css`
+  margin: 0.3rem 0 0;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  font-size: 1.35rem;
+  line-height: 1.45;
+  color: ${Color.darkerGray()};
+  svg {
+    margin-top: 0.3rem;
+    color: ${Color.gray()};
+  }
+`;
+
+const estimateClass = css`
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  background: ${Color.gold(0.14)};
+  border: 1px solid ${Color.gold(0.5)};
+  > svg {
+    margin-top: 0.3rem;
+    color: rgb(190, 140, 0);
+    font-size: 1.6rem;
+  }
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  strong {
+    font-size: 1.45rem;
+    color: ${Color.black()};
+  }
+  span {
+    font-size: 1.3rem;
+    line-height: 1.45;
+    color: ${Color.darkerGray()};
+  }
+`;
+
+const overClass = css`
+  color: ${Color.rose()} !important;
+  font-weight: 600;
 `;
 
 const errorClass = css`

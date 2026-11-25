@@ -2892,6 +2892,155 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // Wand cards with 1 to 3 objectives, in DMs and on comments (twinkle-api
+    // helpers/sponsoredHelp/cards.ts).
+    async previewSponsoredHelp({
+      objectives,
+      persona,
+      percent,
+      target
+    }: {
+      objectives: string[];
+      persona: 'zero' | 'ciel';
+      percent: number;
+      target: {
+        channelId?: number;
+        parentType?: string;
+        parentId?: number;
+        rootCommentId?: number | null;
+        targetCommentId?: number | null;
+        subjectId?: number | null;
+      };
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/preview`,
+          { objectives, persona, percent, target },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async sendSponsoredHelpCard(previewId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/cards`,
+          { previewId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadSponsoredHelpCard(cardId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/sponsored-help/cards/${cardId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async pressAllSponsoredHelp(cardId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/cards/${cardId}/press-all`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async confirmAllSponsoredHelp({
+      cardId,
+      planHashes
+    }: {
+      cardId: number;
+      planHashes: Record<string, string>;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/cards/${cardId}/confirm-all`,
+          { planHashes },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async declineSponsoredHelpCard(cardId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/cards/${cardId}/decline`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async cancelSponsoredHelpCard(cardId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/cards/${cardId}/cancel`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async answerSponsoredHelp({
+      requestId,
+      answer
+    }: {
+      requestId: number;
+      answer: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/${requestId}/answer`,
+          { answer },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadSponsoredHelpAgain(requestId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/sponsored-help/${requestId}/again`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async startSponsoredHelpAgain(requestId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/${requestId}/again`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadPendingTransaction(channelId: number) {
       try {
         const {

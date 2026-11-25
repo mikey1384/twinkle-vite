@@ -55,6 +55,8 @@ import { useRoleColor } from '~/theme/hooks/useRoleColor';
 import { resolveCommentRewardLevel } from '~/helpers/rewardLevel';
 import { useLumineCommentMenuItem } from '../../LumineCommentContext';
 import { useFeatureOnProfileMenuItem } from '~/components/Comments/useFeatureOnProfileMenuItem';
+import { CommentWandCard } from '~/components/SponsoredHelp/WandCard';
+import { readCommentWandCardId } from '~/helpers/sponsoredHelp';
 
 const commentWasDeletedLabel = 'this comment was deleted';
 const editLabel = 'Edit';
@@ -239,6 +241,8 @@ function Reply({
     () => stringIsEmpty(reply.content),
     [reply.content]
   );
+  // a wand card this reply carries (server-written settings only)
+  const wandCardId = useMemo(() => readCommentWandCardId(reply), [reply]);
 
   const timeSincePost = useMemo(
     () => timeSince(reply.timeStamp),
@@ -511,6 +515,22 @@ function Reply({
                       </div>
                     ) : shouldRenderAiEnergySponsorNotice(reply) ? (
                       <AiEnergySponsorButton comment={reply} theme={theme} />
+                    ) : wandCardId ? (
+                      <CommentWandCard
+                        cardId={wandCardId}
+                        commentId={reply.id}
+                        fallback={
+                          <RichText
+                            theme={theme}
+                            contentType="comment"
+                            contentId={reply.id}
+                            section="reply"
+                            className="comment__content"
+                          >
+                            {(reply.content || '').trimEnd()}
+                          </RichText>
+                        }
+                      />
                     ) : !replyIsEmpty ? (
                       <RichText
                         readAloud

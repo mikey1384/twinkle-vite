@@ -401,7 +401,10 @@ function Comments({
           onRewardCommentEdit,
           onReplySubmit: handleSubmitReply,
           onLoadRepliesOfReply,
-          onSubmitWithAttachment: handleFileUpload
+          onSubmitWithAttachment: handleFileUpload,
+          // a wand card the server already posted as a comment
+          // (components/SponsoredHelp/CommentWandButton.tsx)
+          onWandCommentPosted: handleWandCommentPosted
         }}
       >
         <ScopedTheme theme={themeName} roles={['loadMoreButton']}>
@@ -468,6 +471,31 @@ function Comments({
       </Context.Provider>
     </ErrorBoundary>
   );
+
+  function handleWandCommentPosted({
+    comment,
+    isReply,
+    targetCommentId
+  }: {
+    comment: any;
+    isReply: boolean;
+    targetCommentId?: number | null;
+  }) {
+    if (!comment?.id) return;
+    if (isReply) {
+      onReplySubmit({
+        ...comment,
+        contentId: parent.contentId,
+        contentType: parent.contentType
+      });
+    } else {
+      onCommentSubmit({
+        ...comment,
+        contentId: targetCommentId || parent.contentId,
+        contentType: targetCommentId ? 'comment' : parent.contentType
+      });
+    }
+  }
 }
 
 export default memo(Comments);

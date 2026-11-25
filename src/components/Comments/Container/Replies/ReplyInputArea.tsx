@@ -5,6 +5,7 @@ import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';
+import CommentWandButton from '~/components/SponsoredHelp/CommentWandButton';
 
 export default function ReplyInputArea({
   compactMode,
@@ -100,6 +101,18 @@ export default function ReplyInputArea({
             submitButtonLabel={submitButtonLabel}
             theme={theme}
             targetCommentId={targetCommentId}
+            extraButton={
+              disableReason || !targetCommentId ? null : (
+                <CommentWandButton
+                  parent={parent}
+                  rootCommentId={rootCommentId}
+                  targetCommentId={targetCommentId}
+                  subjectId={parent.subjectId}
+                  addressee={targetCommentPoster}
+                  theme={theme}
+                />
+              )
+            }
           />
         )}
       </div>

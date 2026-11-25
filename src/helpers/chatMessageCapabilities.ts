@@ -29,7 +29,11 @@ const SERVER_ISSUED_CHAT_CARD_ROOT_TYPES: ReadonlySet<string> = new Set([
   // A sponsored "Have Zero/Ciel do this" button in a DM, and its card in the
   // recipient's Zero/Ciel chat (twinkle-api helpers/sponsoredHelp).
   'sponsoredHelp',
-  'sponsoredHelpCard'
+  'sponsoredHelpCard',
+  // A wand card with 1 to 3 objectives: the DM message and the recipient's
+  // Zero/Ciel chat card for it.
+  'sponsoredHelpGroup',
+  'sponsoredHelpGroupCard'
 ]);
 
 const SENDER_DELETABLE_BUILD_SUGGESTION_ROOT_TYPES: ReadonlySet<string> =
