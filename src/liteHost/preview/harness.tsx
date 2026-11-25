@@ -331,7 +331,21 @@ function BadgeMenu() {
       config,
       t: LITE_HOST_TEXT[lang],
       session: fakeSession,
-      onReport: () => {}
+      onReport: () => {},
+      onSignIn: () => {},
+      playerKindLabel: () => {
+        const t = LITE_HOST_TEXT[lang];
+        if (!signed) return null;
+        return kind === 'app' ? t.kindApp : kind === 'linked' ? t.kindLinked : t.kindMember;
+      },
+      extraItems: () => {
+        const t = LITE_HOST_TEXT[lang];
+        if (!signed || (kind !== 'app' && kind !== 'linked')) return [];
+        const email = { iconName: 'mail' as const, label: t.menuResetEmail, sub: t.menuResetEmailSub, onClick: () => {} };
+        return kind === 'linked'
+          ? [email, { iconName: 'unlink' as const, label: t.unlinkTwinkle, sub: t.unlinkTwinkleSub, onClick: () => {} }]
+          : [email, { iconName: 'link' as const, label: t.linkTwinkle, sub: t.linkTwinkleSub, onClick: () => {} }];
+      }
     });
     if (params.get('open') !== '0') window.setTimeout(() => badge.click(), 50);
   }, []);
