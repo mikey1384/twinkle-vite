@@ -3444,7 +3444,7 @@ export function useHostBridge({
           }
 
           case 'auth:describe-players': {
-            const ids = Array.isArray(payload?.ids) ? payload.ids.slice(0, 100) : [];
+            const ids = Array.isArray(payload?.ids) ? payload.ids.slice(0, 50) : [];
             response = await describeAppPlayersRef.current({
               buildId: activeBuild.id,
               ids

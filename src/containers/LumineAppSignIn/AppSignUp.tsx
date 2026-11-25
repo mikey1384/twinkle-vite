@@ -127,7 +127,9 @@ export default function AppSignUp({
         appTitle={appTitle}
         onBack={() => setStep(consent ? 'guardian' : 'birth')}
         onSubmit={async ({ username, password, email }) => {
-          const account = await signupFromApp({
+          let account;
+          try {
+            account = await signupFromApp({
             invite: pass.token,
             username,
             password,
@@ -135,7 +137,16 @@ export default function AppSignUp({
             birthYear: birth.birthYear,
             birthMonth: birth.birthMonth,
             guardianConsent: consent || undefined
-          });
+            });
+          } catch (error: any) {
+            // someone on this device said they're under 14 lately: a parent
+            // approves first, whatever birth month was given now
+            if (error?.code === 'guardian_consent' && !consent) {
+              setStep('guardian');
+              return;
+            }
+            throw error;
+          }
           writePass(buildId, null);
           clearGuardianConsent();
           onCreated(account);

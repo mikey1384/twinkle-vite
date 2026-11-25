@@ -75,6 +75,12 @@ export default function AppAccountSheet({
     try {
       await task();
     } catch (err: any) {
+      // someone on this device said they're under 14 lately: a parent
+      // approves first, whatever birth month was given now
+      if (err?.code === 'guardian_consent' && pass && birth && !consent) {
+        setView('guardian');
+        return;
+      }
       setError(err?.message || t.accountFailed);
     } finally {
       setBusy(false);
