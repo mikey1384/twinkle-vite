@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import AppAddress from '~/components/Build/AppAddress';
 import { css } from '@emotion/css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
@@ -1379,6 +1380,16 @@ export default function Header({
           changeKey={rewardChangeKey}
         />
       )}
+      {build.isPublic && contributionStatus === 'none' ? (
+        // The app's lumine.app address (renders nothing, not even its
+        // wrapper, while hosting is off).
+        <AppAddress
+          buildId={Number(build.id)}
+          isOwner={Boolean(isOwner)}
+          appTitle={String(build.title || '')}
+          wrapperStyle={{ flexBasis: '100%', width: '100%', marginTop: '0.8rem' }}
+        />
+      ) : null}
     </header>
   );
 }

@@ -611,7 +611,8 @@ test('H1/L5: the box makes the app frame inert, ends fullscreen and pointer lock
   const request = source.slice(source.indexOf('function requestCoinConfirm'), source.indexOf('function resolve('));
   assert.match(request, /setArmed\(false\)/);
   assert.match(source, /key=\{session\.id\}/);
-  const panel = readFileSync(new URL('../src/containers/Build/PreviewPanel/index.tsx', import.meta.url), 'utf8');
+  // The Coins box lives in the confirmations both hosts share (useHostConfirmations).
+  const panel = readFileSync(new URL('../src/containers/Build/PreviewPanel/hooks/useHostConfirmations.tsx', import.meta.url), 'utf8');
   assert.match(panel, /useCoinConfirm\(\{\s*frameRootRef: previewRootRef\s*\}\)/);
 });
 

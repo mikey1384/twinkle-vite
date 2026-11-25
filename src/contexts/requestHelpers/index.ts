@@ -69,6 +69,22 @@ function registerMethods(
 }
 
 registerMethods('build', [
+  'loadAppAddress',
+  'checkAppAddressSlug',
+  'renameAppAddress',
+  'loadAppSigninInfo',
+  'authorizeAppSignin',
+  'addAppDomain',
+  'checkAppDomain',
+  'loadAppDomainConnect',
+  'removeAppDomain',
+  'loadDomainIdeas',
+  'searchDomains',
+  'startDomainOrder',
+  'loadDomainParentOrder',
+  'decideDomainParentOrder',
+  'createLumineAppCoinConfirmation',
+  'loadLumineAppViewer',
   'loadBuildRewardSettings',
   'requestBuildRewardReview',
   'loadBuildRewardReview',

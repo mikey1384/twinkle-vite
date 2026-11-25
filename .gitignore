@@ -39,3 +39,4 @@ public/gq-media/
 
 # Arena media is served from the CDN; local copies for dev only
 public/arena-media/
+dist-lite-host

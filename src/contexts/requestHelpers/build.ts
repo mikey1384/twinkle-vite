@@ -49,6 +49,17 @@ export interface BuildAppMcpInvocationContext {
   appMcpCallId: string;
 }
 
+function throwLumineAppHostingError(error: any, handleError: (error: any) => any) {
+  const status = Number(error?.response?.status || 0);
+  if (status >= 400 && status < 500) {
+    const known: any = new Error(error?.response?.data?.error || 'Something went wrong');
+    known.status = status;
+    known.code = error?.response?.data?.code;
+    throw known;
+  }
+  return handleError(error);
+}
+
 export default function buildRequestHelpers({
   auth,
   handleError
@@ -559,6 +570,144 @@ export default function buildRequestHelpers({
   }
 
   return {
+    // Lumine app hosting (twinkle-api controllers/build/routes/appHosting.ts):
+    // the app's lumine.app address, sign-in on that address, the member's
+    // own domains and buying a domain (parent-approved). A 4xx throws the
+    // server's plain message with .status and .code for the screen to show.
+    async loadAppAddress({ buildId }: { buildId: number; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/app-address`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async checkAppAddressSlug({ buildId, slug }: { buildId: number; slug?: string; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/app-address/check`, { ...auth(), params: { slug } });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async renameAppAddress({ buildId, slug }: { buildId: number; slug?: string; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-address`, { slug }, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async loadAppSigninInfo({ buildId, origin }: { buildId: number; origin?: string; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/app-session/info`, { ...auth(), params: { origin } });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async authorizeAppSignin({ buildId, origin, codeChallenge, returnUrl }: { buildId: number; origin?: string; codeChallenge?: string; returnUrl?: string; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-session/authorize`, { origin, codeChallenge, returnUrl }, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async addAppDomain({ buildId, hostname }: { buildId: number; hostname?: string; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-domains`, { hostname }, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async checkAppDomain({ buildId, domainId }: { buildId: number; domainId: number; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-domains/${domainId}/check`, {}, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async loadAppDomainConnect({ buildId, domainId }: { buildId: number; domainId: number; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/app-domains/${domainId}/connect`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async removeAppDomain({ buildId, domainId }: { buildId: number; domainId: number; }) {
+      try {
+        const { data } = await request.delete(`${URL}/build/${buildId}/app-domains/${domainId}`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async loadDomainIdeas({ buildId, hint, more }: { buildId: number; hint?: string; more?: string; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/domain-ideas`, { ...auth(), params: { hint, more } });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async searchDomains({ q }: { q?: string; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/domain-search`, { ...auth(), params: { q } });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async startDomainOrder({ buildId, domain, parentEmail, lang }: { buildId: number; domain?: string; parentEmail?: string; lang?: string; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/domain-orders`, { domain, parentEmail, lang }, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async loadDomainParentOrder({ token }: { token?: string; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/domain-orders/parent`, { ...auth(), params: { token } });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    // lumine.app host only (src/liteHost/react): Twinkle's Coins box was
+    // confirmed for this exact request; the server returns a one-time nonce
+    // the Coins route consumes (twinkle-api appHosting/coinConfirmation.ts).
+    async createLumineAppCoinConfirmation({ buildId, operation, payload }: { buildId: number; operation: string; payload: unknown; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-session/coin-confirmation`, { operation, payload }, auth());
+        return data as { nonce: string; expiresAt: number };
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    // lumine.app host only: the signed-in member as this app sees them, plus
+    // the published runtime grants the website's app payload carries.
+    async loadLumineAppViewer({ buildId }: { buildId: number; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/app-session/me`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async decideDomainParentOrder({ token, approve, registrant, adultConfirmed }: { token?: string; approve?: boolean; registrant?: Record<string, string>; adultConfirmed?: boolean; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/domain-orders/parent`, { token, approve, registrant, adultConfirmed }, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+
     // Twinkle.app.openLink sheet counts, tallied on the page and sent at
     // most every 45 s or when the page hides (useAppLinkConfirm.tsx);
     // counts only, never the link. keepalive lets the page-hide send finish
@@ -1053,7 +1202,8 @@ export default function buildRequestHelpers({
       token,
       runtimeGrant,
       runtimeArtifactVersionId,
-      userId
+      userId,
+      coinConfirmation
     }: {
       buildId: number;
       operation: string;
@@ -1062,10 +1212,17 @@ export default function buildRequestHelpers({
       runtimeGrant: string;
       runtimeArtifactVersionId?: number | null;
       userId?: number;
+      // lumine.app only: the member's confirmation of this exact spend
+      // (createLumineAppCoinConfirmation), consumed once by the server.
+      coinConfirmation?: string;
     }) {
       const sessionKey = String(auth().headers?.Authorization || auth().headers?.authorization || '');
       const sessionIsCurrent = () => sessionKey === String(auth().headers?.Authorization || auth().headers?.authorization || '');
-      const headers = { ...auth().headers, 'x-build-api-token': token };
+      const headers = {
+        ...auth().headers,
+        'x-build-api-token': token,
+        ...(coinConfirmation ? { 'x-lumine-coin-confirmation': coinConfirmation } : {})
+      };
       try {
         return await withRewardRuntime({
           sessionKey, isCurrentSession: sessionIsCurrent, userId: userId || 0,

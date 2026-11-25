@@ -1,0 +1,274 @@
+// Every word on the app-address screens, one dictionary per language, for
+// Mikey's review side by side (the parent pages' pattern). Korean is written
+// for Korean kids and parents, not translated line by line. Rules (Mikey
+// 11-25): no jargon by default (no DNS, registrar, TLD on the main screens),
+// one clear price per name, honest that other sites are often cheaper, no
+// pressure (no countdowns, no add-ons), technical things under "Advanced".
+
+export type AddressLang = 'en' | 'ko';
+
+export interface PriceParts {
+  registry: string;
+  card: string;
+  twinkle: string;
+  total: string;
+}
+
+export const ADDRESS_TEXT = {
+  en: {
+    liveAt: 'Your app is live at',
+    copy: 'Copy',
+    copied: 'Copied!',
+    share: 'Share',
+    open: 'Open',
+    alsoAt: 'Also at',
+    getOwn: 'Get your own .com',
+    getOwnAlt: 'Get your own address',
+    // intro: the one moment that teaches "you rent a domain"
+    introTitle: 'Your own web address',
+    introFree: (free: string) => `Your app already has a free address: ${free}`,
+    introRent: (example: string) =>
+      `Addresses like ${example} aren’t free anywhere. Every website owner rents theirs yearly from a domain company. That’s how the internet works.`,
+    introChoice:
+      'You can rent one here and we’ll set it up instantly, or rent one anywhere else and connect it for free.',
+    findOne: 'Find an address',
+    haveOne: 'I already have one',
+    freeTag: 'Free',
+    rentTag: 'Rented yearly',
+    // find
+    findTitle: 'Find an address',
+    findPlaceholder: 'Type a name',
+    search: 'Search',
+    perYear: (price: string) => `${price}/year`,
+    approxKrw: (krw: string) => `about ${krw}`,
+    whatsInPrice: 'What’s in this price?',
+    breakdown: (p: PriceParts) =>
+      `Domain registry fee ${p.registry} · Card payment fee ${p.card} · Twinkle (refunds and support) ${p.twinkle} = ${p.total}/year`,
+    breakdownNote: 'Twinkle doesn’t make money on domains. The small Twinkle part covers refunds, renewals that fail and help when something goes wrong.',
+    buy: 'Buy',
+    bestMatch: 'Best match',
+    taken: 'Taken',
+    honestTitle: 'Good to know',
+    honestBody:
+      'You can also buy domains from other sites like Namecheap or Cloudflare, often for less. If you do, you can connect it here for free. Buying here costs a bit more because we set everything up for you instantly: your app goes live at your new address with no technical steps.',
+    useOwnLink: 'Use a domain I already own',
+    askIdeas: 'Ask Zero for ideas',
+    askIdeasCiel: 'Ask Ciel for ideas',
+    moreIdeas: 'More ideas',
+    hintPlaceholder: 'A hint, like “space”',
+    noResults: 'Nothing free with that name. Try another name or ask for ideas.',
+    renewLine: (price: string) => `Renews yearly for ${price}. You can turn this off anytime.`,
+    privacyLine: 'Privacy protection is on, so your family’s details stay private.',
+    advanced: 'Advanced options',
+    otherEndings: 'Other endings',
+    autoRenewOff: 'Don’t renew automatically',
+    transferOut: 'Move a domain to another company',
+    renewalHistory: 'Renewal history',
+    // parent step (member side)
+    parentTitle: 'A parent needs to say yes',
+    parentBody: (domain: string, price: string) =>
+      `We’ll send ${domain} (${price}/year) to your parent. They’ll see the price, what it’s for, and that cheaper places exist. Nothing is charged unless they pay.`,
+    parentEmail: 'Your parent’s email',
+    sendToParent: 'Send to my parent',
+    sentTitle: 'Sent to your parent ✓',
+    sentBody: (domain: string) =>
+      `When they say yes and pay, your app goes live at ${domain} by itself. We’ll let you know.`,
+    // live
+    liveTitle: (domain: string) => `Your app is now at ${domain}`,
+    liveBody: 'Anyone can open it. Your free lumine.app address keeps working too.',
+    openIt: 'Open it',
+    done: 'Done',
+    back: 'Back',
+    // connect your own
+    connectTitle: 'Connect your domain',
+    connectPlaceholder: 'lilysgame.com',
+    connectGo: 'Connect',
+    connectAuto: (provider: string) => `Connect automatically with ${provider}`,
+    connectAutoNote: 'You’ll sign in there and tap Approve. That’s it.',
+    connectSteps: (provider: string) => `How to connect it on ${provider}`,
+    connectStepsGeneric: 'How to connect it',
+    copyValue: 'Copy',
+    checking: 'Checking…',
+    waiting: 'Waiting for your settings. This can take a few minutes, sometimes up to a day.',
+    connected: 'Connected! Your app opens at this address.',
+    securing: 'Almost there: making the connection secure (a few minutes).',
+    checkNow: 'Check now',
+    rawRecords: 'Records to add (Advanced)',
+    recordType: 'Type',
+    recordHost: 'Name',
+    recordValue: 'Value',
+    askHelp: 'Ask Zero for help',
+    // receipt
+    receiptTitle: 'Receipt',
+    receiptLine: (domain: string, total: string) => `${domain}: ${total} for one year`
+  },
+  ko: {
+    liveAt: '앱 주소',
+    copy: '복사',
+    copied: '복사했어요!',
+    share: '공유',
+    open: '열기',
+    alsoAt: '이 주소로도 열려요',
+    getOwn: '나만의 .com 주소 갖기',
+    getOwnAlt: '나만의 주소 갖기',
+    introTitle: '나만의 웹 주소',
+    introFree: (free: string) => `내 앱은 이미 무료 주소가 있어요: ${free}`,
+    introRent: (example: string) =>
+      `${example} 같은 주소는 어디서도 무료가 아니에요. 모든 웹사이트 주인은 도메인 회사에서 1년씩 주소를 빌려 써요. 인터넷은 원래 그렇게 돌아가요.`,
+    introChoice:
+      '여기서 빌리면 바로 설정해 드리고, 다른 곳에서 빌린 주소도 무료로 연결할 수 있어요.',
+    findOne: '주소 찾기',
+    haveOne: '이미 주소가 있어요',
+    freeTag: '무료',
+    rentTag: '1년씩 빌려요',
+    findTitle: '주소 찾기',
+    findPlaceholder: '이름을 입력하세요',
+    search: '찾기',
+    perYear: (price: string) => `1년 ${price}`,
+    approxKrw: (krw: string) => `약 ${krw}`,
+    whatsInPrice: '이 가격에는 무엇이 들어 있나요?',
+    breakdown: (p: PriceParts) =>
+      `도메인 등록 비용 ${p.registry} · 카드 결제 수수료 ${p.card} · 트윈클(환불·지원 대비) ${p.twinkle} = 1년 ${p.total}`,
+    breakdownNote:
+      '트윈클은 도메인으로 돈을 벌지 않아요. 트윈클 몫은 환불, 갱신 실패, 문제가 생겼을 때의 도움에 쓰여요.',
+    buy: '사기',
+    bestMatch: '가장 잘 맞아요',
+    taken: '이미 있어요',
+    honestTitle: '알아 두세요',
+    honestBody:
+      'Namecheap이나 Cloudflare 같은 다른 사이트에서도 도메인을 살 수 있고, 더 저렴한 경우가 많아요. 거기서 사도 여기서 무료로 연결할 수 있어요. 여기서 사면 조금 더 비싼 대신, 모든 설정을 바로 해 드려서 아무것도 손대지 않아도 새 주소로 앱이 열려요.',
+    useOwnLink: '이미 가진 주소 연결하기',
+    askIdeas: 'Zero에게 아이디어 묻기',
+    askIdeasCiel: 'Ciel에게 아이디어 묻기',
+    moreIdeas: '아이디어 더 보기',
+    hintPlaceholder: '힌트 (예: 우주)',
+    noResults: '그 이름으로 남은 주소가 없어요. 다른 이름을 써 보거나 아이디어를 물어보세요.',
+    renewLine: (price: string) => `매년 ${price}에 자동 갱신돼요. 언제든 끌 수 있어요.`,
+    privacyLine: '개인정보 보호가 켜져 있어서 가족 정보는 공개되지 않아요.',
+    advanced: '고급 설정',
+    otherEndings: '다른 끝자리 (.net, .org 등)',
+    autoRenewOff: '자동 갱신 끄기',
+    transferOut: '다른 회사로 도메인 옮기기',
+    renewalHistory: '갱신 기록',
+    parentTitle: '보호자의 동의가 필요해요',
+    parentBody: (domain: string, price: string) =>
+      `${domain} (1년 ${price}) 요청을 보호자께 보낼게요. 보호자는 가격, 용도, 더 저렴한 곳이 있다는 것까지 보고 결정해요. 보호자가 결제하기 전에는 아무 돈도 나가지 않아요.`,
+    parentEmail: '보호자 이메일',
+    sendToParent: '보호자에게 보내기',
+    sentTitle: '보호자에게 보냈어요 ✓',
+    sentBody: (domain: string) =>
+      `보호자가 동의하고 결제하면 앱이 ${domain} 주소로 저절로 열려요. 알려 드릴게요.`,
+    liveTitle: (domain: string) => `이제 ${domain}에서 앱이 열려요`,
+    liveBody: '누구나 열 수 있어요. 무료 lumine.app 주소도 그대로 쓸 수 있어요.',
+    openIt: '열어 보기',
+    done: '완료',
+    back: '뒤로',
+    connectTitle: '내 주소 연결하기',
+    connectPlaceholder: 'lilysgame.com',
+    connectGo: '연결하기',
+    connectAuto: (provider: string) => `${provider}에서 자동으로 연결하기`,
+    connectAutoNote: '그곳에 로그인해서 승인만 누르면 끝이에요.',
+    connectSteps: (provider: string) => `${provider}에서 연결하는 방법`,
+    connectStepsGeneric: '연결하는 방법',
+    copyValue: '복사',
+    checking: '확인하는 중…',
+    waiting: '설정을 기다리고 있어요. 몇 분, 길게는 하루까지 걸릴 수 있어요.',
+    connected: '연결됐어요! 이 주소로 앱이 열려요.',
+    securing: '거의 다 됐어요: 안전한 연결을 만드는 중이에요 (몇 분).',
+    checkNow: '지금 확인',
+    rawRecords: '추가할 레코드 (고급)',
+    recordType: '유형',
+    recordHost: '이름',
+    recordValue: '값',
+    askHelp: 'Zero에게 도움 받기',
+    receiptTitle: '영수증',
+    receiptLine: (domain: string, total: string) => `${domain}: 1년 ${total}`
+  }
+};
+
+export type AddressText = (typeof ADDRESS_TEXT)['en'];
+
+// The parent's page: shown in Korean for a Korean browser, both languages
+// when the language is unknown (?lang missing and no browser hint).
+export const PARENT_TEXT = {
+  ko: {
+    kicker: '트윈클 · 보호자 확인',
+    title: (child: string) => `${child} 님이 앱 주소를 갖고 싶어 해요`,
+    intro: (app: string, domain: string) =>
+      `트윈클에서 만든 앱 “${app}”을(를) ${domain} 주소로 열 수 있게 하고 싶어 해요.`,
+    whatTitle: '도메인이 뭔가요?',
+    whatBody:
+      '웹사이트 주소예요. 이런 주소는 도메인 회사에서 1년 단위로 빌려 써요. 앱은 이미 무료 주소(lumine.app)가 있어서, 사지 않아도 계속 잘 열려요.',
+    priceTitle: '가격',
+    priceLine: (usd: string, krw: string | null) =>
+      `1년 ${usd}${krw ? ` (약 ${krw})` : ''}, 매년 같은 가격`,
+    krwNote: '미국 달러로 결제되며, 원화 금액은 카드사 환율에 따라 조금 달라질 수 있어요.',
+    whatsInPrice: '이 가격에는 무엇이 들어 있나요?',
+    honest:
+      'Namecheap, Cloudflare 같은 다른 곳에서 더 저렴하게 살 수 있는 경우가 많아요. 다른 곳에서 산 주소도 트윈클에서 무료로 연결할 수 있어요. 여기서 사면 조금 더 비싼 대신 모든 설정을 저희가 바로 해 드려요.',
+    renewal:
+      '매년 같은 가격으로 자동 갱신되며, 갱신 30일·7일·1일 전에 이메일로 알려 드려요. 언제든 자동 갱신을 끌 수 있고, 끄면 1년이 끝난 뒤 앱은 무료 lumine.app 주소로 돌아가요.',
+    ownership:
+      '도메인의 법적 소유자는 보호자님이에요. 개인정보 보호가 기본으로 켜져 있어 연락처는 공개되지 않아요. 원하시면 언제든 인증 코드를 받아 다른 회사로 옮길 수 있어요.',
+    refund:
+      '등록 후 5일 이내에 취소하시면 전액 환불해 드려요. 그 뒤에는 환불이 어렵지만, 도메인은 남은 기간 동안 계속 보호자님 것이에요.',
+    detailsTitle: '등록에 필요한 보호자 정보',
+    detailsNote: '도메인 회사가 실제 성인 연락처를 요구해요. 공개되지 않아요.',
+    firstName: '이름',
+    lastName: '성',
+    email: '이메일',
+    phone: '전화번호 (예: +82.1012345678)',
+    address: '주소',
+    city: '시/군/구',
+    zip: '우편번호',
+    country: '국가',
+    confirmAdult: '저는 이 아이의 부모 또는 법정 보호자이며, 위 내용에 동의합니다.',
+    approve: '동의하고 결제하기',
+    decline: '괜찮아요, 사지 않을게요',
+    noPressure: '서두르지 않으셔도 돼요. 이 링크는 7일 동안 열려 있어요.',
+    approvedTitle: '감사합니다!',
+    approvedBody: (domain: string) => `결제가 끝나면 앱이 ${domain}에서 바로 열려요. 영수증을 이메일로 보내 드릴게요.`,
+    declinedTitle: '알겠어요',
+    declinedBody: '아무것도 결제되지 않았어요. 앱은 무료 주소로 계속 열려요.'
+  },
+  en: {
+    kicker: 'Twinkle · For parents',
+    title: (child: string) => `${child} would like a web address for their app`,
+    intro: (app: string, domain: string) =>
+      `They’d like their Twinkle app “${app}” to open at ${domain}.`,
+    whatTitle: 'What is a domain?',
+    whatBody:
+      'It’s a website address. Addresses like this are rented yearly from a domain company. The app already has a free address (lumine.app), so it keeps working whether or not you buy one.',
+    priceTitle: 'Price',
+    priceLine: (usd: string, krw: string | null) =>
+      `${usd} a year${krw ? ` (about ${krw})` : ''}, the same price every year`,
+    krwNote: 'Charged in US dollars; your card company converts it at its own rate.',
+    whatsInPrice: 'What’s in this price?',
+    honest:
+      'Other sites like Namecheap or Cloudflare often sell domains for less, and a domain bought elsewhere can be connected on Twinkle for free. Buying here costs a bit more because we set everything up instantly.',
+    renewal:
+      'It renews yearly at the same price, and we email you 30, 7 and 1 days before. You can turn auto-renew off anytime; then the app goes back to its free lumine.app address when the year ends.',
+    ownership:
+      'You are the domain’s legal owner. Privacy protection is on, so your contact details aren’t public. You can get the transfer code anytime to move it to another company.',
+    refund:
+      'Cancel within 5 days of registration for a full refund. After that we can’t refund, but the domain stays yours for the rest of the year.',
+    detailsTitle: 'Your details for the registration',
+    detailsNote: 'Domain companies need a real adult contact. It isn’t shown publicly.',
+    firstName: 'First name',
+    lastName: 'Last name',
+    email: 'Email',
+    phone: 'Phone (e.g. +82.1012345678)',
+    address: 'Address',
+    city: 'City',
+    zip: 'Postal code',
+    country: 'Country',
+    confirmAdult: 'I am this child’s parent or legal guardian and I agree to the above.',
+    approve: 'Approve and pay',
+    decline: 'No thanks',
+    noPressure: 'No rush: this link stays open for 7 days.',
+    approvedTitle: 'Thank you!',
+    approvedBody: (domain: string) => `Once payment finishes, the app opens at ${domain}. We’ll email your receipt.`,
+    declinedTitle: 'Got it',
+    declinedBody: 'Nothing was charged. The app keeps opening at its free address.'
+  }
+};

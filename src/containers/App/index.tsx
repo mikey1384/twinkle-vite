@@ -150,6 +150,10 @@ const BuildThumbnailCaptureHost = lazyWithRetry(
 );
 const Chat = lazyWithRetry(() => import('~/containers/Chat'));
 const CliDeviceAuth = lazyWithRetry(() => import('~/containers/CliDeviceAuth'));
+const LumineAppSignIn = lazyWithRetry(() => import('~/containers/LumineAppSignIn'));
+const DomainParentConsent = lazyWithRetry(
+  () => import('~/containers/DomainParentConsent')
+);
 const loadContentPage = () => import('~/containers/ContentPage');
 const ContentPage = lazyWithRetry(loadContentPage);
 const AchievementPage = lazyWithRetry(
@@ -1609,6 +1613,8 @@ export default function App() {
                   element={<BuildRuntimeKeepAliveRoute />}
                 />
                 <Route path="/cli" element={<CliDeviceAuth />} />
+                <Route path="/lumine-app/signin" element={<LumineAppSignIn />} />
+                <Route path="/domain/parent" element={<DomainParentConsent />} />
                 <Route
                   path="/chat/*"
                   element={<Chat onFileUpload={handleFileUploadOnChat} />}

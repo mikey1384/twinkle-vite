@@ -1,0 +1,191 @@
+/* The lite host: the app fills the screen; Twinkle's own UI is a small
+   corner badge and sheets drawn above the frame. */
+:root {
+  --lh-ink: #16161f;
+  --lh-paper: #ffffff;
+  --lh-muted: #5d5d6e;
+  --lh-line: rgba(22, 22, 31, 0.12);
+  --lh-accent: #4b3cf0;
+  color-scheme: light;
+}
+/* Twinkle's own boxes (the website's components) size text in rem against
+   a 10px root, as on twin-kle.com; the host's own UI uses px. */
+html {
+  font-size: 10px;
+}
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  font: 16px/1.45 system-ui, -apple-system, 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+}
+#lumine-app-frame {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  border: 0;
+  display: block;
+  background: #fff;
+}
+.lumine-noscript { color: #fff; text-align: center; margin-top: 40vh; }
+.lh-badge {
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 7.2px;
+  padding: 7.2px 12.8px 7.2px 8.8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(22, 22, 31, 0.78);
+  color: #fff;
+  font: inherit;
+  font-size: 13.12px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.2s ease;
+  opacity: 0.92;
+}
+.lh-badge:hover, .lh-badge:focus-visible { opacity: 1; }
+.lh-badge-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b7bff, #4b3cf0);
+  font-size: 12.8px;
+}
+.lh-badge-text { white-space: nowrap; overflow: hidden; max-width: 224px; transition: max-width 0.35s ease; }
+.lh-badge-text span { opacity: 0.75; }
+.lh-badge-compact {
+  /* After a few seconds the badge becomes a small tab on the right edge,
+     where games rarely put controls (corners hold HUDs and buttons). */
+  top: 38%;
+  bottom: auto;
+  right: 0;
+  padding: 6.4px 4.8px 6.4px 6.4px;
+  gap: 0;
+  border-right: 0;
+  border-radius: 14.4px 0 0 14.4px;
+  opacity: 0.7;
+}
+.lh-badge-compact .lh-badge-text { max-width: 0; }
+.lh-badge-compact .lh-badge-mark { width: 20.8px; height: 20.8px; font-size: 11.2px; }
+.lh-badge-compact:hover, .lh-badge-compact:focus-visible { opacity: 1; }
+.lh-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(10, 10, 18, 0.45);
+  animation: lh-fade 0.18s ease;
+}
+@media (min-width: 640px) { .lh-backdrop { align-items: center; } }
+.lh-sheet {
+  width: min(100%, 416px);
+  box-sizing: border-box;
+  padding: 24px 22.4px calc(20px + env(safe-area-inset-bottom));
+  border-radius: 22.4px 22.4px 0 0;
+  background: var(--lh-paper);
+  color: var(--lh-ink);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
+  animation: lh-rise 0.22s ease;
+}
+@media (min-width: 640px) { .lh-sheet { border-radius: 22.4px; } }
+.lh-sheet h2 { margin: 0 0 8px; font-size: 20.8px; line-height: 1.25; }
+.lh-sheet p { margin: 0 0 16px; color: var(--lh-muted); font-size: 16.8px; }
+.lh-sheet-mark {
+  width: 41.6px; height: 41.6px; border-radius: 14.4px; display: grid; place-items: center;
+  background: linear-gradient(135deg, #8b7bff, #4b3cf0); color: #fff; font-size: 19.2px; margin-bottom: 14.4px;
+}
+.lh-actions { display: flex; flex-direction: column; gap: 8.8px; margin-top: 6.4px; }
+.lh-primary, .lh-secondary {
+  appearance: none; border: 0; border-radius: 999px; padding: 13.6px 16px; font: inherit; font-size: 16.8px;
+  font-weight: 650; cursor: pointer;
+}
+.lh-primary { background: var(--lh-ink); color: #fff; }
+.lh-primary[disabled] { opacity: 0.5; cursor: default; }
+.lh-secondary { background: #f1f1f6; color: var(--lh-ink); }
+.lh-fine { font-size: 14.4px !important; color: var(--lh-muted); margin: 14.4px 0 0 !important; }
+.lh-menu { padding-top: 17.6px; }
+.lh-menu-head { display: flex; gap: 12.8px; align-items: center; margin-bottom: 12.8px; }
+.lh-menu-head strong { display: block; font-size: 17.6px; }
+.lh-menu-head .lh-fine { margin: 0 !important; display: block; }
+.lh-menu-thumb { width: 48px; height: 48px; border-radius: 12.8px; object-fit: cover; background: #eee; }
+.lh-menu-thumb-empty { display: grid; place-items: center; color: var(--lh-accent); }
+.lh-menu-item {
+  display: block; width: 100%; box-sizing: border-box; text-align: left; padding: 13.6px 3.2px; border: 0;
+  border-top: 1px solid var(--lh-line); background: none; color: var(--lh-ink); font: inherit; font-size: 16.8px;
+  text-decoration: none; cursor: pointer;
+}
+.lh-menu-quiet { color: var(--lh-muted); }
+.lh-choices { display: grid; gap: 6.4px; margin: 9.6px 0 12.8px; }
+.lh-choice { display: flex; gap: 9.6px; align-items: center; font-size: 16.8px; }
+.lh-textarea {
+  width: 100%; box-sizing: border-box; min-height: 72px; border-radius: 12.8px; border: 1px solid var(--lh-line);
+  padding: 11.2px; font: inherit; margin-bottom: 6.4px;
+}
+.lh-toast {
+  position: fixed; left: 50%; top: max(14px, env(safe-area-inset-top)); transform: translateX(-50%); z-index: 30;
+  padding: 10.4px 16px; border-radius: 999px; background: rgba(22, 22, 31, 0.9); color: #fff; font-size: 15.2px;
+  animation: lh-fade 0.2s ease;
+}
+@keyframes lh-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lh-rise { from { transform: translateY(16px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .lh-backdrop, .lh-sheet, .lh-toast { animation: none; }
+  .lh-badge, .lh-badge-text { transition: none; }
+}
+
+/* Twinkle's own boxes (website components rendered into #modal) expect the
+   website's page basics (src/styles.css): border-box sizing, its type and
+   the design-pixel and theme variables. Kept to those boxes only. */
+:root {
+  --px: 1px;
+  --ui-frame: 100vw;
+  --ui-frame-x: 0px;
+  --page-bg: rgb(255, 255, 255);
+  --app-bg: var(--page-bg);
+  --theme-bg: rgba(65, 140, 235, 1);
+  --theme-hover-bg: rgba(53, 122, 189, 1);
+  --theme-text: rgba(255, 255, 255, 1);
+  --theme-border: rgba(40, 90, 156, 1);
+  --ui-border: rgba(204, 204, 204, 0.35);
+  --ui-border-strong: rgba(204, 204, 204, 0.8);
+  --theme-disabled-bg: rgba(65, 140, 235, 0.5);
+  --theme-disabled-border: rgba(48, 102, 190, 0.5);
+  --app-keyboard-inset: 0px;
+  /* no Twinkle navigation bar on an app's own address */
+  --mobile-nav-height: 0px;
+  --mobile-nav-footprint: 0px;
+  --mobile-nav-total-height: 0px;
+}
+#modal,
+#modal *,
+#lumine-host-root,
+#lumine-host-root * {
+  box-sizing: border-box;
+}
+#modal,
+#lumine-host-root {
+  font-family: 'Inter', Helvetica, sans-serif, Arial;
+  line-height: 1.5;
+  font-size: 10px;
+}
+#modal h1, #modal h2, #modal h3, #modal h4, #modal h5, #modal h6 {
+  padding: 0;
+  margin: 0;
+}

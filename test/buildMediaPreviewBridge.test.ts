@@ -68,7 +68,7 @@ test('Build media host bridge reauthorizes raw paid actions with exact action id
 });
 
 test('Build media confirmation copy is mixed-age and discloses saved app-usable media', () => {
-  const source = readSource('src/containers/Build/PreviewPanel/index.tsx');
+  const source = readSource('src/containers/Build/PreviewPanel/hooks/useHostConfirmations.tsx');
   const start = source.indexOf(
     'requestBuildMediaActionConfirmationRef.current'
   );
