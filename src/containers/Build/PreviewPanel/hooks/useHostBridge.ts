@@ -3432,6 +3432,14 @@ export function useHostBridge({
             break;
           }
 
+          case 'auth:watch': {
+            // the app follows Twinkle.auth.onChange itself: the lite host
+            // won't reload it on sign-in or sign-out (F8)
+            authHostRef?.current?.markWatched?.();
+            response = { watching: true };
+            break;
+          }
+
           case 'auth:sign-out': {
             const liteAuth = authHostRef?.current;
             if (!liteAuth) {
@@ -4778,6 +4786,8 @@ export function useHostBridge({
           }
 
           case 'shared-db:create-topic': {
+            // a guest never gets this far (F6): no token, no network
+            if (isGuestViewerActive(previewAuth)) triggerGuestRestriction(previewAuth);
             const sharedDbCreateTopicToken = await ensureBuildApiToken(
               ['sharedDb:write'],
               previewAuth
@@ -6264,6 +6274,32 @@ export function useHostBridge({
           case 'coins:withdraw-offer':
           case 'coins:offers':
           case 'coins:record-blocks': {
+            // A guest in a published app: answered here, no network call
+            // (standalone-compat F4). Reads say "sign in to earn Coins";
+            // spending shows the small sign-in bar and rejects.
+            if (runtimeOnly && isGuestViewerActive(previewAuth)) {
+              const message = previewAuth.guestCoinsMessage || 'Sign in to earn Coins.';
+              if (type === 'coins:balance') {
+                response = { mode: 'live', coins: 0, prices: [], spendBudget: null, spentToday: 0, signedIn: false, message };
+                break;
+              }
+              if (type === 'coins:receipts') {
+                response = { mode: 'live', receipts: [], nextCursor: null, signedIn: false, message };
+                break;
+              }
+              if (type === 'coins:offers') {
+                response = { mode: 'live', offers: [], nextCursor: null, signedIn: false, message };
+                break;
+              }
+              if (type === 'coins:record-blocks') {
+                response = { mode: 'live', recorded: { placed: 0, removed: 0, keptForOthers: 0 }, signedIn: false, message };
+                break;
+              }
+              previewAuth.setGuestRestrictionBannerVisible(true);
+              const signInError: any = new Error(message);
+              signInError.code = 'sign_in_required';
+              throw signInError;
+            }
             // Never forward app-supplied grants, prices, recipients or
             // destinations: helpers/buildRuntimeCoins.ts quotes the server,
             // shows Twinkle's own confirmation and sends what was confirmed.

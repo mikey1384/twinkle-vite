@@ -186,6 +186,8 @@ export interface LiteAuthHost {
   signUp(): Promise<void>;
   signOut(): Promise<void>;
   aiCoverage(): Promise<unknown>;
+  // the app subscribed to Twinkle.auth.onChange (no reload on sign-in/out)
+  markWatched?(): void;
 }
 
 export interface GuestPrivateDb {

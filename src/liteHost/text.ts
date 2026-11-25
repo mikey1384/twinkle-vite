@@ -53,6 +53,8 @@ export const LITE_HOST_TEXT = {
     aiBannerClose: 'Close',
     // an app on its own accounts only: no Twinkle account can be used here
     aiUnavailableHere: 'AI features aren’t available in this app.',
+    // Twinkle.coins for a signed-out player (no network call)
+    coinsSignIn: 'Sign in to earn Coins.',
     // Coins/XP refused for a linked player on the app's password session
     rewardsContinue: 'Continue with Twinkle to earn Coins and XP here.',
     // the report sheet
@@ -158,6 +160,7 @@ export const LITE_HOST_TEXT = {
     aiBannerLinkCta: '트윈클 연결하기',
     aiBannerClose: '닫기',
     aiUnavailableHere: '이 앱에서는 AI 기능을 쓸 수 없어요.',
+    coinsSignIn: '로그인하면 코인을 모을 수 있어요.',
     rewardsContinue: '트윈클로 계속하면 여기서 코인과 XP를 받을 수 있어요.',
     reportFailed: '보내지 못했어요. 다시 해 주세요.',
     carriedOver: '게스트로 하던 진행 상황을 계정으로 옮겼어요.',

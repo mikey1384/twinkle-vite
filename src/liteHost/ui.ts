@@ -29,10 +29,22 @@ export function closeSheet() {
   openSheet = null;
 }
 
-function sheet(content: HTMLElement[], { onDismiss }: { onDismiss?: () => void } = {}) {
+/** The sheet of this kind that is open now (never rebuilt while open). */
+export function openSheetOfKind(kind: string) {
+  return openSheet && openSheet.dataset.kind === kind ? openSheet : null;
+}
+
+function sheet(
+  content: HTMLElement[],
+  { onDismiss, kind = '' }: { onDismiss?: () => void; kind?: string } = {}
+) {
+  // An app asking again (some ask every frame) gets the open sheet as it
+  // is: no rebuild, no restarted fade, no focus jump (standalone-compat F2).
+  const open = kind ? openSheetOfKind(kind) : null;
+  if (open) return open.querySelector('.lh-sheet') as HTMLElement;
   dismissMenu?.();
   closeSheet();
-  const backdrop = el('div', { class: 'lh-backdrop', role: 'presentation' });
+  const backdrop = el('div', { class: 'lh-backdrop', role: 'presentation', 'data-kind': kind });
   const panel = el('div', { class: 'lh-sheet', role: 'dialog', 'aria-modal': 'true' }, content);
   backdrop.append(panel);
   backdrop.addEventListener('click', (event) => {
@@ -57,12 +69,23 @@ export function showToast(text: string, ms = 3500) {
 // the background, e.g. saving or an AI move): a small bar at the top with a
 // Sign in button, never a box over the game. At most once a minute; it goes
 // away by itself.
-let hintShownAt = 0;
+// Once per page load, and once per app per browser session (F3): an app
+// that keeps trying in the background never brings it back.
+let hintShown = false;
 let hintNode: HTMLElement | null = null;
+const HINT_SESSION_KEY = `lh-guest-hint:${typeof location !== 'undefined' ? location.host : ''}`;
 export function showGuestHint({ t, onSignIn }: { t: LiteHostText; onSignIn: () => void }) {
-  const now = Date.now();
-  if (hintNode || openSheet || now - hintShownAt < 60_000) return;
-  hintShownAt = now;
+  if (hintShown || hintNode || openSheet) return;
+  try {
+    if (window.sessionStorage.getItem(HINT_SESSION_KEY)) {
+      hintShown = true;
+      return;
+    }
+    window.sessionStorage.setItem(HINT_SESSION_KEY, '1');
+  } catch {
+    /* this page load only */
+  }
+  hintShown = true;
   const button = el('button', { type: 'button' }, [t.guestHintCta]);
   const hint = el('div', { class: 'lh-hint', role: 'status' }, [el('span', {}, [t.guestHint]), button]);
   const remove = () => {
@@ -182,7 +205,9 @@ export function askSignIn({
   t: LiteHostText;
   session: SessionStore;
 }): Promise<boolean> {
-  return new Promise((resolve) => {
+  // already open: the same answer, not a second sheet (F2)
+  if (askSignInOpen && openSheetOfKind('signin')) return askSignInOpen;
+  askSignInOpen = new Promise<boolean>((resolve) => {
     const cta = twinkleButton(config, t.signInCta);
     const later = el('button', { class: 'lh-secondary', type: 'button' }, [t.notNow]);
     const panel = sheet(
@@ -198,7 +223,7 @@ export function askSignIn({
         el('div', { class: 'lh-actions' }, [cta, later]),
         el('p', { class: 'lh-fine' }, [t.neverPassword])
       ],
-      { onDismiss: () => resolve(false) }
+      { onDismiss: () => resolve(false), kind: 'signin' }
     );
     panel.classList.add('lh-signin');
     cta.addEventListener('click', async () => {
@@ -212,7 +237,13 @@ export function askSignIn({
       resolve(false);
     });
   });
+  const pending = askSignInOpen;
+  void pending.finally(() => {
+    if (askSignInOpen === pending) askSignInOpen = null;
+  });
+  return pending;
 }
+let askSignInOpen: Promise<boolean> | null = null;
 
 export function confirmOutsideLink({
   t,
@@ -255,6 +286,7 @@ export function showReport({
   t: LiteHostText;
   send: (reason: string, details: string) => Promise<void>;
 }) {
+  if (openSheetOfKind('report')) return;
   const reasons = Object.entries(t.reportReasons).map(([value, label]) =>
     el('label', { class: 'lh-choice' }, [
       el('input', { type: 'radio', name: 'lh-report', value }),
@@ -270,7 +302,7 @@ export function showReport({
     el('div', { class: 'lh-choices' }, reasons),
     details,
     el('div', { class: 'lh-actions' }, [submit, cancel])
-  ]);
+  ], { kind: 'report' });
   cancel.addEventListener('click', closeSheet);
   submit.addEventListener('click', async () => {
     const chosen = document.querySelector<HTMLInputElement>('input[name="lh-report"]:checked');
