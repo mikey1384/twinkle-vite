@@ -41,48 +41,60 @@ body {
   z-index: 10;
   display: inline-flex;
   align-items: center;
-  gap: 7.2px;
-  padding: 7.2px 12.8px 7.2px 8.8px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  gap: 8px;
+  padding: 6px 14px 6px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  background: rgba(22, 22, 31, 0.78);
+  background: rgba(20, 19, 30, 0.84);
   color: #fff;
   font: inherit;
   font-size: 13.12px;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  transition: opacity 0.2s ease;
-  opacity: 0.92;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  opacity: 0.94;
+  -webkit-tap-highlight-color: transparent;
 }
-.lh-badge:hover, .lh-badge:focus-visible { opacity: 1; }
+.lh-badge:hover, .lh-badge:focus-visible, .lh-badge-open { opacity: 1; background: rgba(20, 19, 30, 0.94); }
+.lh-badge:focus-visible { outline: 2px solid #8d82ff; outline-offset: 3px; }
+/* While its menu is open the badge stays above the dimmed page, as the
+   menu's anchor (a second tap closes it). */
+.lh-badge-open { z-index: 21; }
 .lh-badge-mark {
   display: inline-grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b7bff, #4b3cf0);
-  font-size: 12.8px;
+  background: #5b4bff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  font-size: 13.6px;
+  line-height: 1;
+  transition: transform 0.35s cubic-bezier(0.2, 1.3, 0.4, 1);
 }
+.lh-star { width: 58%; height: 58%; fill: currentColor; display: block; }
+.lh-badge:active .lh-badge-mark { transform: scale(0.88); }
+.lh-badge-open .lh-badge-mark { transform: rotate(90deg) scale(1.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 0 0 3px rgba(139, 125, 255, 0.45); }
 .lh-badge-text { white-space: nowrap; overflow: hidden; max-width: 224px; transition: max-width 0.35s ease; }
-.lh-badge-text span { opacity: 0.75; }
+.lh-badge-text strong { font-weight: 650; }
+.lh-badge-text span { opacity: 0.72; }
 .lh-badge-compact {
   /* After a few seconds the badge becomes a small tab on the right edge,
      where games rarely put controls (corners hold HUDs and buttons). */
   top: 38%;
   bottom: auto;
   right: 0;
-  padding: 6.4px 4.8px 6.4px 6.4px;
+  padding: 7px 6px 7px 7px;
   gap: 0;
   border-right: 0;
-  border-radius: 14.4px 0 0 14.4px;
-  opacity: 0.7;
+  border-radius: 16px 0 0 16px;
+  opacity: 0.78;
 }
 .lh-badge-compact .lh-badge-text { max-width: 0; }
-.lh-badge-compact .lh-badge-mark { width: 20.8px; height: 20.8px; font-size: 11.2px; }
-.lh-badge-compact:hover, .lh-badge-compact:focus-visible { opacity: 1; }
+.lh-badge-compact .lh-badge-mark { width: 24px; height: 24px; font-size: 12.8px; }
+.lh-badge-compact:hover, .lh-badge-compact:focus-visible, .lh-badge-compact.lh-badge-open { opacity: 1; }
 .lh-backdrop {
   position: fixed;
   inset: 0;
@@ -120,18 +132,6 @@ body {
 .lh-primary[disabled] { opacity: 0.5; cursor: default; }
 .lh-secondary { background: #f1f1f6; color: var(--lh-ink); }
 .lh-fine { font-size: 14.4px !important; color: var(--lh-muted); margin: 14.4px 0 0 !important; }
-.lh-menu { padding-top: 17.6px; }
-.lh-menu-head { display: flex; gap: 12.8px; align-items: center; margin-bottom: 12.8px; }
-.lh-menu-head strong { display: block; font-size: 17.6px; }
-.lh-menu-head .lh-fine { margin: 0 !important; display: block; }
-.lh-menu-thumb { width: 48px; height: 48px; border-radius: 12.8px; object-fit: cover; background: #eee; }
-.lh-menu-thumb-empty { display: grid; place-items: center; color: var(--lh-accent); }
-.lh-menu-item {
-  display: block; width: 100%; box-sizing: border-box; text-align: left; padding: 13.6px 3.2px; border: 0;
-  border-top: 1px solid var(--lh-line); background: none; color: var(--lh-ink); font: inherit; font-size: 16.8px;
-  text-decoration: none; cursor: pointer;
-}
-.lh-menu-quiet { color: var(--lh-muted); }
 .lh-choices { display: grid; gap: 6.4px; margin: 9.6px 0 12.8px; }
 .lh-choice { display: flex; gap: 9.6px; align-items: center; font-size: 16.8px; }
 .lh-textarea {
@@ -148,6 +148,273 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .lh-backdrop, .lh-sheet, .lh-toast { animation: none; }
   .lh-badge, .lh-badge-text { transition: none; }
+}
+
+/* The badge menu: a card that grows out of the ✦. Its own light and dark
+   colours (from the system theme), so it reads over dark and light games. */
+.lh-pop-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(8, 8, 16, 0.3);
+  animation: lh-fade 0.2s ease;
+  transition: opacity 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.lh-pop-layer-out { opacity: 0; pointer-events: none; }
+.lh-pop {
+  --pop-bg: #ffffff;
+  --pop-ink: #17161f;
+  --pop-muted: #6b6979;
+  --pop-tint: #f4f3f9;
+  --pop-hover: #efeef6;
+  --pop-edge: rgba(23, 22, 31, 0.09);
+  --pop-accent: #5b4bff;
+  --pop-accent-hover: #4b3cf0;
+  --pop-violet-bg: #ecebff;
+  --pop-violet: #4b3cf0;
+  --pop-amber-bg: #fff0d9;
+  --pop-amber: #c46a00;
+  --pop-ring: #5b4bff;
+  position: fixed;
+  width: min(360px, calc(100vw - 64px));
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: 8px;
+  border-radius: 24px;
+  background: var(--pop-bg);
+  color: var(--pop-ink);
+  box-shadow:
+    0 0 0 1px var(--pop-edge),
+    0 2px 6px rgba(6, 6, 18, 0.12),
+    0 24px 56px -10px rgba(6, 6, 18, 0.5);
+  font-size: 15px;
+  line-height: 1.35;
+  text-align: left;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  .lh-pop {
+    --pop-bg: #1d1c28;
+    --pop-ink: #f4f3fb;
+    --pop-muted: #a6a4b9;
+    --pop-tint: #272635;
+    --pop-hover: #2b2a3b;
+    --pop-edge: rgba(255, 255, 255, 0.11);
+    --pop-accent: #5b4bff;
+    --pop-accent-hover: #4b3cf0;
+    --pop-violet-bg: #2e2a52;
+    --pop-violet: #b9b1ff;
+    --pop-amber-bg: #3b2f1d;
+    --pop-amber: #ffc46b;
+    --pop-ring: #9a90ff;
+    color-scheme: dark;
+  }
+}
+.lh-pop *, .lh-pop *::before, .lh-pop *::after { box-sizing: border-box; }
+.lh-pop :focus { outline: none; }
+.lh-pop :focus-visible { outline: 2px solid var(--pop-ring); outline-offset: 2px; }
+.lh-pop-enter > * { animation: lh-pop-in 0.34s cubic-bezier(0.2, 0.9, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 32ms + 50ms); }
+.lh-icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lh-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 18px;
+  background: var(--pop-tint);
+}
+.lh-pop-thumb {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border-radius: 16px;
+  object-fit: cover;
+  background: var(--pop-violet-bg);
+  box-shadow: 0 0 0 1px var(--pop-edge), 0 4px 12px rgba(6, 6, 18, 0.18);
+}
+.lh-pop-thumb-empty { display: grid; place-items: center; color: var(--pop-violet); }
+.lh-pop-thumb-empty .lh-star { width: 44%; height: 44%; }
+.lh-pop-head-text { min-width: 0; display: grid; gap: 3px; }
+.lh-pop-title {
+  font-size: 17.5px;
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+.lh-pop-owner { font-size: 13.5px; color: var(--pop-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lh-pop-rows { display: grid; gap: 2px; padding: 6px 0; }
+.lh-row {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  min-height: 60px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.lh-row:hover, .lh-row:focus-visible { background: var(--pop-hover); }
+.lh-row:active { background: var(--pop-tint); }
+.lh-row-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--pop-violet-bg);
+  color: var(--pop-violet);
+}
+.lh-row + .lh-row .lh-row-icon { background: var(--pop-amber-bg); color: var(--pop-amber); }
+.lh-row-text { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.lh-row-label { font-size: 15.5px; font-weight: 650; }
+.lh-row-sub { font-size: 13px; color: var(--pop-muted); }
+.lh-row-go { width: 18px; height: 18px; color: var(--pop-muted); opacity: 0.7; transition: transform 0.2s ease, opacity 0.2s ease; }
+.lh-row:hover .lh-row-go, .lh-row:focus-visible .lh-row-go { opacity: 1; transform: translate(2px, -2px); }
+.lh-pop-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 2px;
+  padding: 12px 12px 12px 12px;
+  border-radius: 18px;
+  background: var(--pop-tint);
+}
+.lh-pop-account-out { padding: 0; background: none; }
+.lh-pop-avatar {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--pop-bg), 0 0 0 3.5px var(--pop-accent);
+}
+.lh-avatar-letter {
+  display: grid;
+  place-items: center;
+  background: var(--pop-accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+}
+.lh-pop-account-text { min-width: 0; flex: 1; display: grid; gap: 1px; }
+.lh-pop-account-caption { font-size: 12.5px; color: var(--pop-muted); }
+.lh-pop-account-name { font-size: 15.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lh-pop-signout {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px 0 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--pop-bg);
+  color: var(--pop-ink);
+  box-shadow: 0 0 0 1px var(--pop-edge);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.lh-pop-signout .lh-icon { width: 17px; height: 17px; color: var(--pop-muted); }
+.lh-pop-signout:hover { background: var(--pop-hover); }
+.lh-pop-signin {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  min-height: 64px;
+  padding: 11px 16px 11px 11px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--pop-accent);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 6px 16px -6px rgba(75, 60, 240, 0.7);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.lh-pop-signin:hover { background: var(--pop-accent-hover); }
+.lh-pop-signin:active { transform: scale(0.98); }
+.lh-pop .lh-pop-signin:focus-visible { outline-offset: 3px; }
+.lh-pop-signin-mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 19px;
+  line-height: 1;
+}
+.lh-pop-signin-label { font-size: 16px; font-weight: 700; }
+/* Opaque, at least 4.7:1 on the button at rest and on hover. */
+.lh-pop-signin-sub { font-size: 13px; color: #f0eeff; }
+.lh-pop-foot { display: flex; justify-content: center; padding: 6px 0 0; }
+.lh-pop-report {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--pop-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.lh-pop-report .lh-icon { width: 15px; height: 15px; }
+.lh-pop-report:hover, .lh-pop-report:focus-visible { color: var(--pop-ink); background: var(--pop-hover); }
+@keyframes lh-pop-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (hover: none) {
+  .lh-row { min-height: 64px; }
+  .lh-pop-report { min-height: 44px; }
+  .lh-pop-signout { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lh-pop-layer, .lh-pop-enter > * { animation: none; }
+  .lh-badge-mark, .lh-row-go { transition: none; }
+  .lh-pop-signin { transition: background-color 0.15s ease; }
+  .lh-pop-signin:active, .lh-badge:active .lh-badge-mark { transform: none; }
 }
 
 /* Twinkle's own boxes (website components rendered into #modal) expect the

@@ -24,6 +24,7 @@ import {
 } from '../session';
 import { askSignIn, mountBadge, showReport } from '../ui';
 import { LITE_HOST_TEXT, liteHostLang } from '../text';
+import { cloudFrontURL } from '~/constants/defaultValues';
 import {
   createLiteFrameMetaRef,
   installLiteFrameReloadWatch,
@@ -62,6 +63,28 @@ function storeSessionCredentials(session: AppSession | null) {
     removeStoredItem('token');
     removeStoredItem('userId');
     removeStoredItem('username');
+  }
+}
+
+// The member's picture for the badge menu: an https address, or a path on
+// Twinkle's picture CDN (older answers). Anything else gets the initial.
+function safePictureUrl(value: string | null) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (!text) return null;
+  try {
+    if (/^https:\/\//i.test(text)) {
+      const url = new URL(text);
+      return url.protocol === 'https:' ? url.href : null;
+    }
+    if (!text.startsWith('/') || text.startsWith('//')) return null;
+    const cdn = new URL(cloudFrontURL);
+    if (!/^[\w-]+\.cloudfront\.net$/.test(cdn.hostname) || cdn.hostname.startsWith('undefined.')) {
+      return null;
+    }
+    const url = new URL(text, cdn);
+    return url.origin === cdn.origin ? url.href : null;
+  } catch {
+    return null;
   }
 }
 
@@ -126,6 +149,8 @@ async function start() {
   const openSignIn = () => {
     void askSignIn({ config, t, session });
   };
+  // The signed-in member's picture for the badge menu (from app-session/me).
+  const viewerPictureRef: { current: string | null } = { current: null };
 
   function Root() {
     const [current, setCurrent] = useState<AppSession | null>(session.get());
@@ -229,6 +254,10 @@ async function start() {
         cancelled = true;
       };
     }, [userId]);
+    const viewerPicture = viewer?.profilePicUrl || null;
+    useEffect(() => {
+      viewerPictureRef.current = safePictureUrl(viewerPicture);
+    }, [viewerPicture]);
     const info = useMemo(
       () => ({
         buildId: config!.buildId,
@@ -273,6 +302,7 @@ async function start() {
     config,
     t,
     session,
+    viewerPicture: () => viewerPictureRef.current,
     onReport: () =>
       showReport({
         config,
