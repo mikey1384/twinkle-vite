@@ -34,10 +34,16 @@ export function addCommasToNumber(number: number | string) {
 
 // compact form used where horizontal space is tight (mobile + iPad portrait):
 // 1,234,567 -> 1.2M, 12,345 -> 12.3K
+// One decimal at most, never a trailing ".0" ("240K", not "240.0K"), and
+// 999,950+ reads "1M" rather than "1000K".
 export function abbreviateNumber(number: number) {
   if (!number) return '0';
-  if (number > 999999) return `${(number / 1000000).toFixed(1)}M`;
-  if (number > 999) return `${(number / 1000).toFixed(1)}K`;
+  const sign = number < 0 ? '-' : '';
+  const size = Math.abs(number);
+  const short = (value: number, suffix: string) =>
+    `${sign}${value.toFixed(1).replace(/\.0$/, '')}${suffix}`;
+  if (size >= 999_950) return short(size / 1_000_000, 'M');
+  if (size > 999) return short(size / 1000, 'K');
   return `${number}`;
 }
 

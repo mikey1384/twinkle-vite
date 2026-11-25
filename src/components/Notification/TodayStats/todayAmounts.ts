@@ -10,10 +10,6 @@ export function formatTodayAmount(value: number) {
   const size = Math.abs(amount);
   const exact = `${sign}${addCommasToNumber(size)}`;
   if (size < TODAY_AMOUNT_ABBREVIATE_FROM) return { text: exact, exact: null };
-  // abbreviateNumber would print 999,950–999,999 as "1000.0K".
-  const short =
-    size >= 999_950
-      ? `${(size / 1_000_000).toFixed(1)}M`
-      : abbreviateNumber(size);
+  const short = abbreviateNumber(size);
   return { text: `${sign}${short}`, exact };
 }
