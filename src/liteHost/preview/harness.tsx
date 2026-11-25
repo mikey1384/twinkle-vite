@@ -380,7 +380,14 @@ const NAMECHEAP_STEPS = [
 document.documentElement.lang = lang;
 // the website's 10px root (src/styles.css), which the sign-up steps' shared
 // styles are sized for
-if (['signup', 'signin-new', 'account-app', 'account-both', 'players'].includes(screen)) {
+// twin-kle.com's own global styles for the website's components (the
+// owner's Players modal is drawn on twin-kle.com, not on the lite host):
+// box-sizing, the root size and the --px design unit, as in production
+const WEBSITE_SCREENS = ['signup', 'signin-new', 'account-app', 'account-both', 'players'];
+const render = () => createRoot(document.getElementById('root')!).render(<Harness />);
+if (WEBSITE_SCREENS.includes(screen)) {
   document.documentElement.style.fontSize = '10px';
+  void import('~/styles.css').then(render, render);
+} else {
+  render();
 }
-createRoot(document.getElementById('root')!).render(<Harness />);
