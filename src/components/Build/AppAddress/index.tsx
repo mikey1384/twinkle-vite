@@ -10,10 +10,16 @@ import {
   FindView,
   IntroView,
   MessageView,
+  OrderStatusView,
+  OwnerDetailsView,
   ParentRequestView,
   RenameView,
+  emptyOwnerDetails,
+  ownerDetailsProblem,
   type DnsRecordView,
-  type DomainIdeaView
+  type DomainIdeaView,
+  type DomainOrderView,
+  type OwnerDetails
 } from './views';
 
 // The app's lumine.app address on its page, with Copy / Share and, for the
@@ -27,7 +33,7 @@ interface AddressInfo {
   url?: string | null;
   customDomainsEnabled?: boolean;
   domainSalesEnabled?: boolean;
-  domains?: Array<{ id: number; hostname: string; status: string; source: string }>;
+  domains?: Array<{ id: number; hostname: string; status: string; source: string; statusLine?: string }>;
   accountMode?: 'twinkle' | 'app' | 'both';
 }
 
@@ -35,10 +41,23 @@ type Step =
   | { kind: 'intro' }
   | { kind: 'find' }
   | { kind: 'parent'; idea: DomainIdeaView }
+  | { kind: 'owner'; idea: DomainIdeaView }
+  | { kind: 'order'; orderId: number }
+  | { kind: 'live'; hostname: string }
   | { kind: 'sent'; idea: DomainIdeaView }
   | { kind: 'connect'; domainId?: number }
   | { kind: 'rename' }
   | null;
+
+// The buyer's country guess for the form (they can change it).
+function guessCountry() {
+  try {
+    const region = new Intl.Locale(navigator.language).maximize().region || '';
+    return /^[A-Z]{2}$/.test(region) ? region : 'KR';
+  } catch {
+    return 'KR';
+  }
+}
 
 function pageLang(): AddressLang {
   try {
@@ -67,6 +86,11 @@ export default function AppAddress({
   const loadDomainIdeas = useAppContext((v) => v.requestHelpers.loadDomainIdeas);
   const searchDomains = useAppContext((v) => v.requestHelpers.searchDomains);
   const startDomainOrder = useAppContext((v) => v.requestHelpers.startDomainOrder);
+  const loadDomainPurchase = useAppContext((v) => v.requestHelpers.loadDomainPurchase);
+  const startSelfDomainOrder = useAppContext((v) => v.requestHelpers.startSelfDomainOrder);
+  const loadDomainOrder = useAppContext((v) => v.requestHelpers.loadDomainOrder);
+  const loadDomainStatus = useAppContext((v) => v.requestHelpers.loadDomainStatus);
+  const removeAppDomain = useAppContext((v) => v.requestHelpers.removeAppDomain);
   const addAppDomain = useAppContext((v) => v.requestHelpers.addAppDomain);
   const loadAppDomainConnect = useAppContext((v) => v.requestHelpers.loadAppDomainConnect);
   const checkAppDomain = useAppContext((v) => v.requestHelpers.checkAppDomain);
@@ -93,7 +117,199 @@ export default function AppAddress({
     status: 'waiting' | 'checking' | 'securing' | 'connected';
   } | null>(null);
   const [error, setError] = useState('');
+  // Buying here: open for this member? who pays? (server decides)
+  const [purchase, setPurchase] = useState<{ open: boolean; buyer?: 'self' | 'parent'; renews?: boolean } | null>(null);
+  const [owner, setOwner] = useState<OwnerDetails>(() => emptyOwnerDetails(guessCountry()));
+  const [ownerAgreed, setOwnerAgreed] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [ownerProblem, setOwnerProblem] = useState('');
+  const [order, setOrder] = useState<DomainOrderView | null>(null);
   const t = ADDRESS_TEXT[pageLang()];
+
+  // Back from Stripe Checkout: ?domainOrder=<id> opens the order's status.
+  useEffect(() => {
+    if (!isOwner) return;
+    let orderId = 0;
+    try {
+      orderId = Number(new URLSearchParams(window.location.search).get('domainOrder') || 0);
+    } catch {
+      orderId = 0;
+    }
+    if (orderId > 0) setStep({ kind: 'order', orderId });
+  }, [buildId, isOwner]);
+
+  // A wand plan (Zero/Ciel, twinkle-api sponsoredHelp open_app_address)
+  // opens ?appAddress=find|buy|connect|status[&domain=…] on the owner's app
+  // page. Only the domain choice comes in; the member does every buying step.
+  const [deepLink, setDeepLink] = useState<{ screen: string; domain: string } | null>(null);
+  useEffect(() => {
+    if (!isOwner) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const screen = params.get('appAddress') || '';
+      if (!['find', 'buy', 'connect', 'status'].includes(screen)) return;
+      setDeepLink({ screen, domain: String(params.get('domain') || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 253) });
+      const url = new URL(window.location.href);
+      url.searchParams.delete('appAddress');
+      url.searchParams.delete('domain');
+      window.history.replaceState(window.history.state, '', url.toString());
+    } catch {
+      // no deep link
+    }
+  }, [buildId, isOwner]);
+  useEffect(() => {
+    if (!deepLink || !info?.enabled) return;
+    const { screen, domain } = deepLink;
+    setDeepLink(null);
+    void openFromWand(screen, domain);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLink, info?.enabled]);
+
+  async function openFromWand(screen: string, domain: string) {
+    setError('');
+    if (screen === 'connect') {
+      if (!info?.customDomainsEnabled) {
+        setStep({ kind: 'intro' });
+        return;
+      }
+      setHostname(domain);
+      setConnect(null);
+      setStep({ kind: 'connect' });
+      return;
+    }
+    if (screen === 'status') {
+      // the named address (bought or connected), else the newest one
+      const status = await loadDomainStatus({ buildId, hostname: domain || undefined }).catch(() => null);
+      const row = status?.domains?.[0];
+      if (row && row.source === 'own' && row.status !== 'live' && info?.customDomainsEnabled) {
+        setHostname(row.hostname);
+        await showConnectSetup(row.id);
+        return;
+      }
+      if (row && row.status === 'live') {
+        setStep({ kind: 'live', hostname: row.hostname });
+        return;
+      }
+      if (status?.order?.orderId) {
+        setStep({ kind: 'order', orderId: status.order.orderId });
+        return;
+      }
+      setStep({ kind: 'intro' });
+      return;
+    }
+    const purchaseInfo = purchase || (await loadDomainPurchase({ buildId }).catch(() => ({ open: false })));
+    setPurchase(purchaseInfo);
+    if (!purchaseInfo?.open || !info?.domainSalesEnabled) {
+      // buying here is closed: connecting your own still works
+      setStep({ kind: 'intro' });
+      return;
+    }
+    const label = domain.replace(/\.[a-z.]+$/, '') || appTitle;
+    setQuery(label);
+    setStep({ kind: 'find' });
+    if (screen === 'find' && !domain) {
+      void loadIdeas();
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await searchDomains({ q: label });
+      const found = (data?.results || []).filter((row: any) => row.available && row.price).map((row: any) => row.price);
+      setIdeas(found);
+      const exact = found.find((idea: DomainIdeaView) => idea.domain === domain);
+      if (screen === 'buy' && exact) {
+        setOwnerProblem('');
+        setStep(purchaseInfo.buyer === 'self' ? { kind: 'owner', idea: exact } : { kind: 'parent', idea: exact });
+      } else if (screen === 'buy') {
+        setError(t.notAvailableHere(domain));
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // While an order is being set up, ask again every 5 s (each ask may move
+  // it forward on the server); stop once it is live or refunded.
+  const orderId = step?.kind === 'order' ? step.orderId : 0;
+  useEffect(() => {
+    if (!orderId) return;
+    let cancelled = false;
+    let timer = 0;
+    async function poll() {
+      try {
+        const data = await loadDomainOrder({ buildId, orderId });
+        if (cancelled || !data?.order) return;
+        setOrder(data.order);
+        if (data.order.stage === 'live') {
+          const fresh = await loadAppAddress({ buildId }).catch(() => null);
+          if (!cancelled && fresh) setInfo(fresh);
+          return;
+        }
+        // keep asking while payment or setup is still going (a webhook can
+        // land after the buyer is back from Stripe)
+        if (['paying', 'setting_up', 'refunding'].includes(data.order.stage)) timer = window.setTimeout(poll, 5000);
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || '');
+      }
+    }
+    void poll();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, buildId]);
+
+  function openOwnFlow() {
+    setError('');
+    setStep({ kind: 'intro' });
+    if (purchase) return;
+    loadDomainPurchase({ buildId })
+      .then((data: any) => setPurchase(data || { open: false }))
+      .catch(() => setPurchase({ open: false }));
+  }
+
+  async function payAsOwner(idea: DomainIdeaView) {
+    const problem = ownerDetailsProblem(t, owner);
+    if (problem) {
+      setOwnerProblem(problem);
+      return;
+    }
+    setOwnerProblem('');
+    setPaying(true);
+    try {
+      const result = await startSelfDomainOrder({
+        buildId,
+        domain: idea.domain,
+        registrant: { ...owner, phone: owner.phone.trim() },
+        agreed: ownerAgreed,
+        priceCents: idea.priceCents
+      });
+      if (result?.checkoutUrl) {
+        window.location.assign(result.checkoutUrl);
+        return;
+      }
+      setOwnerProblem(t.whyOther(idea.domain));
+    } catch (e: any) {
+      setOwnerProblem(e?.message || '');
+    }
+    setPaying(false);
+  }
+
+  function closeFlow() {
+    setStep(null);
+    setOrder(null);
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('domainOrder')) {
+        url.searchParams.delete('domainOrder');
+        url.searchParams.delete('cancelled');
+        window.history.replaceState(window.history.state, '', url.toString());
+      }
+    } catch {
+      // nothing to tidy
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -161,19 +377,34 @@ export default function AppAddress({
     }
   }
 
+  async function showConnectSetup(domainId: number) {
+    const how = await loadAppDomainConnect({ buildId, domainId });
+    setConnect({
+      providerName: how?.provider?.name || how?.domainConnect?.providerName || null,
+      providerSteps: how?.provider?.steps || how?.instructions?.plainSteps || [],
+      domainConnectUrl: how?.domainConnect?.applyUrl || null,
+      records: how?.instructions?.records || [],
+      status: 'waiting'
+    });
+    setStep({ kind: 'connect', domainId });
+  }
+
   async function startConnect() {
     setError('');
     try {
       const added = await addAppDomain({ buildId, hostname });
-      const how = await loadAppDomainConnect({ buildId, domainId: added.domainId });
-      setConnect({
-        providerName: how?.provider?.name || how?.domainConnect?.providerName || null,
-        providerSteps: how?.provider?.steps || how?.instructions?.plainSteps || [],
-        domainConnectUrl: how?.domainConnect?.applyUrl || null,
-        records: how?.instructions?.records || [],
-        status: 'waiting'
-      });
-      setStep({ kind: 'connect', domainId: added.domainId });
+      await showConnectSetup(added.domainId);
+    } catch (e: any) {
+      setError(e?.message || '');
+    }
+  }
+
+  async function removeDomain(domainId: number) {
+    setError('');
+    try {
+      await removeAppDomain({ buildId, domainId });
+      const fresh = await loadAppAddress({ buildId }).catch(() => null);
+      if (fresh) setInfo(fresh);
     } catch (e: any) {
       setError(e?.message || '');
     }
@@ -257,6 +488,9 @@ export default function AppAddress({
         t={t}
         url={info.url}
         domains={liveDomains}
+        ownerDomains={isOwner ? info.domains : undefined}
+        removableSources={['own']}
+        onRemoveDomain={isOwner && info.customDomainsEnabled ? (domainId) => void removeDomain(domainId) : undefined}
         isOwner={isOwner && Boolean(info.customDomainsEnabled || info.domainSalesEnabled)}
         copied={copied}
         onCopy={() => {
@@ -268,7 +502,7 @@ export default function AppAddress({
           if (navigator.share) void navigator.share({ title: appTitle, url: info.url || '' }).catch(() => {});
           else void navigator.clipboard?.writeText(info.url || '').catch(() => {});
         }}
-        onGetOwn={() => setStep({ kind: 'intro' })}
+        onGetOwn={openOwnFlow}
         onRename={
           isOwner
             ? () => {
@@ -285,7 +519,7 @@ export default function AppAddress({
         <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />
       )}
       {step && (
-        <Modal modalKey="AppAddressFlow" isOpen onClose={() => setStep(null)} size="md" hasHeader={false} closeOnBackdropClick>
+        <Modal modalKey="AppAddressFlow" isOpen onClose={closeFlow} size="md" hasHeader={false} closeOnBackdropClick>
           {error && <div style={{ color: '#b42318', marginBottom: '0.6rem' }}>{error}</div>}
           {step.kind === 'rename' && (
             <RenameView
@@ -304,12 +538,16 @@ export default function AppAddress({
             <IntroView
               t={t}
               freeHost={freeHost}
-              onFind={() => {
-                setStep({ kind: 'find' });
-                setQuery(appTitle);
-                void loadIdeas();
-              }}
-              onHaveOne={() => setStep({ kind: 'connect' })}
+              onFind={
+                purchase?.open && info.domainSalesEnabled
+                  ? () => {
+                      setStep({ kind: 'find' });
+                      setQuery(appTitle);
+                      void loadIdeas();
+                    }
+                  : undefined
+              }
+              onHaveOne={info.customDomainsEnabled ? () => setStep({ kind: 'connect' }) : undefined}
               ask={<AskAgentButton context={askContext('getting my own web address', 'Step: what a domain is.')} />}
             />
           )}
@@ -321,8 +559,11 @@ export default function AppAddress({
               loading={loading}
               onQuery={setQuery}
               onSearch={search}
-              onBuy={(idea) => setStep({ kind: 'parent', idea })}
-              onUseOwn={() => setStep({ kind: 'connect' })}
+              onBuy={(idea) => {
+                setOwnerProblem('');
+                setStep(purchase?.buyer === 'self' ? { kind: 'owner', idea } : { kind: 'parent', idea });
+              }}
+              onUseOwn={info.customDomainsEnabled ? () => setStep({ kind: 'connect' }) : undefined}
               onMoreIdeas={() => loadIdeas({ more: true })}
               ask={
                 <AskAgentButton
@@ -347,6 +588,44 @@ export default function AppAddress({
               onEmail={setParentEmail}
               onSend={() => sendToParent(step.idea)}
               onBack={() => setStep({ kind: 'find' })}
+            />
+          )}
+          {step.kind === 'owner' && (
+            <OwnerDetailsView
+              t={t}
+              idea={step.idea}
+              details={owner}
+              agreed={ownerAgreed}
+              renews={Boolean(purchase?.renews)}
+              busy={paying}
+              problem={ownerProblem}
+              onDetails={setOwner}
+              onAgree={setOwnerAgreed}
+              onPay={() => void payAsOwner(step.idea)}
+              onBack={() => setStep({ kind: 'find' })}
+            />
+          )}
+          {step.kind === 'order' && order && (
+            <OrderStatusView
+              t={t}
+              order={order}
+              onOpen={() => window.open(`https://${order.domain}`, '_blank', 'noopener,noreferrer')}
+              onTryAgain={() => {
+                closeFlow();
+                openOwnFlow();
+              }}
+              onClose={closeFlow}
+            />
+          )}
+          {step.kind === 'live' && (
+            <MessageView
+              title={t.liveTitle(step.hostname)}
+              body={t.liveBody}
+              primaryLabel={t.openIt}
+              onPrimary={() => window.open(`https://${step.hostname}`, '_blank', 'noopener,noreferrer')}
+              secondaryLabel={t.done}
+              onSecondary={closeFlow}
+              celebrate
             />
           )}
           {step.kind === 'sent' && (

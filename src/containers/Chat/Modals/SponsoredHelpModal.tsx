@@ -26,6 +26,7 @@ const KIND_ICON: Record<string, string> = {
   lumine_build: 'code-branch',
   chat_session: 'comment',
   open_page: 'arrow-right',
+  app_address: 'globe',
   not_possible: 'ban',
   not_right: 'exclamation-triangle'
 };

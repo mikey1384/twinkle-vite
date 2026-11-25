@@ -18,7 +18,9 @@ export type SponsoredHelpStatus =
 export type SponsoredHelpStep =
   | { action: 'create_lumine_project'; title: string; idea: string }
   | { action: 'start_chat_session'; opening_message: string }
-  | { action: 'open_page'; path: string };
+  | { action: 'open_page'; path: string }
+  // the member's own app's web-address screens (twinkle-api actions.ts)
+  | { action: 'open_app_address'; build_id: number; screen: 'find' | 'buy' | 'connect' | 'status'; domain?: string };
 
 export interface SponsoredHelpView {
   id: number;
@@ -47,6 +49,7 @@ export interface SponsoredHelpView {
     idea?: string;
     path?: string;
     sessionMessageId?: number;
+    appAddress?: { buildId: number; title: string; screen: string; domain: string | null };
   };
   failureCode?: string | null;
   assistantPathId?: number;
@@ -93,7 +96,19 @@ export function sponsoredHelpStepLabel(step: SponsoredHelpStep) {
   if (step.action === 'start_chat_session') {
     return `Start in this chat: “${step.opening_message}”`;
   }
+  if (step.action === 'open_app_address') {
+    if (step.screen === 'buy') return `Open the buy screen for ${step.domain} on your app (you or your parent finish it)`;
+    if (step.screen === 'connect') return `Open “I already have one”${step.domain ? ` for ${step.domain}` : ''} on your app`;
+    if (step.screen === 'status') return 'Show how your app’s address is going';
+    return `Open name ideas for your app’s address${step.domain ? `, starting with “${step.domain}”` : ''}`;
+  }
   return `Open ${step.path}`;
+}
+
+// The button on a finished objective that opened an app's address screens.
+export function sponsoredHelpResultLabel(result: SponsoredHelpView['result']) {
+  if (result?.appAddress) return 'Open your app’s address';
+  return 'Open the page';
 }
 
 export function sponsoredHelpStatusLine(
@@ -217,7 +232,7 @@ export interface SponsoredHelpPreview {
   summary: string;
   objectives: {
     text: string;
-    kind: 'lumine_build' | 'chat_session' | 'open_page' | 'not_possible' | 'not_right';
+    kind: 'lumine_build' | 'chat_session' | 'open_page' | 'app_address' | 'not_possible' | 'not_right';
     line: string;
     estimatePercent: number;
   }[];

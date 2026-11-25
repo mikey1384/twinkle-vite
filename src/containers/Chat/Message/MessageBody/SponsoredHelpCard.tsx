@@ -12,6 +12,7 @@ import {
   type SponsoredHelpView,
   isSponsoredHelpBusy,
   sponsoredHelpPersonaName,
+  sponsoredHelpResultLabel,
   sponsoredHelpStatusLine,
   sponsoredHelpStepLabel
 } from '~/helpers/sponsoredHelp';
@@ -444,7 +445,7 @@ export default function SponsoredHelpCard({
           icon="arrow-right"
           onClick={() => navigate(String(result.path))}
         >
-          Open the page
+          {sponsoredHelpResultLabel(result)}
         </GameCTAButton>
       );
     }
