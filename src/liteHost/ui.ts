@@ -91,13 +91,16 @@ export function showAiBanner({
   buildId,
   cta,
   onAction,
-  force = false
+  force = false,
+  text
 }: {
   t: LiteHostText;
   buildId: number;
-  cta: string;
+  // null: a note with no button (an app on its own accounts only)
+  cta: string | null;
   onAction: () => void;
   force?: boolean;
+  text?: string;
 }) {
   if (aiBannerNode) {
     if (force) {
@@ -114,15 +117,15 @@ export function showAiBanner({
       /* no storage: show it */
     }
   }
-  const action = el('button', { class: 'lh-ai-banner-cta', type: 'button' }, [cta]);
+  const action = cta ? el('button', { class: 'lh-ai-banner-cta', type: 'button' }, [cta]) : null;
   const close = el('button', { class: 'lh-ai-banner-close', type: 'button', 'aria-label': t.aiBannerClose }, ['×']);
-  const banner = el('div', { class: 'lh-ai-banner', role: 'status' }, [
+  const banner = el('div', { class: `lh-ai-banner${action ? '' : ' lh-ai-banner-note'}`, role: 'status' }, [
     el('span', { class: 'lh-ai-banner-mark', 'aria-hidden': 'true' }, ['✦']),
-    el('span', { class: 'lh-ai-banner-text' }, [t.aiBanner]),
-    action,
+    el('span', { class: 'lh-ai-banner-text' }, [text || t.aiBanner]),
+    ...(action ? [action] : []),
     close
   ]);
-  action.addEventListener('click', () => {
+  action?.addEventListener('click', () => {
     hideAiBanner();
     onAction();
   });

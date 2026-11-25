@@ -267,21 +267,35 @@ async function start() {
   // in an app on its own accounts only).
   const isExternal = (signedIn: AppSession | null) =>
     !signedIn || (signedIn.appPlayer?.kind === 'app' && !signedIn.appPlayer.linked);
+  // force: the server just refused an AI action (twinkle_account_required,
+  // or a guest's): always say why, whatever the account looks like here. A
+  // linked app account whose session its member didn't sign continues with
+  // Twinkle (the member flow); in an app on its own accounts only, a short
+  // note with no button.
   const refreshAiBanner = ({ force = false }: { force?: boolean } = {}) =>
     accountModeReady.then(() => {
       const signedIn = session.get();
-      if (!isExternal(signedIn) || accountMode === 'app' || (!force && !config.usesAi)) {
+      if (accountMode === 'app') {
+        if (force) {
+          showAiBanner({ t, buildId: config.buildId, cta: null, text: t.aiUnavailableHere, force, onAction: () => {} });
+        } else {
+          hideAiBanner();
+        }
+        return;
+      }
+      if (!force && (!isExternal(signedIn) || !config.usesAi)) {
         hideAiBanner();
         return;
       }
-      const appAccount = Boolean(signedIn);
+      const player = signedIn?.appPlayer;
+      const kind = !signedIn ? 'guest' : player?.kind === 'app' ? (player.linked ? 'linked' : 'app') : 'member';
       showAiBanner({
         t,
         buildId: config.buildId,
-        cta: appAccount ? t.aiBannerLinkCta : t.aiBannerCta,
+        cta: kind === 'app' ? t.aiBannerLinkCta : kind === 'linked' ? t.signInCta : t.aiBannerCta,
         force,
         onAction: () => {
-          if (appAccount) void linkTwinkle();
+          if (kind === 'app') void linkTwinkle();
           else void session.signIn();
         }
       });

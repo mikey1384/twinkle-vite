@@ -265,7 +265,8 @@ function Harness() {
         <LiteHostProviders
           requestHelpers={{
             loadAppPlayers: async () => ({
-              accountMode: 'both',
+              accountMode: params.get('mode') || 'both',
+              usesAi: params.get('ai') === '1',
               players: [
                 { id: 4, kind: 'app', name: 'speedy_sam', linkedTo: null, createdAt: 1764000000, lastSeenAt: 1764050000, disabled: false, guardianApproved: true },
                 { id: 3, kind: 'app', name: 'nova7', linkedTo: 'nova_builds', createdAt: 1763900000, lastSeenAt: 1764040000, disabled: false, guardianApproved: false },
@@ -351,10 +352,12 @@ function BadgeMenu() {
     // ?ai=1: the AI banner a guest (or an app-only player) sees
     if (params.get('ai') === '1') {
       const t = LITE_HOST_TEXT[lang];
+      const note = params.get('note') === '1'; // an app on its own accounts only
       showAiBanner({
         t,
         buildId: 2,
-        cta: signed && kind === 'app' ? t.aiBannerLinkCta : t.aiBannerCta,
+        cta: note ? null : signed && kind === 'app' ? t.aiBannerLinkCta : t.aiBannerCta,
+        text: note ? t.aiUnavailableHere : undefined,
         force: true,
         onAction: () => {}
       });

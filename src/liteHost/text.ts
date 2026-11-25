@@ -50,6 +50,8 @@ export const LITE_HOST_TEXT = {
     aiBannerCta: 'Make a free account',
     aiBannerLinkCta: 'Link Twinkle',
     aiBannerClose: 'Close',
+    // an app on its own accounts only: no Twinkle account can be used here
+    aiUnavailableHere: 'AI features aren’t available in this app.',
     carriedOver: 'Your guest progress was saved to your account.',
     // app accounts (an app on its own accounts): the app's own words only
     accountSignInTitle: (title: string) => `Sign in to ${title}`,
@@ -150,6 +152,7 @@ export const LITE_HOST_TEXT = {
     aiBannerCta: '무료 계정 만들기',
     aiBannerLinkCta: '트윈클 연결하기',
     aiBannerClose: '닫기',
+    aiUnavailableHere: '이 앱에서는 AI 기능을 쓸 수 없어요.',
     carriedOver: '게스트로 하던 진행 상황을 계정으로 옮겼어요.',
     accountSignInTitle: (title: string) => `${title} 로그인`,
     accountSignUpTitle: (title: string) => `${title} 계정 만들기`,
