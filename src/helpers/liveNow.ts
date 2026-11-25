@@ -50,6 +50,93 @@ export interface LiveNowApp {
   choices: LiveNowMember[];
 }
 
+/**
+ * One presence entry as Live now sees it: the app they are in and the member
+ * (with what they can be joined for), or null when Live now leaves them out
+ * (the viewer, blocked, not shown by the badge rule, no name).
+ */
+export function readLiveNowEntry(
+  key: string,
+  entry: any,
+  {
+    myId,
+    hiddenUserIds,
+    blockedUserIds
+  }: {
+    myId: number;
+    hiddenUserIds: readonly number[];
+    blockedUserIds?: ReadonlySet<number>;
+  }
+): { activity: any; member: LiveNowMember } | null {
+  const userId = Number(entry?.id ?? key);
+  const activity = entry?.activity;
+  // The viewer is left out: the row is for joining other people, and an app
+  // only the viewer is in (another tab) is not something to join.
+  if (!Number.isSafeInteger(userId) || userId <= 0 || userId === myId)
+    return null;
+  if (blockedUserIds?.has(userId)) return null;
+  if (
+    activity?.kind !== 'app' ||
+    !Number.isSafeInteger(activity.id) ||
+    activity.id <= 0
+  )
+    return null;
+  const presence: PresenceFlags = {
+    isOnline: entry.isOnline,
+    isAway: entry.isAway
+  };
+  if (!isActivityShown({ userId, activity, presence, hiddenUserIds }))
+    return null;
+  const username = String(entry.username || '').trim();
+  if (!username) return null;
+  // Hidden-presence accounts (Zero and Ciel) are never walked up to.
+  const joinable = hiddenUserIds.includes(userId)
+    ? null
+    : readJoinable(activity);
+  return {
+    activity,
+    member: {
+      id: userId,
+      username,
+      profilePicUrl: String(entry.profilePicUrl || ''),
+      ...(joinable ? { joinable } : {})
+    }
+  };
+}
+
+/**
+ * The picker's people as they are right now, read straight from presence
+ * (not from app.choices, which is capped): each id maps to the member while
+ * they are still in that app, else null. A JSON string, so a selector can
+ * return it and re-render only when one of them changes.
+ */
+export function readLiveNowPickerSignature({
+  chatStatus,
+  appId,
+  ids,
+  myId,
+  hiddenUserIds,
+  blockedUserIds
+}: {
+  chatStatus: Record<string, any> | null | undefined;
+  appId: number;
+  ids: readonly number[];
+  myId: number;
+  hiddenUserIds: readonly number[];
+  blockedUserIds?: ReadonlySet<number>;
+}) {
+  const out: Record<number, LiveNowMember | null> = {};
+  for (const id of ids) {
+    const read = readLiveNowEntry(String(id), chatStatus?.[id], {
+      myId,
+      hiddenUserIds,
+      blockedUserIds
+    });
+    out[id] = read && read.activity.id === appId ? read.member : null;
+  }
+  return JSON.stringify(out);
+}
+
 export function groupLiveNowApps({
   chatStatus,
   myId,
@@ -65,34 +152,13 @@ export function groupLiveNowApps({
 }): LiveNowApp[] {
   const byApp = new Map<number, LiveNowApp>();
   for (const [key, entry] of Object.entries(chatStatus || {})) {
-    const userId = Number(entry?.id ?? key);
-    const activity = entry?.activity;
-    // The viewer is left out: the row is for joining other people, and an app
-    // only the viewer is in (another tab) is not something to join.
-    if (!Number.isSafeInteger(userId) || userId <= 0 || userId === myId)
-      continue;
-    if (blockedUserIds?.has(userId)) continue;
-    if (
-      activity?.kind !== 'app' ||
-      !Number.isSafeInteger(activity.id) ||
-      activity.id <= 0
-    )
-      continue;
-    const presence: PresenceFlags = {
-      isOnline: entry.isOnline,
-      isAway: entry.isAway
-    };
-    if (
-      !isActivityShown({
-        userId,
-        activity,
-        presence,
-        hiddenUserIds
-      })
-    )
-      continue;
-    const username = String(entry.username || '').trim();
-    if (!username) continue;
+    const read = readLiveNowEntry(key, entry, {
+      myId,
+      hiddenUserIds,
+      blockedUserIds
+    });
+    if (!read) continue;
+    const { activity, member } = read;
     let app = byApp.get(activity.id);
     if (!app) {
       app = {
@@ -108,16 +174,7 @@ export function groupLiveNowApps({
       byApp.set(activity.id, app);
     }
     app.count++;
-    // Hidden-presence accounts (Zero and Ciel) are never walked up to.
-    const joinable = hiddenUserIds.includes(userId)
-      ? null
-      : readJoinable(activity);
-    app.members.push({
-      id: userId,
-      username,
-      profilePicUrl: String(entry.profilePicUrl || ''),
-      ...(joinable ? { joinable } : {})
-    });
+    app.members.push(member);
   }
   const apps = [...byApp.values()];
   for (const app of apps) {
@@ -186,21 +243,46 @@ export type LiveNowRowChoice =
 export function liveNowRowChoice(
   app: Pick<LiveNowApp, 'choices'>
 ): LiveNowRowChoice {
-  const choices = app.choices || [];
-  const best = bestJoinAction(choices);
-  if (!best) return { kind: 'open' };
-  const sameVerb = choices.filter(
-    (member) => primaryJoinAction(member.joinable)?.verb === best.verb
-  );
-  if (sameVerb.length >= 2)
-    return { kind: 'pick', verb: best.verb, members: choices };
-  return {
-    kind: 'walk',
-    verb: best.verb,
-    intent: best.intent,
-    member: best.member
-  };
+  const choice = liveNowTapChoice(rowVerb(app), app);
+  return choice.kind === 'gone' ? { kind: 'open' } : choice;
 }
+
+/** The word on a row's button: the best verb anyone offers, or null (Play). */
+export function rowVerb(app: Pick<LiveNowApp, 'choices'>): JoinVerb | null {
+  return bestJoinAction(app.choices || [])?.verb || null;
+}
+
+/**
+ * What a tap does, given the word the button showed (it may come from rows
+ * held still under the pointer) and who is in the app right now. The tap
+ * always does what the word said: the default Play opens the app; a verb
+ * walks up to the one person still offering it, or lets the member pick
+ * from two or more; nobody offering it any more is 'gone' (open the app with
+ * a quiet note), never a different verb's picker.
+ */
+export function liveNowTapChoice(
+  verb: JoinVerb | null,
+  live: Pick<LiveNowApp, 'choices'> | null | undefined
+): LiveNowRowChoice | { kind: 'gone'; verb: JoinVerb } {
+  if (!verb) return { kind: 'open' };
+  const choices = live?.choices || [];
+  const sameVerb = choices.filter(
+    (member) => primaryJoinAction(member.joinable)?.verb === verb
+  );
+  if (sameVerb.length >= 2) return { kind: 'pick', verb, members: choices };
+  const [only] = sameVerb;
+  const action = only ? primaryJoinAction(only.joinable) : null;
+  if (!only || !action) return { kind: 'gone', verb };
+  return { kind: 'walk', verb, intent: action.intent, member: only };
+}
+
+// The quiet note when the button's people have all gone by the time of the
+// tap (the app opens anyway).
+export const LIVE_NOW_GONE_NOTES: Record<JoinVerb, string> = {
+  join: "That room isn't open right now",
+  play: "Nobody's ready to play right now",
+  watch: 'Nobody to watch right now'
+};
 
 function joinableRank(joinable: Joinable | undefined) {
   if (!joinable) return 3;

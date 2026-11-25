@@ -13,6 +13,7 @@ import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useOutsideClick } from '~/helpers/hooks';
+import { lockBodyScroll } from '~/helpers/bodyScrollLock';
 import {
   JOIN_VERB_LABELS,
   joinableBadge,
@@ -26,6 +27,10 @@ import {
   type LiveNowMember
 } from '~/helpers/liveNow';
 
+// The picker's people as presence has them now: id -> member, or null once
+// they are no longer in the app.
+export type LiveNowPickerLiveMembers = Record<number, LiveNowMember | null>;
+
 // "Who do you want to watch?": when two or more people in an app offer the
 // row's verb, the row's button opens this list instead of picking for the
 // member (Mikey, 11-25). A bottom sheet on phones, a popover next to the
@@ -34,7 +39,13 @@ import {
 // disabled once they can no longer be joined), so nobody is walked up to
 // from a stale line. The server still has the last word (useWalkUp).
 
-export type LiveNowPickerDismiss = 'escape' | 'outside' | 'close';
+export type LiveNowPickerDismiss =
+  | 'escape'
+  | 'outside'
+  | 'close'
+  // another row's picker took its place / the card went away while open
+  | 'replaced'
+  | 'unmount';
 
 const EXIT_MS = 160;
 const POPOVER_GAP = 8;
@@ -306,12 +317,16 @@ function reducedMotion() {
   );
 }
 
-/** A line's live state: the member as they are now, or null once gone. */
+/**
+ * A line's live state: the member as they are now and what they can be
+ * joined for, or null once they can't (left, blocked, nothing to tap). Read
+ * from their own presence, so the 10-person cap never marks anyone gone.
+ */
 export function liveChoiceFor(
   member: LiveNowMember,
-  liveApp: Pick<LiveNowApp, 'choices'> | null | undefined
+  liveMembers: LiveNowPickerLiveMembers
 ): { member: LiveNowMember; action: PrimaryJoinAction } | null {
-  const live = liveApp?.choices?.find((entry) => entry.id === member.id);
+  const live = liveMembers[member.id];
   const action = live ? primaryJoinAction(live.joinable) : null;
   return live && action ? { member: live, action } : null;
 }
@@ -320,19 +335,20 @@ export default function LiveNowPicker({
   app,
   verb,
   members,
-  liveApp,
+  liveMembers,
   anchor,
   insideRefs,
   buttonColor,
   onChoose,
-  onDismiss
+  onDismiss,
+  onClosed
 }: {
   app: LiveNowApp;
   verb: JoinVerb;
   // the lines, in the order they opened with
   members: LiveNowMember[];
-  // the app as it is right now (null when nobody is in it any more)
-  liveApp: LiveNowApp | null;
+  // the listed people as they are right now
+  liveMembers: LiveNowPickerLiveMembers;
   // the row's button: the popover sits next to it
   anchor: HTMLElement | null;
   // taps here are not "outside" (the row, which toggles the picker itself)
@@ -343,7 +359,10 @@ export default function LiveNowPicker({
     action: PrimaryJoinAction,
     position: number
   ) => void;
+  // the member dismissed it (counted now) ...
   onDismiss: (how: LiveNowPickerDismiss) => void;
+  // ... and its exit animation has finished
+  onClosed: () => void;
 }) {
   const titleId = useId();
   const [mode] = useState<'sheet' | 'popover'>(() =>
@@ -362,16 +381,41 @@ export default function LiveNowPicker({
       : document.getElementById('outer-layer') || document.body
   );
 
+  const exitTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(exitTimer.current), []);
   const dismiss = useCallback(
     (how: LiveNowPickerDismiss) => {
       if (closing) return;
       if (how !== 'outside') anchor?.focus?.({ preventScroll: true });
-      if (reducedMotion()) return onDismiss(how);
+      onDismiss(how);
+      if (reducedMotion()) return onClosed();
       setClosing(true);
-      window.setTimeout(() => onDismiss(how), EXIT_MS);
+      exitTimer.current = window.setTimeout(onClosed, EXIT_MS);
     },
-    [anchor, closing, onDismiss]
+    [anchor, closing, onClosed, onDismiss]
   );
+
+  // Phone sheet: the page behind it does not scroll. The body lock is the
+  // one Modal uses; iPhone Safari can still pan the page on a touch drag, so
+  // drags are stopped too, except inside the list while it can scroll.
+  const layerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (mode !== 'sheet' || typeof document === 'undefined') return;
+    const release = lockBodyScroll(document.body);
+    const layer = layerRef.current;
+    function handleTouchMove(event: TouchEvent) {
+      const list = (event.target as Element | null)?.closest?.(
+        '.live-picker-list'
+      ) as HTMLElement | null;
+      if (list && list.scrollHeight > list.clientHeight) return;
+      event.preventDefault();
+    }
+    layer?.addEventListener('touchmove', handleTouchMove, { passive: false });
+    return () => {
+      layer?.removeEventListener('touchmove', handleTouchMove);
+      release();
+    };
+  }, [mode]);
 
   // Popover: next to the row's button, below it when there is room, and
   // following it if the page scrolls.
@@ -444,11 +488,12 @@ export default function LiveNowPicker({
 
   const lines = members.map((member) => ({
     member,
-    live: liveChoiceFor(member, liveApp)
+    live: liveChoiceFor(member, liveMembers)
   }));
 
   return createPortal(
     <div
+      ref={layerRef}
       className={layerCls}
       data-closing={closing || undefined}
       // Clicks here must not reach the Live now row (React bubbles through

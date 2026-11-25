@@ -33,6 +33,7 @@ import {MemoryRouter,useLocation} from 'react-router-dom';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {faTimes} from '@fortawesome/pro-solid-svg-icons/faTimes';
 import {FixtureProvider} from '~/contexts';
+import {ToastProvider} from '~/contexts/Toast';
 library.add(faTimes);
 import TodayStats from './src/components/Notification/TodayStats';
 import {container as notificationContainer} from './src/components/Notification/Styles';
@@ -75,8 +76,10 @@ function Root(){
   const [scene,setScene]=useState({name:'none'});window.setScene=setScene;
   const [chatStatus,setChatStatus]=useState({});window.setChatStatus=setChatStatus;
   return <FixtureProvider value={{chatStatus,requestHelpers,achievements,settings:{}}}>
-    <LocationProbe/>
-    {scene.name==='live'?<LiveScene width={scene.width}/>:null}
+    <ToastProvider>
+      <LocationProbe/>
+      {scene.name==='live'?<LiveScene width={scene.width}/>:null}
+    </ToastProvider>
   </FixtureProvider>;
 }
 createRoot(document.getElementById('root')).render(<MemoryRouter><Root/></MemoryRouter>);
@@ -222,7 +225,11 @@ async function openPage(browser, viewport) {
   });
   await page.goto('http://localhost:3000/');
   await page.addScriptTag({ content: await compileFixture() });
-  await page.waitForFunction(() => typeof window.setScene === 'function');
+  await page
+    .waitForFunction(() => typeof window.setScene === 'function')
+    .catch((error) => {
+      throw new Error(`fixture did not start: ${errors.join(' | ') || error.message}`);
+    });
   return { page, errors };
 }
 
@@ -250,8 +257,13 @@ for (const engine of ['chromium', 'webkit']) {
         await row.waitFor();
         await page.waitForTimeout(400);
         await shoot(page, `row-phone-${width}.png`);
+        assert.equal(await row.getAttribute('aria-haspopup'), 'dialog');
+        assert.equal(await page.getByRole('button', { name: 'Watch: Sketch Town' }).getAttribute('aria-haspopup'), null);
         await row.click();
         await picker(page).waitFor();
+        assert.equal(await row.getAttribute('aria-expanded'), 'true');
+        // the page behind the sheet does not scroll
+        assert.equal(await page.evaluate(() => document.body.style.overflowY), 'hidden');
         // the sheet, in the verb's words, listing both watchable people (not
         // dodo, who offers nothing), each with their own Watch
         assert.equal(await picker(page).getAttribute('data-mode'), 'sheet');
@@ -281,6 +293,7 @@ for (const engine of ['chromium', 'webkit']) {
         ]);
         await page.waitForFunction(() => window.lastLocation?.pathname === '/app/2');
         await picker(page).waitFor({ state: 'detached' });
+        assert.equal(await page.evaluate(() => document.body.style.overflowY), '');
         assert.deepEqual(errors, []);
         await page.close();
       }
@@ -392,6 +405,27 @@ for (const engine of ['chromium', 'webkit']) {
       await picker(page).waitFor();
       await row.click();
       await picker(page).waitFor({ state: 'detached' });
+      assert.equal(await page.evaluate(() => window.walkups.length), 1);
+      // the popover never locks the page
+      assert.equal(await page.evaluate(() => document.body.style.overflowY), '');
+
+      // The card is held under the mouse; both watchers stop while it is.
+      // The button still says Watch, so the tap opens the app with a quiet
+      // note, never a picker or another verb.
+      await row.hover();
+      await page.evaluate(() => {
+        window.setChatStatus({
+          ...window.live,
+          11: window.person(11, window.redSquare({ state: 'open', label: 'Looking for a game', mode: '1v1' })),
+          12: window.person(12, window.redSquare())
+        });
+      });
+      await page.waitForTimeout(200);
+      assert.equal(await row.innerText(), 'Watch');
+      await row.click();
+      await page.getByText('Nobody to watch right now').waitFor();
+      await page.waitForFunction(() => window.lastLocation?.pathname === '/app/2');
+      assert.equal(await picker(page).count(), 0);
       assert.equal(await page.evaluate(() => window.walkups.length), 1);
       assert.deepEqual(errors, []);
     } finally {

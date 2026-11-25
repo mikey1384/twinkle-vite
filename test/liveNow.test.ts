@@ -3,6 +3,9 @@ import test from 'node:test';
 import {
   groupLiveNowApps,
   liveNowRowChoice,
+  liveNowTapChoice,
+  readLiveNowPickerSignature,
+  rowVerb,
   LIVE_NOW_MAX_APPS,
   LIVE_NOW_MAX_CHOICES,
   LIVE_NOW_MAX_FACES
@@ -360,4 +363,87 @@ test('row choice: blocked and hidden-presence members are never offered', () => 
   assert.ok(choice.kind === 'walk');
   assert.equal(choice.member.id, 51);
   assert.deepEqual(apps[0].choices.map((entry) => entry.id), [51]);
+});
+
+test('a tap does what the button said: a held Play opens the app even if people became watchable', () => {
+  const [now] = group(
+    statusOf(member(61, inApp(watching())), member(62, inApp(watching())))
+  );
+  assert.deepEqual(liveNowTapChoice(null, now), { kind: 'open' });
+});
+
+test('a tap does what the button said: a held Watch whose people all left is gone, never another verb', () => {
+  // Everyone left the app.
+  assert.deepEqual(liveNowTapChoice('watch', null), { kind: 'gone', verb: 'watch' });
+  // Still there, but now only someone ready to play: not a Play picker or walk.
+  const [now] = group(
+    statusOf(member(71, inApp(queueOpen)), member(72, inApp(queueOpen)), member(73, inApp()))
+  );
+  assert.equal(rowVerb(now), 'play');
+  assert.deepEqual(liveNowTapChoice('watch', now), { kind: 'gone', verb: 'watch' });
+});
+
+test('a tap does what the button said: a held Watch with one or two watchers left walks or picks', () => {
+  const [one] = group(
+    statusOf(member(81, inApp(watching())), member(82, inApp(roomOpen)))
+  );
+  // The button was frozen on Watch; a room opened since. Watch still walks
+  // up to the one watcher (it does not become Join).
+  const walk = liveNowTapChoice('watch', one);
+  assert.ok(walk.kind === 'walk');
+  assert.equal(walk.member.id, 81);
+  assert.equal(walk.intent, 'watch');
+  const [two] = group(
+    statusOf(member(83, inApp(watching())), member(84, inApp(watching())))
+  );
+  const pick = liveNowTapChoice('watch', two);
+  assert.ok(pick.kind === 'pick');
+  assert.equal(pick.verb, 'watch');
+  assert.deepEqual(pick.members.map((entry) => entry.id), [83, 84]);
+});
+
+test('picker live state comes from presence, not the capped choices: someone past the cap stays available', () => {
+  const entries = [];
+  for (let id = 100; id < 100 + LIVE_NOW_MAX_CHOICES; id++)
+    entries.push(member(id, inApp(watching())));
+  // A room opens: choices fill with [room, watchers 100..108]; watcher 109
+  // drops off the capped list but is still watchable.
+  entries.push(member(99, inApp(roomOpen)));
+  const chatStatus = statusOf(...entries);
+  const [now] = group(chatStatus);
+  assert.equal(now.choices.some((entry) => entry.id === 109), false);
+  const live = JSON.parse(
+    readLiveNowPickerSignature({
+      chatStatus,
+      appId: 1,
+      ids: [109, 100],
+      myId: ME,
+      hiddenUserIds: [ZERO]
+    })
+  );
+  assert.equal(live[109].joinable.state, 'busy-watchable');
+  assert.equal(live[100].id, 100);
+});
+
+test('picker live state: someone who left the app, went offline or was blocked reads null', () => {
+  const chatStatus = statusOf(
+    member(91, app(2, { joinable: watching() })),
+    member(92, inApp(watching()), { isOnline: false }),
+    member(93, inApp(watching())),
+    member(94, inApp(watching()))
+  );
+  const live = JSON.parse(
+    readLiveNowPickerSignature({
+      chatStatus,
+      appId: 1,
+      ids: [91, 92, 93, 94, 95],
+      myId: ME,
+      hiddenUserIds: [ZERO],
+      blockedUserIds: new Set([93])
+    })
+  );
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(live).map(([id, value]) => [id, value ? 'here' : null])),
+    { 91: null, 92: null, 93: null, 94: 'here', 95: null }
+  );
 });

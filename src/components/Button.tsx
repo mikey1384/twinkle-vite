@@ -11,6 +11,7 @@ interface ButtonProps {
   'aria-label'?: string;
   'aria-pressed'?: boolean;
   'aria-expanded'?: boolean;
+  'aria-haspopup'?: 'dialog' | 'menu' | 'listbox' | boolean;
   'aria-controls'?: string;
   'aria-describedby'?: string;
   'aria-busy'?: boolean;
@@ -60,6 +61,7 @@ export default function Button(props: ButtonProps) {
     'aria-label': ariaLabel,
     'aria-pressed': ariaPressed,
     'aria-expanded': ariaExpanded,
+    'aria-haspopup': ariaHasPopup,
     'aria-controls': ariaControls,
     'aria-describedby': ariaDescribedBy,
     'aria-busy': ariaBusy,
@@ -202,6 +204,7 @@ export default function Button(props: ButtonProps) {
       aria-label={ariaLabel}
       aria-pressed={ariaPressed}
       aria-expanded={ariaExpanded}
+      aria-haspopup={ariaHasPopup}
       aria-controls={ariaControls}
       aria-describedby={ariaDescribedBy}
       aria-busy={ariaBusy ?? loading}
