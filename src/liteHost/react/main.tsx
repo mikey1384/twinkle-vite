@@ -327,6 +327,7 @@ async function start() {
           <AppAccountSheet
             config={config!}
             t={t}
+            lang={liteHostLang()}
             session={session}
             twinkleToo={accountMode === 'both'}
             onClose={() => setAccountSheetOpen(false)}

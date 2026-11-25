@@ -1,6 +1,7 @@
-// Every word the lite host shows. Sign-in, sign-up, guest and account
-// words are English only (Mikey 11-25: Korean is for parent-facing pages);
-// the badge menu and the report box follow the browser's language.
+// Every word the lite host shows, one dictionary per language, chosen by the
+// browser (Mikey 11-25: the lite host is localized; Twinkle's own sign-up and
+// sign-in screens on twin-kle.com stay English, parent pages Korean). The
+// Korean should read as written in Korean, not translated.
 export type LiteHostLang = 'en' | 'ko';
 
 export function liteHostLang(): LiteHostLang {
@@ -13,7 +14,7 @@ export function liteHostLang(): LiteHostLang {
   return languages.some((value) => /^ko\b/i.test(String(value || ''))) ? 'ko' : 'en';
 }
 
-const BASE_TEXT = {
+export const LITE_HOST_TEXT = {
   en: {
     madeWith: 'Made with Lumine',
     onTwinkle: 'on Twinkle',
@@ -93,6 +94,48 @@ const BASE_TEXT = {
     openOnTwinkle: '트윈클에서 열기',
     makeYourOwn: '나만의 앱 만들기',
     report: '이 앱 신고하기',
+    signIn: '트윈클로 로그인',
+    signOut: '로그아웃',
+    signedInAs: (name: string) => `${name}(으)로 로그인했어요`,
+    signInTitle: '진행 상황 저장하기',
+    signInBody: (title: string) =>
+      `무료 트윈클 계정을 만들면 진행 상황이 저장되고 순위표에도 이름이 올라가요. ${title}은(는) 트윈클에서 만든 게임이에요.`,
+    signInCta: '트윈클로 계속하기',
+    notNow: '게스트로 계속할게요',
+    neverPassword: '로그인과 가입은 twin-kle.com에서 해요. 트윈클은 앱 안에서 비밀번호를 묻지 않아요.',
+    guestHint: '지금은 게스트예요. 로그인하면 진행 상황이 저장돼요.',
+    guestHintCta: '로그인',
+    carriedOver: '게스트로 하던 진행 상황을 계정으로 옮겼어요.',
+    accountSignInTitle: (title: string) => `${title} 로그인`,
+    accountSignUpTitle: (title: string) => `${title} 계정 만들기`,
+    accountSignInBody: '로그인하면 진행 상황이 저장되고 순위표에도 이름이 올라가요.',
+    accountUsername: '아이디',
+    accountPassword: '비밀번호',
+    accountSignIn: '로그인',
+    accountSigningIn: '로그인하는 중…',
+    accountNew: '처음이에요? 계정 만들기',
+    accountHave: '계정이 있어요? 로그인',
+    accountBirth: '생년월을 알려 주세요',
+    accountBirthNote: '만 14세 미만이면 먼저 부모님이나 보호자의 동의를 받아요.',
+    accountMonth: '월',
+    accountYear: '연도',
+    accountMonths: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+    accountNext: '다음',
+    accountBack: '이전',
+    accountUsernameHint: '영문, 숫자, _ 3~19자',
+    accountPasswordHint: '5자 이상',
+    accountCreate: '계정 만들기',
+    accountCreating: '계정을 만드는 중…',
+    accountApprovedNext: '이제 아이디와 비밀번호를 정해 주세요.',
+    accountFailed: '잘 안 됐어요. 다시 해 볼까요?',
+    accountOr: '또는',
+    accountTwinkle: '트윈클로 계속하기',
+    accountPrivacy: '개인정보 처리방침',
+    linkTwinkle: '트윈클 계정 연결하기',
+    linkedTwinkle: '트윈클 계정을 연결했어요. 이제 여기서도 코인과 XP를 받을 수 있어요.',
+    linkFailed: '트윈클 계정을 연결하지 못했어요.',
+    unlinkTwinkle: '트윈클 계정 연결 끊기',
+    unlinkedTwinkle: '이 플레이어와 트윈클 계정의 연결을 끊었어요.',
     linkTitle: (host: string) => `${host}을(를) 열까요?`,
     linkBody: '이 링크는 앱을 떠나 새 탭에서 다른 웹사이트를 열어요.',
     linkOpen: '열기',
@@ -113,17 +156,6 @@ const BASE_TEXT = {
     reportThanks: '고마워요. 트윈클이 확인할게요.',
     close: '닫기'
   }
-};
-
-// English for every sign-in and account word, in every language
-const SIGN_IN_KEYS = ['signIn', 'signOut', 'signedInAs', 'signInTitle', 'signInBody', 'signInCta', 'notNow', 'neverPassword', 'guestHint', 'guestHintCta', 'carriedOver', 'accountSignInTitle', 'accountSignUpTitle', 'accountSignInBody', 'accountUsername', 'accountPassword', 'accountSignIn', 'accountSigningIn', 'accountNew', 'accountHave', 'accountBirth', 'accountBirthNote', 'accountMonth', 'accountYear', 'accountMonths', 'accountNext', 'accountBack', 'accountUsernameHint', 'accountPasswordHint', 'accountCreate', 'accountCreating', 'accountApprovedNext', 'accountFailed', 'accountOr', 'accountTwinkle', 'accountPrivacy', 'linkTwinkle', 'linkedTwinkle', 'linkFailed', 'unlinkTwinkle', 'unlinkedTwinkle'] as const;
-const englishSignIn = Object.fromEntries(
-  SIGN_IN_KEYS.map((key) => [key, BASE_TEXT.en[key]])
-) as Pick<(typeof BASE_TEXT)['en'], (typeof SIGN_IN_KEYS)[number]>;
-
-export const LITE_HOST_TEXT = {
-  en: BASE_TEXT.en,
-  ko: { ...BASE_TEXT.ko, ...englishSignIn }
 };
 
 export type LiteHostText = (typeof LITE_HOST_TEXT)['en'];

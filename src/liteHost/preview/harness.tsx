@@ -19,9 +19,9 @@ import {
 import ParentConsentView from '~/containers/DomainParentConsent/ParentConsentView';
 import SignInCardView from '~/containers/LumineAppSignIn/SignInCardView';
 import AppSignUp from '~/containers/LumineAppSignIn/AppSignUp';
-import { SIGNIN_TEXT } from '~/containers/LumineAppSignIn/text';
+import { SIGNIN_TEXT, signInLang } from '~/containers/LumineAppSignIn/text';
 import { LiteHostProviders } from '../react/LiteHost';
-import { askSignIn, showGuestHint } from '../ui';
+import { askSignIn, mountBadge, showGuestHint } from '../ui';
 import { LITE_HOST_TEXT } from '../text';
 import AppAccountSheet from '../react/AppAccountSheet';
 import AppPlayers from '~/components/Build/AppAddress/AppPlayers';
@@ -231,7 +231,7 @@ function Harness() {
             allow={noop}
             handBack={noop}
             onOpenSigninModal={noop}
-            signUp={<AppSignUp buildId={2} origin="https://the-adventure-of-a-red-square.lumine.app" appTitle="The Adventure of a Red Square" t={SIGNIN_TEXT} onBack={noop} onCreated={() => { document.body.dataset.created = '1'; }} />}
+            signUp={<AppSignUp buildId={2} origin="https://the-adventure-of-a-red-square.lumine.app" appTitle="The Adventure of a Red Square" lang={signInLang()} t={SIGNIN_TEXT[signInLang()]} onBack={noop} onCreated={() => { document.body.dataset.created = '1'; }} />}
           />
         </LiteHostProviders>
       );
@@ -244,6 +244,7 @@ function Harness() {
           <AppAccountSheet
             config={{ ...SITE_CONFIG, apiOrigin: '', siteOrigin: 'https://www.twin-kle.com' } as any}
             t={LITE_HOST_TEXT[lang]}
+            lang={lang}
             session={{ post: async () => ({ token: 'a_preview.preview', expiresAt: Math.floor(Date.now() / 1000) + 86400 }), signInAppAccount: async () => null, signUpAppAccount: async () => null, signIn: async () => null } as any}
             twinkleToo={screen === 'account-both'}
             onClose={noop}
@@ -278,6 +279,8 @@ function Harness() {
           </Page>
         </LiteHostProviders>
       );
+    case 'menu':
+      return <BadgeMenu />;
     case 'host-sheet':
     case 'host-hint':
       return <HostSheet hint={screen === 'host-hint'} />;
@@ -294,6 +297,35 @@ function HostSheet({ hint }: { hint: boolean }) {
     else void askSignIn({ config: SITE_CONFIG, t, session: { signIn: async () => null } as any });
   }, [hint]);
   return <div style={{ position: 'fixed', inset: 0, background: 'linear-gradient(#5aa9e6, #9fd7ff 60%, #6bbf59 60%)' }} />;
+}
+
+// The ✦ badge and its menu over a game (the shoot script paints the game).
+function BadgeMenu() {
+  React.useEffect(() => {
+    const signed = params.get('signed') === '1';
+    const kind = params.get('kind') || 'twinkle';
+    const fakeSession: any = {
+      get: () =>
+        signed
+          ? { user: { id: 5, username: kind === 'app' ? 'speedy_sam' : 'lily' }, appPlayer: { id: 3, kind: kind === 'app' ? 'app' : 'twinkle', linked: false } }
+          : null,
+      signIn: async () => null,
+      signOut: async () => {}
+    };
+    const config = {
+      ...SITE_CONFIG,
+      thumbnailUrl: params.get('thumb') || null,
+      owner: { id: 1, username: 'mikey' }
+    };
+    const badge = mountBadge({
+      config,
+      t: LITE_HOST_TEXT[lang],
+      session: fakeSession,
+      onReport: () => {}
+    });
+    if (params.get('open') !== '0') window.setTimeout(() => badge.click(), 50);
+  }, []);
+  return null;
 }
 
 const RECORDS = [

@@ -9,7 +9,7 @@ import {
   clearGuardianConsent,
   needsGuardianConsent
 } from '~/helpers/signupPasses';
-import type { SignInText } from './text';
+import type { SignInLang, SignInText } from './text';
 
 // "Create a free account" in an app's sign-in window (Mikey, 2026-11-25):
 // a free Twinkle account in three short steps, with the app's maker as the
@@ -54,6 +54,7 @@ export default function AppSignUp({
   buildId,
   origin,
   appTitle,
+  lang,
   t,
   onBack,
   onCreated
@@ -61,6 +62,7 @@ export default function AppSignUp({
   buildId: number;
   origin: string;
   appTitle: string;
+  lang: SignInLang;
   t: SignInText;
   onBack: () => void;
   onCreated: (account: any) => void;
@@ -99,6 +101,7 @@ export default function AppSignUp({
     return (
       <div className={stepWrapClass}>
         <GuardianConsent
+          lang={lang}
           inviteToken={pass.token}
           birthYear={birth.birthYear}
           birthMonth={birth.birthMonth}

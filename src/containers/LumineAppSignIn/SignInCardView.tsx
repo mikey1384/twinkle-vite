@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { SIGNIN_TEXT } from './text';
+import { SIGNIN_TEXT, signInLang } from './text';
 
 // The "Sign in with Twinkle" card for a Lumine app on its own address
 // (container: ./index.tsx). Plain view so the preview renders the same card.
@@ -40,7 +40,7 @@ export default function SignInCardView({
   // opened by an app account's "Link a Twinkle account"
   link?: boolean;
 }) {
-  const t = SIGNIN_TEXT;
+  const t = SIGNIN_TEXT[signInLang()];
   const signedOutLanding = app && originAllowed && !userId && !signUp;
   return (
     <div className={pageClass}>
