@@ -8,6 +8,7 @@ import {
   openAssistantDock,
   subscribeAssistantDock
 } from '~/containers/App/AssistantDock/dockState';
+import { saveHomeCallAssistant } from '~/helpers/aiVoiceCall';
 import Greeter from './Greeter';
 import TourPanel from './TourPanel';
 import {
@@ -232,6 +233,9 @@ export default function WelcomeTourHost() {
     );
     pendingStopKey.current = '';
     setGuide(picked);
+    // The guide they pick becomes the Home page's default call partner
+    // (the chooser under the call button). Mikey 11-25.
+    saveHomeCallAssistant(userId || null, picked === 'ciel' ? 'Ciel' : 'Zero');
     setStops(ordered);
     setIndex(startAt);
     setDone([]);
