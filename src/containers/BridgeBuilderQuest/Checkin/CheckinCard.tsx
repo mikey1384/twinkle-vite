@@ -39,10 +39,14 @@ const pop = keyframes`
 // counts). Refusals are never explained; only "time ran out" is stated.
 export default function CheckinCard({
   achievementTitle,
-  onUnlocked
+  onUnlocked,
+  onlyIfStarted
 }: {
   achievementTitle: string;
   onUnlocked?: () => void;
+  // 11-25: the 7-person check-in is no longer a promoted path; show it only
+  // to members who already have check-ins in progress so nobody loses them
+  onlyIfStarted?: boolean;
 }) {
   const navigate = useNavigate();
   const loadMeetupCheckins = useAppContext(
@@ -71,7 +75,18 @@ export default function CheckinCard({
 
   const title = achievementTitle || 'Bridge Builder';
   if (!progress) {
-    return error ? <QuestNote tone="warning">{error}</QuestNote> : null;
+    return error && !onlyIfStarted ? (
+      <QuestNote tone="warning">{error}</QuestNote>
+    ) : null;
+  }
+  if (
+    onlyIfStarted &&
+    progress.people.length === 0 &&
+    !progress.witnessPending &&
+    !progress.review &&
+    !progress.unlocked
+  ) {
+    return null;
   }
   const canCheckIn = progress.myAge !== 'adult';
   const counted = progress.people.filter((p) => p.state === 'counted');
@@ -113,7 +128,7 @@ export default function CheckinCard({
           color: ${Color.logoBlue()};
         `}
       >
-        <Icon icon="qrcode" /> Path 1 · Meet up
+        <Icon icon="qrcode" /> Your meet-up check-ins
       </div>
       <h2
         className={css`

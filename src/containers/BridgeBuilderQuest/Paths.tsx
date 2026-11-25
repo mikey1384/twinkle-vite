@@ -6,21 +6,17 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { QuestNote } from './StepCard';
 import type { CrewView } from './types';
 
-// Bridge Builder's three independent paths (Mikey 2026-11-21): finishing
-// ANY ONE earns it; they are never mixed or added together.
+// Bridge Builder's two paths (Mikey 2026-11-25: crew + tour are the key ways;
+// the 7-person check-in repeated the crew, and the original Face to Face rule
+// stays valid as an unpromoted footnote). Either one earns it.
 export function PathsIntro({ title }: { title: string }) {
   return (
     <section className={introClass}>
       <h1 className={introTitleClass}>{title}</h1>
       <p className={introTextClass}>
-        Three ways to earn it. Finish <b>any one</b> path and it&apos;s yours
-        (the paths don&apos;t add up together):
+        Two ways to earn it. Finish <b>either one</b> and it&apos;s yours:
       </p>
       <ol className={introListClass}>
-        <li>
-          <b>Meet up:</b> check in with 7 people you meet in real life (friends
-          you bring to Twinkle count too).
-        </li>
         <li>
           <b>Crew:</b> make a crew with Twinkle friends and meet up together.
         </li>
@@ -29,6 +25,11 @@ export function PathsIntro({ title }: { title: string }) {
           Twinkle Minecraft World.
         </li>
       </ol>
+      <p className={footnoteClass}>
+        Or the original way: meet up in person with a parent or Twinkle teacher
+        there, 3 or more students from different Twinkle branches, doing
+        something educational on video. Mikey awards it.
+      </p>
     </section>
   );
 }
@@ -58,7 +59,7 @@ export function CrewPathCard({
   return (
     <section className={cardClass}>
       <div className={labelClass}>
-        <Icon icon="users" /> Path 2 · Crew
+        <Icon icon="users" /> Path 1 · Crew
       </div>
       <h2 className={titleClass}>
         {met ? 'Crew path done!' : 'Meet up with your crew'}
@@ -136,4 +137,10 @@ const titleClass = css`
   margin: 0.4rem 0 0;
   font-size: 2.1rem;
   color: ${Color.black()};
+`;
+
+const footnoteClass = css`
+  margin: 1rem 0 0;
+  font-size: 1.2rem;
+  color: ${Color.gray()};
 `;

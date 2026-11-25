@@ -45,6 +45,7 @@ export default function ItemPanel({
   unlockMessage,
   requirements = [],
   anyOf = false,
+  afterRequirements,
   badgeSrc,
   milestones,
   progressObj,
@@ -62,6 +63,8 @@ export default function ItemPanel({
   requirements?: React.ReactNode[];
   // the requirements are alternative ways (any one unlocks it), not a checklist
   anyOf?: boolean;
+  // shown under the ways (buttons, a footnote)
+  afterRequirements?: React.ReactNode;
   badgeSrc?: string;
   milestones?: { name: string; completed: boolean }[];
   progressObj?: { label: string; currentValue: number; targetValue: number };
@@ -383,6 +386,7 @@ export default function ItemPanel({
               {requirement}
             </div>
           ))}
+          {afterRequirements}
           {phasesShown &&
             visiblePhases.map((phase, index) => {
               const isCurrent = !phase.completed;

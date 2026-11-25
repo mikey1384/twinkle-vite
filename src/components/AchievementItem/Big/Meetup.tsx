@@ -4,7 +4,8 @@ import ItemPanel from './ItemPanel';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { FACE_TO_FACE_RECRUIT_TARGET } from '~/constants/meetupQuest';
 
@@ -17,7 +18,7 @@ export const BRIDGE_BUILDER_QUEST_PATH = '/achievements/bridge-builder';
 export default function Meetup({
   isThumb,
   isNotification,
-  data: { id, ap, title, description, progressObj, unlockMessage },
+  data: { id, ap, title, description, unlockMessage },
   style
 }: {
   isThumb?: boolean;
@@ -81,14 +82,18 @@ export default function Meetup({
         unlockMessage={unlockMessage}
         anyOf
         requirements={[
+          <>Crew: make a crew with Twinkle friends and meet up together.</>,
           <>
-            Meet up: check in with {FACE_TO_FACE_RECRUIT_TARGET} different
-            people you meet in real life (friends you bring to Twinkle count
-            too), or meet up once with a Twinkle teacher or your parent there.
+            Show friends around: take {FACE_TO_FACE_RECRUIT_TARGET} different
+            Twinkle friends on the tour of Twinkle Minecraft World.
+          </>
+        ]}
+        afterRequirements={
+          <>
             {questShown && (
               <div
                 style={{
-                  marginTop: '0.8rem',
+                  marginTop: '1rem',
                   display: 'flex',
                   gap: '0.6rem',
                   flexWrap: 'wrap'
@@ -99,8 +104,8 @@ export default function Meetup({
                   color="green"
                   onClick={() => navigate(BRIDGE_BUILDER_QUEST_PATH)}
                 >
-                  <Icon icon="qrcode" style={{ marginRight: '0.5rem' }} />
-                  See all three ways
+                  <Icon icon="arrow-right" style={{ marginRight: '0.5rem' }} />
+                  How it works
                 </Button>
                 {!!quest?.crewId && (
                   <Button
@@ -119,17 +124,22 @@ export default function Meetup({
                 )}
               </div>
             )}
-          </>,
-          <>Crew: make a crew with Twinkle friends and meet up together.</>,
-          <>
-            Show friends around: take {FACE_TO_FACE_RECRUIT_TARGET} different
-            Twinkle friends on the tour of Twinkle Minecraft World.{' '}
-            <Link to={BRIDGE_BUILDER_QUEST_PATH} style={{ fontWeight: 'bold' }}>
-              How it works
-            </Link>
+            {!isNotification && (
+              <div
+                style={{
+                  marginTop: '1rem',
+                  fontSize: '1.1rem',
+                  color: Color.gray()
+                }}
+              >
+                Or the original way: meet up in person with a parent or Twinkle
+                teacher there, 3 or more students from different Twinkle
+                branches, doing something educational on video. Mikey awards
+                it.
+              </div>
+            )}
           </>
-        ]}
-        progressObj={progressObj}
+        }
         badgeSrc={MeetupBadge}
       />
     </ErrorBoundary>

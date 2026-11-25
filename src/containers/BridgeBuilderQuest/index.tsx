@@ -173,7 +173,6 @@ export default function BridgeBuilderQuest({
           ) : (
             <>
               <PathsIntro title={achievementTitle || 'Bridge Builder'} />
-              <CheckinCard achievementTitle={achievementTitle} />
               <CrewPathCard
                 crew={data?.myCrew}
                 onOpen={() => {
@@ -192,6 +191,7 @@ export default function BridgeBuilderQuest({
                 }}
               />
               <TourCard />
+              <CheckinCard achievementTitle={achievementTitle} onlyIfStarted />
             </>
           )}
 

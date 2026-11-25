@@ -72,7 +72,7 @@ export default function TourCard() {
   return (
     <section className={cardClass}>
       <div className={labelClass}>
-        <Icon icon="cubes" /> Path 3 · Show friends around
+        <Icon icon="cubes" /> Path 2 · Show friends around
       </div>
       <h2 className={titleClass}>
         {tour.unlocked
