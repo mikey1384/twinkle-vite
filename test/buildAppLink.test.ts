@@ -11,6 +11,12 @@ import {
 } from '../src/containers/Build/PreviewPanel/helpers/appLinkPolicy';
 import { isMutatingPreviewRequestType } from '../src/containers/Build/PreviewPanel/helpers/previewRequestPolicy';
 import { runAppLinkBridgeRequest } from '../src/containers/Build/PreviewPanel/helpers/appLinkBridge';
+import {
+  createLinkBlocklistClient,
+  LINK_BLOCKLIST_FRESH_MS,
+  LINK_BLOCKLIST_RETRY_MS,
+  matchBlockedLinkHost
+} from '../src/helpers/linkBlocklistClient';
 
 // Twinkle.app.openLink: the Twinkle page's own check of the link an app asks
 // to open, the site name its sheet shows, and one sheet at a time.
@@ -170,4 +176,63 @@ test('the bridge: captures answer "not opened" with no sheet; the tap is read as
     source,
     /case 'app:open-link': \{[\s\S]*?runAppLinkBridgeRequest\(\{[\s\S]*?capture: Boolean\(captureScratchStore\)[\s\S]*?userActivationApi: navigator\.userActivation[\s\S]*?requestBuildAppLinkRef\?\.current[\s\S]*?normalizeAllowedBuildPreviewFrameSrc[\s\S]*?pendingHostNavigationUrl = linkResult\.navigateUrl[\s\S]*?response = linkResult\.response;/
   );
+});
+
+test('the blocked-site list is matched on the page: subdomains, any host characters, never neighbours', () => {
+  const blocked = new Set(['blocked.com', '203.0.113.5']);
+  assert.equal(matchBlockedLinkHost('blocked.com', blocked), 'blocked.com');
+  assert.equal(matchBlockedLinkHost('a_b.blocked.com', blocked), 'blocked.com');
+  assert.equal(matchBlockedLinkHost('WWW.Blocked.COM.', blocked), 'blocked.com');
+  assert.equal(matchBlockedLinkHost('notblocked.com', blocked), null);
+  assert.equal(matchBlockedLinkHost('blocked.com.evil.net', blocked), null);
+  assert.equal(matchBlockedLinkHost('203.0.113.5', blocked), '203.0.113.5');
+});
+
+test('the list loads once, a slow list is waited for, 4xx refuses, only real failures are unknown', async () => {
+  let clock = 1_000_000;
+  const now = () => clock;
+  const answers: Array<() => Promise<{ hosts?: unknown }>> = [];
+  let loads = 0;
+  const fetchList = () => {
+    loads += 1;
+    return (answers.shift() || (() => Promise.resolve({ hosts: ['blocked.com'] })))();
+  };
+  const fail = (status: number) => () => Promise.reject(Object.assign(new Error('x'), { status }));
+  const slow = (ms: number, hosts: string[]) => () =>
+    new Promise<{ hosts: string[] }>((resolve) => setTimeout(() => resolve({ hosts }), ms));
+
+  // a slow list (200 ms) is waited for
+  answers.push(slow(200, ['blocked.com']));
+  const client = createLinkBlocklistClient({ fetchList, now, waitMs: 1000 });
+  assert.equal(await client.check('a_b.blocked.com'), 'blocked');
+  assert.equal(await client.check('fine.org'), 'allowed');
+  for (let index = 0; index < 50; index += 1) await client.check('x.blocked.com');
+  assert.equal(loads, 1, 'one load for every check while fresh');
+
+  // too slow: unknown (the sheet shows), the load still lands later
+  answers.push(slow(300, ['blocked.com']));
+  const waiting = createLinkBlocklistClient({ fetchList, now, waitMs: 50 });
+  assert.equal(await waiting.check('blocked.com'), 'unknown');
+  await new Promise((resolve) => setTimeout(resolve, 350));
+  assert.equal(await waiting.check('blocked.com'), 'blocked');
+
+  // a 4xx never fails open; a network error or 5xx with no list is unknown
+  for (const [status, expected] of [[429, 'refused'], [400, 'refused'], [404, 'refused'], [0, 'unknown'], [503, 'unknown']] as const) {
+    answers.push(fail(status));
+    const fresh = createLinkBlocklistClient({ fetchList, now, waitMs: 1000 });
+    assert.equal(await fresh.check('blocked.com'), expected, String(status));
+  }
+
+  // an older list is used when a refresh fails with a 5xx; a retry waits 10 s
+  const keeper = createLinkBlocklistClient({ fetchList, now, waitMs: 1000 });
+  assert.equal(await keeper.check('blocked.com'), 'blocked');
+  clock += LINK_BLOCKLIST_FRESH_MS;
+  answers.push(fail(502));
+  const before = loads;
+  assert.equal(await keeper.check('blocked.com'), 'blocked');
+  assert.equal(await keeper.check('blocked.com'), 'blocked');
+  assert.equal(loads, before + 1, 'no retry inside the back-off');
+  clock += LINK_BLOCKLIST_RETRY_MS;
+  assert.equal(await keeper.check('blocked.com'), 'blocked');
+  assert.equal(loads, before + 2);
 });

@@ -33,7 +33,7 @@ import {createRoot} from 'react-dom/client';
 import useAppLinkConfirm from './src/components/Build/AppLink/useAppLinkConfirm';
 import {runAppLinkBridgeRequest} from './src/containers/Build/PreviewPanel/helpers/appLinkBridge';
 import {normalizeAllowedBuildPreviewFrameSrc} from './src/helpers/buildPreviewOriginHelpers';
-window.posts=[];window.checks=[];window.blockedHosts=[];
+window.posts=[];
 function Fixture(){
  const frameRootRef=useRef(null);
  const {appLinkModal,handleAppLinkRequest}=useAppLinkConfirm({buildId:884,signedIn:true,frameRootRef});
@@ -62,7 +62,7 @@ async function compileFixture() {
   if (bundle) return bundle;
   const stubs = {
     '~/contexts':
-      'const state={requestHelpers:{recordBuildAppLinkEvents:(event)=>{window.posts.push(event);return Promise.resolve();},checkLinkHost:(host)=>{window.checks.push(host);if(host==="slow.example.com")return Promise.reject(new Error("offline"));return Promise.resolve({blocked:window.blockedHosts.some((b)=>host===b||host.endsWith("."+b))});}}};export const useAppContext=select=>select(state);',
+      'const state={requestHelpers:{recordBuildAppLinkEvents:(event)=>{window.posts.push(event);return Promise.resolve();},loadLinkBlocklist:()=>{window.listLoads=(window.listLoads||0)+1;const c=window.listConfig||{};return new Promise((resolve,reject)=>setTimeout(()=>c.status!==undefined?reject(Object.assign(new Error("list"),{status:c.status})):resolve({hosts:c.hosts||[]}),c.delayMs||0));}}};export const useAppContext=select=>select(state);',
     '~/theme/hooks/useRoleColor':
       'export const useRoleColor=()=>({getColor:()=>"#126bb5",color:"#126bb5",colorKey:"logoBlue",themeName:"logoBlue"});',
     '~/helpers':
@@ -128,7 +128,7 @@ const VIEWS = [
   { name: 'desktop', options: { viewport: { width: 1280, height: 800 } } }
 ];
 
-async function open(browser, view) {
+async function open(browser, view, listConfig = { hosts: [] }) {
   const context = await browser.newContext(view.options);
   const styles = readFileSync(path.join(repo, 'src/styles.css'), 'utf8');
   await context.route('**/*', (route) => {
@@ -141,6 +141,8 @@ async function open(browser, view) {
     }
     return route.abort();
   });
+  // the blocked-site list the page downloads (GET /build/link-blocklist)
+  await context.addInitScript((config) => { window.listConfig = config; }, listConfig);
   const page = await context.newPage();
   page.setDefaultTimeout(8000);
   const errors = [];
@@ -275,19 +277,16 @@ for (const engine of ['chromium', 'webkit']) {
     );
 
     test(
-      `blocked sites get a short note; a thousand calls in one tap make one request (${engine}, ${view.name})`,
+      `blocked sites (and their subdomains) get a short note; a thousand calls in one tap make one request (${engine}, ${view.name})`,
       { skip: !browsers && 'Install existing Playwright tooling or set PLAYWRIGHT_MODULE_PATH', timeout: 120000 },
       async () => {
         const browser = await browsers[engine].launch();
         try {
-          // a fresh page: the 5-sheets-a-minute limit starts again
-          const { context, page, errors } = await open(browser, view);
+          // a fresh page whose list loads slowly (1.5 s): a tap waits for it
+          const { context, page, errors } = await open(browser, view, { hosts: ['example.org', 'blocked.com'], delayMs: 1500 });
           let popups = 0;
           context.on('page', () => (popups += 1));
-          let pending;
-          // a blocked site (and its subdomains): a short note, OK, LINK_BLOCKED, no tab
-          await page.evaluate(() => { window.blockedHosts = ['example.org']; });
-          pending = page.evaluate(() => window.requestLink('https://www.example.org/games'));
+          let pending = page.evaluate(() => window.requestLink('https://www.example.org/games'));
           await sheet(page).waitFor();
           const blockedText = (await sheet(page).innerText()).replace(/\s+/g, ' ');
           assert.match(blockedText, /This site can't be opened from Twinkle apps/);
@@ -295,18 +294,29 @@ for (const engine of ['chromium', 'webkit']) {
           assert.equal(await sheet(page).getByRole('button', { name: 'Open' }).count(), 0);
           await settle(page, 700);
           await shot(page, `blocked-${engine}-${view.name}`);
-          const popupsBeforeBlocked = popups;
           await sheet(page).getByRole('button', { name: 'OK' }).click();
           assert.equal((await pending).code, 'LINK_BLOCKED');
-          assert.equal(popups, popupsBeforeBlocked);
-          // the check could not be answered: the sheet shows as usual
+          assert.equal(popups, 0);
+
+          // an app flooding openLink (and anything else it can call) cannot
+          // switch the list off: nothing is asked per link. A host with '_'
+          // under a blocked domain is blocked too.
           await settle(page, 1600);
-          pending = page.evaluate(() => window.requestLink('https://slow.example.com/'));
+          const burst = page.evaluate(() =>
+            Promise.all(Array.from({ length: 300 }, () => window.requestLink('https://blocked.com/a')))
+          );
           await sheet(page).waitFor();
-          assert.match(await sheet(page).innerText(), /Open slow\.example\.com\?/);
-          await page.keyboard.press('Escape');
-          await pending;
-          assert.deepEqual(await page.evaluate(() => window.checks.filter((h) => h.includes('example.org'))), ['www.example.org'], 'only the host was asked, once');
+          await sheet(page).getByRole('button', { name: 'OK' }).click();
+          const burstCodes = (await burst).map((r) => r.code);
+          assert.equal(burstCodes.filter((code) => code === 'LINK_BLOCKED').length, 1);
+          assert.equal(burstCodes.filter((code) => code === 'LINK_CONFIRM_IN_PROGRESS').length, 299);
+          await settle(page, 1600);
+          pending = page.evaluate(() => window.requestLink('https://a_b.blocked.com/'));
+          await sheet(page).waitFor();
+          assert.match(await sheet(page).innerText(), /can't be opened/);
+          await sheet(page).getByRole('button', { name: 'OK' }).click();
+          assert.equal((await pending).code, 'LINK_BLOCKED');
+          assert.equal(await page.evaluate(() => window.listLoads), 1, 'the list was loaded once for the page');
 
           // a browser without the user-activation API still gets the sheet
           await settle(page, 1600);
@@ -332,8 +342,44 @@ for (const engine of ['chromium', 'webkit']) {
           assert.equal(posts.length, 1, 'one request for everything');
           assert.equal(posts[0].buildId, 884);
           assert.equal(posts[0].keepalive, true);
-          assert.deepEqual(posts[0].counts, { rejected: 50, blocked: 1, shown: 3, cancelled: 3 });
+          assert.deepEqual(posts[0].counts, { rejected: 50, blocked: 3, shown: 2, cancelled: 2 });
           assert.deepEqual(errors, []);
+        } finally {
+          await browser.close();
+        }
+      }
+    );
+
+    test(
+      `a refused list stops the link; only a real network failure shows the sheet unchecked (${engine}, ${view.name})`,
+      { skip: !browsers && 'Install existing Playwright tooling or set PLAYWRIGHT_MODULE_PATH', timeout: 120000 },
+      async () => {
+        const browser = await browsers[engine].launch();
+        try {
+          for (const status of [429, 400]) {
+            const { page, context, errors } = await open(browser, view, { status });
+            const pending = page.evaluate(() => window.requestLink('https://example.com/'));
+            await sheet(page).waitFor();
+            assert.match(await sheet(page).innerText(), /Couldn't check this site\. Try again in a moment\./);
+            assert.equal(await sheet(page).getByRole('button', { name: 'Open' }).count(), 0);
+            if (status === 429) {
+              await settle(page, 700);
+              await shot(page, `unchecked-${engine}-${view.name}`);
+            }
+            await sheet(page).getByRole('button', { name: 'OK' }).click();
+            assert.equal((await pending).code, 'LINK_CHECK_UNAVAILABLE');
+            assert.deepEqual(errors, []);
+            await context.close();
+          }
+          for (const config of [{ status: 0 }, { status: 503 }, { hosts: ['example.com'], delayMs: 6000 }]) {
+            const { page, context } = await open(browser, view, config);
+            const pending = page.evaluate(() => window.requestLink('https://example.com/'));
+            await sheet(page).waitFor({ timeout: 9000 });
+            assert.match(await sheet(page).innerText(), /Open example\.com\?/, JSON.stringify(config));
+            await page.keyboard.press('Escape');
+            assert.equal((await pending).ok.response.opened, false);
+            await context.close();
+          }
         } finally {
           await browser.close();
         }

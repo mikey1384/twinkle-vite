@@ -591,15 +591,21 @@ export default function buildRequestHelpers({
         // telemetry
       }
     },
-    // Is this site on Twinkle's blocked list? Only the host is sent. Throws
-    // when the answer is unknown (the caller then shows its sheet as usual).
-    async checkLinkHost(host: string) {
-      const { data } = await request.post(
-        `${URL}/build/link-check`,
-        { host },
-        { timeout: 4000, maxRetries: 0 } as any
-      );
-      return { blocked: data?.blocked === true };
+    // Twinkle's whole blocked-site list for the page to match links against
+    // (helpers/linkBlocklistClient.ts). No sign-in; the server and the
+    // browser cache it. Errors carry the HTTP status (0 for no answer).
+    async loadLinkBlocklist() {
+      try {
+        const { data } = await request.get(`${URL}/build/link-blocklist`, {
+          timeout: 8000,
+          maxRetries: 0
+        } as any);
+        return { hosts: Array.isArray(data?.hosts) ? data.hosts : [] };
+      } catch (error: any) {
+        throw Object.assign(new Error('link blocklist unavailable'), {
+          status: Number(error?.response?.status || error?.status || 0)
+        });
+      }
     },
     async loadBuildRewardSettings(buildId: number) {
       const { data } = await request.get(

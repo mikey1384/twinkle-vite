@@ -15,6 +15,7 @@ import type {
   AppLinkBridgeHandlerRequest,
   AppLinkBridgeResult
 } from '~/containers/Build/PreviewPanel/helpers/appLinkBridge';
+import { createLinkBlocklistClient } from '~/helpers/linkBlocklistClient';
 import {
   isFullscreen,
   leaveFullscreenAndPointerLock,
@@ -42,8 +43,12 @@ import {
 //
 // A site on Twinkle's blocked list (`lumine admin link-block`) gets a short
 // "This site can't be opened from Twinkle apps" note with one OK button,
-// and the app's call is refused with LINK_BLOCKED. If the check cannot be
-// answered (offline, slow), the sheet shows as usual.
+// and the app's call is refused with LINK_BLOCKED. The page holds the whole
+// list and matches it here (helpers/linkBlocklistClient.ts); a tap before
+// it has loaded waits for it a few seconds. When the server refuses the
+// list (a 4xx) the link is not opened ("Couldn't check this site",
+// LINK_CHECK_UNAVAILABLE); only a real network error, timeout or 5xx with
+// no list at all shows the sheet unchecked.
 //
 // Counts (shown / opened / cancelled / rejected / blocked) are tallied on
 // the page and sent together at most every APP_LINK_FLUSH_MS and when the
@@ -54,7 +59,6 @@ export const APP_LINK_FLUSH_MS = 45_000;
 export const APP_LINK_FLUSH_CAP = 50;
 // the SDK gives up after 5 minutes; the sheet closes as Cancel before that
 export const APP_LINK_SHEET_MAX_MS = 4.5 * 60_000;
-const HOST_CHECK_REMEMBER_MS = 10 * 60_000;
 
 const bodyClass = css`
   display: grid;
@@ -97,7 +101,7 @@ type Tally = Partial<Record<CountKind, number>>;
 
 interface Session {
   id: number;
-  mode: 'confirm' | 'blocked';
+  mode: 'confirm' | 'blocked' | 'unchecked';
   url: string;
   site: AppLinkSite;
   resolve: (opened: boolean) => void;
@@ -107,8 +111,18 @@ export type AppLinkRequest = AppLinkBridgeHandlerRequest;
 export type AppLinkResult = AppLinkBridgeResult;
 
 let nextSessionId = 0;
-// host -> blocked answer, shared by every panel on the page
-const hostChecks = new Map<string, { blocked: boolean; at: number }>();
+// One list for the whole page, loaded through whichever panel asked last.
+const blocklistFetch: { current: (() => Promise<{ hosts?: unknown }>) | null } = {
+  current: null
+};
+const blocklist = createLinkBlocklistClient({
+  fetchList: () => {
+    if (!blocklistFetch.current) {
+      return Promise.reject(Object.assign(new Error('unavailable'), { status: 0 }));
+    }
+    return blocklistFetch.current();
+  }
+});
 
 function appLinkError(message: string, code: string) {
   const error = new Error(message) as Error & { code?: string };
@@ -148,11 +162,10 @@ export default function useAppLinkConfirm({
   const recordBuildAppLinkEvents = useAppContext(
     (v) => v.requestHelpers.recordBuildAppLinkEvents
   );
-  const checkLinkHost = useAppContext((v) => v.requestHelpers.checkLinkHost);
+  const loadLinkBlocklist = useAppContext((v) => v.requestHelpers.loadLinkBlocklist);
   const recordRef = useRef(recordBuildAppLinkEvents);
   recordRef.current = recordBuildAppLinkEvents;
-  const checkRef = useRef(checkLinkHost);
-  checkRef.current = checkLinkHost;
+  if (loadLinkBlocklist) blocklistFetch.current = loadLinkBlocklist;
   const flushTargetRef = useRef({ buildId, signedIn });
   flushTargetRef.current = { buildId, signedIn };
   const tallyRef = useRef<Tally>({});
@@ -208,6 +221,7 @@ export default function useAppLinkConfirm({
   }, [session, frameRootRef]);
 
   useEffect(() => {
+    blocklist.preload();
     const onHide = () => flush(true);
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') flush(true);
@@ -271,20 +285,6 @@ export default function useAppLinkConfirm({
     finish(true);
   }
 
-  async function isBlocked(host: string) {
-    const known = hostChecks.get(host);
-    if (known && Date.now() - known.at < HOST_CHECK_REMEMBER_MS) return known.blocked;
-    try {
-      const answer = await checkRef.current?.(host);
-      const blocked = answer?.blocked === true;
-      hostChecks.set(host, { blocked, at: Date.now() });
-      while (hostChecks.size > 500) hostChecks.delete(hostChecks.keys().next().value!);
-      return blocked;
-    } catch {
-      return false; // unknown: the sheet is still the viewer's choice
-    }
-  }
-
   function showSession(mode: Session['mode'], url: string, site: AppLinkSite) {
     return new Promise<boolean>((resolve) => {
       const next: Session = { id: ++nextSessionId, mode, url, site, resolve };
@@ -324,14 +324,22 @@ export default function useAppLinkConfirm({
     }
     let opened = false;
     try {
-      const host = new URL(decision.url).hostname;
-      if (await isBlocked(host)) {
+      const answer = await blocklist.check(new URL(decision.url).hostname);
+      if (answer === 'blocked') {
         count('rejected');
         count('blocked');
         await showSession('blocked', decision.url, decision.site);
         throw appLinkError(
           "This site can't be opened from Twinkle apps.",
           'LINK_BLOCKED'
+        );
+      }
+      if (answer === 'refused') {
+        count('rejected');
+        await showSession('unchecked', decision.url, decision.site);
+        throw appLinkError(
+          "Couldn't check this site. Try again in a moment.",
+          'LINK_CHECK_UNAVAILABLE'
         );
       }
       count('shown');
@@ -344,9 +352,10 @@ export default function useAppLinkConfirm({
   }
 
   const appLinkModal = session ? (
-    session.mode === 'blocked' ? (
+    session.mode !== 'confirm' ? (
       <AppLinkBlockedNote
         key={session.id}
+        unchecked={session.mode === 'unchecked'}
         site={session.site}
         confirmColor={confirmColor}
         onClose={() => finish(false)}
@@ -447,25 +456,27 @@ export function AppLinkSheet({
 
 export function AppLinkBlockedNote({
   site,
+  unchecked = false,
   confirmColor,
   onClose
 }: {
   site: AppLinkSite;
+  // the list could not be checked (the server refused it), not a block
+  unchecked?: boolean;
   confirmColor: string;
   onClose: () => void;
 }) {
+  const title = unchecked
+    ? "Couldn't check this site. Try again in a moment."
+    : `This site can't be opened from ${SITE_NAME} apps`;
   return (
     <Modal
       modalKey="AppLinkBlockedModal"
       isOpen
       onClose={onClose}
       hasHeader
-      header={
-        <span className={headerClass}>
-          This site can&apos;t be opened from {SITE_NAME} apps
-        </span>
-      }
-      aria-label={`This site can't be opened from ${SITE_NAME} apps`}
+      header={<span className={headerClass}>{title}</span>}
+      aria-label={title}
       size="sm"
       modalLevel={2}
       priority
