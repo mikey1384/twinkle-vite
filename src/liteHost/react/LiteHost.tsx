@@ -231,6 +231,7 @@ export function LiteHostBridge({
   retiredRef,
   onGuestRestricted,
   onAiNeedsAccount,
+  onRewardsNeedMember,
   guestStore,
   accountKind,
   authHost,
@@ -244,6 +245,7 @@ export function LiteHostBridge({
   onGuestRestricted: () => void;
   // an AI action from a guest or an app-only player: the AI banner
   onAiNeedsAccount?: () => void;
+  onRewardsNeedMember?: () => void;
   // A signed-out visitor's private storage on this device (guestStore.ts).
   guestStore: GuestPrivateDb | null;
   // Twinkle.auth: the signed-in player's kind, and the lite host's own
@@ -331,6 +333,8 @@ export function LiteHostBridge({
   onGuestRestrictedRef.current = onGuestRestricted;
   const onAiNeedsAccountRef = useRef(onAiNeedsAccount);
   onAiNeedsAccountRef.current = onAiNeedsAccount;
+  const onRewardsNeedMemberRef = useRef(onRewardsNeedMember);
+  onRewardsNeedMemberRef.current = onRewardsNeedMember;
   // the sign-in hint waits a tick, so an AI action shows the AI banner
   // instead (onAiNeedsAccount runs first, in the bridge's catch)
   const aiBannerShownAtRef = useRef(0);
@@ -361,7 +365,8 @@ export function LiteHostBridge({
     onAiNeedsAccount: () => {
       aiBannerShownAtRef.current = Date.now();
       onAiNeedsAccountRef.current?.();
-    }
+    },
+    onRewardsNeedMember: () => onRewardsNeedMemberRef.current?.()
   }).current;
 
   const frameSrc = frame.getAttribute('src') || frame.src;

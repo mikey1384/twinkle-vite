@@ -47,7 +47,7 @@ const TEXT = {
     turnOn: 'Turn on',
     lastSeen: (date: string) => `Last played ${date}`,
     aiAppOnly:
-      'Your app uses AI. Players with app accounts can’t use it — choose Both to let them make a Twinkle account for AI.',
+      'Your app uses AI. Guests and players with app accounts can’t use it — choose Both to let them make a Twinkle account for AI.',
     aiNote:
       'AI in your app is for Twinkle members. Guests and players on your app’s own accounts see a banner offering a free Twinkle account; you don’t need to add anything.',
     close: 'Close',
@@ -73,7 +73,7 @@ const TEXT = {
     turnOn: '켜기',
     lastSeen: (date: string) => `마지막 플레이 ${date}`,
     aiAppOnly:
-      '앱이 AI를 사용해요. 앱 계정 플레이어는 AI를 쓸 수 없어요. AI를 쓰게 하려면 ‘둘 다’를 골라 트윈클 계정을 만들 수 있게 해 주세요.',
+      '앱이 AI를 사용해요. 게스트와 앱 계정 플레이어는 AI를 쓸 수 없어요. AI를 쓰게 하려면 ‘둘 다’를 골라 트윈클 계정을 만들 수 있게 해 주세요.',
     aiNote:
       '앱의 AI는 트윈클 회원이 쓸 수 있어요. 게스트와 앱 전용 계정 플레이어에게는 무료 트윈클 계정을 안내하는 배너가 자동으로 보여요. 따로 만들 건 없어요.',
     close: '닫기',

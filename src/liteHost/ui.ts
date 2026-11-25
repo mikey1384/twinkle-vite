@@ -78,7 +78,7 @@ export function showGuestHint({ t, onSignIn }: { t: LiteHostText; onSignIn: () =
   window.setTimeout(remove, 6000);
 }
 
-// "This app uses AI. Make a free Twinkle account to use it." Twinkle AI is
+// "This app uses AI." (generic: audit G6) with the way in. Twinkle AI is
 // for Twinkle members (Mikey 2026-11-26); guests and an app's own accounts
 // see this, with no work from the app's maker. A slim bar at the top:
 // dismissible (remembered for this tab and app), back whenever the app tries
@@ -276,7 +276,20 @@ export function showReport({
     const chosen = document.querySelector<HTMLInputElement>('input[name="lh-report"]:checked');
     if (!chosen) return;
     submit.setAttribute('disabled', 'true');
-    await send(chosen.value, (details as HTMLTextAreaElement).value).catch(() => {});
+    try {
+      await send(chosen.value, (details as HTMLTextAreaElement).value);
+    } catch (error: any) {
+      // only a stored report is thanked. Too many from here today: the
+      // server's own words (it already has them); otherwise try again.
+      if (error?.status === 429 && error.message) {
+        closeSheet();
+        showToast(error.message);
+        return;
+      }
+      submit.removeAttribute('disabled');
+      showToast(t.reportFailed);
+      return;
+    }
     closeSheet();
     showToast(t.reportThanks);
   });

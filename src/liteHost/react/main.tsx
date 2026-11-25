@@ -241,8 +241,11 @@ async function start() {
     signUp: () => openSignIn('birth'),
     signOut: () => session.signOut(),
     async aiCoverage() {
+      await accountModeReady;
+      // an app on its own accounts only: no Twinkle account can help (G4)
+      if (accountMode === 'app') return { payer: 'none', reason: 'app_accounts_only', message: 'AI isn’t available in this app.' };
       const token = await session.accessToken();
-      if (!token) return { payer: 'none', reason: 'twinkle_account_required', message: null };
+      if (!token) return { payer: 'none', reason: 'twinkle_account_required', message: 'This app’s AI needs a Twinkle account.' };
       const response = await fetch(`${config.apiOrigin}/build/${config.buildId}/app-session/ai-coverage`, {
         headers: { authorization: token }
       });
@@ -301,6 +304,21 @@ async function start() {
       });
     });
   const onAiNeedsAccount = () => void refreshAiBanner({ force: true });
+  // Coins/XP refused: a linked player on a session its member didn't sign
+  // (the app's password) can continue with Twinkle to earn them (audit G7)
+  const onRewardsNeedMember = () =>
+    void accountModeReady.then(() => {
+      const player = session.get()?.appPlayer;
+      if (!player || player.kind !== 'app' || !player.linked) return;
+      showAiBanner({
+        t,
+        buildId: config.buildId,
+        cta: t.signInCta,
+        text: t.rewardsContinue,
+        force: true,
+        onAction: () => void session.signIn()
+      });
+    });
   // The signed-in member's picture for the badge menu (from app-session/me).
   const viewerPictureRef: { current: string | null } = { current: null };
 
@@ -454,6 +472,7 @@ async function start() {
             retiredRef={retiredRef}
             onGuestRestricted={onGuestRestricted}
             onAiNeedsAccount={onAiNeedsAccount}
+            onRewardsNeedMember={onRewardsNeedMember}
             guestStore={current ? null : guestStore}
             accountKind={accountKind}
             authHost={authHost}
@@ -533,12 +552,18 @@ async function start() {
       showReport({
         config,
         t,
+        // with the player's pass when signed in (not anonymous); throws
+        // unless the report was stored, so the sheet says so (audit G1)
         send: async (reason, details) => {
-          await fetch(
+          const token = await session.accessToken().catch(() => null);
+          const response = await fetch(
             `${config.apiOrigin}/build/${config.buildId}/app-report`,
             {
               method: 'POST',
-              headers: { 'content-type': 'application/json' },
+              headers: {
+                'content-type': 'application/json',
+                ...(token ? { authorization: token } : {})
+              },
               body: JSON.stringify({
                 reason,
                 details,
@@ -546,6 +571,12 @@ async function start() {
               })
             }
           );
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            const error: any = new Error(String(data?.error || ''));
+            error.status = response.status;
+            throw error;
+          }
         }
       })
   });

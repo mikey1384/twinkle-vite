@@ -42,6 +42,9 @@ export interface PreviewHostBridgeAuth {
   // the lite host (an app's own address): an AI action a guest or an
   // app-only player can't make shows "make a free Twinkle account"
   onAiNeedsAccount?: () => void;
+  // Coins/XP refused for an app player (lite host: a linked player can
+  // continue with Twinkle)
+  onRewardsNeedMember?: () => void;
   // An app's own address (src/liteHost): what kind of account the signed-in
   // player has (Twinkle.auth). On twin-kle.com every signed-in viewer is a
   // Twinkle member.

@@ -3455,16 +3455,16 @@ export function useHostBridge({
           case 'ai:coverage': {
             const liteAuth = authHostRef?.current;
             const viewer = getViewerInfo(previewAuth);
-            if (!viewer.isLoggedIn) {
-              // Twinkle AI is for Twinkle members (the lite host shows the
-              // banner offering a free account)
+            if (liteAuth && (!viewer.isLoggedIn || viewer.accountKind !== 'member')) {
+              // the lite host knows the app's account mode (app-only: AI
+              // isn't available at all, audit G4)
+              response = await liteAuth.aiCoverage();
+            } else if (!viewer.isLoggedIn) {
               response = {
                 payer: 'none',
                 reason: 'twinkle_account_required',
-                message: 'This app’s AI is for Twinkle members. Make a free Twinkle account to use it.'
+                message: 'This app’s AI needs a Twinkle account.'
               };
-            } else if (liteAuth && viewer.accountKind !== 'member') {
-              response = await liteAuth.aiCoverage();
             } else {
               response = { payer: 'member', message: null };
             }
@@ -6526,12 +6526,26 @@ export function useHostBridge({
         // Twinkle AI is for Twinkle members: on the lite host, a guest's or
         // an app-only player's AI action shows the AI banner (before the
         // generic sign-in hint, which then stays quiet)
-        if (
+        // Any twinkle_account_required refusal, whatever the request (AI,
+        // character chat, newspaper, Word Master generation: audit G5); and
+        // a guest's try at one of those AI requests.
+        const aiRequest =
           typeof type === 'string' &&
-          type.startsWith('ai:') &&
-          (error?.code === 'guest_restricted' || error?.code === 'twinkle_account_required')
+          (type.startsWith('ai:') ||
+            type === 'characters:chat' ||
+            type === 'news:generate' ||
+            type === 'content:word-master:korean-definition' ||
+            type === 'content:word-master:generate-entry');
+        if (
+          error?.code === 'twinkle_account_required' ||
+          (aiRequest && error?.code === 'guest_restricted')
         ) {
           previewAuth.onAiNeedsAccount?.();
+        }
+        // Coins and XP refused for an app player (a linked one on the app's
+        // password session gets "Continue with Twinkle": audit G7)
+        if (error?.code === 'app_account_no_rewards') {
+          previewAuth.onRewardsNeedMember?.();
         }
         if (
           error?.code === 'guest_restricted' &&
