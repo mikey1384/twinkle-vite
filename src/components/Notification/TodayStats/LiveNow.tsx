@@ -10,7 +10,7 @@ import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import ProfilePic from '~/components/ProfilePic';
 import useUserPopupTrigger from '~/components/UserPopup/useUserPopupTrigger';
-import { useChatContext } from '~/contexts';
+import { useChatContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { PRESENCE_HIDDEN_USER_IDS } from '~/helpers/hiddenPresence';
 import { trackEvent } from '~/helpers/analytics';
@@ -20,16 +20,20 @@ import { useWalkUp } from '~/helpers/hooks/useSocialWalkups';
 import {
   bestJoinAction,
   JOIN_VERB_LABELS,
-  joinableBadge
+  joinableBadge,
+  type JoinVerb,
+  type PrimaryJoinAction
 } from '~/helpers/socialWalkups';
 import type { User } from '~/types';
 import {
   createLiveNowShownTracker,
   createLiveNowSignatureReader,
   LIVE_NOW_COLLAPSED_APPS,
+  liveNowRowChoice,
   type LiveNowApp,
   type LiveNowMember
 } from '~/helpers/liveNow';
+import LiveNowPicker, { type LiveNowPickerDismiss } from './LiveNowPicker';
 
 const panelCls = css`
   margin: 0.8rem auto 0;
@@ -429,6 +433,27 @@ export default function LiveNow({
   const navigate = useNavigate();
   const walkUp = useWalkUp();
   const [expanded, setExpanded] = useState(false);
+  // The rows show what Today's Progress holds still while the pointer is on
+  // the card; a tap decides from who is in the app right now, and the picker
+  // follows them live.
+  const myId = useKeyContext((v) => v.myState.userId);
+  const liveApps = useLiveNowApps(myId);
+  // "Who do you want to watch?" for one row, when two or more people offer
+  // the row's verb. Its lines keep the order they opened with.
+  const [picker, setPicker] = useState<{
+    id: number;
+    appId: number;
+    rowIndex: number;
+    verb: JoinVerb;
+    members: LiveNowMember[];
+  } | null>(null);
+  const pickerSeq = useRef(0);
+  // The picker calls back after its exit animation, possibly from an older
+  // render: it compares against the picker open now.
+  const pickerNow = useRef(picker);
+  pickerNow.current = picker;
+  const rowRefs = useRef(new Map<number, HTMLLIElement>());
+  const pickerRowRef = useRef<HTMLLIElement | null>(null);
   // Which faces / join lines have their profile card open right now.
   const [openPopupKeys, setOpenPopupKeys] = useState<string[]>([]);
   const handlePopupShown = useCallback((key: string, shown: boolean) => {
@@ -466,7 +491,9 @@ export default function LiveNow({
     if (apps.length <= LIVE_NOW_COLLAPSED_APPS) setExpanded(false);
   }, [apps.length]);
 
-  const popupOpen = openPopupKeys.length > 0;
+  // The card holds still while the picker is open, as it does for a
+  // profile card, so nothing moves under the pointer.
+  const popupOpen = openPopupKeys.length > 0 || !!picker;
   useEffect(() => {
     onPopupOpenChange?.(popupOpen);
   }, [onPopupOpenChange, popupOpen]);
@@ -499,6 +526,10 @@ export default function LiveNow({
         {visible.map((app, index) => (
           <li
             key={app.appId}
+            ref={(element) => {
+              if (element) rowRefs.current.set(app.appId, element);
+              else rowRefs.current.delete(app.appId);
+            }}
             className={entryCls}
             onClick={() => join(app, index, 'app')}
           >
@@ -552,6 +583,7 @@ export default function LiveNow({
             <LiveNowRowButton
               app={app}
               buttonColor={buttonColor}
+              pickerOpen={picker?.appId === app.appId}
               onJoin={() => join(app, index, 'join')}
             />
           </li>
@@ -570,28 +602,122 @@ export default function LiveNow({
           {expanded ? 'Show less' : `+${hiddenCount} more`}
         </button>
       ) : null}
+      {picker ? (
+        <LiveNowPicker
+          key={picker.id}
+          app={
+            apps.find((app) => app.appId === picker.appId) ||
+            liveApps.find((app) => app.appId === picker.appId)!
+          }
+          verb={picker.verb}
+          members={picker.members}
+          liveApp={liveApps.find((app) => app.appId === picker.appId) || null}
+          anchor={
+            rowRefs.current
+              .get(picker.appId)
+              ?.querySelector<HTMLElement>(':scope > button') || null
+          }
+          insideRefs={[pickerRowRef]}
+          buttonColor={buttonColor}
+          onChoose={handlePickerChoose}
+          onDismiss={(how) => handlePickerDismiss(how, picker.id)}
+        />
+      ) : null}
     </section>
   );
+
+  function handlePickerChoose(
+    member: LiveNowMember,
+    action: PrimaryJoinAction,
+    position: number
+  ) {
+    if (!picker) return;
+    const app =
+      liveApps.find((entry) => entry.appId === picker.appId) ||
+      apps.find((entry) => entry.appId === picker.appId);
+    trackEvent('live_now_picker_choose', {
+      app_id: picker.appId,
+      verb: action.verb,
+      position,
+      people: picker.members.length
+    });
+    trackEvent('live_now_join', {
+      app_id: picker.appId,
+      people: app?.count,
+      multiplayer: app?.multiplayer,
+      position: picker.rowIndex + 1,
+      action: action.verb,
+      picker_position: position
+    });
+    setPicker(null);
+    pickerRowRef.current = null;
+    void walkUp({
+      buildId: picker.appId,
+      host: member,
+      intent: action.intent,
+      source: 'live_now'
+    });
+  }
+
+  function handlePickerDismiss(how: LiveNowPickerDismiss, id?: number) {
+    // A picker that finished closing after another one opened leaves the
+    // new one alone.
+    const current = pickerNow.current;
+    if (!current || (id !== undefined && id !== current.id)) return;
+    trackEvent('live_now_picker_dismiss', {
+      app_id: current.appId,
+      how,
+      people: current.members.length
+    });
+    pickerNow.current = null;
+    setPicker(null);
+    pickerRowRef.current = null;
+  }
 
   function join(app: LiveNowApp, index: number, target: 'app' | 'join') {
     // The row's button says what this does (bestJoinAction): Join an open
     // room, Play with someone ready for a game, or Watch. Tapping the row
     // itself does the same; with nothing to join it opens the app, as always
-    // (nobody busy is queued on without the member choosing them).
-    const action = bestJoinAction(app.members);
+    // (nobody busy is queued on without the member choosing them). With two
+    // or more people offering that verb, the member picks whom (Mikey,
+    // 11-25); a second tap on the same row closes the picker.
+    // (A tap on another row closes it as an outside tap.)
+    if (picker?.appId === app.appId) {
+      handlePickerDismiss('close');
+      return;
+    }
+    // Decide from who is there right now, not the held rows.
+    const current = liveApps.find((entry) => entry.appId === app.appId) || app;
+    const choice = liveNowRowChoice(current);
     trackEvent('live_now_tap', { target, app_id: app.appId });
+    if (choice.kind === 'pick') {
+      pickerRowRef.current = rowRefs.current.get(app.appId) || null;
+      setPicker({
+        id: ++pickerSeq.current,
+        appId: app.appId,
+        rowIndex: index,
+        verb: choice.verb,
+        members: choice.members
+      });
+      trackEvent('live_now_picker_shown', {
+        app_id: app.appId,
+        verb: choice.verb,
+        people: choice.members.length
+      });
+      return;
+    }
     trackEvent('live_now_join', {
       app_id: app.appId,
-      people: app.count,
-      multiplayer: app.multiplayer,
+      people: current.count,
+      multiplayer: current.multiplayer,
       position: index + 1,
-      action: action?.verb || 'open'
+      action: choice.kind === 'walk' ? choice.verb : 'open'
     });
-    if (action) {
+    if (choice.kind === 'walk') {
       void walkUp({
         buildId: app.appId,
-        host: action.member,
-        intent: action.intent,
+        host: choice.member,
+        intent: choice.intent,
         source: 'live_now'
       });
       return;
@@ -607,13 +733,15 @@ export default function LiveNow({
 function LiveNowRowButton({
   app,
   buttonColor,
+  pickerOpen,
   onJoin
 }: {
   app: LiveNowApp;
   buttonColor: string;
+  pickerOpen: boolean;
   onJoin: () => void;
 }) {
-  const action = bestJoinAction(app.members);
+  const action = bestJoinAction(app.choices);
   const label = action ? JOIN_VERB_LABELS[action.verb] : 'Play';
   return (
     <Button
@@ -623,6 +751,7 @@ function LiveNowRowButton({
       size="sm"
       uppercase={false}
       aria-label={`${label}: ${app.title}`}
+      aria-expanded={pickerOpen || undefined}
       onClick={(event: React.MouseEvent) => {
         event?.stopPropagation?.();
         onJoin();

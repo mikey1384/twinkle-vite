@@ -55,6 +55,9 @@ export type AnalyticsEventName =
   | 'live_now_shown'
   | 'live_now_tap'
   | 'live_now_join'
+  | 'live_now_picker_shown'
+  | 'live_now_picker_choose'
+  | 'live_now_picker_dismiss'
   // Meet people in apps: walking up, and the shared-moment DM card
   | 'social_walkup'
   | 'social_card_shown'

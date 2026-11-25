@@ -9,12 +9,22 @@
 //
 // Kept free of app imports so node tests can load it.
 import { isActivityShown, type PresenceFlags } from './presenceVisibility';
-import { bestJoinAction, readJoinable, type Joinable } from './socialWalkups';
+import {
+  bestJoinAction,
+  primaryJoinAction,
+  readJoinable,
+  type Joinable,
+  type JoinVerb,
+  type PrimaryJoinAction
+} from './socialWalkups';
 
 export const LIVE_NOW_COLLAPSED_APPS = 2;
 // Hard bound for the expanded list and for the faces per app.
 export const LIVE_NOW_MAX_APPS = 12;
 export const LIVE_NOW_MAX_FACES = 3;
+// Hard bound for the "Who do you want to watch?" picker: everyone in an app
+// who offers Join / Play / Watch, up to this many, apart from the face cap.
+export const LIVE_NOW_MAX_CHOICES = 10;
 
 export interface LiveNowMember {
   id: number;
@@ -34,6 +44,10 @@ export interface LiveNowApp {
   members: LiveNowMember[];
   // Members shown here that someone can join right now or next.
   joinable: number;
+  // Everyone in the app the viewer can Join / Play with / Watch right now
+  // (not only the faces): best verb first (Join, Play, Watch), then by user
+  // id so lines keep their places. At most LIVE_NOW_MAX_CHOICES.
+  choices: LiveNowMember[];
 }
 
 export function groupLiveNowApps({
@@ -88,7 +102,8 @@ export function groupLiveNowApps({
         multiplayer: activity.multiplayer === true,
         count: 0,
         members: [],
-        joinable: 0
+        joinable: 0,
+        choices: []
       };
       byApp.set(activity.id, app);
     }
@@ -106,6 +121,17 @@ export function groupLiveNowApps({
   }
   const apps = [...byApp.values()];
   for (const app of apps) {
+    // Who the picker lists: everyone with something to tap. The app's label
+    // ("Playing level 12") is free text, so there is no reliable "furthest
+    // along" order; lines stay in a stable order instead.
+    app.choices = app.members
+      .filter((member) => primaryJoinAction(member.joinable))
+      .sort(
+        (a, b) =>
+          verbRank(primaryJoinAction(a.joinable)) -
+            verbRank(primaryJoinAction(b.joinable)) || a.id - b.id
+      )
+      .slice(0, LIVE_NOW_MAX_CHOICES);
     // People you can join come first (ready now, then busy); within each
     // group faces are stable: the same people keep their places.
     app.members.sort(
@@ -117,7 +143,9 @@ export function groupLiveNowApps({
   // Apps where the row's button really does something with someone (Join,
   // Play with someone, Watch) come first; rows that only open the app ("Play")
   // follow. Mikey 11-24.
-  const actionable = new Map(apps.map((app) => [app, bestJoinAction(app.members) ? 1 : 0]));
+  const actionable = new Map(
+    apps.map((app) => [app, bestJoinAction(app.choices) ? 1 : 0])
+  );
   apps.sort(
     (a, b) =>
       (actionable.get(b) || 0) - (actionable.get(a) || 0) ||
@@ -127,6 +155,51 @@ export function groupLiveNowApps({
       a.appId - b.appId
   );
   return apps.slice(0, LIVE_NOW_MAX_APPS);
+}
+
+const VERB_ORDER: Record<JoinVerb, number> = { join: 0, play: 1, watch: 2 };
+function verbRank(action: PrimaryJoinAction | null) {
+  return action ? VERB_ORDER[action.verb] : 3;
+}
+
+// The picker's title, in the row verb's words.
+export const LIVE_NOW_PICKER_TITLES: Record<JoinVerb, string> = {
+  join: 'Which room?',
+  play: 'Who do you want to play with?',
+  watch: 'Who do you want to watch?'
+};
+
+export type LiveNowRowChoice =
+  // nobody to join: the row opens the app
+  | { kind: 'open' }
+  // exactly one person offers the row's verb: one tap walks up to them
+  | { kind: 'walk'; verb: JoinVerb; intent: 'play' | 'watch'; member: LiveNowMember }
+  // two or more offer it: "Who do you want to watch?" lists everyone
+  // actionable (app.choices), each line with its own verb
+  | { kind: 'pick'; verb: JoinVerb; members: LiveNowMember[] };
+
+/**
+ * What tapping a Live now row (or its button) does. The row's verb is the
+ * best one anyone offers (bestJoinAction). With two or more members offering
+ * that verb the member chooses whom (Mikey, 11-25); with one, one tap.
+ */
+export function liveNowRowChoice(
+  app: Pick<LiveNowApp, 'choices'>
+): LiveNowRowChoice {
+  const choices = app.choices || [];
+  const best = bestJoinAction(choices);
+  if (!best) return { kind: 'open' };
+  const sameVerb = choices.filter(
+    (member) => primaryJoinAction(member.joinable)?.verb === best.verb
+  );
+  if (sameVerb.length >= 2)
+    return { kind: 'pick', verb: best.verb, members: choices };
+  return {
+    kind: 'walk',
+    verb: best.verb,
+    intent: best.intent,
+    member: best.member
+  };
 }
 
 function joinableRank(joinable: Joinable | undefined) {

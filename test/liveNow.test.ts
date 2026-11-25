@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   groupLiveNowApps,
+  liveNowRowChoice,
   LIVE_NOW_MAX_APPS,
+  LIVE_NOW_MAX_CHOICES,
   LIVE_NOW_MAX_FACES
 } from '../src/helpers/liveNow';
 
@@ -228,4 +230,134 @@ test('blocked members are never a face or a count; their app stays if others are
     ]),
     [[1, 1, [11]]]
   );
+});
+
+// ---- "Who do you want to watch?" ------------------------------------------
+
+const watching = (label = '') => ({ state: 'busy-watchable', label, mode: 'watch' });
+const queueOpen = { state: 'open', label: 'Looking for a game', mode: '1v1' };
+const roomOpen = { state: 'open', label: 'Waiting for crews', mode: 'room', dropIn: true };
+const inApp = (joinable?: any) => app(1, joinable ? { joinable } : {});
+
+test('choices: everyone actionable, past the face cap, best verb first then stable; busy and plain members left out', () => {
+  const apps = group(
+    statusOf(
+      member(31, inApp(watching('Level 3'))),
+      member(22, inApp(watching('Level 12'))),
+      member(40, inApp(queueOpen)),
+      member(12, inApp({ state: 'busy', label: 'In a game', mode: '1v1' })),
+      member(11, inApp()),
+      member(50, inApp(roomOpen)),
+      member(25, inApp(watching()))
+    )
+  );
+  assert.equal(apps[0].members.length, LIVE_NOW_MAX_FACES);
+  assert.deepEqual(
+    apps[0].choices.map((entry) => entry.id),
+    [50, 40, 22, 25, 31]
+  );
+});
+
+test('choices are bounded apart from the faces', () => {
+  const entries = [];
+  for (let id = 100; id < 100 + LIVE_NOW_MAX_CHOICES + 4; id++)
+    entries.push(member(id, inApp(watching())));
+  const [only] = group(statusOf(...entries));
+  assert.equal(only.count, LIVE_NOW_MAX_CHOICES + 4);
+  assert.equal(only.members.length, LIVE_NOW_MAX_FACES);
+  assert.equal(only.choices.length, LIVE_NOW_MAX_CHOICES);
+  assert.deepEqual(
+    only.choices.map((entry) => entry.id),
+    Array.from({ length: LIVE_NOW_MAX_CHOICES }, (_, i) => 100 + i)
+  );
+});
+
+test('row choice: nobody to join (the default Play) opens the app and never shows the picker', () => {
+  assert.deepEqual(liveNowRowChoice({ choices: [] }), { kind: 'open' });
+  // Several people in the app, none offering anything (plain, busy, or a
+  // watch-only member who is not watchable): still just opens the app.
+  const [plain] = group(
+    statusOf(
+      member(11, inApp()),
+      member(12, inApp()),
+      member(13, inApp({ state: 'busy', label: '', mode: '1v1' })),
+      member(14, inApp({ state: 'open', label: '', mode: 'watch' }))
+    )
+  );
+  assert.equal(plain.count, 4);
+  assert.deepEqual(plain.choices, []);
+  assert.deepEqual(liveNowRowChoice(plain), { kind: 'open' });
+});
+
+test('row choice: one actionable person walks up directly', () => {
+  const [one] = group(
+    statusOf(member(11, inApp()), member(12, inApp(watching('Level 4'))))
+  );
+  const choice = liveNowRowChoice(one);
+  assert.equal(choice.kind, 'walk');
+  assert.ok(choice.kind === 'walk');
+  assert.equal(choice.member.id, 12);
+  assert.equal(choice.verb, 'watch');
+  assert.equal(choice.intent, 'watch');
+});
+
+test('row choice: two or more offering the row verb open the picker with everyone actionable', () => {
+  const [two] = group(
+    statusOf(
+      member(21, inApp(watching('Level 12'))),
+      member(22, inApp(watching('Level 3'))),
+      member(23, inApp())
+    )
+  );
+  const choice = liveNowRowChoice(two);
+  assert.equal(choice.kind, 'pick');
+  assert.ok(choice.kind === 'pick');
+  assert.equal(choice.verb, 'watch');
+  assert.deepEqual(choice.members.map((entry) => entry.id), [21, 22]);
+});
+
+test('row choice with mixed verbs: the best verb decides; one of it walks, two of it pick (listing the others too)', () => {
+  // One open room and two watchable: the row says Join and one tap joins.
+  const [oneRoom] = group(
+    statusOf(
+      member(31, inApp(watching())),
+      member(32, inApp(watching())),
+      member(33, inApp(roomOpen))
+    )
+  );
+  const walk = liveNowRowChoice(oneRoom);
+  assert.ok(walk.kind === 'walk');
+  assert.equal(walk.verb, 'join');
+  assert.equal(walk.member.id, 33);
+  // Two people ready for a game and one watchable: Play, picker lists all
+  // three, Play lines first.
+  const [twoReady] = group(
+    statusOf(
+      member(41, inApp(watching())),
+      member(43, inApp(queueOpen)),
+      member(42, inApp(queueOpen))
+    )
+  );
+  const pick = liveNowRowChoice(twoReady);
+  assert.ok(pick.kind === 'pick');
+  assert.equal(pick.verb, 'play');
+  assert.deepEqual(pick.members.map((entry) => entry.id), [42, 43, 41]);
+});
+
+test('row choice: blocked and hidden-presence members are never offered', () => {
+  const apps = groupLiveNowApps({
+    chatStatus: statusOf(
+      member(51, inApp(watching())),
+      member(52, inApp(watching())),
+      member(ZERO, inApp(watching()))
+    ),
+    myId: ME,
+    hiddenUserIds: [ZERO],
+    blockedUserIds: new Set([52])
+  });
+  // Zero is hidden from presence altogether; ana (52) is blocked.
+  const choice = liveNowRowChoice(apps[0]);
+  assert.ok(choice.kind === 'walk');
+  assert.equal(choice.member.id, 51);
+  assert.deepEqual(apps[0].choices.map((entry) => entry.id), [51]);
 });
