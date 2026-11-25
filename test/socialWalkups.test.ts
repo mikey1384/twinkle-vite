@@ -7,6 +7,7 @@ import {
   createSocialWalkupStore,
   EMPTY_SOCIAL_STATE,
   bestJoinAction,
+  JOIN_VERB_LABELS,
   joinActions,
   joinNotice,
   primaryJoinAction,
@@ -80,7 +81,8 @@ test('the badge uses the app’s own words, with a plain default per state', () 
 test('Play or Join when they are ready; Watch and "next" when they are busy', () => {
   const labels = (joinable: any, appTitle = 'Baduk') =>
     joinActions({ joinable, appTitle, username: 'KenGo' }).map((a) => [a.intent, a.label]);
-  assert.deepEqual(labels(open), [['play', 'Play Baduk with KenGo']]);
+  // a head-to-head game (mode 1v1) is a challenge the member answers
+  assert.deepEqual(labels(open), [['play', 'Challenge KenGo to Baduk']]);
   assert.deepEqual(labels({ state: 'open', label: '', mode: 'room' }, 'Sketch Town'), [
     ['play', 'Join KenGo in Sketch Town']
   ]);
@@ -98,6 +100,20 @@ test('Play or Join when they are ready; Watch and "next" when they are busy', ()
   assert.deepEqual(labels({ state: 'busy', label: '', mode: 'watch' }), []);
 });
 
+test('the verb word: Challenge for a 1v1 member, Play for other queue modes', () => {
+  const word = (joinable: any) => {
+    const action = primaryJoinAction(joinable);
+    return action ? JOIN_VERB_LABELS[action.verb] : null;
+  };
+  assert.equal(word(open), 'Challenge');
+  assert.equal(word({ state: 'open', label: '', mode: 'coop' }), 'Play');
+  assert.equal(word({ state: 'open', label: '', mode: 'versus' }), 'Play');
+  assert.equal(word({ state: 'open', label: '', mode: '' }), 'Play');
+  assert.equal(word({ state: 'open', label: '', mode: 'room' }), 'Join');
+  assert.equal(word(watchable), 'Watch');
+  assert.equal(word({ state: 'busy', label: '', mode: '1v1' }), null);
+});
+
 test('the row verb is derived from state and mode: Join a room, Play a queue, Watch anything watchable', () => {
   const verb = (joinable: any) => {
     const action = primaryJoinAction(joinable);
@@ -105,7 +121,7 @@ test('the row verb is derived from state and mode: Join a room, Play a queue, Wa
   };
   assert.equal(verb({ state: 'open', label: '', mode: 'room', dropIn: true }), 'join/play');
   assert.equal(verb({ state: 'open', label: '', mode: 'room' }), 'join/play');
-  assert.equal(verb(open), 'play/play');
+  assert.equal(verb(open), 'challenge/play');
   assert.equal(verb({ state: 'open', label: '', mode: 'coop' }), 'play/play');
   assert.equal(verb({ state: 'open', label: '', mode: '' }), 'play/play');
   assert.equal(verb(watchable), 'watch/watch');
@@ -122,7 +138,7 @@ test('the row verb is derived from state and mode: Join a room, Play a queue, Wa
     const action = bestJoinAction(members);
     return action ? [action.verb, action.member.id] : null;
   };
-  assert.deepEqual(best([m(1, watchable), m(2, open), m(3, open)]), ['play', 2]);
+  assert.deepEqual(best([m(1, watchable), m(2, open), m(3, open)]), ['challenge', 2]);
   assert.deepEqual(best([m(1, open), m(2, { state: 'open', label: '', mode: 'room', dropIn: true })]), ['join', 2]);
   assert.deepEqual(best([m(1), m(2, { state: 'busy', label: '', mode: '1v1' }), m(3, watchable)]), ['watch', 3]);
   assert.equal(best([m(1), m(2, { state: 'busy', label: '', mode: '1v1' })]), null);

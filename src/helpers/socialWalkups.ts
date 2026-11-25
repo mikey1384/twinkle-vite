@@ -111,17 +111,22 @@ export interface JoinAction {
 //
 //   state           mode                     verb    tap
 //   open            'room' (drop-in)         Join    walk straight in
-//   open            any queue mode           Play    walk up (you're next)
+//   open            '1v1' (head-to-head)     Challenge walk up; the member answers it
+//   open            any other queue mode     Play    walk up (you're next)
 //   busy-watchable  any, incl. room/watch    Watch   watch, never queued
 //   busy            any                      -       nothing to tap
 //   open / busy     'watch'                  -       (read as closed)
 //   closed / none   -                        -       nothing to tap
-export type JoinVerb = 'join' | 'play' | 'watch';
+export type JoinVerb = 'join' | 'play' | 'challenge' | 'watch';
 export const JOIN_VERB_LABELS: Record<JoinVerb, string> = {
   join: 'Join',
   play: 'Play',
+  challenge: 'Challenge',
   watch: 'Watch'
 };
+// A head-to-head game (mode '1v1') is a challenge the member accepts or
+// declines (Baduk, 11-25); other queue modes stay Play.
+export const CHALLENGE_MODE = '1v1';
 export interface PrimaryJoinAction {
   verb: JoinVerb;
   intent: 'play' | 'watch';
@@ -132,12 +137,13 @@ export function primaryJoinAction(
   if (!joinable) return null;
   if (joinable.state === 'busy-watchable') return { verb: 'watch', intent: 'watch' };
   if (joinable.state !== 'open' || isWatchOnly(joinable)) return null;
-  return isRoom(joinable)
-    ? { verb: 'join', intent: 'play' }
+  if (isRoom(joinable)) return { verb: 'join', intent: 'play' };
+  return joinable.mode === CHALLENGE_MODE
+    ? { verb: 'challenge', intent: 'play' }
     : { verb: 'play', intent: 'play' };
 }
 
-const VERB_RANK: Record<JoinVerb, number> = { join: 0, play: 1, watch: 2 };
+const VERB_RANK: Record<JoinVerb, number> = { join: 0, play: 1, challenge: 1, watch: 2 };
 
 /**
  * The row's one button when several members are in the same app: the best
@@ -189,6 +195,8 @@ export function joinActions({
   }
   if (primary?.verb === 'play')
     return [{ intent: 'play', label: `Play ${appTitle} with ${username}` }];
+  if (primary?.verb === 'challenge')
+    return [{ intent: 'play', label: `Challenge ${username} to ${appTitle}` }];
   const next: JoinAction = { intent: 'next', label: 'Play next' };
   return primary?.verb === 'watch'
     ? [{ intent: 'watch', label: 'Watch' }, next]

@@ -214,7 +214,7 @@ export function groupLiveNowApps({
   return apps.slice(0, LIVE_NOW_MAX_APPS);
 }
 
-const VERB_ORDER: Record<JoinVerb, number> = { join: 0, play: 1, watch: 2 };
+const VERB_ORDER: Record<JoinVerb, number> = { join: 0, play: 1, challenge: 1, watch: 2 };
 function verbRank(action: PrimaryJoinAction | null) {
   return action ? VERB_ORDER[action.verb] : 3;
 }
@@ -223,6 +223,7 @@ function verbRank(action: PrimaryJoinAction | null) {
 export const LIVE_NOW_PICKER_TITLES: Record<JoinVerb, string> = {
   join: 'Which room?',
   play: 'Who do you want to play with?',
+  challenge: 'Who do you want to challenge?',
   watch: 'Who do you want to watch?'
 };
 
@@ -281,6 +282,7 @@ export function liveNowTapChoice(
 export const LIVE_NOW_GONE_NOTES: Record<JoinVerb, string> = {
   join: "That room isn't open right now",
   play: "Nobody's ready to play right now",
+  challenge: "Nobody's ready for a challenge right now",
   watch: 'Nobody to watch right now'
 };
 
