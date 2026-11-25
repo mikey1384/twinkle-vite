@@ -256,6 +256,9 @@ export default function BattleScreen({
   const [remainingMs, setRemainingMs] = useState(0);
   const [burst, setBurst] = useState<string | null>(null);
   const [burstTone, setBurstTone] = useState<'gold' | 'white' | 'big'>('gold');
+  // Mikey 11-25: when YOU dodge, the scene sidesteps and the word pops by
+  // your hearts, so it never reads as the monster dodging.
+  const [playerDodge, setPlayerDodge] = useState(false);
   const [finished, setFinished] = useState<BattleState | null>(null);
   const [errorText, setErrorText] = useState('');
   // Engine 2: the meters (HP, half-hearts, focus), whose turn it is, a card
@@ -559,7 +562,7 @@ export default function BattleScreen({
         case 'dodge':
           setPose('attack');
           setBurstTone('white');
-          setBurst('DODGED!');
+          setPlayerDodge(true);
           playBattleSound('dodge');
           break;
         case 'hit': {
@@ -620,6 +623,7 @@ export default function BattleScreen({
       setStunStamp(false);
       if (!mounted.current) return;
       setBurst(null);
+      setPlayerDodge(false);
       setPose('idle');
       setLostHeart(-1);
       setDrainFrom(null);
@@ -685,7 +689,8 @@ export default function BattleScreen({
 
   return (
     <div className={cx(rootCls, shake && shakeCls)} data-phase={phase}>
-      <div className={sceneCls} style={{ backgroundImage: `url("${backdropUri(level)}")` }}>
+      <div className={cx(sceneCls, playerDodge && sceneDodgeCls)} style={{ backgroundImage: `url("${backdropUri(level)}")` }}>
+        {playerDodge && <div className={burstPlayerCls}>YOU DODGED!</div>}
         <div className={hudCls}>
           {meter ? (
             <div
@@ -1112,6 +1117,54 @@ const bossEnterCls = css`
 const ranAwayCls = css`
   transform: translate(160%, 0) !important;
   transition: transform 0.6s steps(6) !important;
+`;
+
+// You dodged: a quick sidestep of the whole scene (the view is your eyes).
+const sceneDodgeCls = css`
+  animation: player-sidestep 0.5s ease-out 1;
+  @keyframes player-sidestep {
+    0% {
+      background-position: center bottom;
+      transform: translateX(0);
+    }
+    30% {
+      transform: translateX(-16px);
+    }
+    60% {
+      transform: translateX(6px);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+// "YOU DODGED!" pops under your hearts panel (top left), not over the monster.
+const burstPlayerCls = css`
+  position: absolute;
+  top: 142px;
+  left: 14px;
+  z-index: 3;
+  font-family: ${PIXEL_FONT};
+  font-size: 16px;
+  color: #ffffff;
+  text-shadow: 3px 3px 0 #0f0b1a, -2px -2px 0 #0f0b1a;
+  pointer-events: none;
+  animation: burst-player 0.7s steps(4) 1 forwards;
+  @keyframes burst-player {
+    0% {
+      transform: translateY(8px) scale(0.6);
+    }
+    40% {
+      transform: translateY(-4px) scale(1.15);
+    }
+    100% {
+      transform: translateY(-10px) scale(1);
+    }
+  }
 `;
 
 const burstCls = css`
