@@ -6614,6 +6614,8 @@ export function useHostBridge({
     appMcpSessionId,
     appHelperBridgeRef,
     appHelperEventsRef,
+    guestLeaderboardsReadOnly,
+    guestPrivateDbRef,
     appHelperRelayStateRef,
     buildId,
     capabilitySnapshotRef,
