@@ -222,15 +222,18 @@ export default function Hero({
       title="Build Studio"
       description="Create apps, review requests, and find projects to join or fork."
       action={
-        <GameCTAButton
-          variant="primary"
-          size="lg"
-          shiny
-          icon="wand-magic-sparkles"
-          onClick={onNewBuild}
-        >
-          New Build
-        </GameCTAButton>
+        // the welcome tour's Lumine stop points here
+        <span data-welcome-tour="lumine" style={{ display: 'inline-flex' }}>
+          <GameCTAButton
+            variant="primary"
+            size="lg"
+            shiny
+            icon="wand-magic-sparkles"
+            onClick={onNewBuild}
+          >
+            New Build
+          </GameCTAButton>
+        </span>
       }
     >
       <div className={discoveryContainerClass}>

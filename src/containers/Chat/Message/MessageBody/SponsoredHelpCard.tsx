@@ -15,6 +15,10 @@ import {
   sponsoredHelpStatusLine,
   sponsoredHelpStepLabel
 } from '~/helpers/sponsoredHelp';
+import MakeChoice from '~/containers/App/WelcomeTour/MakeChoice';
+import { startWelcomeTour } from '~/containers/App/WelcomeTour/store';
+import type { WelcomeTourData } from '~/containers/App/WelcomeTour/rules';
+import { GUIDE_COLOR, GUIDE_SOFT } from '~/containers/App/WelcomeTour/styles';
 
 // A sponsored "Have Zero/Ciel do this" request (twinkle-api
 // helpers/sponsoredHelp/service.ts), in two places:
@@ -44,12 +48,17 @@ export default function SponsoredHelpCard({
   const changeSponsoredHelp = useAppContext((v) => v.requestHelpers.changeSponsoredHelp);
   const declineSponsoredHelp = useAppContext((v) => v.requestHelpers.declineSponsoredHelp);
   const cancelSponsoredHelp = useAppContext((v) => v.requestHelpers.cancelSponsoredHelp);
+  const loadWelcomeTour = useAppContext((v) => v.requestHelpers.loadWelcomeTour);
   const [request, setRequest] = useState<SponsoredHelpView>(initialRequest);
   const [working, setWorking] = useState<string>('');
   const [error, setError] = useState('');
   const [changing, setChanging] = useState(false);
   const [note, setNote] = useState('');
   const [ideaShown, setIdeaShown] = useState(false);
+  // the welcome card: "What do you want to make?" before Show me! plans the
+  // first build (never a random one), and the same tour's stops
+  const [choosing, setChoosing] = useState(false);
+  const [tour, setTour] = useState<WelcomeTourData | null>(null);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -109,6 +118,20 @@ export default function SponsoredHelpCard({
   const persona = sponsoredHelpPersonaName(request.persona);
   const isWelcome = !!request.isWelcome;
   const isRecipient = myId === request.recipientId;
+  const showsTour = variant === 'assistant' && isWelcome && isRecipient;
+  useEffect(() => {
+    if (!showsTour) return;
+    let cancelled = false;
+    Promise.resolve(loadWelcomeTour())
+      .then((data: any) => {
+        if (!cancelled && data?.tour?.stops?.length) setTour(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showsTour]);
   const isSender = myId === request.senderId;
   const themeName = request.persona === 'ciel' ? 'pink' : 'logoBlue';
   const statusLine = sponsoredHelpStatusLine(request, { isSender, isRecipient, variant });
@@ -142,7 +165,7 @@ export default function SponsoredHelpCard({
                   size="md"
                   icon="wand-magic-sparkles"
                   loading={working === 'press'}
-                  onClick={handlePress}
+                  onClick={() => handlePress()}
                 >
                   Have {persona} do this
                 </GameCTAButton>
@@ -161,7 +184,7 @@ export default function SponsoredHelpCard({
                 size="md"
                 icon="comment"
                 loading={working === 'press'}
-                onClick={handlePress}
+                onClick={() => handlePress()}
               >
                 Open in {persona} chat
               </GameCTAButton>
@@ -286,6 +309,41 @@ export default function SponsoredHelpCard({
             </div>
           </div>
         ) : null}
+        {isWelcome && choosing && request.status === 'sent' && tour ? (
+          <div
+            className={makeBoxClass}
+            style={
+              {
+                '--guide': GUIDE_COLOR[request.persona],
+                '--guide-soft': GUIDE_SOFT[request.persona]
+              } as React.CSSProperties
+            }
+          >
+            <MakeChoice
+              tree={tour.tour.makeChoices}
+              free={tour.free.card}
+              working={working === 'press'}
+              onDone={({ idea }) => handlePress(idea)}
+              onCancel={() => setChoosing(false)}
+            />
+          </div>
+        ) : null}
+        {showsTour && tour ? (
+          <div className={tourListClass}>
+            <span>Take the tour with {persona}:</span>
+            <div>
+              {tour.tour.stops.map((stop) => (
+                <button
+                  key={stop.key}
+                  type="button"
+                  onClick={() => startWelcomeTour({ stopKey: stop.key, guide: request.persona })}
+                >
+                  {stop.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {error ? <p className={errorClass}>{error}</p> : null}
       </BuildMessageCard>
     </div>
@@ -324,7 +382,9 @@ export default function SponsoredHelpCard({
       );
     }
     if (isWelcome && request.status === 'sent') {
-      // The greeting's own button: press plans right here in this card.
+      if (choosing && tour) return null;
+      // The greeting's own button: first "What do you want to make?", then
+      // press plans right here in this card from their choice.
       return (
         <>
           <GameCTAButton
@@ -332,7 +392,7 @@ export default function SponsoredHelpCard({
             size="md"
             icon="wand-magic-sparkles"
             loading={working === 'press'}
-            onClick={handlePress}
+            onClick={() => (tour ? setChoosing(true) : handlePress())}
           >
             {request.failureCode ? 'Try again' : 'Show me!'}
           </GameCTAButton>
@@ -354,7 +414,7 @@ export default function SponsoredHelpCard({
           size="md"
           icon="redo"
           loading={working === 'press'}
-          onClick={handlePress}
+          onClick={() => handlePress()}
         >
           Try again
         </GameCTAButton>
@@ -414,8 +474,9 @@ export default function SponsoredHelpCard({
     }
   }
 
-  async function handlePress() {
-    const data = await run('press', () => pressSponsoredHelp(request.id));
+  async function handlePress(memberChoice?: string) {
+    const data = await run('press', () => pressSponsoredHelp(request.id, memberChoice));
+    if (data) setChoosing(false);
     const pathId = Number(data?.request?.assistantPathId || request.assistantPathId || 0);
     if (data && variant === 'dm' && pathId) navigate(`/chat/${pathId}`);
   }
@@ -632,4 +693,49 @@ const startChipClass = css`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+`;
+
+// "What do you want to make?" in the welcome tour's own dialogue look
+const makeBoxClass = css`
+  margin-top: 1rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 1.2rem;
+  background: #121833;
+  color: #f3f5ff;
+`;
+
+// the same tour's stops: each opens the guided tour at that stop
+const tourListClass = css`
+  margin-top: 1.2rem;
+  > span {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: ${Color.darkerGray()};
+    margin-bottom: 0.5rem;
+  }
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  button {
+    border: 1px solid ${Color.borderGray()};
+    background: #fff;
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: ${Color.darkerGray()};
+    cursor: pointer;
+    &:hover {
+      border-color: ${Color.logoBlue()};
+      color: ${Color.logoBlue()};
+    }
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    button {
+      font-size: 1.2rem;
+    }
+  }
 `;

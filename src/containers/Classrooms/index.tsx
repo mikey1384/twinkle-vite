@@ -70,7 +70,7 @@ export default function Classrooms() {
 
   return (
     <ErrorBoundary componentPath="Classrooms/index">
-      <main className={pageClass}>
+      <main className={pageClass} data-welcome-tour="my_classes">
         <header className={headerClass}>
           <h1 className={pageTitleClass}>My classes</h1>
           <Link

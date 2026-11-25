@@ -2819,11 +2819,12 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async pressSponsoredHelp(requestId: number) {
+    // memberChoice: the welcome card's "What do you want to make?" answer
+    async pressSponsoredHelp(requestId: number, memberChoice?: string) {
       try {
         const { data } = await request.post(
           `${URL}/chat/sponsored-help/${requestId}/press`,
-          {},
+          memberChoice ? { memberChoice } : {},
           auth()
         );
         return data;

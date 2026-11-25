@@ -218,6 +218,9 @@ const ExploreRedirect = lazyWithRetry(
   () => import('~/containers/Explore/Redirect')
 );
 const Home = lazyWithRetry(() => import('~/containers/Home'));
+const WelcomeTourHost = lazyWithRetry(
+  () => import('~/containers/App/WelcomeTour')
+);
 const ChessOptionsModal = lazyWithRetry(
   () => import('~/containers/Home/TopMenu/ChessOptionsModal')
 );
@@ -1828,6 +1831,12 @@ export default function App() {
           </Suspense>
         )}
         {!!userId && !sessionAccessBlocked && <QuickAskHost key={userId} />}
+        {!!userId && !sessionAccessBlocked && (
+          // the welcome greeter and guided tour (Mikey 11-25)
+          <Suspense fallback={null}>
+            <WelcomeTourHost key={userId} />
+          </Suspense>
+        )}
         {isAdmin && shouldShowAdminTelemetryWindow && !sessionAccessBlocked && (
           <Suspense fallback={null}>
             <AdminTelemetryWindow

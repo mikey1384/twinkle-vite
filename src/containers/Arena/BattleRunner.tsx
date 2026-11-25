@@ -1,5 +1,6 @@
 import { RewardRequirements } from './RewardOffer';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useWelcomeFocusSurface } from '~/containers/App/WelcomeTour/useWelcomeFocusSurface';
 import { css, cx } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { useNavigate } from 'react-router-dom';
@@ -207,6 +208,8 @@ export default function BattleRunner({
   onExit: () => void;
   onOpenPractice?: (runId: number) => void;
 }) {
+  // an Arena sitting: the welcome tour waits until they leave it
+  useWelcomeFocusSurface();
   const loadArenaBattle = useAppContext(
     (v) => v.requestHelpers.loadArenaBattle
   );

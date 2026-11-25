@@ -7,6 +7,8 @@ import React, {
   useState
 } from 'react';
 import VideoPlayer from '~/components/VideoPlayer';
+// the welcome greeter waits while a video plays (WelcomeTour/rules.ts)
+import { reportWelcomeMedia } from '~/containers/App/WelcomeTour/store';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPBar from './XPBar';
 import Link from '~/components/Link';
@@ -526,11 +528,16 @@ function XPVideoPlayer({
                   onSetCinemaLevel={setCinemaLevel}
                   onPlay={() => {
                     onPlay?.();
+                    reportWelcomeMedia('playing');
                     handleVideoPlay({ userId: userIdRef.current });
                   }}
-                  onPause={handleVideoStop}
+                  onPause={() => {
+                    reportWelcomeMedia('paused');
+                    handleVideoStop();
+                  }}
                   onPlayerReady={handlePlayerInit}
                   onEnded={() => {
+                    reportWelcomeMedia('ended');
                     handleVideoStop();
                     onVideoEnd?.();
                     if (userIdRef.current) {

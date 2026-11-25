@@ -30,6 +30,7 @@ export default function Layout({
       style={layout.style}
       data-chat-navigation
       data-chat-panel="navigation"
+      data-welcome-tour="chat"
       data-has-channel-navigation={!!channelNavigation}
       className={cx(
         chatPanelClass,

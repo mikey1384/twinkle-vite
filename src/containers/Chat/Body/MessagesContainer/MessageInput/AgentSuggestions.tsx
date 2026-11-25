@@ -2,6 +2,10 @@ import React, { useRef } from 'react';
 import { css, cx, keyframes } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { shouldIgnoreSuggestionTap } from './agentSuggestionsGuard';
+import {
+  isWelcomeTourStarter,
+  startWelcomeTour
+} from '~/containers/App/WelcomeTour/store';
 
 const appear = keyframes`
   from { opacity: 0; transform: translateY(4px); }
@@ -111,6 +115,12 @@ export default function AgentSuggestions({
                 clickDetail: event.detail
               })
             ) {
+              return;
+            }
+            // "Show me around Twinkle" opens the scripted welcome tour
+            // (where they left it), not an AI-made one
+            if (isWelcomeTourStarter(idea)) {
+              startWelcomeTour();
               return;
             }
             onPick(idea);

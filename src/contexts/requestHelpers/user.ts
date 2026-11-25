@@ -742,6 +742,50 @@ export default function userRequestHelpers({
       }
     },
     // Bridge Builder path 3: my show-around tours and the next step
+    // The welcome greeter and guided tour (twinkle-api helpers/welcomeTour):
+    // the stops and words, whether the banner shows, where the member is.
+    async loadWelcomeTour() {
+      try {
+        const { data } = await request.get(`${URL}/user/welcome-tour`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateWelcomeTourState({
+      event,
+      guide,
+      stopKey
+    }: {
+      event: 'shown' | 'start' | 'stop' | 'finish' | 'decline';
+      guide?: 'zero' | 'ciel';
+      stopKey?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/welcome-tour/state`,
+          { event, guide, stopKey },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // The tour's Lumine stop: makes the project from "What do you want to
+    // make?"; on the first tour Twinkle pays its first Lumine run (free).
+    async startWelcomeTourBuild({ idea, title }: { idea: string; title: string }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/user/welcome-tour/build`,
+          { idea, title },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadBridgeTour() {
       try {
         const { data } = await request.get(

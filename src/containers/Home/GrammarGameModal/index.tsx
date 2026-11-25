@@ -1,5 +1,6 @@
 import useUserActivity from '~/helpers/hooks/useUserActivity';
 import React, { Suspense, useMemo, useRef, useState, useEffect } from 'react';
+import { useWelcomeFocusSurface } from '~/containers/App/WelcomeTour/useWelcomeFocusSurface';
 import { css, cx } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import {
@@ -91,6 +92,8 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
     nodeId: string | null;
   }>({ worldId: null, nodeId: null });
   const [gameState, setGameState] = useState('notStarted');
+  // a round in progress: the welcome tour waits until it ends
+  useWelcomeFocusSurface(gameState === 'started');
   useUserActivity(
     activeTab === 'game' && gameState === 'started'
       ? { kind: 'game', id: 'grammarbles' }
@@ -498,6 +501,7 @@ export default function Grammarbles({ onHide }: { onHide: () => void }) {
       )}
       // an XP activity: the website agent never plays it for the member
       data-agent-no-play=""
+      data-welcome-tour="grammarbles"
       ref={setPage}
     >
       <GamePageContext.Provider value={page}>
