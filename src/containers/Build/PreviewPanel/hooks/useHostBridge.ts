@@ -4959,6 +4959,46 @@ export function useHostBridge({
               buildId: activeBuild.id,
               roomKey: payload?.roomKey,
               name: payload?.name,
+              members: Array.isArray(payload?.members)
+                ? payload.members
+                : undefined,
+              token: chatWriteToken
+            });
+            break;
+          }
+
+          case 'chat:get-room': {
+            const chatReadToken = await ensureBuildApiToken(
+              ['chat:read'],
+              previewAuth
+            );
+            response = await requestRefs.postBuildChatRoomActionRef.current({
+              buildId: activeBuild.id,
+              action: 'get',
+              roomKey: payload?.roomKey,
+              token: chatReadToken
+            });
+            break;
+          }
+
+          case 'chat:add-members':
+          case 'chat:remove-members':
+          case 'chat:leave-room': {
+            const chatWriteToken = await ensureBuildApiToken(
+              ['chat:write'],
+              previewAuth
+            );
+            response = await requestRefs.postBuildChatRoomActionRef.current({
+              buildId: activeBuild.id,
+              action:
+                type === 'chat:add-members'
+                  ? 'members/add'
+                  : type === 'chat:remove-members'
+                    ? 'members/remove'
+                    : 'leave',
+              roomKey: payload?.roomKey,
+              userIds:
+                type === 'chat:leave-room' ? undefined : payload?.userIds,
               token: chatWriteToken
             });
             break;

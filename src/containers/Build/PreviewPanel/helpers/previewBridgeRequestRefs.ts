@@ -102,6 +102,7 @@ export interface PreviewHostBridgeRequestRefs {
   submitBuildLeaderboardScoreRef: AsyncRequestRef;
   listBuildChatRoomsRef: AsyncRequestRef;
   createBuildChatRoomRef: AsyncRequestRef;
+  postBuildChatRoomActionRef: AsyncRequestRef;
   listBuildChatMessagesRef: AsyncRequestRef;
   sendBuildChatMessageRef: AsyncRequestRef;
   deleteBuildRuntimeChatMessageRef: AsyncRequestRef;

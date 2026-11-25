@@ -356,6 +356,9 @@ export default function useAppRequests({
   const createBuildChatRoom = useAppContext(
     (v) => v.requestHelpers.createBuildChatRoom
   );
+  const postBuildChatRoomAction = useAppContext(
+    (v) => v.requestHelpers.postBuildChatRoomAction
+  );
   const listBuildChatMessages = useAppContext(
     (v) => v.requestHelpers.listBuildChatMessages
   );
@@ -544,6 +547,7 @@ export default function useAppRequests({
   const submitBuildLeaderboardScoreRef = useRef(submitBuildLeaderboardScore);
   const listBuildChatRoomsRef = useRef(listBuildChatRooms);
   const createBuildChatRoomRef = useRef(createBuildChatRoom);
+  const postBuildChatRoomActionRef = useRef(postBuildChatRoomAction);
   const listBuildChatMessagesRef = useRef(listBuildChatMessages);
   const sendBuildChatMessageRef = useRef(sendBuildChatMessage);
   const deleteBuildRuntimeChatMessageRef = useRef(
@@ -692,6 +696,7 @@ export default function useAppRequests({
     submitBuildLeaderboardScoreRef,
     listBuildChatRoomsRef,
     createBuildChatRoomRef,
+    postBuildChatRoomActionRef,
     listBuildChatMessagesRef,
     sendBuildChatMessageRef,
     deleteBuildRuntimeChatMessageRef,

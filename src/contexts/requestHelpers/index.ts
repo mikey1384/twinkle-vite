@@ -308,6 +308,7 @@ registerMethods('build', [
   'submitBuildLeaderboardScore',
   'listBuildChatRooms',
   'createBuildChatRoom',
+  'postBuildChatRoomAction',
   'listBuildChatMessages',
   'sendBuildChatMessage',
   'deleteBuildRuntimeChatMessage',

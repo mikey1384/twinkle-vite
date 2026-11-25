@@ -6814,17 +6814,46 @@ export default function buildRequestHelpers({
       buildId,
       roomKey,
       name,
+      members,
       token
     }: {
       buildId: number;
-      roomKey: string;
+      roomKey?: string;
       name?: string | null;
+      members?: unknown[];
       token?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/chat/rooms/create`,
-          { roomKey, name },
+          members != null ? { name, members } : { roomKey, name },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    // Twinkle.chat.getRoom / addMembers / removeMembers / leaveRoom
+    // (members-only rooms).
+    async postBuildChatRoomAction({
+      buildId,
+      action,
+      roomKey,
+      userIds,
+      token
+    }: {
+      buildId: number;
+      action: 'get' | 'members/add' | 'members/remove' | 'leave';
+      roomKey: string;
+      userIds?: unknown[];
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/chat/rooms/${action}`,
+          userIds ? { roomKey, userIds } : { roomKey },
           getBuildApiConfig(token)
         );
         return data;
