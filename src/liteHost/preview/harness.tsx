@@ -216,6 +216,12 @@ function Harness() {
           <WandHarness stage="plan" place="assistant" />
         </Page>
       );
+    case 'owner-saved':
+      return (
+        <Page wide={!!params.get('wide')}>
+          <OwnerHarness filled saved="saved" />
+        </Page>
+      );
     case 'owner':
     case 'owner-filled':
       return (
@@ -501,11 +507,31 @@ function WandHarness({ stage, place = 'dm' }: { stage: string; place?: 'dm' | 'a
   );
 }
 
-function OwnerHarness({ filled }: { filled: boolean }) {
+function OwnerHarness({ filled, saved: savedStart = 'none' }: { filled: boolean; saved?: 'saved' | 'none' | 'forgotten' }) {
   const [details, setDetails] = useState<OwnerDetails>(filled ? FILLED_OWNER : emptyOwnerDetails('KR'));
-  const [agreed, setAgreed] = useState(filled);
+  const [agreed, setAgreed] = useState(filled && savedStart === 'none');
+  const [saved, setSaved] = useState(savedStart);
   const [phone, setPhone] = useState<PhoneDraft>(() => draftFromPhone(details.phone, 'KR'));
-  return <OwnerDetailsView t={t} idea={RED_SQUARE} details={details} phoneDraft={phone} onPhoneDraft={setPhone} agreed={agreed} renews={false} busy={false} problem="" onDetails={setDetails} onAgree={setAgreed} onPay={() => {}} onBack={() => {}} startPage={filled ? 3 : 0} />;
+  return (
+    <OwnerDetailsView
+      t={t}
+      idea={RED_SQUARE}
+      details={details}
+      phoneDraft={phone}
+      onPhoneDraft={setPhone}
+      agreed={agreed}
+      renews={false}
+      busy={false}
+      problem=""
+      onDetails={setDetails}
+      onAgree={setAgreed}
+      onPay={() => {}}
+      onBack={() => {}}
+      startPage={filled ? 3 : 0}
+      saved={saved}
+      onSavedChoice={() => setSaved('forgotten')}
+    />
+  );
 }
 const NAMECHEAP_STEPS = [
   'Sign in to Namecheap and open Domain List.',

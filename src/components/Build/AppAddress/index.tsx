@@ -6,7 +6,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { useUserAssistant } from '~/helpers/assistantVoice';
 import { CheckoutSurface } from './checkout/ui';
 import { guessCountry } from './checkout/countries';
-import type { PhoneDraft } from './checkout/phone';
+import { draftFromPhone, type PhoneDraft } from './checkout/phone';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
 import {
@@ -94,6 +94,8 @@ export default function AppAddress({
   const startDomainOrder = useAppContext((v) => v.requestHelpers.startDomainOrder);
   const loadDomainPurchase = useAppContext((v) => v.requestHelpers.loadDomainPurchase);
   const startSelfDomainOrder = useAppContext((v) => v.requestHelpers.startSelfDomainOrder);
+  const loadSavedRegistrant = useAppContext((v) => v.requestHelpers.loadSavedRegistrant);
+  const forgetSavedRegistrant = useAppContext((v) => v.requestHelpers.forgetSavedRegistrant);
   const loadDomainOrder = useAppContext((v) => v.requestHelpers.loadDomainOrder);
   const loadDomainStatus = useAppContext((v) => v.requestHelpers.loadDomainStatus);
   const removeAppDomain = useAppContext((v) => v.requestHelpers.removeAppDomain);
@@ -129,6 +131,9 @@ export default function AppAddress({
   // the phone as typed; owner.phone is the E.164 number made from it
   const [ownerPhone, setOwnerPhone] = useState<PhoneDraft>(() => ({ country: owner.country, national: '' }));
   const [ownerAgreed, setOwnerAgreed] = useState(false);
+  // the member's saved details (their own, from their last purchase)
+  const [savedDetails, setSavedDetails] = useState<'saved' | 'none' | 'forgotten'>('none');
+  const savedAskedRef = useRef(false);
   const [paying, setPaying] = useState(false);
   const [ownerProblem, setOwnerProblem] = useState('');
   const [order, setOrder] = useState<DomainOrderView | null>(null);
@@ -338,6 +343,38 @@ export default function AppAddress({
       .catch(() => setPurchase({ open: false }));
   }
 
+  // An adult buyer's saved details prefill every step once (never over what
+  // they already typed in this checkout).
+  useEffect(() => {
+    if (purchase?.buyer !== 'self' || savedAskedRef.current) return;
+    savedAskedRef.current = true;
+    loadSavedRegistrant()
+      .then((data: any) => {
+        const saved = data?.saved?.registrant;
+        if (!saved) return;
+        const typed = ['firstName', 'lastName', 'address1', 'city', 'zip'].some((key) => String((owner as any)[key] || '').trim());
+        if (typed) return;
+        const filled: OwnerDetails = { ...emptyOwnerDetails(saved.country || owner.country), ...saved };
+        setOwner(filled);
+        setOwnerPhone(draftFromPhone(filled.phone, filled.country));
+        setSavedDetails('saved');
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchase?.buyer]);
+
+  async function forgetOrSkipSaved() {
+    if (savedDetails === 'saved') {
+      try {
+        await forgetSavedRegistrant();
+      } catch {
+        setOwnerProblem(t.forgetFailed);
+        return;
+      }
+    }
+    setSavedDetails('forgotten');
+  }
+
   async function payAsOwner(idea: DomainIdeaView) {
     const problem = ownerDetailsProblem(t, owner);
     if (problem) {
@@ -356,7 +393,8 @@ export default function AppAddress({
         domain: idea.domain,
         registrant,
         agreed: ownerAgreed,
-        priceCents: idea.priceCents
+        priceCents: idea.priceCents,
+        saveDetails: savedDetails !== 'forgotten'
       });
       // Leaving the check screen (Back, closing) cancels the hand-off; the
       // same server order opens again from Continue to payment.
@@ -790,6 +828,10 @@ export default function AppAddress({
               onAgree={setOwnerAgreed}
               onPay={() => void payAsOwner(step.idea)}
               onBack={() => setStep({ kind: 'find' })}
+              // saved details: straight to the check screen, Edit links
+              startPage={savedDetails === 'saved' && !ownerDetailsProblem(t, owner) ? 3 : 0}
+              saved={savedDetails}
+              onSavedChoice={() => void forgetOrSkipSaved()}
             />
           )}
           {step.kind === 'order' &&

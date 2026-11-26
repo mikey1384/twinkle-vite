@@ -92,6 +92,8 @@ registerMethods('build', [
   'startDomainOrder',
   'loadDomainPurchase',
   'startSelfDomainOrder',
+  'loadSavedRegistrant',
+  'forgetSavedRegistrant',
   'loadDomainOrder',
   'loadLatestDomainOrder',
   'loadDomainStatus',

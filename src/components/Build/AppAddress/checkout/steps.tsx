@@ -384,10 +384,17 @@ export function OwnerDetailsView({
   onBack,
   phoneDraft,
   onPhoneDraft,
-  startPage = 0
+  startPage = 0,
+  saved = 'none',
+  onSavedChoice
 }: StepBase & {
   idea: DomainIdeaView;
   details: OwnerDetails;
+  // the member's saved details: 'saved' (prefilled from their last
+  // purchase), 'none' (these will be saved after paying), 'forgotten'
+  // (not kept); onSavedChoice: Forget / Don't save
+  saved?: 'saved' | 'none' | 'forgotten';
+  onSavedChoice?: () => void;
   // the phone as typed (calling code + number); details.phone is its E.164
   phoneDraft: PhoneDraft;
   onPhoneDraft: (draft: PhoneDraft) => void;
@@ -440,7 +447,7 @@ export function OwnerDetailsView({
   }
   const tips = [t.tipOwner, t.tipContact, t.tipAddress, t.tipReview];
   const titles = [t.ownerNameTitle, t.contactTitle, t.addressTitle, t.reviewTitle];
-  const leads = [t.nameGroupNote, t.contactGroupNote, t.ownerPrivate, t.ownerIntro];
+  const leads = [t.nameGroupNote, t.contactGroupNote, t.ownerPrivate, saved === 'saved' ? t.savedLead : t.ownerIntro];
   return (
     <CheckoutLayout
       stepKey={`owner-${page}`}
@@ -529,6 +536,17 @@ export function OwnerDetailsView({
                 </div>
               ))}
             </dl>
+            <p className={savedNoteClass} data-saved={saved}>
+              <span>{saved === 'saved' ? t.savedNote : saved === 'none' ? t.saveNextNote : t.notSavedNote}</span>
+              {saved !== 'forgotten' && onSavedChoice && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <button type="button" className={textButtonClass} onClick={onSavedChoice}>
+                    {saved === 'saved' ? t.savedForget : t.dontSave}
+                  </button>
+                </>
+              )}
+            </p>
             <Notice>{t.cheaperElsewhere}</Notice>
             <label className={consentClass}>
               <input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} />
@@ -1427,6 +1445,20 @@ const consentBoxClass = css`
       transform: none;
       transition: opacity 0.15s ease;
     }
+  }
+`;
+const savedNoteClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 2px 0 14px;
+  color: ${T.muted};
+  font-size: 14px;
+  line-height: 1.5;
+  button {
+    min-height: 32px;
+    font-size: 14px;
   }
 `;
 const payNoteClass = css`
