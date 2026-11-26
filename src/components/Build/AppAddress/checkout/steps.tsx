@@ -4,7 +4,7 @@ import LumineAtWork from '~/containers/Build/PreviewPanel/LumineAtWork';
 import Confetti from '~/containers/Build/Editor/ChatPanel/Roadmap/Confetti';
 import type { AddressText } from '../text';
 import { toE164, type PhoneDraft } from './phone';
-import { isKnownCountry } from './countries';
+import { STATE_OPTIONAL, countryInStateField, guessCountry, isKnownCountry } from './countries';
 import {
   usd,
   krw,
@@ -19,9 +19,10 @@ import {
   CheckIcon,
   CHECKOUT_TITLE_ID,
   CheckoutLayout,
+  DomainText,
   Companion,
   focusFirstInvalid,
-  CountrySelect,
+  CountryField,
   FieldGrid,
   MobileSummary,
   Notice,
@@ -37,7 +38,6 @@ import {
   SummaryCard,
   TextButton,
   TextField,
-  selectClass,
   textButtonClass,
   type CheckoutProgress
 } from './ui';
@@ -317,7 +317,9 @@ export function FindView({
                         {t.bestMatch}
                       </span>
                     )}
-                    <span className={resultDomainClass}>{idea.domain}</span>
+                    <span className={resultDomainClass}>
+                      <DomainText domain={idea.domain} />
+                    </span>
                   </span>
                   <span className={resultPriceClass}>
                     <b>{usd(idea.priceCents)}</b>
@@ -395,7 +397,8 @@ export function OwnerDetailsView({
   renews: boolean;
   busy: boolean;
   problem: string;
-  onDetails: (details: OwnerDetails) => void;
+  // takes an updater, so autofill's several changes in a row all land
+  onDetails: React.Dispatch<React.SetStateAction<OwnerDetails>>;
   onAgree: (agreed: boolean) => void;
   onPay: () => void;
   onBack: () => void;
@@ -403,7 +406,14 @@ export function OwnerDetailsView({
 }) {
   const [page, setPage] = useState<OwnerPage>(startPage);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
-  const set = (key: keyof OwnerDetails) => (value: string) => onDetails({ ...details, [key]: value });
+  const set = (key: keyof OwnerDetails) => (value: string) => onDetails((prev) => ({ ...prev, [key]: value }));
+  // a country's name autofilled into State moves to Country
+  const setState = (value: string) => {
+    const country = countryInStateField(value);
+    if (country) onDetails((prev) => ({ ...prev, country, state: '' }));
+    else set('state')(value);
+  };
+  const stateOptional = STATE_OPTIONAL.has(details.country.toUpperCase());
   const required = (key: keyof OwnerDetails) => (details[key].trim() ? '' : t.fieldRequired);
   const pageErrors: Record<OwnerPage, Partial<Record<keyof OwnerDetails, string>>> = {
     0: { firstName: required('firstName'), lastName: required('lastName') },
@@ -415,7 +425,7 @@ export function OwnerDetailsView({
       country: isKnownCountry(details.country) ? '' : t.fieldRequired,
       address1: required('address1'),
       city: required('city'),
-      state: required('state'),
+      state: stateOptional ? '' : required('state'),
       zip: required('zip')
     },
     3: {}
@@ -475,37 +485,53 @@ export function OwnerDetailsView({
       >
         {page === 0 && (
           <FieldGrid>
-            <TextField label={t.firstName} value={details.firstName} onChange={set('firstName')} autoComplete="given-name" error={errors.firstName} autoFocus />
-            <TextField label={t.lastName} value={details.lastName} onChange={set('lastName')} autoComplete="family-name" error={errors.lastName} />
+            <TextField label={t.firstName} name="given-name" value={details.firstName} onChange={set('firstName')} autoComplete="given-name" error={errors.firstName} autoFocus />
+            <TextField label={t.lastName} name="family-name" value={details.lastName} onChange={set('lastName')} autoComplete="family-name" error={errors.lastName} />
           </FieldGrid>
         )}
         {page === 1 && (
           <div className={stackClass}>
-            <TextField label={t.email} type="email" inputMode="email" value={details.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="you@example.com" autoFocus />
+            <TextField label={t.email} name="email" type="email" inputMode="email" value={details.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="you@example.com" autoFocus />
             <PhoneField
               label={t.phone}
               dialLabel={t.dialCode}
               draft={phoneDraft}
               onChange={(draft) => {
                 onPhoneDraft(draft);
-                onDetails({ ...details, phone: toE164(draft) });
+                onDetails((prev) => ({ ...prev, phone: toE164(draft) }));
               }}
               error={errors.phone}
+              hint={t.phoneWhy}
             />
           </div>
         )}
         {page === 2 && (
           <FieldGrid>
-            <div data-span="2" className={countryFieldClass}>
-              <span>{t.country}</span>
-              <CountrySelect value={details.country} onChange={set('country')} label={t.country} className={selectClass} error={errors.country} />
+            <div data-span="2">
+              <CountryField
+                label={t.country}
+                value={details.country}
+                onChange={set('country')}
+                error={errors.country}
+                detected={guessCountry()}
+                searchPlaceholder={t.countrySearch}
+                noMatch={t.countryNoMatch}
+                closeLabel={t.close}
+              />
             </div>
             <div data-span="2">
-              <TextField label={t.address1} value={details.address1} onChange={set('address1')} autoComplete="street-address" error={errors.address1} />
+              <TextField label={t.address1} name="address-line1" value={details.address1} onChange={set('address1')} autoComplete="address-line1" error={errors.address1} />
             </div>
-            <TextField label={t.city} value={details.city} onChange={set('city')} autoComplete="address-level2" error={errors.city} />
-            <TextField label={t.state} value={details.state} onChange={set('state')} autoComplete="address-level1" error={errors.state} />
-            <TextField label={t.zip} value={details.zip} onChange={set('zip')} autoComplete="postal-code" error={errors.zip} />
+            <TextField label={t.city} name="address-level2" value={details.city} onChange={set('city')} autoComplete="address-level2" error={errors.city} />
+            <TextField
+              label={stateOptional ? t.stateOptional : t.state}
+              name="address-level1"
+              value={details.state}
+              onChange={setState}
+              autoComplete="address-level1"
+              error={errors.state}
+            />
+            <TextField label={t.zip} name="postal-code" value={details.zip} onChange={set('zip')} autoComplete="postal-code" error={errors.zip} />
           </FieldGrid>
         )}
         {page === 3 && (
@@ -1293,7 +1319,8 @@ const resultDomainClass = css`
   font-size: 18px;
   font-weight: 760;
   letter-spacing: -0.01em;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
 `;
 const resultPriceClass = css`
   flex: none;
@@ -1313,15 +1340,6 @@ const resultPriceClass = css`
 const resultRevealClass = css`
   padding: 0 16px 12px 54px;
   margin-top: -10px;
-`;
-const countryFieldClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  > span:first-child {
-    font-size: 14.5px;
-    font-weight: 700;
-  }
 `;
 const reviewListClass = css`
   margin: 0;

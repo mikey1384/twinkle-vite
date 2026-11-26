@@ -21,6 +21,116 @@ export function countryName(code: string, lang?: string) {
   }
 }
 
+// Names people (and browsers' autofill) use for a country besides its
+// English and Korean names.
+const COUNTRY_ALIASES: Record<string, string[]> = {
+  KR: ['south korea', 'korea', 'korea, republic of', 'republic of korea', 'korea (south)', 'rok', '한국', '대한민국', '남한'],
+  KP: ['north korea', "korea, democratic people's republic of", '북한'],
+  US: ['us', 'usa', 'u.s.', 'u.s.a.', 'united states of america', 'america', '미국'],
+  GB: ['uk', 'u.k.', 'britain', 'great britain', 'england', 'scotland', 'wales', 'northern ireland', '영국'],
+  JP: ['japan', '일본'],
+  CN: ['china', "people's republic of china", 'prc', '중국'],
+  TW: ['taiwan', 'republic of china', '대만', '타이완'],
+  HK: ['hong kong', 'hong kong sar', '홍콩'],
+  CA: ['canada', '캐나다'],
+  AU: ['australia', '호주'],
+  NZ: ['new zealand', '뉴질랜드'],
+  VN: ['vietnam', 'viet nam', '베트남'],
+  PH: ['philippines', '필리핀'],
+  SG: ['singapore', '싱가포르'],
+  DE: ['germany', 'deutschland', '독일'],
+  FR: ['france', '프랑스'],
+  RU: ['russia', 'russian federation', '러시아'],
+  CZ: ['czechia', 'czech republic'],
+  TR: ['turkey', 'türkiye', 'turkiye', '튀르키예', '터키'],
+  CI: ["cote d'ivoire", "côte d'ivoire", 'ivory coast'],
+  AE: ['uae', 'united arab emirates'],
+  NL: ['holland', 'netherlands', 'the netherlands']
+};
+
+function normalizeCountryText(value: string) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[’`]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+let countryIndex: Array<{ code: string; names: string[] }> | null = null;
+function index() {
+  if (countryIndex) return countryIndex;
+  countryIndex = COUNTRY_CODES.map((code) => {
+    const names = new Set<string>([code.toLowerCase()]);
+    for (const lang of ['en', 'ko']) {
+      try {
+        const name = new Intl.DisplayNames([lang], { type: 'region' }).of(code);
+        if (name && name !== code) names.add(normalizeCountryText(name));
+      } catch {
+        // no names for this language
+      }
+    }
+    for (const alias of COUNTRY_ALIASES[code] || []) names.add(normalizeCountryText(alias));
+    return { code, names: [...names] };
+  });
+  return countryIndex;
+}
+
+// "South Korea", "Korea, Republic of", "대한민국", "kr" -> KR (exactly one
+// country's name or code, as autofill or a person would write it), or ''.
+export function matchCountry(value: string) {
+  const text = normalizeCountryText(value);
+  if (!text) return '';
+  if (/^[a-z]{2}$/.test(text) && isKnownCountry(text)) return text.toUpperCase();
+  const found = index().find((entry) => entry.names.includes(text));
+  return found ? found.code : '';
+}
+
+// Countries for a search box: exact names first, then names that start
+// with the text, then names that contain it.
+export function searchCountries(query: string) {
+  const text = normalizeCountryText(query);
+  if (!text) return COUNTRY_CODES.slice();
+  const ranked: Array<{ code: string; rank: number }> = [];
+  for (const entry of index()) {
+    let rank = 99;
+    for (const name of entry.names) {
+      if (name === text) rank = Math.min(rank, 0);
+      else if (name.startsWith(text)) rank = Math.min(rank, 1);
+      else if (name.split(/[\s,()'-]+/).some((word) => word.startsWith(text))) rank = Math.min(rank, 2);
+      else if (text.length > 2 && name.includes(text)) rank = Math.min(rank, 3);
+    }
+    if (rank < 99) ranked.push({ code: entry.code, rank });
+  }
+  return ranked
+    .sort((left, right) => left.rank - right.rank || countryName(left.code, 'en').localeCompare(countryName(right.code, 'en')))
+    .map((item) => item.code);
+}
+
+// Autofill sometimes drops the country's name into "State or province"
+// (a saved Korean address: State = "South Korea"). That value names a
+// country, not a state: it moves to Country. Names that are also states
+// (Georgia, Jersey) stay where they are.
+const STATE_NAMES_THAT_ARE_COUNTRIES = new Set(['GE', 'JE']);
+export function countryInStateField(state: string) {
+  const code = matchCountry(state);
+  if (!code || STATE_NAMES_THAT_ARE_COUNTRIES.has(code)) return '';
+  // a two-letter state code (CA, WA, IN...) is a state, not a country
+  if (/^[a-z]{2}$/i.test(String(state || '').trim())) return '';
+  return code;
+}
+
+// Countries where the address doesn't need a state or province (the city
+// is enough, e.g. Seoul). The registrar still wants one, so the city is
+// sent in its place when it's left empty.
+export const STATE_OPTIONAL = new Set(['KR', 'SG', 'HK', 'MO', 'GB', 'IE', 'NZ']);
+export function stateOrCity(country: string, state: string, city: string) {
+  const value = String(state || '').trim();
+  if (value) return value;
+  return STATE_OPTIONAL.has(String(country || '').toUpperCase()) ? String(city || '').trim() : '';
+}
+
 // Time zones and the country they mean. A zone pins the country better
 // than the browser language (an English browser in Seoul is still in
 // Korea). A zone that isn't listed, or that several countries share, falls

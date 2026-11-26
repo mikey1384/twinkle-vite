@@ -1280,6 +1280,8 @@ export default function Header({
             buildId={Number(build.id)}
             isOwner={Boolean(isOwner)}
             appTitle={String(build.title || '')}
+            hasUnsavedChanges={hasUnsavedRewardChanges}
+            onSaveChanges={onSaveRewardCode}
           >
             {rewardChip}
           </AppAddress>

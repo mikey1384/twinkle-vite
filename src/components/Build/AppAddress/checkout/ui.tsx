@@ -1,11 +1,9 @@
-import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { css, cx, keyframes } from '@emotion/css';
 import AssistantFace from '~/components/AssistantFace';
 import TwinkleLogo from '~/containers/App/Header/TwinkleLogo';
-import { lockBodyScroll } from '~/helpers/bodyScrollLock';
-import { trapModalFocus } from '~/components/Modal';
-import { COUNTRY_CODES, POPULAR_COUNTRIES, countryName, isKnownCountry } from './countries';
+import { COUNTRY_CODES, POPULAR_COUNTRIES, countryName, isKnownCountry, matchCountry, searchCountries } from './countries';
 import { CALLING_CODES, callingCode, splitInternational, type PhoneDraft } from './phone';
 
 // The own-web-address checkout's look (Mikey 11-26: friendlier than a form
@@ -114,75 +112,34 @@ export function InfoIcon() {
 
 // ---------------------------------------------------------------- surface
 
-// The checkout's whole screen: over the Build page (overlay, with "Back to
-// your app") or as its own page (the parent's link). It keeps the page
-// underneath alive, so the workspace and its unsaved work stay as they were.
+// The checkout's whole screen as a page of its own (the app's checkout at
+// /build/<id>/domain, with "Back to your app"; the parent's link page with
+// its language switch). Nothing is layered over another page, so there is
+// no scroll lock, focus trap or hidden page behind it.
 export function CheckoutSurface({
-  variant,
   label,
   onClose,
   closeLabel,
   topRight,
   children
 }: {
-  variant: 'overlay' | 'page';
+  // kept for the call sites (both are pages now)
+  variant?: 'page';
   label: string;
   onClose?: () => void;
   closeLabel?: string;
   topRight?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [opener] = useState(() => (typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null)));
-  useLayoutEffect(() => {
-    if (variant !== 'overlay' || typeof document === 'undefined') return;
-    return lockBodyScroll(document.body);
-  }, [variant]);
-  // A dialog over the Build page: Escape closes it and Tab stays inside it
-  // (the shared Modal's trap), so the editor underneath can't be reached;
-  // Zero and Ciel's floating window keeps its own focus.
   useEffect(() => {
-    if (variant !== 'overlay') return;
-    function onKey(event: KeyboardEvent) {
-      if (event.defaultPrevented) return;
-      // Escape that ends a Korean/Japanese/Chinese composition isn't a close
-      if (event.isComposing || event.keyCode === 229) return;
-      if (event.key === 'Escape' && onClose) {
-        onClose();
-        return;
-      }
-      const fromAgentWindow = (event.target as Element | null)?.closest?.('[data-website-agent-ui]');
-      if (event.key === 'Tab' && scrollRef.current && !fromAgentWindow) trapModalFocus(event, scrollRef.current);
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [variant, onClose]);
-  // Focus moves in on open and back to what opened it (the address chip,
-  // or the chip itself after a deep link) on close.
-  useEffect(() => {
-    if (variant !== 'overlay') return;
-    if (!scrollRef.current?.contains(document.activeElement)) scrollRef.current?.focus({ preventScroll: true });
+    const previous = document.title;
+    document.title = label ? `${label} · Twinkle` : previous;
     return () => {
-      const target =
-        opener && opener.isConnected && opener !== document.body
-          ? opener
-          : document.querySelector<HTMLElement>('[data-header-chip="address"]');
-      target?.focus({ preventScroll: true });
+      document.title = previous;
     };
-    // the opener is fixed at first render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [variant]);
-  const content = (
-    <div
-      ref={scrollRef}
-      tabIndex={-1}
-      role={variant === 'overlay' ? 'dialog' : undefined}
-      aria-modal={variant === 'overlay' ? true : undefined}
-      aria-label={variant === 'overlay' ? undefined : label}
-      aria-labelledby={variant === 'overlay' ? CHECKOUT_TITLE_ID : undefined}
-      className={cx(surfaceClass, variant === 'overlay' && overlayClass)}
-      data-checkout-surface=""
-    >
+  }, [label]);
+  return (
+    <div className={surfaceClass} data-checkout-surface="" aria-label={label}>
       <header className={topBarClass}>
         <div className={logoClass}>
           <TwinkleLogo alwaysVisible linkHome={false} />
@@ -200,10 +157,6 @@ export function CheckoutSurface({
       {children}
     </div>
   );
-  if (variant === 'overlay' && typeof document !== 'undefined') {
-    return createPortal(content, document.body);
-  }
-  return content;
 }
 
 // ---------------------------------------------------------------- layout
@@ -309,6 +262,26 @@ export function Companion({ assistant, children }: { assistant: 'Zero' | 'Ciel' 
   );
 }
 
+// A domain that may wrap only after its dots and hyphens, never inside a
+// label ("the-adventure-of-a-" / "red-square.com", not "redsq" / "uare").
+export function DomainText({ domain }: { domain: string }) {
+  // (no look-behind: older Safari can't parse it)
+  const parts = String(domain || '')
+    .replace(/([.-])/g, '$1\u0000')
+    .split('\u0000')
+    .filter(Boolean);
+  return (
+    <>
+      {parts.map((part, index) => (
+        <React.Fragment key={index}>
+          {part}
+          {index < parts.length - 1 ? <wbr /> : null}
+        </React.Fragment>
+      ))}
+    </>
+  );
+}
+
 export function StepTitle({ children, lead }: { children: React.ReactNode; lead?: React.ReactNode }) {
   return (
     <>
@@ -344,7 +317,9 @@ export function SummaryCard({
   return (
     <section className={summaryClass} aria-label={heading}>
       <div className={summaryHeadingClass}>{heading}</div>
-      <div className={summaryDomainClass}>{domain}</div>
+      <div className={summaryDomainClass}>
+        <DomainText domain={domain} />
+      </div>
       {price && (
         <div className={summaryPriceRowClass}>
           <span className={summaryPriceClass}>{price}</span>
@@ -537,8 +512,9 @@ export function PhoneField({
         <input
           id={id}
           type="tel"
+          name="tel-national"
           inputMode="tel"
-          autoComplete="tel"
+          autoComplete="tel-national"
           value={draft.national}
           onChange={(event) => onChange(splitInternational(event.target.value, draft.country) || { country: draft.country, national: event.target.value })}
           onBlur={onBlur}
@@ -595,59 +571,342 @@ export function FieldGrid({ children }: { children: React.ReactNode }) {
   return <div className={fieldGridClass}>{children}</div>;
 }
 
-// The country list: every ISO country (where most Twinkle families live
-// first), so only a real country can be chosen; the caller presets it from
-// guessCountry().
-export function CountrySelect({
+// The country: a searchable combobox (ARIA combobox + listbox) instead of a
+// long native list. Type to filter by English or Korean name or a common
+// alias (Korea, 대한민국, USA, UK...); arrows, Enter and Escape work; on a
+// phone it opens a full-height sheet with its own search box. The value is
+// always an ISO code. Autofill (Chrome writes a country name or code into
+// it) lands on the right country through the same aliases.
+export function CountryField({
+  label,
   value,
   onChange,
-  label,
-  className,
-  error
+  error,
+  detected,
+  searchPlaceholder,
+  noMatch,
+  closeLabel
 }: {
+  label: string;
   value: string;
   onChange: (country: string) => void;
-  label: string;
-  className?: string;
   error?: string;
+  // the country guessed for this person, offered first
+  detected?: string;
+  searchPlaceholder: string;
+  noMatch: string;
+  closeLabel: string;
 }) {
-  const errorId = useId();
-  const code = value.toUpperCase();
-  const others = COUNTRY_CODES.filter((item) => !POPULAR_COUNTRIES.includes(item))
-    .map((item) => ({ code: item, name: countryName(item) }))
-    .sort((left, right) => left.name.localeCompare(right.name));
+  const id = useId();
+  const listId = `${id}-list`;
+  const errorId = `${id}-error`;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const sheetInputRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [active, setActive] = useState(0);
+  const [phone, setPhone] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 759px)').matches);
+  useEffect(() => {
+    const media = window.matchMedia?.('(max-width: 759px)');
+    if (!media) return;
+    const onChangeMedia = () => setPhone(media.matches);
+    media.addEventListener?.('change', onChangeMedia);
+    return () => media.removeEventListener?.('change', onChangeMedia);
+  }, []);
+  const code = String(value || '').toUpperCase();
+  const selectedName = isKnownCountry(code) ? countryName(code) : '';
+  const top = Array.from(new Set([detected, code, ...POPULAR_COUNTRIES].filter((item): item is string => Boolean(item) && isKnownCountry(String(item)))));
+  const options: Array<{ code: string; divider?: boolean }> = query
+    ? searchCountries(query).map((item) => ({ code: item }))
+    : [
+        ...top.map((item) => ({ code: item })),
+        ...COUNTRY_CODES.filter((item) => !top.includes(item))
+          .sort((left, right) => countryName(left).localeCompare(countryName(right)))
+          .map((item, index) => ({ code: item, divider: index === 0 }))
+      ];
+  const activeCode = options[Math.min(active, options.length - 1)]?.code;
+
+  function choose(next: string) {
+    onChange(next);
+    setOpen(false);
+    setQuery('');
+    window.requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
+  }
+  function openList() {
+    setQuery('');
+    setActive(Math.max(0, options.findIndex((item) => item.code === code)));
+    setOpen(true);
+    if (phone) window.requestAnimationFrame(() => sheetInputRef.current?.focus());
+  }
+  function onKeyDown(event: React.KeyboardEvent) {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (!open) {
+        openList();
+        return;
+      }
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      setActive((current) => Math.max(0, Math.min(options.length - 1, current + step)));
+      return;
+    }
+    if (event.key === 'Enter' && open) {
+      event.preventDefault();
+      if (activeCode) choose(activeCode);
+      return;
+    }
+    if (event.key === 'Escape' && open) {
+      // closes the list, not the checkout
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(false);
+      setQuery('');
+    }
+  }
+  function onType(text: string, fromSheet = false, nativeEvent?: Event) {
+    // Autofill writes the whole name (or code) at once without typing
+    const inputType = (nativeEvent as InputEvent | undefined)?.inputType;
+    const typed = inputType && inputType !== 'insertReplacementText';
+    const exact = matchCountry(text);
+    if (exact && !typed && !fromSheet) {
+      onChange(exact);
+      setQuery('');
+      setOpen(false);
+      return;
+    }
+    setQuery(text);
+    setActive(0);
+    if (!open) setOpen(true);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    document.getElementById(`${id}-opt-${activeCode}`)?.scrollIntoView({ block: 'nearest' });
+  }, [open, activeCode, id]);
+
+  const list = (
+    <ul id={listId} role="listbox" aria-label={label} className={phone ? sheetListClass : popoverClass}>
+      {options.length === 0 && <li className={noMatchClass}>{noMatch}</li>}
+      {options.map((item, index) => (
+        <li
+          key={item.code}
+          id={`${id}-opt-${item.code}`}
+          role="option"
+          aria-selected={item.code === code}
+          data-active={item.code === activeCode || undefined}
+          data-divider={item.divider || undefined}
+          className={optionClass}
+          onMouseDown={(event) => event.preventDefault()}
+          onMouseEnter={() => setActive(index)}
+          onClick={() => choose(item.code)}
+        >
+          <span>{countryName(item.code)}</span>
+          {item.code === code ? <CheckIcon size={15} /> : null}
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', minWidth: 0 }}>
-      <select
-        className={className || selectClass}
-        aria-label={label}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
-        value={isKnownCountry(code) ? code : ''}
-        onChange={(event) => onChange(event.target.value)}
-        style={{ flex: 1, minWidth: 0 }}
-      >
-        {!isKnownCountry(code) && <option value="" disabled />}
-        {POPULAR_COUNTRIES.map((item) => (
-          <option key={item} value={item}>
-            {countryName(item)}
-          </option>
-        ))}
-        <option disabled>──────────</option>
-        {others.map((item) => (
-          <option key={item.code} value={item.code}>
-            {item.name}
-          </option>
-        ))}
-      </select>
+    <div className={fieldClass}>
+      <label htmlFor={id}>{label}</label>
+      <div className={comboWrapClass}>
+        <input
+          ref={inputRef}
+          id={id}
+          name="country"
+          type="text"
+          role="combobox"
+          autoComplete="country-name"
+          aria-autocomplete="list"
+          aria-expanded={open && !phone}
+          aria-controls={listId}
+          aria-activedescendant={open && !phone && activeCode ? `${id}-opt-${activeCode}` : undefined}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          value={open && !phone ? query : selectedName}
+          placeholder={selectedName || searchPlaceholder}
+          onFocus={() => {
+            if (!phone) openList();
+          }}
+          onClick={() => {
+            if (!open) openList();
+          }}
+          onChange={(event) => onType(event.target.value, false, event.nativeEvent)}
+          onKeyDown={onKeyDown}
+          onBlur={() => {
+            if (!phone) window.setTimeout(() => setOpen(false), 120);
+          }}
+          className={cx(inputClass, comboInputClass)}
+        />
+        <span className={comboChevronClass} aria-hidden="true">
+          <ChevronIcon open={open} />
+        </span>
+        {open && !phone && list}
+      </div>
+      {open &&
+        phone &&
+        createPortal(
+        <div className={sheetClass} role="dialog" aria-modal="true" aria-label={label}>
+          <div className={sheetHeadClass}>
+            <strong>{label}</strong>
+            <button type="button" className={sheetCloseClass} onClick={() => setOpen(false)} aria-label={closeLabel}>
+              <CloseIcon />
+            </button>
+          </div>
+          <div className={sheetSearchClass}>
+            <SearchIcon />
+            <input
+              ref={sheetInputRef}
+              type="search"
+              role="combobox"
+              aria-expanded
+              aria-controls={listId}
+              aria-autocomplete="list"
+              aria-activedescendant={activeCode ? `${id}-opt-${activeCode}` : undefined}
+              aria-label={searchPlaceholder}
+              placeholder={searchPlaceholder}
+              value={query}
+              onChange={(event) => onType(event.target.value, true)}
+              onKeyDown={onKeyDown}
+              className={inputClass}
+            />
+          </div>
+          {list}
+        </div>,
+          document.body
+        )}
       {error ? (
-        <span id={errorId} className={fieldErrorClass} role="alert" style={{ flexBasis: '100%' }}>
+        <span id={errorId} className={fieldErrorClass} role="alert">
           {error}
         </span>
       ) : null}
     </div>
   );
 }
+
+const sheetRise = keyframes`
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+`;
+const comboWrapClass = css`
+  position: relative;
+`;
+const comboInputClass = css`
+  padding-right: 44px;
+  cursor: pointer;
+  &::placeholder {
+    color: ${T.ink};
+  }
+  &:focus::placeholder {
+    color: #a2a6b4;
+  }
+`;
+const comboChevronClass = css`
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${T.muted};
+  pointer-events: none;
+  display: grid;
+`;
+const popoverClass = css`
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid ${T.line};
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(20, 20, 40, 0.06), 0 18px 40px rgba(20, 20, 40, 0.16);
+`;
+const optionClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 16px;
+  color: ${T.ink};
+  cursor: pointer;
+  &[data-active] {
+    background: ${T.blueTint};
+  }
+  &[aria-selected='true'] {
+    font-weight: 700;
+  }
+  &[data-divider] {
+    margin-top: 6px;
+    border-top: 1px solid ${T.line};
+    border-radius: 0 0 10px 10px;
+  }
+`;
+const noMatchClass = css`
+  padding: 12px;
+  color: ${T.muted};
+  font-size: 15px;
+`;
+const sheetClass = css`
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  animation: ${sheetRise} 0.22s ${T.ease} both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+const sheetHeadClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 6px 18px;
+  strong {
+    font-size: 18px;
+  }
+`;
+const sheetCloseClass = css`
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f4f5f9;
+  color: ${T.ink};
+  cursor: pointer;
+`;
+const sheetSearchClass = css`
+  position: relative;
+  padding: 6px 14px 10px;
+  > svg {
+    position: absolute;
+    left: 30px;
+    top: 50%;
+    transform: translateY(-60%);
+    color: ${T.muted};
+  }
+  input {
+    padding-left: 46px;
+  }
+`;
+const sheetListClass = css`
+  flex: 1;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 8px calc(16px + env(safe-area-inset-bottom));
+  list-style: none;
+`;
 
 
 // ---------------------------------------------------------------- buttons
@@ -727,10 +986,6 @@ const chevronClass = css`
     transition: none;
   }
 `;
-const rise = keyframes`
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
-`;
 const slide = keyframes`
   from { opacity: 0; transform: translateX(18px); }
   to { opacity: 1; transform: none; }
@@ -756,17 +1011,6 @@ const surfaceClass = css`
   *::before,
   *::after {
     box-sizing: border-box;
-  }
-`;
-const overlayClass = css`
-  position: fixed;
-  inset: 0;
-  z-index: 100000;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  animation: ${rise} 0.28s ${T.ease} both;
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
   }
 `;
 const topBarClass = css`
@@ -1062,7 +1306,9 @@ const summaryDomainClass = css`
   line-height: 1.2;
   font-weight: 760;
   letter-spacing: -0.01em;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
 `;
 const summaryPriceRowClass = css`
   display: flex;

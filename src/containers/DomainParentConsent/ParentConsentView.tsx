@@ -3,12 +3,12 @@ import { css } from '@emotion/css';
 import { PARENT_TEXT } from '~/components/Build/AppAddress/text';
 import { usd, krw } from '~/components/Build/AppAddress/checkout/model';
 import { draftFromPhone, toE164, type PhoneDraft } from '~/components/Build/AppAddress/checkout/phone';
-import { guessCountry, isKnownCountry } from '~/components/Build/AppAddress/checkout/countries';
+import { STATE_OPTIONAL, countryInStateField, guessCountry, isKnownCountry, stateOrCity } from '~/components/Build/AppAddress/checkout/countries';
 import {
   T,
   CheckIcon,
   CheckoutLayout,
-  CountrySelect,
+  CountryField,
   FieldGrid,
   MobileSummary,
   Notice,
@@ -23,7 +23,6 @@ import {
   SummaryCard,
   TextField,
   focusFirstInvalid,
-  selectClass,
   textButtonClass
 } from '~/components/Build/AppAddress/checkout/ui';
 import Confetti from '~/containers/Build/Editor/ChatPanel/Roadmap/Confetti';
@@ -135,6 +134,14 @@ export default function ParentConsentView({
     </>
   );
   const set = (key: keyof RegistrantInput) => (value: string) => setRegistrant((prev) => ({ ...prev, [key]: value }));
+  // a country's name autofilled into State moves to Country
+  const setState = (value: string) => {
+    const country = countryInStateField(value);
+    if (country) setRegistrant((prev) => ({ ...prev, country, state: '' }));
+    else set('state')(value);
+  };
+  const stateOptional = STATE_OPTIONAL.has(registrant.country.toUpperCase());
+  const [detectedCountry] = useState(() => guessCountry());
   const required = (key: keyof RegistrantInput) => (registrant[key].trim() ? '' : main.fieldRequired);
   const pageErrors: Record<Page, Partial<Record<keyof RegistrantInput, string>>> = {
     0: {},
@@ -147,7 +154,7 @@ export default function ParentConsentView({
       country: isKnownCountry(registrant.country) ? '' : main.fieldRequired,
       address1: required('address1'),
       city: required('city'),
-      state: required('state'),
+      state: stateOptional ? '' : required('state'),
       zip: required('zip')
     },
     4: {}
@@ -218,7 +225,7 @@ export default function ParentConsentView({
               {page === 0 ? main.start : main.next}
             </PrimaryButton>
           ) : (
-            <PrimaryButton busy={submitting === 'approve'} disabled={!complete || Boolean(submitting)} onClick={() => onApprove(registrant)}>
+            <PrimaryButton busy={submitting === 'approve'} disabled={!complete || Boolean(submitting)} onClick={() => onApprove({ ...registrant, state: stateOrCity(registrant.country, registrant.state, registrant.city) })}>
               {main.approve} · {usd(order.priceCents)}
             </PrimaryButton>
           )}
@@ -231,7 +238,7 @@ export default function ParentConsentView({
         onSubmit={(event) => {
           event.preventDefault();
           if (page < 4) next();
-          else if (complete && !submitting) onApprove(registrant);
+          else if (complete && !submitting) onApprove({ ...registrant, state: stateOrCity(registrant.country, registrant.state, registrant.city) });
         }}
       >
         {page === 0 && (
@@ -253,8 +260,8 @@ export default function ParentConsentView({
           <>
             <StepTitle lead={both((t) => t.detailsNote)}>{titles[1]}</StepTitle>
             <FieldGrid>
-              <TextField label={main.lastName} value={registrant.lastName} onChange={set('lastName')} autoComplete="family-name" error={errors.lastName} autoFocus />
-              <TextField label={main.firstName} value={registrant.firstName} onChange={set('firstName')} autoComplete="given-name" error={errors.firstName} />
+              <TextField label={main.lastName} name="family-name" value={registrant.lastName} onChange={set('lastName')} autoComplete="family-name" error={errors.lastName} autoFocus />
+              <TextField label={main.firstName} name="given-name" value={registrant.firstName} onChange={set('firstName')} autoComplete="given-name" error={errors.firstName} />
             </FieldGrid>
           </>
         )}
@@ -262,7 +269,7 @@ export default function ParentConsentView({
           <>
             <StepTitle lead={both((t) => t.detailsNote)}>{titles[2]}</StepTitle>
             <div className={stackClass}>
-              <TextField label={main.email} type="email" inputMode="email" value={registrant.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="name@example.com" autoFocus />
+              <TextField label={main.email} name="email" type="email" inputMode="email" value={registrant.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="name@example.com" autoFocus />
               <PhoneField
                 label={main.phoneLabel}
                 dialLabel={main.dialCode}
@@ -272,6 +279,7 @@ export default function ParentConsentView({
                   setRegistrant((prev) => ({ ...prev, phone: toE164(draft) }));
                 }}
                 error={errors.phone}
+                hint={main.phoneWhy}
               />
             </div>
           </>
@@ -280,16 +288,31 @@ export default function ParentConsentView({
           <>
             <StepTitle lead={both((t) => t.detailsNote)}>{titles[3]}</StepTitle>
             <FieldGrid>
-              <div data-span="2" className={countryFieldClass}>
-                <span>{main.country}</span>
-                <CountrySelect value={registrant.country} onChange={set('country')} label={main.country} className={selectClass} error={errors.country} />
+              <div data-span="2">
+                <CountryField
+                  label={main.country}
+                  value={registrant.country}
+                  onChange={set('country')}
+                  error={errors.country}
+                  detected={detectedCountry}
+                  searchPlaceholder={main.countrySearch}
+                  noMatch={main.countryNoMatch}
+                  closeLabel={main.close}
+                />
               </div>
               <div data-span="2">
-                <TextField label={main.address} value={registrant.address1} onChange={set('address1')} autoComplete="street-address" error={errors.address1} />
+                <TextField label={main.address} name="address-line1" value={registrant.address1} onChange={set('address1')} autoComplete="address-line1" error={errors.address1} />
               </div>
-              <TextField label={main.state} value={registrant.state} onChange={set('state')} autoComplete="address-level1" error={errors.state} />
-              <TextField label={main.city} value={registrant.city} onChange={set('city')} autoComplete="address-level2" error={errors.city} />
-              <TextField label={main.zip} value={registrant.zip} onChange={set('zip')} autoComplete="postal-code" error={errors.zip} />
+              <TextField
+                label={stateOptional ? main.stateOptional : main.state}
+                name="address-level1"
+                value={registrant.state}
+                onChange={setState}
+                autoComplete="address-level1"
+                error={errors.state}
+              />
+              <TextField label={main.city} name="address-level2" value={registrant.city} onChange={set('city')} autoComplete="address-level2" error={errors.city} />
+              <TextField label={main.zip} name="postal-code" value={registrant.zip} onChange={set('zip')} autoComplete="postal-code" error={errors.zip} />
             </FieldGrid>
           </>
         )}
@@ -473,15 +496,6 @@ const quietClass = css`
 const stackClass = css`
   display: grid;
   gap: 18px;
-`;
-const countryFieldClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  > span:first-child {
-    font-size: 14.5px;
-    font-weight: 700;
-  }
 `;
 const reviewListClass = css`
   margin: 0;
