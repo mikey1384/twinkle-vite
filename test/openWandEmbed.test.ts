@@ -4,7 +4,8 @@ import {
   appendOpenWandEmbed,
   openWandEmbedMarkdown,
   openWandIdsInText,
-  openWandSlotsLine,
+  openWandEnergyLine,
+  openWandSpotsLine,
   removeOpenWandEmbed
 } from '../src/helpers/sponsoredHelp';
 
@@ -37,7 +38,11 @@ test('Remove takes out only that card and leaves the rest of the text', () => {
   assert.equal(removeOpenWandEmbed(removeOpenWandEmbed(text, 12), 7), 'Hello');
 });
 
-test('slots read plainly', () => {
-  assert.equal(openWandSlotsLine({ left: 18, cap: 20 }), '18 of 20 left');
-  assert.equal(openWandSlotsLine({ left: 0, cap: 20 }), 'All 20 used');
+test('spots and the Energy line read plainly, worst case included', () => {
+  assert.equal(openWandSpotsLine({ sponsoredLeft: 3, sponsorCap: 10 }), '3 of 10 sponsored spots left');
+  assert.equal(openWandSpotsLine({ sponsoredLeft: 1, sponsorCap: 1 }), '1 of 1 sponsored spot left');
+  assert.equal(openWandSpotsLine({ sponsoredLeft: 0, sponsorCap: 10 }), 'Sponsored spots used up');
+  assert.equal(openWandSpotsLine({ sponsoredLeft: 0, sponsorCap: 0 }), '');
+  assert.equal(openWandEnergyLine(10, 5), 'Up to 5% of your AI Energy per sponsored person (up to 50% in total)');
+  assert.equal(openWandEnergyLine(0, 5), 'Nothing comes out of your AI Energy');
 });

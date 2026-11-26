@@ -6,10 +6,11 @@ import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
-  OPEN_WAND_DEFAULT_CAP,
-  OPEN_WAND_MAX_CAP,
+  OPEN_WAND_DEFAULT_SPONSOR_CAP,
+  OPEN_WAND_MAX_SPONSOR_CAP,
   OPEN_WAND_PER_PERSON_PERCENT,
   OPEN_WAND_PRESETS,
+  openWandEnergyLine,
   SPONSORED_HELP_MAX_OBJECTIVES,
   SPONSORED_HELP_OBJECTIVE_MAX,
   energyPercentLabel,
@@ -44,13 +45,12 @@ const KIND_ICON: Record<string, string> = {
 // decides what is possible; this only collects the request and shows the
 // preview it wrote.
 //
-// Open mode (twinkle-api helpers/sponsoredHelp/openCards.ts): a card for
-// anyone who reads the post, inserted into the text being written. One
-// compact sheet: what Zero/Ciel helps with (a pick, preselected, or typed),
-// Zero or Ciel, how many people, the Energy it may use, Insert.
-//   openMode 'only'   the Subject composer, or a comment on your own post
-//                     (nobody to address)
-//   openMode 'choice' a reply: "For <name>" or "Anyone who reads it"
+// Open mode (twinkle-api helpers/sponsoredHelp/openCards.ts; the Subject
+// composer's attach menu): a card for anyone who reads the post, inserted
+// into the text being written. One compact sheet: what Zero/Ciel helps with
+// (a pick, preselected, or typed), Zero or Ciel, how many people to
+// sponsor (first come, first served; 0 allowed: after them, or with 0,
+// people use their own AI Energy), the honest worst case, Insert.
 export default function SponsoredHelpModal({
   target,
   recipientUsername,
@@ -58,19 +58,19 @@ export default function SponsoredHelpModal({
   maxObjectives = SPONSORED_HELP_MAX_OBJECTIVES,
   objectiveMaxLength = SPONSORED_HELP_OBJECTIVE_MAX,
   cardsSupported = true,
-  openMode,
-  openDefaultCap = OPEN_WAND_DEFAULT_CAP,
-  openMaxCap = OPEN_WAND_MAX_CAP,
+  open = false,
+  openDefaultSponsorCap = OPEN_WAND_DEFAULT_SPONSOR_CAP,
+  openMaxSponsorCap = OPEN_WAND_MAX_SPONSOR_CAP,
   openPerPersonPercent = OPEN_WAND_PER_PERSON_PERCENT,
   onInserted,
   onHide,
   onSent
 }: {
   target?: SponsoredHelpTarget | null;
-  // open wand cards: see above (absent: addressed cards only)
-  openMode?: 'only' | 'choice';
-  openDefaultCap?: number;
-  openMaxCap?: number;
+  // an open wand card (see above) instead of an addressed one
+  open?: boolean;
+  openDefaultSponsorCap?: number;
+  openMaxSponsorCap?: number;
   openPerPersonPercent?: number;
   // the open card was made: put its embed into the text
   onInserted?: (openCardId: number) => void;
@@ -87,9 +87,8 @@ export default function SponsoredHelpModal({
   const sendSponsoredHelpCard = useAppContext((v) => v.requestHelpers.sendSponsoredHelpCard);
   const sendSponsoredHelp = useAppContext((v) => v.requestHelpers.sendSponsoredHelp);
   const createOpenWandCard = useAppContext((v) => v.requestHelpers.createOpenWandCard);
-  const [mode, setMode] = useState<'addressed' | 'open'>(openMode === 'only' || !target ? 'open' : 'addressed');
   const [task, setTask] = useState(OPEN_WAND_PRESETS[0]);
-  const [cap, setCap] = useState(Math.min(openDefaultCap, openMaxCap));
+  const [sponsorCap, setSponsorCap] = useState(Math.max(0, Math.min(openDefaultSponsorCap, openMaxSponsorCap)));
   const [objectives, setObjectives] = useState<string[]>(['']);
   const [persona, setPersona] = useState<'zero' | 'ciel'>('zero');
   const [percent, setPercent] = useState(percents.includes(10) ? 10 : percents[0]);
@@ -98,7 +97,7 @@ export default function SponsoredHelpModal({
   const [error, setError] = useState('');
   const personaName = persona === 'ciel' ? 'Ciel' : 'Zero';
   const isComment = !target || !('channelId' in target);
-  const isOpen = mode === 'open';
+  const isOpen = open || !target;
   const canInsert = task.trim().length >= 3 && !working;
   const filled = objectives.map((text) => text.trim()).filter(Boolean);
   const canCheck =
@@ -163,35 +162,9 @@ export default function SponsoredHelpModal({
         )
       }
     >
-      {openMode === 'choice' && target && !preview ? renderModeChoice() : null}
       {isOpen ? renderOpenCompose() : preview ? renderPreview(preview) : renderCompose()}
     </Modal>
   );
-
-  function renderModeChoice() {
-    return (
-      <div className={cx(rowClass, modeRowClass)}>
-        <span className={labelClass}>For</span>
-        <div className={choiceRowClass} role="radiogroup" aria-label="Who it is for">
-          {(['addressed', 'open'] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              role="radio"
-              aria-checked={mode === value}
-              className={cx(choiceClass, mode === value && (persona === 'ciel' ? cielOnClass : zeroOnClass))}
-              onClick={() => {
-                setMode(value);
-                setError('');
-              }}
-            >
-              {value === 'open' ? 'Anyone who reads it' : who}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   function renderOpenCompose() {
     const custom = !OPEN_WAND_PRESETS.includes(task);
@@ -238,17 +211,24 @@ export default function SponsoredHelpModal({
           </div>
         </div>
         <div className={rowClass}>
-          <span className={labelClass}>How many people</span>
-          <div className={stepperClass} role="group" aria-label="How many people">
-            <button type="button" aria-label="Fewer" disabled={cap <= 1} onClick={() => setCap((value) => Math.max(1, value - 1))}>
+          <span className={labelClass} id="wand-sponsor-label">
+            Sponsor up to {sponsorCap} {sponsorCap === 1 ? 'person' : 'people'}
+          </span>
+          <div className={stepperClass} role="group" aria-labelledby="wand-sponsor-label">
+            <button
+              type="button"
+              aria-label="Fewer"
+              disabled={sponsorCap <= 0}
+              onClick={() => setSponsorCap((value) => Math.max(0, value - 1))}
+            >
               <Icon icon="minus" />
             </button>
-            <span aria-live="polite">{cap}</span>
+            <span aria-live="polite">{sponsorCap}</span>
             <button
               type="button"
               aria-label="More"
-              disabled={cap >= openMaxCap}
-              onClick={() => setCap((value) => Math.min(openMaxCap, value + 1))}
+              disabled={sponsorCap >= openMaxSponsorCap}
+              onClick={() => setSponsorCap((value) => Math.min(openMaxSponsorCap, value + 1))}
             >
               <Icon icon="plus" />
             </button>
@@ -257,10 +237,12 @@ export default function SponsoredHelpModal({
         <div className={estimateClass}>
           <Icon icon="bolt" />
           <div>
-            <strong>Up to {openPerPersonPercent}% of your AI Energy per person</strong>
+            <strong>{openWandEnergyLine(sponsorCap, openPerPersonPercent)}</strong>
             <span>
-              Nothing is used until someone presses it, and only what {personaName} uses comes out. Each person can
-              press it once, and sees a plan before anything happens.
+              {sponsorCap > 0
+                ? `The first ${sponsorCap === 1 ? 'person' : `${sponsorCap} people`} to start it use your Energy, and only what ${personaName} uses comes out. After that, people can still use the card with their own AI Energy.`
+                : `Everyone who uses it pays with their own AI Energy.`}{' '}
+              Each person can use it once and sees a plan before anything happens.
             </span>
           </div>
         </div>
@@ -274,7 +256,7 @@ export default function SponsoredHelpModal({
     setWorking('insert');
     setError('');
     try {
-      const result = await createOpenWandCard({ task: task.trim(), persona, cap });
+      const result = await createOpenWandCard({ task: task.trim(), persona, sponsorCap });
       if (result?.openCardId) {
         onInserted?.(Number(result.openCardId));
         onHide();
@@ -578,12 +560,6 @@ const addClass = css`
     border-color: ${Color.logoBlue()};
     color: ${Color.logoBlue()};
   }
-`;
-
-const modeRowClass = css`
-  margin-bottom: 1.4rem;
-  padding-bottom: 1.2rem;
-  border-bottom: 1px solid ${Color.borderGray()};
 `;
 
 const presetGridClass = css`

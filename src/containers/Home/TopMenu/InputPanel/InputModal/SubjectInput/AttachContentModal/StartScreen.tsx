@@ -60,7 +60,8 @@ export default function StartScreen({
     >
       <div
         style={{
-          width: '50%',
+          // on a computer the site column takes more room for three buttons
+          width: onAddWandCard && !deviceIsMobile ? '38%' : '50%',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center'
@@ -98,7 +99,7 @@ export default function StartScreen({
       </div>
       <div
         style={{
-          width: '50%',
+          width: onAddWandCard && !deviceIsMobile ? '62%' : '50%',
           flexDirection: 'column',
           alignItems: 'center',
           display: 'flex',
@@ -167,13 +168,7 @@ export default function StartScreen({
               onClick={onAddWandCard}
             >
               <Icon icon="wand-magic-sparkles" />
-              {/* the longest label: smaller text on one line, same icon */}
-              <span
-                style={{
-                  marginLeft: deviceIsMobile ? '0.5rem' : '1rem',
-                  fontSize: deviceIsMobile ? undefined : '1.6rem'
-                }}
-              >
+              <span style={{ marginLeft: deviceIsMobile ? '0.5rem' : '1rem' }}>
                 {wandCardLabel}
               </span>
             </Button>

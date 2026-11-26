@@ -15,8 +15,8 @@ export interface WandConfig {
   objectiveMaxLength?: number;
   // open wand cards embedded in rich text (missing on an API from before them)
   openCards?: boolean;
-  openCardDefaultCap?: number;
-  openCardMaxCap?: number;
+  openCardDefaultSponsorCap?: number;
+  openCardMaxSponsorCap?: number;
   openCardPerPersonPercent?: number;
 }
 

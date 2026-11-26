@@ -13,18 +13,20 @@ import { GUIDE_PICTURE } from '~/containers/App/WelcomeTour/Greeter';
 import {
   OPEN_WAND_SITE,
   openWandPath,
-  openWandSlotsLine,
+  openWandSpotsLine,
   sponsoredHelpPersonaName,
   type OpenWandCardView
 } from '~/helpers/sponsoredHelp';
 
 // An open wand card (twinkle-api helpers/sponsoredHelp/openCards.ts),
-// embedded in a Subject or comment as /wand/<id>. Anyone who reads it can
-// press it once: Zero or Ciel then helps THEM (a plan in their own Zero/Ciel
-// chat first, nothing happens until they confirm), paid from the author's
-// AI Energy. Every state is the server's: slots left, used up, the author
-// out of Energy today, "coming soon" for a domain card while domain sales
-// aren't open for this reader, closed. The same look as WandCard.
+// embedded in a Subject as /wand/<id>. Anyone who reads it can press it
+// once: Zero or Ciel then helps THEM (a plan in their own Zero/Ciel chat
+// first, nothing happens until they confirm). The author sponsors the first
+// few people (first come, first served); after that, or with no
+// sponsorship, it still works on the reader's own AI Energy, and the card
+// says so before they press. Every state is the server's: sponsored spots
+// left, own Energy (and why), "coming soon" for a domain card while domain
+// sales aren't open for this reader, closed. The same look as WandCard.
 //
 // asReader: the composer's live preview, drawn the way a reader sees it
 // (the author's own view has counts and Copy link instead of the button).
@@ -94,8 +96,17 @@ export default function OpenWandCard({
   const buttonVariant = card.persona === 'ciel' ? 'pink' : 'logoBlue';
   const viewer = asReader ? 'member' : card.viewer;
   const mine = asReader ? null : card.mine;
-  const state = asReader && card.state !== 'closed' ? (card.left > 0 ? 'open' : 'used_up') : card.state;
+  // the composer's preview: what a reader sees (a domain card is drawn as
+  // for a reader who can use it)
+  const state =
+    asReader && card.state !== 'closed'
+      ? card.sponsorCap > 0 && card.sponsoredLeft > 0
+        ? 'sponsored'
+        : 'own_energy'
+      : card.state;
+  const reason = asReader ? (card.sponsorCap > 0 ? (card.sponsoredLeft > 0 ? '' : 'used_up') : 'not_sponsored') : card.reason;
   const author = card.senderUsername || 'A member';
+  const spots = openWandSpotsLine(card);
 
   return (
     <div className={wrapClass} data-open-wand={card.openCardId} data-state={state} data-viewer={viewer}>
@@ -103,13 +114,17 @@ export default function OpenWandCard({
         themeName={themeName}
         bannerIcon="wand-magic-sparkles"
         bannerText={
-          viewer === 'author' ? `Your wand card · anyone who reads it can use it` : `${author} is sponsoring ${persona} to help you`
+          viewer === 'author'
+            ? `Your wand card · anyone who reads it can use it`
+            : state === 'sponsored'
+              ? `${author} is sponsoring ${persona} to help you`
+              : `${author} shared ${persona}’s help`
         }
         chips={
           <>
-            {state !== 'coming_soon' && state !== 'closed' ? (
-              <BuildMessageCardChip icon="user-group" themeName={themeName}>
-                {openWandSlotsLine(card)}
+            {spots && state !== 'coming_soon' && state !== 'closed' ? (
+              <BuildMessageCardChip icon={state === 'sponsored' || viewer === 'author' ? 'user-group' : 'bolt'} themeName={themeName}>
+                {spots}
               </BuildMessageCardChip>
             ) : null}
             <BuildMessageCardChip muted>{persona}</BuildMessageCardChip>
@@ -145,26 +160,28 @@ export default function OpenWandCard({
 
   function line() {
     if (viewer === 'author') {
-      const spent = card!.spentPercent ? ` So far: ${formatPercent(card!.spentPercent)} used.` : '';
-      if (state === 'closed') return `You closed this card. ${card!.used} ${card!.used === 1 ? 'person' : 'people'} used it.${spent}`;
-      return `Each person can use up to ${card!.perPersonPercent ?? 5}% of your AI Energy. Only what ${persona} uses comes out.${spent}`;
+      const spent = card!.spentPercent ? ` So far: ${formatPercent(card!.spentPercent)} of your Energy.` : '';
+      const used = `${card!.presses} ${card!.presses === 1 ? 'person' : 'people'} used it.`;
+      if (state === 'closed') return `You closed this card. ${used}${spent}`;
+      if (card!.sponsorCap <= 0) return `People use it with their own AI Energy. ${used}`;
+      return `The first ${card!.sponsorCap} to start it use up to ${card!.perPersonPercent}% of your AI Energy each; after that, people use their own. ${used}${spent}`;
     }
     if (mine) {
-      return mine.status === 'completed'
-        ? `${persona} helped you with this.`
-        : mine.status === 'declined' || mine.status === 'expired' || mine.status === 'failed'
-          ? `You’ve used your turn on this card.`
-          : `${persona} is helping you with this in your ${persona} chat.`;
+      if (mine.status === 'completed') return `${persona} helped you with this.`;
+      if (['declined', 'expired', 'failed'].includes(mine.status)) return `You’ve used your turn on this card.`;
+      return mine.paidBy === 'self'
+        ? `${persona} is helping you with this in your ${persona} chat, with your own AI Energy.`
+        : `${persona} is helping you with this in your ${persona} chat, paid with ${author}’s AI Energy.`;
     }
     switch (state) {
       case 'coming_soon':
         return 'Domains are coming soon. Your app already works at its free lumine.app address.';
-      case 'used_up':
-        return `Everyone this card could help has used it.`;
-      case 'author_out':
-        return `${author}’s AI Energy for this is used up for today. Try again tomorrow.`;
       case 'closed':
         return 'This card isn’t available right now.';
+      case 'own_energy':
+        if (reason === 'used_up') return 'Sponsored spots are used up. You can still use it with your own AI Energy.';
+        if (reason === 'author_out') return `${author}’s AI Energy for this is used up for today. You can still use it with your own AI Energy.`;
+        return `Press it and ${persona} helps you, using your own AI Energy. You see the plan first.`;
       default:
         return `Press it and ${persona} helps you, paid with ${author}’s AI Energy. You see the plan first.`;
     }
@@ -197,7 +214,7 @@ export default function OpenWandCard({
         </GameCTAButton>
       ) : null;
     }
-    if (state !== 'open') return null;
+    if (state !== 'sponsored' && state !== 'own_energy') return null;
     if (viewer === 'guest') {
       return (
         <GameCTAButton variant={buttonVariant} size="sm" icon="key" onClick={() => onOpenSigninModal()}>

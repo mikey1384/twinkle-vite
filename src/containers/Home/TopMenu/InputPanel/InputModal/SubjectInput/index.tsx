@@ -703,11 +703,11 @@ function SubjectInput({
       />
       {wandSheetShown ? (
         <SponsoredHelpModal
-          openMode="only"
+          open
           recipientUsername=""
           objectiveMaxLength={wandConfig?.objectiveMaxLength}
-          openDefaultCap={wandConfig?.openCardDefaultCap}
-          openMaxCap={wandConfig?.openCardMaxCap}
+          openDefaultSponsorCap={wandConfig?.openCardDefaultSponsorCap}
+          openMaxSponsorCap={wandConfig?.openCardMaxSponsorCap}
           openPerPersonPercent={wandConfig?.openCardPerPersonPercent}
           onInserted={(openCardId) => {
             handleSetDescriptionFieldShown(true);
