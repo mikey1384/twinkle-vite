@@ -184,6 +184,8 @@ export default function AppAddress({
       orderId = 0;
     }
     if (orderId > 0) setStep({ kind: 'order', orderId });
+    // read once when the page (or owner) arrives; the parameter is cleared on close
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildId, isOwner]);
 
   // A wand plan (Zero/Ciel, twinkle-api sponsoredHelp open_app_address)
@@ -201,6 +203,8 @@ export default function AppAddress({
     } catch {
       // no deep link
     }
+    // read once when the page (or owner) arrives, then removed from the URL
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildId, isOwner]);
   useEffect(() => {
     if (!deepLink || !info?.enabled) return;
@@ -623,9 +627,13 @@ export default function AppAddress({
             : step.kind === 'parent'
               ? t.parentTitle
               : t.introTitle;
-  const shareAddress = (url: string) => {
-    if (navigator.share) void navigator.share({ title: appTitle, url }).catch(() => {});
-    else void navigator.clipboard?.writeText(url).catch(() => {});
+  // the share sheet, or the link copied (true) where there's none
+  const shareAddress = async (url: string) => {
+    if (navigator.share) {
+      await navigator.share({ title: appTitle, url }).catch(() => {});
+      return false;
+    }
+    return Boolean(await navigator.clipboard?.writeText(url).then(() => true, () => false));
   };
 
   return (
@@ -883,4 +891,3 @@ function useConnectPolling(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domainId, status]);
 }
-

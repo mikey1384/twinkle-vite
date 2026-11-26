@@ -82,7 +82,8 @@ function ChevronIcon({ open }: { open: boolean }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      style={{ transition: `transform 0.2s ${T.ease}`, transform: open ? 'rotate(180deg)' : 'none', flex: 'none' }}
+      className={chevronClass}
+      style={{ transform: open ? 'rotate(180deg)' : 'none', flex: 'none' }}
     >
       <path d="M6 9l6 6 6-6" />
     </svg>
@@ -718,6 +719,12 @@ export function Notice({ tone = 'info', children }: { tone?: 'info' | 'warm' | '
 
 // ---------------------------------------------------------------- styles
 
+const chevronClass = css`
+  transition: transform 0.2s ${T.ease};
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
 const rise = keyframes`
   from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: none; }
@@ -1291,6 +1298,12 @@ const buttonBase = `
   transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
   &:active:not(:disabled) {
     transform: scale(0.98);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    &:active:not(:disabled) {
+      transform: none;
+    }
   }
   &:focus-visible {
     outline: 3px solid rgba(47, 123, 224, 0.35);

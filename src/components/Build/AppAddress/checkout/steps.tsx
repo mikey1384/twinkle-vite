@@ -727,9 +727,11 @@ export function LiveView({
   note?: string;
   priceCents?: number;
   onOpen: () => void;
-  onShare?: () => void;
+  // resolves true when the link was copied (no share sheet on this device)
+  onShare?: () => Promise<boolean> | boolean | void;
   onDone: () => void;
 }) {
+  const [copied, setCopied] = useState(false);
   return (
     <CheckoutLayout
       stepKey="live"
@@ -738,7 +740,15 @@ export function LiveView({
       actions={
         <StepActions>
           <SecondaryButton onClick={onDone}>{t.done}</SecondaryButton>
-          {onShare && <SecondaryButton onClick={onShare}>{t.shareLink}</SecondaryButton>}
+          {onShare && (
+            <SecondaryButton
+              onClick={() => {
+                void Promise.resolve(onShare()).then((didCopy) => setCopied(Boolean(didCopy)));
+              }}
+            >
+              {copied ? t.linkCopied : t.shareLink}
+            </SecondaryButton>
+          )}
           <PrimaryButton onClick={onOpen}>{t.openIt}</PrimaryButton>
         </StepActions>
       }
@@ -754,6 +764,9 @@ export function LiveView({
         </h1>
         <p className={bodyTextClass} style={{ textAlign: 'center' }}>
           {t.liveBody}
+        </p>
+        <p className={srOnlyClass} role="status">
+          {copied ? t.linkCopied : ''}
         </p>
       </div>
       {note && <Notice tone="warm">{note}</Notice>}
@@ -789,7 +802,7 @@ export function OrderStatusView({
   // the last refresh failed (the screen keeps the order's last known stage)
   refreshError?: string;
   onOpen: () => void;
-  onShare?: () => void;
+  onShare?: () => Promise<boolean> | boolean | void;
   onTryAgain: () => void;
   onClose: () => void;
 }) {
@@ -1408,6 +1421,12 @@ const consentBoxClass = css`
     transition:
       opacity 0.15s ease,
       transform 0.2s ${T.ease};
+  }
+  @media (prefers-reduced-motion: reduce) {
+    svg {
+      transform: none;
+      transition: opacity 0.15s ease;
+    }
   }
 `;
 const payNoteClass = css`

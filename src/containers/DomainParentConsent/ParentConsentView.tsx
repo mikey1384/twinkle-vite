@@ -601,6 +601,12 @@ const consentBoxClass = css`
       opacity 0.15s ease,
       transform 0.2s ${T.ease};
   }
+  @media (prefers-reduced-motion: reduce) {
+    svg {
+      transform: none;
+      transition: opacity 0.15s ease;
+    }
+  }
 `;
 const payNoteClass = css`
   display: flex;

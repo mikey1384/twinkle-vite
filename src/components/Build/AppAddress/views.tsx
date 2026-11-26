@@ -14,7 +14,6 @@ export * from './checkout/model';
 export {
   ConnectView,
   FindView,
-  GoingLiveView,
   IntroView,
   LiveView,
   MessageView,
@@ -23,7 +22,6 @@ export {
   ParentRequestView,
   orderStatusTitle
 } from './checkout/steps';
-export { CountrySelect } from './checkout/ui';
 
 const muted = '#5d5d6e';
 const accent = '#4b3cf0';
@@ -322,4 +320,3 @@ export function RenameView({
     </div>
   );
 }
-
