@@ -145,6 +145,8 @@ export function CheckoutSurface({
     if (variant !== 'overlay') return;
     function onKey(event: KeyboardEvent) {
       if (event.defaultPrevented) return;
+      // Escape that ends a Korean/Japanese/Chinese composition isn't a close
+      if (event.isComposing || event.keyCode === 229) return;
       if (event.key === 'Escape' && onClose) {
         onClose();
         return;

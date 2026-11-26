@@ -15,7 +15,11 @@ const cases: Array<[string, string, string]> = [
   ['IT', '02 1234 5678', '+390212345678'],
   ['GB', '07911 123456', '+447911123456'],
   ['RU', '8 912 345 67 89', '+79123456789'],
-  ['JP', '090-1234-5678', '+819012345678']
+  ['JP', '090-1234-5678', '+819012345678'],
+  ['HU', '06 20 123 4567', '+36201234567'],
+  ['HU', '20 123 4567', '+36201234567'],
+  ['CI', '07 07 12 34 56', '+2250707123456'],
+  ['KR', '02-123-4567', '+8221234567']
 ];
 
 test('a calling code plus the number as typed makes exactly the E.164 number meant', () => {
@@ -30,6 +34,10 @@ test('an incomplete number is not a number yet', () => {
   assert.equal(toE164({ country: 'KR', national: '' }), '');
   assert.equal(toE164({ country: 'KR', national: '010' }), '');
   assert.equal(toE164({ country: 'US', national: '555 01' }), '');
+  // +141555501: a +1 number is always 10 digits
+  assert.equal(toE164({ country: 'US', national: '41555501' }), '');
+  assert.equal(toE164(splitInternational('+141555501', 'KR')!), '');
+  assert.equal(toE164({ country: 'GB', national: '07911 1234' }), '');
 });
 
 test('a pasted international number moves its code to the picker, without a second prefix', () => {

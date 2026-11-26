@@ -39,8 +39,25 @@ const MAIN_COUNTRY: Record<string, string> = {
   '262': 'RE', '358': 'FI', '590': 'GP', '599': 'CW'
 };
 
-// Countries whose numbers keep their leading 0 after the calling code.
-const KEEPS_LEADING_ZERO = new Set(['IT', 'SM', 'VA']);
+// Countries whose numbers keep their leading 0 after the calling code
+// (Côte d'Ivoire's 10-digit numbers start with it).
+const KEEPS_LEADING_ZERO = new Set(['IT', 'SM', 'VA', 'CI']);
+
+// The shortest national (significant) number each country uses, where it's
+// known; elsewhere 6 digits. A number shorter than this is still being typed.
+const MIN_NATIONAL_DIGITS: Record<string, number> = {
+  '1': 10, // US, Canada and the rest of +1: always 10
+  KR: 8, JP: 9, CN: 9, TW: 8, HK: 8, MO: 8, SG: 8, MY: 8, TH: 8, VN: 9, PH: 8, ID: 8, IN: 10, PK: 9,
+  GB: 9, IE: 7, FR: 9, ES: 9, PT: 9, IT: 6, DE: 6, AT: 6, NL: 9, BE: 8, CH: 9, SE: 7, NO: 8, DK: 8,
+  FI: 6, PL: 9, CZ: 9, HU: 8, GR: 10, TR: 10, IL: 8, AE: 8, SA: 9, EG: 9, ZA: 9, NG: 8, KE: 9,
+  RU: 10, KZ: 10, UA: 9, AU: 9, NZ: 8, BR: 10, MX: 10, AR: 10, CL: 9, CO: 10, PE: 8, CI: 10
+};
+
+function minNationalDigits(country: string) {
+  const code = String(country || '').toUpperCase();
+  if (callingCode(code) === '1') return MIN_NATIONAL_DIGITS['1'];
+  return MIN_NATIONAL_DIGITS[code] || 6;
+}
 
 const E164 = /^\+[1-9]\d{7,14}$/;
 
@@ -82,6 +99,8 @@ export function nationalDigits(country: string, national: string) {
   let digits = String(national || '').replace(/\D/g, '');
   if (code === '1' && digits.length === 11 && digits.startsWith('1')) return digits.slice(1);
   if (code === '7' && digits.length === 11 && digits.startsWith('8')) return digits.slice(1);
+  // Hungary dials 06 before a national number
+  if (String(country || '').toUpperCase() === 'HU' && digits.startsWith('06')) return digits.slice(2);
   if (!KEEPS_LEADING_ZERO.has(String(country || '').toUpperCase()) && digits.startsWith('0')) digits = digits.slice(1);
   return digits;
 }
@@ -90,7 +109,7 @@ export function nationalDigits(country: string, national: string) {
 export function toE164(draft: PhoneDraft) {
   const code = callingCode(draft.country);
   const digits = nationalDigits(draft.country, draft.national);
-  if (!code || digits.length < 4) return '';
+  if (!code || digits.length < minNationalDigits(draft.country)) return '';
   const number = `+${code}${digits}`;
   return E164.test(number) ? number : '';
 }

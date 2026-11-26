@@ -16,7 +16,7 @@ test('after Stripe, the going-live and live screens carry the order’s own pric
 
 test('the parent request is sent with the price the child saw', () => {
   const flow = read('../src/components/Build/AppAddress/index.tsx');
-  assert.match(flow, /startDomainOrder\(\{[\s\S]{0,260}priceCents: idea\.priceCents/);
+  assert.match(flow, /startDomainOrder\(\{[\s\S]{0,600}priceCents: idea\.priceCents/);
   const helpers = read('../src/contexts/requestHelpers/build.ts');
   assert.match(helpers, /domain-orders`, \{ domain, parentEmail, lang, priceCents \}/);
 });

@@ -215,6 +215,11 @@ export default function AppAddress({
   }, [deepLink, info?.enabled]);
 
   async function openFromWand(screen: string, domain: string) {
+    // Like claimRequest: a reply that arrives after the checkout was closed
+    // (or the member moved to another screen) changes nothing.
+    const gen = flowGenRef.current;
+    const startStep = stepRef.current;
+    const still = (expected: Step = startStep) => flowGenRef.current === gen && stepRef.current === expected;
     setError('');
     if (screen === 'connect') {
       if (!info?.customDomainsEnabled) {
@@ -229,10 +234,11 @@ export default function AppAddress({
     if (screen === 'status') {
       // the named address (bought or connected), else the newest one
       const status = await loadDomainStatus({ buildId, hostname: domain || undefined }).catch(() => null);
+      if (!still()) return;
       const row = status?.domains?.[0];
       if (row && row.source === 'own' && row.status !== 'live' && info?.customDomainsEnabled) {
         setHostname(row.hostname);
-        await showConnectSetup(row.id);
+        await showConnectSetup(row.id, () => still());
         return;
       }
       if (row && row.status === 'live') {
@@ -247,6 +253,7 @@ export default function AppAddress({
       return;
     }
     const purchaseInfo = purchase || (await loadDomainPurchase({ buildId }).catch(() => ({ open: false })));
+    if (!still()) return;
     setPurchase(purchaseInfo);
     if (!purchaseInfo?.open || !info?.domainSalesEnabled) {
       // buying here is closed: connecting your own still works
@@ -255,7 +262,8 @@ export default function AppAddress({
     }
     const label = domain.replace(/\.[a-z.]+$/, '') || appTitle;
     setQuery(label);
-    setStep({ kind: 'find' });
+    const findStep: Step = { kind: 'find' };
+    setStep(findStep);
     if (screen === 'find' && !domain) {
       void loadIdeas();
       return;
@@ -263,6 +271,7 @@ export default function AppAddress({
     setLoading(true);
     try {
       const data = await searchDomains({ q: label });
+      if (!still(findStep)) return;
       const found = (data?.results || []).filter((row: any) => row.available && row.price).map((row: any) => row.price);
       setIdeas(found);
       const exact = found.find((idea: DomainIdeaView) => idea.domain === domain);
@@ -473,8 +482,9 @@ export default function AppAddress({
         domain: idea.domain,
         parentEmail,
         lang: pageLang(),
-        // the price on screen: a request for a price that has since changed
-        // is refused, so the member sees the new one before it's sent
+        // the price on screen, so the API can refuse a quote that has since
+        // changed (that check is coming on the API side; today it keeps its
+        // own quote, which the parent reviews before paying)
         priceCents: idea.priceCents
       });
       if (request.current()) setStep({ kind: 'sent', idea });
