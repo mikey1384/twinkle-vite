@@ -92,7 +92,7 @@ export const ADDRESS_TEXT = {
     findOne: 'Find an address',
     haveOne: 'I already have one',
     freeTag: 'Free',
-    rentTag: 'Rented yearly',
+    rentTag: 'Example · rented yearly',
     // find
     findTitle: 'Find an address',
     findPlaceholder: 'Type a name',
@@ -289,7 +289,7 @@ export const ADDRESS_TEXT = {
     findOne: '주소 찾기',
     haveOne: '이미 주소가 있어요',
     freeTag: '무료',
-    rentTag: '1년씩 빌려요',
+    rentTag: '예시 · 1년씩 빌려요',
     findTitle: '주소 찾기',
     findPlaceholder: '이름을 입력하세요',
     search: '찾기',
