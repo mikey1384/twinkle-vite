@@ -105,6 +105,36 @@ function OrderMobileSummary({ t, idea, renews }: { t: AddressText; idea: DomainI
   );
 }
 
+// After Stripe: the order as the server recorded it (what was paid).
+function ReceiptSummary({ t, domain, priceCents }: { t: AddressText; domain: string; priceCents: number }) {
+  return (
+    <SummaryCard
+      heading={t.receiptTitle}
+      domain={domain}
+      price={usd(priceCents)}
+      period={t.perYearShort}
+      checks={[t.noAutoRenew, t.includedPrivacy, t.includedSecure, t.includedFree]}
+      notes={[{ icon: 'shield', text: t.refundShort }]}
+    />
+  );
+}
+
+function ReceiptMobileSummary({ t, domain, priceCents }: { t: AddressText; domain: string; priceCents: number }) {
+  return (
+    <MobileSummary domain={domain} price={usd(priceCents)}>
+      <ul className={mobileChecksClass}>
+        {[t.noAutoRenew, t.includedPrivacy, t.includedFree].map((line) => (
+          <li key={line}>
+            <CheckIcon size={14} />
+            {line}
+          </li>
+        ))}
+      </ul>
+      <p className={mobileNoteClass}>{t.refundShort}</p>
+    </MobileSummary>
+  );
+}
+
 // The member flow's progress (adult buyers: pick, owner, contact, address,
 // check; under 18: pick, then a parent).
 export function buyProgress(t: AddressText, index: number, forParent = false): CheckoutProgress {
@@ -629,9 +659,12 @@ export function GoingLiveView({
   reached,
   title,
   body,
+  priceCents,
   onClose
 }: StepBase & {
   domain: string;
+  // the order's price (the receipt beside the steps)
+  priceCents?: number;
   // how many of Paid, Registered, Secure, Live are done (from the order)
   reached: number;
   title?: string;
@@ -643,6 +676,8 @@ export function GoingLiveView({
     <CheckoutLayout
       stepKey={`going-live-${reached}`}
       error={error}
+      aside={priceCents ? <ReceiptSummary t={t} domain={domain} priceCents={priceCents} /> : null}
+      mobileSummary={priceCents ? <ReceiptMobileSummary t={t} domain={domain} priceCents={priceCents} /> : null}
       actions={
         <StepActions>
           <SecondaryButton onClick={onClose}>{t.backToApp}</SecondaryButton>
@@ -683,12 +718,14 @@ export function LiveView({
   assistant,
   domain,
   note,
+  priceCents,
   onOpen,
   onShare,
   onDone
 }: StepBase & {
   domain: string;
   note?: string;
+  priceCents?: number;
   onOpen: () => void;
   onShare?: () => void;
   onDone: () => void;
@@ -696,6 +733,8 @@ export function LiveView({
   return (
     <CheckoutLayout
       stepKey="live"
+      aside={priceCents ? <ReceiptSummary t={t} domain={domain} priceCents={priceCents} /> : null}
+      mobileSummary={priceCents ? <ReceiptMobileSummary t={t} domain={domain} priceCents={priceCents} /> : null}
       actions={
         <StepActions>
           <SecondaryButton onClick={onDone}>{t.done}</SecondaryButton>
@@ -755,7 +794,7 @@ export function OrderStatusView({
   onClose: () => void;
 }) {
   if (order.stage === 'live') {
-    return <LiveView t={t} assistant={assistant} domain={order.domain} note={t.confirmEmailNote} onOpen={onOpen} onShare={onShare} onDone={onClose} />;
+    return <LiveView t={t} assistant={assistant} domain={order.domain} priceCents={order.priceCents} note={t.confirmEmailNote} onOpen={onOpen} onShare={onShare} onDone={onClose} />;
   }
   if (order.stage === 'refunded') {
     const why =
@@ -796,6 +835,7 @@ export function OrderStatusView({
         reached={0}
         title={t.paymentCheckingTitle}
         body={t.paymentCheckingBody}
+        priceCents={order.priceCents}
         onClose={onClose}
       />
     );
@@ -817,7 +857,17 @@ export function OrderStatusView({
       />
     );
   }
-  return <GoingLiveView t={t} assistant={assistant} error={refreshError} domain={order.domain} reached={order.status === 'registered' ? 2 : 1} onClose={onClose} />;
+  return (
+    <GoingLiveView
+      t={t}
+      assistant={assistant}
+      error={refreshError}
+      domain={order.domain}
+      priceCents={order.priceCents}
+      reached={order.status === 'registered' ? 2 : 1}
+      onClose={onClose}
+    />
+  );
 }
 
 // ---------------------------------------------------------------- connect your own

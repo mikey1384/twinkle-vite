@@ -746,9 +746,9 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
-    async startDomainOrder({ buildId, domain, parentEmail, lang }: { buildId: number; domain?: string; parentEmail?: string; lang?: string; }) {
+    async startDomainOrder({ buildId, domain, parentEmail, lang, priceCents }: { buildId: number; domain?: string; parentEmail?: string; lang?: string; priceCents?: number; }) {
       try {
-        const { data } = await request.post(`${URL}/build/${buildId}/domain-orders`, { domain, parentEmail, lang }, auth());
+        const { data } = await request.post(`${URL}/build/${buildId}/domain-orders`, { domain, parentEmail, lang, priceCents }, auth());
         return data;
       } catch (error: any) {
         return throwLumineAppHostingError(error, handleError);

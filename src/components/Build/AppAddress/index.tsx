@@ -468,7 +468,10 @@ export default function AppAddress({
         buildId,
         domain: idea.domain,
         parentEmail,
-        lang: pageLang()
+        lang: pageLang(),
+        // the price on screen: a request for a price that has since changed
+        // is refused, so the member sees the new one before it's sent
+        priceCents: idea.priceCents
       });
       if (request.current()) setStep({ kind: 'sent', idea });
     } catch (e: any) {
