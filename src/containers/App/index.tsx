@@ -29,7 +29,7 @@ import {
   Routes,
   Route
 } from 'react-router-dom';
-import { appAddressIntentPath } from '~/helpers/appAddressLinks';
+import { appAddressIntentPath, isCheckoutPagePath } from '~/helpers/appAddressLinks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   APP_SHELL_HEADER_OFFSET_STYLE,
@@ -768,6 +768,7 @@ export default function App() {
     usingFullBuildAppRuntime && isPhoneLandscape;
   // the 2nd-level build collapse ALSO hides the global nav (full-screen app)
   const suppressHeader =
+    isCheckoutPagePath(location.pathname) ||
     (usingBuildRuntime && !showBuildHeader) ||
     (showBuildHeader && buildHeaderCollapsed && buildNavHidden) ||
     (buildAppLandscapeFullScreen && !buildLandscapeMenusShown);

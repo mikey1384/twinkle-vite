@@ -84,10 +84,16 @@ export function ensureGuestSessionId(previewAuth: PreviewHostBridgeAuth) {
   return generatedGuestSessionId;
 }
 
-export function triggerGuestRestriction(previewAuth: PreviewHostBridgeAuth) {
+export function triggerGuestRestriction(
+  previewAuth: PreviewHostBridgeAuth,
+  {
+    code = 'guest_restricted',
+    message = GUEST_RESTRICTION_ERROR_MESSAGE
+  }: { code?: string; message?: string } = {}
+) {
   previewAuth.setGuestRestrictionBannerVisible(true);
-  const error: any = new Error(GUEST_RESTRICTION_ERROR_MESSAGE);
-  error.code = 'guest_restricted';
+  const error: any = new Error(message);
+  error.code = code;
   throw error;
 }
 

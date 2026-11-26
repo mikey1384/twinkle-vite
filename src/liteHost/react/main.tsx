@@ -17,6 +17,7 @@ import {
   removeStoredItem,
   setStoredItem
 } from '~/helpers/userDataHelpers';
+import { normalizeHttpRequestError } from '~/helpers/errorMessageHelpers';
 import {
   createSessionStore,
   type AppSession,
@@ -113,6 +114,16 @@ function basicViewer(id: number, username: string): LiteHostViewer {
   };
 }
 
+function nextViewerForSession(
+  previous: LiteHostViewer | null,
+  next: AppSession | null
+): LiteHostViewer | null {
+  if (!next) return null;
+  return previous && previous.id === next.user.id
+    ? previous
+    : basicViewer(next.user.id, next.user.username);
+}
+
 function replayEarlyMessages() {
   const early = window.__lumineEarly || [];
   window.__lumineEarly = undefined;
@@ -175,7 +186,7 @@ async function start() {
   storeSessionCredentials(session.get());
 
   const requestHelpers = requestHelpersFactory((error) =>
-    Promise.reject(error)
+    Promise.reject(normalizeHttpRequestError(error))
   );
   const socketBinder = createLiteSocketBinder();
   const metaRef = createLiteFrameMetaRef(config.buildId);
@@ -359,6 +370,7 @@ async function start() {
       const unsubscribe = session.subscribe((next) => {
         storeSessionCredentials(next);
         setCurrent(next);
+        setViewer((previous) => nextViewerForSession(previous, next));
         void refreshAiBanner();
         reloadFrameForIdentity(next);
       });

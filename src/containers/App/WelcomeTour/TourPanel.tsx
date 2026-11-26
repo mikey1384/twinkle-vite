@@ -3,19 +3,30 @@ import Icon from '~/components/Icon';
 import { GUIDE_PICTURE } from './Greeter';
 import MakeChoice from './MakeChoice';
 import { TourApps, TourArenaExams } from './StopExtras';
-import type { StopMark, WelcomeTourData, WelcomeTourGuide, WelcomeTourStop } from './rules';
+import {
+  lumineStopFor,
+  type StopMark,
+  type WelcomeTourData,
+  type WelcomeTourGuide,
+  type WelcomeTourProject,
+  type WelcomeTourStop
+} from './rules';
 import {
   GUIDE_COLOR,
   GUIDE_NAME,
   GUIDE_SOFT,
   actionsClass,
   badgeClass,
-  closeClass,
+  celebrateClass,
   extraClass,
+  mutedTextClass,
+  srOnlyClass,
   freeBadgeClass,
   ghostButtonClass,
   primaryButtonClass,
+  projectCardClass,
   skipButtonClass,
+  skipTourClass,
   stripChipClass,
   stripClass,
   tourDockClass,
@@ -29,8 +40,10 @@ import {
 const TYPE_MS_PER_CHAR = 22;
 
 // One tour stop: the guide on the panel's corner, the stop strip (jump to any
-// stop, seen or not), the guide's line typed out, the stop's extra (make
-// something, the apps, the Arena's exams), and Ask / Skip / Next.
+// stop, seen or not), "2 of 6", the guide's line typed out, the stop's extra
+// (their first project or make something, the apps, the Arena's exams), and
+// Ask / Back / Next, with Skip tour in the corner. The last Next shows the
+// "You've seen it all!" moment.
 export default function TourPanel({
   guide,
   stops,
@@ -42,12 +55,16 @@ export default function TourPanel({
   making,
   makeError,
   onJump,
-  onSkip,
+  onBack,
   onNext,
   onAsk,
-  onClose,
+  onSkipTour,
   onMake,
+  onOpenProject,
+  onOpenCardChat,
   onOpenApp,
+  visited,
+  lumine,
   besideDock = false
 }: {
   guide: WelcomeTourGuide;
@@ -60,21 +77,32 @@ export default function TourPanel({
   finishing: boolean;
   making: boolean;
   makeError: string;
+  // stops this run has shown (only these are ticked at the end)
+  visited: string[];
+  // what the Lumine stop offers (rules.ts lumineStopFor)
+  lumine: ReturnType<typeof lumineStopFor>;
   onJump: (index: number) => void;
-  onSkip: () => void;
+  onBack: () => void;
   onNext: () => void;
   onAsk: () => void;
-  onClose: () => void;
+  onSkipTour: () => void;
   onMake: (result: { idea: string; title: string }) => void;
+  onOpenProject: (project: WelcomeTourProject) => void;
+  onOpenCardChat: () => void;
   onOpenApp: (buildId: number) => void;
   // the guide's chat window is open: the panel moves to the other side
   besideDock?: boolean;
 }) {
   const stop = stops[index];
-  const line = finishing ? data.tour.greeting.finishLine[guide] : stop?.lines[guide] || '';
+  const allSeen = stops.every((item) => visited.includes(item.key));
+  // a full finish says so; with stops skipped, the chips are the way back
+  const line = finishing
+    ? (allSeen ? null : data.tour.greeting.partialFinishLine?.[guide]) || data.tour.greeting.finishLine[guide]
+    : stop?.lines[guide] || '';
   const [typed, setTyped] = useState(0);
   const [makeOpen, setMakeOpen] = useState(false);
   const stripRef = useRef<HTMLDivElement | null>(null);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
   const reduceMotion =
     typeof window !== 'undefined' &&
     window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
@@ -105,6 +133,14 @@ export default function TourPanel({
     chip?.scrollIntoView?.({ block: 'nearest', inline: 'center' });
   }, [index]);
 
+  // Focus (review 11-26 #8): into the panel when it opens and onto the new
+  // heading at every stop, so a control that disappears (Back on stop two,
+  // the stop's own buttons) never leaves focus behind the panel. The panel
+  // stays non-modal: the page remains usable around it.
+  useEffect(() => {
+    headingRef.current?.focus({ preventScroll: true });
+  }, [index, finishing]);
+
   if (!stop) return null;
   const typing = typed < line.length;
   const isLast = index === stops.length - 1;
@@ -122,72 +158,67 @@ export default function TourPanel({
         }
       >
         <img className={tourSpriteClass} src={GUIDE_PICTURE[guide]} alt={GUIDE_NAME[guide]} />
-        <button type="button" className={closeClass} aria-label="End the tour" onClick={onClose}>
-          <Icon icon="times" />
+        <button type="button" className={skipTourClass} onClick={onSkipTour}>
+          {finishing ? 'Close' : 'Skip tour'}
         </button>
-        <div className={tourHeadClass} style={{ paddingRight: '3.2rem' }}>
-          <div className={stripClass} ref={stripRef} role="tablist" aria-label="Tour stops">
-            {stops.map((item, i) => (
-              <button
-                key={item.key}
-                type="button"
-                role="tab"
-                aria-selected={i === index}
-                className={stripChipClass}
-                data-mark={marks[i]}
-                onClick={() => onJump(i)}
-              >
-                {marks[i] === 'done' ? <Icon icon="check" /> : null}
-                {item.short}
-              </button>
-            ))}
-          </div>
+        <div className={tourHeadClass}>
+          <nav className={stripClass} ref={stripRef} aria-label="Tour stops">
+            {stops.map((item, i) => {
+              // at the end only the stops this run showed are ticked
+              const mark = finishing ? (visited.includes(item.key) ? 'done' : 'upcoming') : marks[i];
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  aria-current={!finishing && i === index ? 'step' : undefined}
+                  className={stripChipClass}
+                  data-mark={mark}
+                  onClick={() => onJump(i)}
+                >
+                  {mark === 'done' ? <Icon icon="check" /> : null}
+                  {item.short}
+                </button>
+              );
+            })}
+          </nav>
         </div>
         <div className={tourTitleRowClass}>
-          <h3>{finishing ? 'Tour complete' : stop.title}</h3>
+          {finishing ? (
+            <span className={celebrateClass} aria-hidden>
+              <Icon icon="party-horn" />
+            </span>
+          ) : null}
+          <h3 ref={headingRef} tabIndex={-1}>
+            {finishing ? (allSeen ? 'You’ve seen it all!' : 'That’s the tour!') : stop.title}
+          </h3>
           {replay && !finishing ? (
             <span className={badgeClass}>
               <Icon icon="undo" /> Seen before
             </span>
           ) : null}
           <span style={{ flex: 1 }} />
-          <span className={badgeClass}>
-            {index + 1} / {stops.length}
-          </span>
+          {finishing ? null : (
+            <span className={badgeClass} aria-label={`Stop ${index + 1} of ${stops.length}`}>
+              {index + 1} of {stops.length}
+            </span>
+          )}
         </div>
+        {/* the typed line is for the eyes; screen readers get the whole line
+            once (review 11-26 #8) */}
         <p
           className={tourLineClass}
           data-typing={typing ? 'true' : undefined}
           onClick={() => setTyped(line.length)}
-          aria-live="polite"
+          aria-hidden
         >
           {line.slice(0, typed)}
         </p>
+        <p className={srOnlyClass} aria-live="polite">
+          {line}
+        </p>
         {!finishing && stop.extra ? (
           <div className={extraClass}>
-            {stop.extra === 'make' ? (
-              makeOpen ? (
-                <MakeChoice
-                  tree={data.tour.makeChoices}
-                  free={data.welcomeCard ? data.free.card : data.free.build}
-                  working={making}
-                  error={makeError}
-                  onDone={onMake}
-                  onCancel={() => setMakeOpen(false)}
-                />
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
-                  <button type="button" className={primaryButtonClass} onClick={() => setMakeOpen(true)}>
-                    <Icon icon="wand-magic-sparkles" /> Make something
-                  </button>
-                  {(data.welcomeCard ? data.free.card : data.free.build) ? (
-                    <span className={freeBadgeClass}>
-                      <Icon icon="gift" /> This one’s on us
-                    </span>
-                  ) : null}
-                </div>
-              )
-            ) : stop.extra === 'apps' ? (
+            {stop.extra === 'make' ? renderLumine() : stop.extra === 'apps' ? (
               <TourApps
                 pinnedBuildId={data.tour.apps.pinnedBuildId}
                 extra={data.tour.apps.extra}
@@ -212,9 +243,9 @@ export default function TourPanel({
             </button>
           ) : null}
           <span className="spacer" />
-          {!finishing && !isLast ? (
-            <button type="button" className={skipButtonClass} onClick={onSkip}>
-              Skip
+          {!finishing && index > 0 ? (
+            <button type="button" className={skipButtonClass} onClick={onBack}>
+              <Icon icon="arrow-left" /> Back
             </button>
           ) : null}
           <button type="button" className={primaryButtonClass} onClick={onNext}>
@@ -225,4 +256,67 @@ export default function TourPanel({
       </div>
     </div>
   );
+
+  // The Lumine stop (review 11-26 P0): their first project when there is
+  // one (opened, never remade); the welcome card's own free first build
+  // ("Show me!") while the card waits; its chat while the card is making it;
+  // the tour's own "Make something" only with no card and no project; and on
+  // an older API with neither answer, nothing to press.
+  function renderLumine() {
+    if (lumine.kind === 'project') {
+      const project = lumine.project;
+      return (
+        <div className={projectCardClass}>
+          <span className="thumb" aria-hidden>
+            <Icon icon="code-branch" />
+          </span>
+          <span className="text">
+            <b>{project.title}</b>
+            <small>Your first project, made with Lumine</small>
+          </span>
+          <button type="button" className={primaryButtonClass} onClick={() => onOpenProject(project)}>
+            Open it <Icon icon="arrow-right" />
+          </button>
+        </div>
+      );
+    }
+    if (lumine.kind === 'card_in_progress') {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
+          <span className={mutedTextClass} style={{ margin: 0 }}>
+            {GUIDE_NAME[guide]} is setting up your first project in your chat.
+          </span>
+          <button type="button" className={primaryButtonClass} onClick={onOpenCardChat}>
+            <Icon icon="comment" /> Go to the chat
+          </button>
+        </div>
+      );
+    }
+    if (lumine.kind !== 'card_waiting' && lumine.kind !== 'make') return null;
+    const free = lumine.kind === 'card_waiting' ? data.free.card : data.free.build;
+    if (makeOpen) {
+      return (
+        <MakeChoice
+          tree={data.tour.makeChoices}
+          free={free}
+          working={making}
+          error={makeError}
+          onDone={onMake}
+          onCancel={() => setMakeOpen(false)}
+        />
+      );
+    }
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
+        <button type="button" className={primaryButtonClass} onClick={() => setMakeOpen(true)}>
+          <Icon icon="wand-magic-sparkles" /> {lumine.kind === 'card_waiting' ? 'Show me!' : 'Make something'}
+        </button>
+        {free ? (
+          <span className={freeBadgeClass}>
+            <Icon icon="gift" /> This one’s on us
+          </span>
+        ) : null}
+      </div>
+    );
+  }
 }
