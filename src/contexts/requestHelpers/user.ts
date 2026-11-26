@@ -744,9 +744,13 @@ export default function userRequestHelpers({
     // Bridge Builder path 3: my show-around tours and the next step
     // The welcome greeter and guided tour (twinkle-api helpers/welcomeTour):
     // the stops and words, whether the banner shows, where the member is.
-    async loadWelcomeTour() {
+    // fresh: resuming, so read where they are from the server's writer
+    async loadWelcomeTour({ fresh = false }: { fresh?: boolean } = {}) {
       try {
-        const { data } = await request.get(`${URL}/user/welcome-tour`, auth());
+        const { data } = await request.get(
+          `${URL}/user/welcome-tour${fresh ? '?fresh=1' : ''}`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -758,17 +762,24 @@ export default function userRequestHelpers({
       event,
       guide,
       stopKey,
-      source
+      source,
+      runKey,
+      runId,
+      seq
     }: {
       event: 'shown' | 'start' | 'stop' | 'skip' | 'finish' | 'decline';
       guide?: 'zero' | 'ciel';
       stopKey?: string;
       source?: 'card' | 'banner' | 'chip';
+      // runs: the start's key; a step's run and number
+      runKey?: string;
+      runId?: number;
+      seq?: number;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/user/welcome-tour/state`,
-          { event, guide, stopKey, source },
+          { event, guide, stopKey, source, runKey, runId, seq },
           auth()
         );
         return data;
@@ -786,8 +797,15 @@ export default function userRequestHelpers({
           auth()
         );
         return data;
-      } catch (error) {
-        return handleError(error);
+      } catch (error: any) {
+        // a refusal because a first project exists names it (opened, never
+        // remade)
+        const project = error?.response?.data?.project;
+        try {
+          return await handleError(error);
+        } catch (handled: any) {
+          throw project ? { ...handled, project } : handled;
+        }
       }
     },
     async loadBridgeTour() {
