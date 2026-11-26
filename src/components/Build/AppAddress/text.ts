@@ -30,7 +30,7 @@ export const ADDRESS_TEXT = {
     summaryToday: 'Your app today',
     summaryFreeNow: 'Free, and it keeps working',
     perYearShort: 'for 1 year',
-    noAutoRenew: 'No auto-renew. It won’t charge again by itself.',
+    noAutoRenew: 'Includes 1 year. You’ll be able to renew before it ends.',
     includedSetup: 'We set it up for you, no technical steps',
     includedPrivacy: 'Privacy protection is on',
     includedSecure: 'Secure https connection',
@@ -165,7 +165,7 @@ export const ADDRESS_TEXT = {
       'You’re buying this address for your own app, so it’s registered to you as its legal owner. Domain companies need the owner’s real details.',
     ownerPrivate: 'Privacy protection is on, so these details aren’t shown publicly.',
     priceForYear: (price: string) => `${price} for one year`,
-    oneYearLine: 'It pays for one year and doesn’t renew by itself.',
+    oneYearLine: 'It pays for one year. You’ll be able to renew before it ends.',
     renewsLine: (price: string) => `Renews yearly for ${price}. You can cancel anytime.`,
     cheaperElsewhere:
       'Other sites like Cloudflare, Namecheap or Porkbun often sell domains for less. Buying here costs a bit more because we register it and connect it to your app for you.',
@@ -228,7 +228,7 @@ export const ADDRESS_TEXT = {
     summaryToday: '지금 앱 주소',
     summaryFreeNow: '무료이고, 계속 쓸 수 있어요',
     perYearShort: '1년',
-    noAutoRenew: '자동 갱신 없음. 저절로 다시 결제되지 않아요.',
+    noAutoRenew: '1년 포함. 끝나기 전에 갱신할 수 있게 해 드려요.',
     includedSetup: '설정은 저희가 해 드려요',
     includedPrivacy: '개인정보 보호가 켜져 있어요',
     includedSecure: '안전한 https 연결',
@@ -422,7 +422,7 @@ export const PARENT_TEXT = {
     reviewTitle: '확인하고 결제해 주세요',
     summaryHeading: '자녀가 원하는 주소',
     perYearShort: '1년',
-    noAutoRenew: '자동 갱신 없음',
+    noAutoRenew: '1년 포함',
     includedSetup: '설정은 트윈클이 바로 해 드려요',
     includedPrivacy: '개인정보 보호 기본 적용',
     includedOwner: '법적 소유자는 보호자님',
@@ -451,7 +451,7 @@ export const PARENT_TEXT = {
     honest:
       'Namecheap, Cloudflare 같은 다른 곳에서 더 저렴하게 살 수 있는 경우가 많아요. 다른 곳에서 산 주소도 트윈클에서 무료로 연결할 수 있어요. 여기서 사면 조금 더 비싼 대신 모든 설정을 저희가 바로 해 드려요.',
     renewal:
-      '1년 동안 쓸 수 있고, 저절로 갱신되거나 다시 결제되지 않아요. 1년이 끝나도 앱은 무료 lumine.app 주소로 계속 열려요.',
+      '1년 동안 쓸 수 있고, 끝나기 전에 갱신할 수 있어요. 갱신하지 않아도 앱은 무료 lumine.app 주소로 계속 열려요.',
     ownership:
       '도메인의 법적 소유자는 보호자님이에요. 개인정보 보호가 기본으로 켜져 있어 연락처는 공개되지 않아요. 다른 회사로 옮기고 싶으시면 트윈클에 요청해 이전 코드를 받으실 수 있어요.',
     refund:
@@ -498,7 +498,7 @@ export const PARENT_TEXT = {
     reviewTitle: 'Check and pay',
     summaryHeading: 'The address they’d like',
     perYearShort: 'for 1 year',
-    noAutoRenew: 'No auto-renew',
+    noAutoRenew: '1 year included',
     includedSetup: 'Twinkle sets it up instantly',
     includedPrivacy: 'Privacy protection on',
     includedOwner: 'You are the legal owner',
@@ -527,7 +527,7 @@ export const PARENT_TEXT = {
     honest:
       'Other sites like Namecheap or Cloudflare often sell domains for less, and a domain bought elsewhere can be connected on Twinkle for free. Buying here costs a bit more because we set everything up instantly.',
     renewal:
-      'It pays for one year and doesn’t renew or charge again by itself. After the year, the app keeps opening at its free lumine.app address.',
+      'It pays for one year, and you’ll be able to renew before it ends. If it isn’t renewed, the app keeps opening at its free lumine.app address.',
     ownership:
       'You are the domain’s legal owner. Privacy protection is on, so your contact details aren’t public. If you ever want to move it to another company, ask Twinkle for its transfer code.',
     refund:
