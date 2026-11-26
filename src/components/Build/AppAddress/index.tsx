@@ -27,7 +27,9 @@ import {
   type DnsRecordView,
   type DomainIdeaView,
   type DomainOrderView,
-  type OwnerDetails
+  type OtherDomainView,
+  type OwnerDetails,
+  type OwnerDomainView
 } from './views';
 
 // The app's address chip in the Build header's strip, with Open / Copy /
@@ -49,7 +51,11 @@ interface AddressInfo {
   lumineUrl?: string | null;
   customDomainsEnabled?: boolean;
   domainSalesEnabled?: boolean;
-  domains?: Array<{ id: number; hostname: string; status: string; source: string; statusLine?: string }>;
+  // each domain is its buyer's or connector's (ownedByYou), whoever owns the
+  // app; canRemove: this viewer may take it off this app
+  domains?: OwnerDomainView[];
+  // on the viewer's own app: their domains that aren't on it
+  yourOtherDomains?: OtherDomainView[];
   accountMode?: 'twinkle' | 'app' | 'both';
 }
 
@@ -97,6 +103,7 @@ export default function AppAddress({
   const loadDomainOrder = useAppContext((v) => v.requestHelpers.loadDomainOrder);
   const loadDomainStatus = useAppContext((v) => v.requestHelpers.loadDomainStatus);
   const removeAppDomain = useAppContext((v) => v.requestHelpers.removeAppDomain);
+  const attachAppDomainOrder = useAppContext((v) => v.requestHelpers.attachAppDomainOrder);
   const addAppDomain = useAppContext((v) => v.requestHelpers.addAppDomain);
   const loadAppDomainConnect = useAppContext((v) => v.requestHelpers.loadAppDomainConnect);
   const checkAppDomain = useAppContext((v) => v.requestHelpers.checkAppDomain);
@@ -535,6 +542,33 @@ export default function AppAddress({
     }
   }
 
+  // a domain of yours on another app (one you gave away, say): take it off
+  async function removeElsewhere(domain: OtherDomainView) {
+    setError('');
+    try {
+      await removeAppDomain({ buildId: domain.buildId, domainId: domain.domainId });
+      const fresh = await loadAppAddress({ buildId }).catch(() => null);
+      if (fresh) setInfo(fresh);
+    } catch (e: any) {
+      setError(e?.message || '');
+    }
+  }
+
+  // a bought domain of yours that's on no app: put it on this one, then
+  // follow it like a purchase being set up
+  async function useHere(domain: OtherDomainView) {
+    setError('');
+    try {
+      const result = await attachAppDomainOrder({ buildId, orderId: domain.orderId });
+      const fresh = await loadAppAddress({ buildId }).catch(() => null);
+      if (fresh) setInfo(fresh);
+      if (result?.orderId) setStep({ kind: 'order', orderId: Number(result.orderId) });
+    } catch (e: any) {
+      setError(e?.message || '');
+      setStep({ kind: 'intro' });
+    }
+  }
+
   async function checkConnect(domainId?: number) {
     if (!domainId || !connect) return;
     setConnect({ ...connect, status: 'checking' });
@@ -653,9 +687,11 @@ export default function AppAddress({
         primaryUrl={info.url}
         freeUrl={freeUrl}
         domains={liveDomains}
-        ownerDomains={isOwner ? info.domains : undefined}
-        removableSources={['own']}
-        onRemoveDomain={isOwner && info.customDomainsEnabled ? (domainId) => void removeDomain(domainId) : undefined}
+        ownerDomains={isOwner || (info.domains || []).some((d) => d.ownedByYou) ? info.domains : undefined}
+        onRemoveDomain={(domainId) => void removeDomain(domainId)}
+        otherDomains={isOwner ? info.yourOtherDomains : undefined}
+        onRemoveElsewhere={(domain) => void removeElsewhere(domain)}
+        onUseHere={(domain) => void useHere(domain)}
         canGetOwn={isOwner && Boolean(info.customDomainsEnabled || info.domainSalesEnabled)}
         copied={copied}
         onCopy={() => {

@@ -43,6 +43,34 @@ export function addressHost(url: string) {
   }
 }
 
+export interface OwnerDomainView {
+  id: number;
+  hostname: string;
+  status: string;
+  statusLine?: string;
+  source?: string;
+  ownedByYou?: boolean;
+  ownerUsername?: string | null;
+  canRemove?: boolean;
+}
+
+export interface OtherDomainView {
+  domainId: number;
+  orderId: number;
+  hostname: string;
+  source: string;
+  status: string;
+  statusLine?: string;
+  buildId: number;
+  appTitle: string;
+  appIsYours: boolean;
+}
+
+// "Owned by @x" under an address someone else owns
+function ownerLine(t: AddressText, domain?: OwnerDomainView) {
+  return domain && domain.ownedByYou === false && domain.ownerUsername ? t.ownedBy(domain.ownerUsername) : '';
+}
+
 export function AddressMenuView({
   t,
   primaryUrl,
@@ -50,7 +78,9 @@ export function AddressMenuView({
   domains,
   ownerDomains,
   onRemoveDomain,
-  removableSources = ['own'],
+  otherDomains,
+  onRemoveElsewhere,
+  onUseHere,
   canGetOwn,
   copied,
   onCopy,
@@ -66,11 +96,14 @@ export function AddressMenuView({
   freeUrl: string;
   // every live own domain (hostnames)
   domains: string[];
-  // owner only: every own address with its status, and Remove
-  ownerDomains?: Array<{ id: number; hostname: string; status: string; statusLine?: string; source?: string }>;
+  // the app's owner, or a domain's owner: the addresses with their status;
+  // the server says which this viewer may remove (canRemove)
+  ownerDomains?: OwnerDomainView[];
   onRemoveDomain?: (domainId: number) => void;
-  // which kinds can be removed here (a bought address can't, yet)
-  removableSources?: string[];
+  // on the viewer's own app: their domains that aren't on it (ruling 11-26)
+  otherDomains?: OtherDomainView[];
+  onRemoveElsewhere?: (domain: OtherDomainView) => void;
+  onUseHere?: (domain: OtherDomainView) => void;
   canGetOwn: boolean;
   copied: boolean;
   onCopy: () => void;
@@ -79,7 +112,8 @@ export function AddressMenuView({
   // owner only: change the free lumine.app address
   onRename?: () => void;
 }) {
-  const [confirming, setConfirming] = useState(0);
+  const [confirming, setConfirming] = useState<number | string>(0);
+  const byHost = new Map((ownerDomains || []).map((domain) => [domain.hostname, domain]));
   // every address once (by hostname), the shared one first
   const links: Array<{ host: string; href: string }> = [];
   for (const href of [primaryUrl, ...domains.map((host) => `https://${host}/`), freeUrl]) {
@@ -87,15 +121,25 @@ export function AddressMenuView({
     if (host && !links.some((link) => link.host === host)) links.push({ host, href });
   }
   const shownHost = links[0]?.host || addressHost(primaryUrl);
-  const items: HeaderMenuItem[] = links.map(({ host, href }) => ({
-    label: (
-      <>
-        <Icon icon="external-link-alt" />
-        <span>{host}</span>
-      </>
-    ),
-    href
-  }));
+  const items: HeaderMenuItem[] = links.map(({ host, href }) => {
+    const owner = ownerLine(t, byHost.get(host));
+    return {
+      label: (
+        <>
+          <Icon icon="external-link-alt" />
+          {owner ? (
+            <span style={{ display: 'grid', gap: '0.2rem' }}>
+              <span>{host}</span>
+              <small className={fine}>{owner}</small>
+            </span>
+          ) : (
+            <span>{host}</span>
+          )}
+        </>
+      ),
+      href
+    };
+  });
   for (const domain of ownerDomains || []) {
     if (domain.status === 'live') continue;
     items.push({
@@ -105,6 +149,7 @@ export function AddressMenuView({
           <span style={{ display: 'grid', gap: '0.2rem' }}>
             <span>{domain.hostname}</span>
             {domain.statusLine ? <small className={fine}>{domain.statusLine}</small> : null}
+            {ownerLine(t, domain) ? <small className={fine}>{ownerLine(t, domain)}</small> : null}
           </span>
         </>
       )
@@ -145,7 +190,7 @@ export function AddressMenuView({
   }
   if (onRemoveDomain) {
     for (const domain of ownerDomains || []) {
-      if (!removableSources.includes(String(domain.source || 'own'))) continue;
+      if (!domain.canRemove) continue;
       const armed = confirming === domain.id;
       items.push({
         label: (
@@ -165,6 +210,67 @@ export function AddressMenuView({
           }
         }
       });
+    }
+  }
+  if (otherDomains?.length) {
+    items.push({ separator: true }, { label: <small className={fine}>{t.yourOtherAddresses}</small>, disabled: true });
+    for (const domain of otherDomains) {
+      // a bought one on no app: one row that puts it on this app
+      if (!domain.domainId) {
+        if (!onUseHere) continue;
+        items.push({
+          label: (
+            <>
+              <Icon icon="plus" />
+              <span style={{ display: 'grid', gap: '0.2rem' }}>
+                <span>{t.useHere(domain.hostname)}</span>
+                <small className={fine}>{t.notInUse}</small>
+              </span>
+            </>
+          ),
+          style: { color: accent, fontWeight: 700 },
+          onClick: () => onUseHere(domain)
+        });
+        continue;
+      }
+      const key = `d${domain.domainId}`;
+      const armed = confirming === key;
+      items.push({
+        label: (
+          <>
+            <Icon icon="globe" />
+            <span style={{ display: 'grid', gap: '0.2rem' }}>
+              <span>{domain.hostname}</span>
+              <small className={fine}>
+                {domain.status === 'live' || !domain.statusLine
+                  ? t.onApp(domain.appTitle)
+                  : `${t.onApp(domain.appTitle)} · ${domain.statusLine}`}
+              </small>
+            </span>
+          </>
+        ),
+        ...(domain.status === 'live' ? { href: `https://${domain.hostname}/` } : { disabled: true })
+      });
+      if (onRemoveElsewhere) {
+        items.push({
+          label: (
+            <>
+              <Icon icon="trash-alt" />
+              <span>{armed ? t.removeFromConfirm : t.removeFrom(domain.appTitle)}</span>
+            </>
+          ),
+          style: { color: armed ? '#b42318' : muted },
+          keepOpen: !armed,
+          onClick: () => {
+            if (armed) {
+              setConfirming(0);
+              onRemoveElsewhere(domain);
+            } else {
+              setConfirming(key);
+            }
+          }
+        });
+      }
     }
   }
   if (canGetOwn) {

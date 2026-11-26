@@ -2,6 +2,15 @@ import React from 'react';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { useKeyContext } from '~/contexts';
+
+// A live domain on the app and who owns it. A domain stays its buyer's when
+// the app changes hands (twinkle-api domainOwnership.ts, ruling 11-26).
+export interface TradeBuildDomain {
+  hostname: string;
+  ownerUserId?: number;
+  ownerUsername?: string | null;
+}
 
 export interface TradeBuild {
   id: number;
@@ -12,6 +21,16 @@ export interface TradeBuild {
   creatorId?: number;
   creatorUsername?: string;
   unavailable?: boolean;
+  domains?: TradeBuildDomain[];
+}
+
+export function appDomainNote(domain: TradeBuildDomain, viewerId: number) {
+  if (domain.ownerUserId && domain.ownerUserId === viewerId) {
+    return `${domain.hostname} stays yours. It keeps pointing to this app until you remove it.`;
+  }
+  return `This app uses ${domain.hostname}, owned by ${
+    domain.ownerUsername ? `@${domain.ownerUsername}` : 'its buyer'
+  }, who can remove it at any time.`;
 }
 
 const listClass = css`
@@ -84,6 +103,18 @@ const listClass = css`
     font-size: 1.1rem;
     margin-top: 0.3rem;
   }
+  .app-domain {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: var(--ui-text-muted, #536178);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+  .app-domain svg {
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+  }
 `;
 
 export default function TradeBuilds({
@@ -99,6 +130,7 @@ export default function TradeBuilds({
   selectedIds?: number[];
   embedded?: boolean;
 }) {
+  const viewerId = Number(useKeyContext((v) => v.myState.userId) || 0);
   return (
     <div className={listClass} data-embedded={embedded}>
       {builds.map((build) => {
@@ -131,6 +163,12 @@ export default function TradeBuilds({
                 {!build.isPublic && !build.unavailable && (
                   <small>Private app · workspace included</small>
                 )}
+                {(build.domains || []).map((domain) => (
+                  <small className="app-domain" key={domain.hostname}>
+                    <Icon icon="globe" />
+                    <span>{appDomainNote(domain, viewerId)}</span>
+                  </small>
+                ))}
               </div>
             </Preview>
             {renderAction && (

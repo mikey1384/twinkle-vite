@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import UserSearchInput, {
@@ -8,9 +8,10 @@ import AICardModal from '~/components/Modals/AICardModal';
 import TransactionModal from '~/containers/Chat/Modals/TransactionModal';
 import TradeBuilds, {
   AppOwnershipNotice,
-  type TradeBuild
+  type TradeBuild,
+  type TradeBuildDomain
 } from './TradeBuilds';
-import { useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function AppTransferModal({
   build,
@@ -29,11 +30,37 @@ export default function AppTransferModal({
   const [started, setStarted] = useState(!isOwner);
   const [groupObjs, setGroupObjs] = useState<Record<number, any>>({});
   const [cardId, setCardId] = useState(0);
+  // the app's live domains and their owners, for the note under the app
+  const loadAppAddress = useAppContext((v) => v.requestHelpers.loadAppAddress);
+  const [domains, setDomains] = useState<TradeBuildDomain[] | undefined>(build.domains);
+  useEffect(() => {
+    if (build.domains) return;
+    let cancelled = false;
+    loadAppAddress({ buildId: build.id })
+      .then((data: any) => {
+        if (cancelled || !data?.enabled) return;
+        setDomains(
+          (data.domains || [])
+            .filter((row: any) => row.status === 'live')
+            .map((row: any) => ({
+              hostname: String(row.hostname),
+              ownerUserId: row.ownedByYou ? userId : 0,
+              ownerUsername: row.ownerUsername || null
+            }))
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build.id]);
+  const shownBuild = domains ? { ...build, domains } : build;
   return (
     <>
       {started && partner ? (
         <TransactionModal
-          initialBuild={build}
+          initialBuild={shownBuild}
           initialOption={mode}
           partner={partner}
           currentTransactionId={0}
@@ -66,7 +93,7 @@ export default function AppTransferModal({
           }
         >
           <div style={{ width: '100%', minWidth: 0 }}>
-            <TradeBuilds builds={[build]} />
+            <TradeBuilds builds={[shownBuild]} />
             <AppOwnershipNotice />
             <div
               style={{

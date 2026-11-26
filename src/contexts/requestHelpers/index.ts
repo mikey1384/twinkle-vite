@@ -87,6 +87,7 @@ registerMethods('build', [
   'checkAppDomain',
   'loadAppDomainConnect',
   'removeAppDomain',
+  'attachAppDomainOrder',
   'loadDomainIdeas',
   'searchDomains',
   'startDomainOrder',
