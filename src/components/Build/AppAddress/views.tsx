@@ -128,9 +128,19 @@ const fine = css`
 // The app's address as a chip in the Build header's strip; its menu holds
 // every address action (open, copy, share, change, remove an own domain,
 // get your own .com). A live own domain is the address the chip shows.
+// "https://a.example/" -> "a.example" (keeps a dev port); never throws.
+export function addressHost(url: string) {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url.replace(/^[a-z]+:\/\//i, '').replace(/\/.*$/, '');
+  }
+}
+
 export function AddressMenuView({
   t,
-  url,
+  primaryUrl,
+  freeUrl,
   domains,
   ownerDomains,
   onRemoveDomain,
@@ -143,9 +153,12 @@ export function AddressMenuView({
   onRename
 }: {
   t: AddressText;
+  // the address to share (the server's choice: a live bought domain, else
+  // the free address); the chip shows it and Copy / Share hand it out
+  primaryUrl: string;
   // the free lumine.app address
-  url: string;
-  // every live own domain
+  freeUrl: string;
+  // every live own domain (hostnames)
   domains: string[];
   // owner only: every own address with its status, and Remove
   ownerDomains?: Array<{ id: number; hostname: string; status: string; statusLine?: string; source?: string }>;
@@ -161,25 +174,33 @@ export function AddressMenuView({
   onRename?: () => void;
 }) {
   const [confirming, setConfirming] = useState(0);
-  const freeHost = url.replace(/^https:\/\//, '');
-  const hosts = [...domains, freeHost];
-  const items: HeaderMenuItem[] = hosts.map((host) => ({
+  // every address once (by hostname), the shared one first
+  const links: Array<{ host: string; href: string }> = [];
+  for (const href of [primaryUrl, ...domains.map((host) => `https://${host}/`), freeUrl]) {
+    const host = addressHost(href);
+    if (host && !links.some((link) => link.host === host)) links.push({ host, href });
+  }
+  const shownHost = links[0]?.host || addressHost(primaryUrl);
+  const items: HeaderMenuItem[] = links.map(({ host, href }) => ({
     label: (
       <>
         <Icon icon="external-link-alt" />
         <span>{host}</span>
       </>
     ),
-    onClick: () => window.open(`https://${host}`, '_blank', 'noopener,noreferrer')
+    href
   }));
   for (const domain of ownerDomains || []) {
     if (domain.status === 'live') continue;
     items.push({
       label: (
-        <span style={{ display: 'grid', gap: '0.2rem' }}>
-          <span>{domain.hostname}</span>
-          {domain.statusLine ? <small className={fine}>{domain.statusLine}</small> : null}
-        </span>
+        <>
+          <Icon icon="clock" />
+          <span style={{ display: 'grid', gap: '0.2rem' }}>
+            <span>{domain.hostname}</span>
+            {domain.statusLine ? <small className={fine}>{domain.statusLine}</small> : null}
+          </span>
+        </>
       )
     });
   }
@@ -224,7 +245,7 @@ export function AddressMenuView({
         label: (
           <>
             <Icon icon="trash-alt" />
-            <span>{armed ? t.removeConfirm : `${t.remove} ${domain.hostname}`}</span>
+            <span>{armed ? `${domain.hostname}: ${t.removeConfirm}` : `${t.remove} ${domain.hostname}`}</span>
           </>
         ),
         style: { color: armed ? '#b42318' : muted },
@@ -258,14 +279,16 @@ export function AddressMenuView({
   return (
     <HeaderMenu
       items={items}
-      renderTrigger={({ onToggle }) => (
+      label={shownHost}
+      renderTrigger={({ onToggle, triggerProps }) => (
         <HeaderChip
           chip="address"
           icon="globe"
           tone="blue"
-          label={hosts[0]}
-          title={hosts[0]}
+          label={shownHost}
+          title={shownHost}
           caret
+          menuTrigger={triggerProps}
           onClick={() => {
             setConfirming(0);
             onToggle();

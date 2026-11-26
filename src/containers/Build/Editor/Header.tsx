@@ -464,13 +464,15 @@ function SettingsMenuButton({ menuProps }: { menuProps: HeaderMenuItem[] }) {
   return (
     <HeaderMenu
       items={menuProps}
-      renderTrigger={({ open, onToggle }) => (
+      label="Settings"
+      renderTrigger={({ open, onToggle, triggerProps }) => (
         <GameCTAButton
           variant="neutral"
           size="md"
           icon="gear"
           toggled={open}
           onClick={onToggle}
+          {...triggerProps}
         >
           Settings
         </GameCTAButton>
@@ -511,13 +513,15 @@ function BuildPhoneStatusBadge({
       (releaseStatus.hasUnpublishedChanges ||
         releaseStatus.state === 'missing_snapshot')
   );
-  const label = !isPublic
-    ? 'Private'
+  // text and title from the same facts; guests and other members get no
+  // release status, so they only see "Public"
+  const [label, title] = !isPublic
+    ? ['Private', 'Private build']
     : !releaseStatus
-      ? 'Public'
+      ? ['Public', 'Public build']
       : unpublished
-        ? 'Public · Unpublished'
-        : 'Public · Live';
+        ? ['Public · Unpublished', 'Public build · Unpublished changes']
+        : ['Public · Live', 'Public build · Published app is live'];
   return (
     <span
       className={headerChipClass}
@@ -526,13 +530,7 @@ function BuildPhoneStatusBadge({
           ? getReleaseStatusBadgeStyle(releaseStatus.state)
           : getVisibilityBadgeStyle(isPublic)
       }
-      title={
-        isPublic
-          ? unpublished
-            ? 'Public build · Unpublished changes'
-            : 'Public build · Published app is live'
-          : 'Private build'
-      }
+      title={title}
     >
       <Icon icon={isPublic ? 'globe' : 'lock'} />
       {label}

@@ -47,7 +47,9 @@ export default function DropdownList({
   onHideMenu = () => null,
   onMouseEnter = () => null,
   onMouseLeave = () => null,
-  zIndex = 100_000_000_000
+  zIndex = 100_000_000_000,
+  fitToViewport = false,
+  listProps
 }: {
   xAdjustment?: number;
   children: React.ReactNode;
@@ -65,6 +67,11 @@ export default function DropdownList({
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   zIndex?: number;
+  // Keep the whole list on screen: its width and height stop at the
+  // viewport edge on the side it opens toward, and a tall list scrolls.
+  fitToViewport?: boolean;
+  // Extra attributes for the list (role, id, aria-label, key handling).
+  listProps?: React.HTMLAttributes<HTMLUListElement>;
 }) {
   const MenuRef = useRef(null);
   const [portalContainer] = useState<HTMLElement | null>(() => {
@@ -91,6 +98,32 @@ export default function DropdownList({
   const isReversed = useMemo(() => {
     return window.innerHeight / 2 - y < 0;
   }, [y]);
+  const viewportFitStyle = useMemo<React.CSSProperties | null>(() => {
+    if (!fitToViewport) return null;
+    const edge = 8;
+    const gap = 5;
+    const roomX = displaysToTheRight
+      ? window.innerWidth - x - edge
+      : x + xAdjustment + width - edge;
+    const roomY = isReversed
+      ? y - gap - edge
+      : window.innerHeight - (y + height + gap) - edge;
+    return {
+      maxWidth: Math.max(160, roomX),
+      maxHeight: Math.max(120, roomY),
+      overflowY: 'auto',
+      overscrollBehavior: 'contain'
+    };
+  }, [
+    displaysToTheRight,
+    fitToViewport,
+    height,
+    isReversed,
+    width,
+    x,
+    xAdjustment,
+    y
+  ]);
   const { getColor: getFilterColor } = useRoleColor('filter', {
     fallback: 'logoBlue'
   });
@@ -147,9 +180,10 @@ export default function DropdownList({
         style={{ pointerEvents: 'auto' }}
       >
         <ul
+          {...listProps}
           ref={innerRef}
           translate="no"
-          style={style}
+          style={viewportFitStyle ? { ...style, ...viewportFitStyle } : style}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
           className={`${css`

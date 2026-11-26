@@ -15,7 +15,10 @@ export default function GameCTAButton({
   toggled = false,
   loading = false,
   arcade = false,
-  'aria-label': ariaLabel
+  'aria-label': ariaLabel,
+  'aria-haspopup': ariaHasPopup,
+  'aria-expanded': ariaExpanded,
+  'aria-controls': ariaControls
 }: {
   onClick: () => void;
   children?: React.ReactNode;
@@ -40,6 +43,10 @@ export default function GameCTAButton({
   // every other button renders exactly as before.
   arcade?: boolean;
   'aria-label'?: string;
+  // a trigger for a menu (the Build header's Settings)
+  'aria-haspopup'?: 'menu';
+  'aria-expanded'?: boolean;
+  'aria-controls'?: string;
 }) {
   const hasLabel = !!(
     children && !(typeof children === 'string' && children.trim().length === 0)
@@ -50,6 +57,9 @@ export default function GameCTAButton({
   return (
     <button
       aria-label={ariaLabel}
+      aria-haspopup={ariaHasPopup}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
       onClick={onClick}
       className={cls}
       style={style}

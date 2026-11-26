@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import DropdownList from '~/components/DropdownList';
 import Icon from '~/components/Icon';
@@ -178,6 +178,12 @@ export const headerChipStripClass = css`
   }
 `;
 
+export interface HeaderMenuTriggerProps {
+  'aria-haspopup': 'menu';
+  'aria-expanded': boolean;
+  'aria-controls'?: string;
+}
+
 export function HeaderChip({
   chip,
   icon,
@@ -185,6 +191,7 @@ export function HeaderChip({
   label,
   title,
   caret = false,
+  menuTrigger,
   onClick
 }: {
   // names the chip for tests and screenshots (data-header-chip)
@@ -194,6 +201,8 @@ export function HeaderChip({
   label: React.ReactNode;
   title?: string;
   caret?: boolean;
+  // set when the chip opens a HeaderMenu
+  menuTrigger?: HeaderMenuTriggerProps;
   onClick?: () => void;
 }) {
   const content = (
@@ -222,7 +231,7 @@ export function HeaderChip({
       style={HEADER_CHIP_TONES[tone]}
       title={title}
       data-header-chip={chip}
-      aria-haspopup={caret ? 'menu' : undefined}
+      {...menuTrigger}
       onClick={onClick}
     >
       {content}
@@ -233,6 +242,8 @@ export function HeaderChip({
 export interface HeaderMenuItem {
   label?: React.ReactNode;
   onClick?: () => void;
+  // a link (opens in a new tab); the row is a real <a>
+  href?: string;
   disabled?: boolean;
   style?: React.CSSProperties;
   separator?: boolean;
@@ -240,70 +251,217 @@ export interface HeaderMenuItem {
   keepOpen?: boolean;
 }
 
+const MENU_ITEM_SELECTOR = '[role="menuitem"]:not([aria-disabled="true"])';
+
 // A header trigger with its DropdownList menu (Settings, the address chip).
+// Keyboard: Enter, Space or ArrowDown on the trigger opens it with focus on
+// the first row; ArrowUp/ArrowDown/Home/End move; Enter or Space picks;
+// Escape or Tab closes and returns focus to the trigger.
 export function HeaderMenu({
   items,
   renderTrigger,
-  menuStyle
+  menuStyle,
+  label
 }: {
   items: HeaderMenuItem[];
-  renderTrigger: (props: { open: boolean; onToggle: () => void }) => React.ReactNode;
+  renderTrigger: (props: {
+    open: boolean;
+    onToggle: () => void;
+    triggerProps: HeaderMenuTriggerProps;
+  }) => React.ReactNode;
   menuStyle?: React.CSSProperties;
+  // the menu's accessible name
+  label: string;
 }) {
   const triggerRef = useRef<HTMLDivElement>(null);
+  const keyboardOpenRef = useRef(false);
+  const menuId = useId();
   const [dropdownContext, setDropdownContext] = useState<DOMRect | null>(null);
+  const open = !!dropdownContext;
+
+  useEffect(() => {
+    if (!open || !keyboardOpenRef.current) return;
+    keyboardOpenRef.current = false;
+    const frame = window.requestAnimationFrame(() => focusItem('first'));
+    return () => window.cancelAnimationFrame(frame);
+    // focusItem reads the rendered menu by id
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // Escape also closes a menu opened by pointer while focus is elsewhere.
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setDropdownContext(null);
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
 
   return (
-    <div ref={triggerRef} className={menuTriggerClass}>
-      {renderTrigger({ open: !!dropdownContext, onToggle: handleToggle })}
+    <div
+      ref={triggerRef}
+      className={menuTriggerClass}
+      onKeyDown={handleKeyDown}
+    >
+      {renderTrigger({
+        open,
+        onToggle: handleToggle,
+        triggerProps: {
+          'aria-haspopup': 'menu',
+          'aria-expanded': open,
+          'aria-controls': open ? menuId : undefined
+        }
+      })}
       {dropdownContext ? (
         <DropdownList
           dropdownContext={dropdownContext}
           triggerRef={triggerRef}
           onHideMenu={handleHide}
           className={menuListClass}
+          fitToViewport
+          listProps={{ id: menuId, role: 'menu', 'aria-label': label }}
           style={{ minWidth: '15rem', width: 'max-content', ...menuStyle }}
         >
-          {items.map((item, index) =>
-            item.separator ? (
-              <hr key={index} />
-            ) : (
+          {items.map((item, index) => {
+            if (item.separator) return <hr key={index} role="separator" />;
+            const inert = item.disabled || (!item.onClick && !item.href);
+            const rowClass = css`
+              opacity: ${item.disabled ? 0.3 : 1};
+              cursor: ${inert ? 'default' : 'pointer'};
+              @media (hover: hover) and (pointer: fine) {
+                &:hover {
+                  background: ${inert ? '#fff !important' : ''};
+                  box-shadow: ${inert ? 'none !important' : ''};
+                }
+              }
+            `;
+            if (item.href && !item.disabled) {
+              return (
+                <li key={index} role="none" className={`${rowClass} ${linkRowClass}`}>
+                  <a
+                    role="menuitem"
+                    tabIndex={-1}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={item.style}
+                    onClick={() => handleActivate(item)}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              );
+            }
+            return (
               <li
                 key={index}
+                role="menuitem"
+                tabIndex={inert ? undefined : -1}
+                aria-disabled={inert || undefined}
                 style={item.style}
-                className={css`
-                  opacity: ${item.disabled ? 0.3 : 1};
-                  cursor: ${item.disabled || !item.onClick
-                    ? 'default'
-                    : 'pointer'};
-                  @media (hover: hover) and (pointer: fine) {
-                    &:hover {
-                      background: ${item.disabled || !item.onClick
-                        ? '#fff !important'
-                        : ''};
-                      box-shadow: ${item.disabled || !item.onClick
-                        ? 'none !important'
-                        : ''};
-                    }
-                  }
-                `}
-                onClick={
-                  item.disabled || !item.onClick
-                    ? undefined
-                    : () => {
-                        if (!item.keepOpen) setDropdownContext(null);
-                        item.onClick?.();
-                      }
-                }
+                className={rowClass}
+                onClick={inert ? undefined : () => handleActivate(item)}
               >
                 {item.label}
               </li>
-            )
-          )}
+            );
+          })}
         </DropdownList>
       ) : null}
     </div>
   );
+
+  function handleActivate(item: HeaderMenuItem) {
+    if (!item.keepOpen) closeAndFocusTrigger();
+    item.onClick?.();
+  }
+
+  function menuElement() {
+    return document.getElementById(menuId);
+  }
+
+  function triggerButton() {
+    return triggerRef.current?.querySelector<HTMLElement>('button') || null;
+  }
+
+  function focusItem(which: 'first' | 'last' | 'next' | 'prev') {
+    const rows = Array.from(
+      menuElement()?.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR) || []
+    );
+    if (!rows.length) return;
+    const current = rows.indexOf(document.activeElement as HTMLElement);
+    const index =
+      which === 'first'
+        ? 0
+        : which === 'last'
+          ? rows.length - 1
+          : which === 'next'
+            ? current < 0
+              ? 0
+              : (current + 1) % rows.length
+            : current < 0
+              ? rows.length - 1
+              : (current - 1 + rows.length) % rows.length;
+    rows[index].focus();
+  }
+
+  function closeAndFocusTrigger() {
+    setDropdownContext(null);
+    triggerButton()?.focus({ preventScroll: true });
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent) {
+    const inMenu = Boolean(
+      menuElement()?.contains(event.target as Node)
+    );
+    if (!open) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        // the button's click follows and opens the menu
+        keyboardOpenRef.current = true;
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        keyboardOpenRef.current = true;
+        handleToggle();
+      }
+      return;
+    }
+    switch (event.key) {
+      case 'Escape':
+      case 'Tab':
+        event.preventDefault();
+        event.stopPropagation();
+        closeAndFocusTrigger();
+        return;
+      case 'ArrowDown':
+        event.preventDefault();
+        focusItem('next');
+        return;
+      case 'ArrowUp':
+        event.preventDefault();
+        focusItem('prev');
+        return;
+      case 'Home':
+        event.preventDefault();
+        focusItem('first');
+        return;
+      case 'End':
+        event.preventDefault();
+        focusItem('last');
+        return;
+      case 'Enter':
+      case ' ': {
+        if (!inMenu) return;
+        const row = event.target as HTMLElement;
+        if (row.getAttribute('role') !== 'menuitem') return;
+        // a link follows itself on Enter; Space and plain rows click
+        if (row.tagName === 'A' && event.key === 'Enter') return;
+        event.preventDefault();
+        row.click();
+        return;
+      }
+    }
+  }
 
   function handleToggle() {
     setDropdownContext(
@@ -314,9 +472,36 @@ export function HeaderMenu({
   }
 
   function handleHide() {
+    keyboardOpenRef.current = false;
     setDropdownContext(null);
   }
 }
+
+// A link row: the anchor fills the row so the whole row is the link.
+const linkRowClass = css`
+  && {
+    padding: 0;
+  }
+  && > a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 0.9rem 1.1rem;
+    border-radius: inherit;
+  }
+  && > a > svg:first-child {
+    flex: 0 0 1.25em;
+    width: 1.25em;
+  }
+  && > a > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
 
 // Menu rows read left to right, one line each, with their icons in one
 // column; a long address shortens with an ellipsis.
@@ -335,6 +520,17 @@ const menuListClass = css`
   && li > svg:first-child {
     flex: 0 0 1.25em;
     width: 1.25em;
+  }
+  && > hr,
+  && > li {
+    flex: none;
+  }
+  && [role='menuitem']:focus {
+    outline: none;
+  }
+  && [role='menuitem']:focus-visible {
+    outline: 2px solid #418ceb;
+    outline-offset: -2px;
   }
 `;
 

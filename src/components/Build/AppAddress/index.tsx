@@ -6,6 +6,7 @@ import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
 import {
   AddressMenuView,
+  addressHost,
   ConnectView,
   FindView,
   IntroView,
@@ -31,7 +32,10 @@ interface AddressInfo {
   enabled: boolean;
   eligible?: boolean;
   slug?: string | null;
+  // the address to share: a live bought domain, else the free address
   url?: string | null;
+  // the free lumine.app address
+  lumineUrl?: string | null;
   customDomainsEnabled?: boolean;
   domainSalesEnabled?: boolean;
   domains?: Array<{ id: number; hostname: string; status: string; source: string; statusLine?: string }>;
@@ -458,8 +462,21 @@ export default function AppAddress({
     setRenaming(true);
     try {
       const result = await renameAppAddress({ buildId, slug: renameValue.trim() });
-      setInfo((prev) => (prev ? { ...prev, slug: result.slug, url: result.url } : prev));
+      // the answer is the new free address; a live bought domain stays the
+      // shared address, so ask the server for the whole record again
+      setInfo((prev) =>
+        prev
+          ? {
+              ...prev,
+              slug: result.slug,
+              lumineUrl: result.url,
+              url: prev.url === (prev.lumineUrl || prev.url) ? result.url : prev.url
+            }
+          : prev
+      );
       setStep(null);
+      const fresh = await loadAppAddress({ buildId }).catch(() => null);
+      if (fresh) setInfo(fresh);
     } catch (e: any) {
       setRenameStatus('taken');
       setRenameMessage(e?.message || '');
@@ -473,10 +490,11 @@ export default function AppAddress({
   useConnectPolling(step, connect?.status, checkConnect);
 
   if (!info?.enabled || !info.url) return <>{children}</>;
-  const freeHost = info.url.replace(/^https:\/\//, '');
+  const freeUrl = info.lumineUrl || info.url;
+  const freeHost = addressHost(freeUrl);
   const liveDomains = (info.domains || []).filter((d) => d.status === 'live').map((d) => d.hostname);
-  // the chip shows (and Copy / Share hand out) a live own domain first
-  const shownUrl = liveDomains[0] ? `https://${liveDomains[0]}` : info.url;
+  // the chip shows (and Copy / Share hand out) the server's shared address
+  const shownUrl = info.url;
   const askContext = (label: string, excerpt: string) => ({
     kind: 'page',
     id: buildId,
@@ -489,7 +507,8 @@ export default function AppAddress({
     <>
       <AddressMenuView
         t={t}
-        url={info.url}
+        primaryUrl={info.url}
+        freeUrl={freeUrl}
         domains={liveDomains}
         ownerDomains={isOwner ? info.domains : undefined}
         removableSources={['own']}

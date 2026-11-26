@@ -35,6 +35,16 @@ import { askSignIn, mountBadge, showAiBanner, showGuestHint } from '../ui';
 import { LITE_HOST_TEXT } from '../text';
 import AppAccountSheet from '../react/AppAccountSheet';
 import AppPlayers from '~/components/Build/AppAddress/AppPlayers';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faGlobe } from '@fortawesome/pro-solid-svg-icons/faGlobe';
+import { faChevronDown } from '@fortawesome/pro-solid-svg-icons/faChevronDown';
+import { faExternalLinkAlt } from '@fortawesome/pro-solid-svg-icons/faExternalLinkAlt';
+import { faCopy } from '@fortawesome/pro-solid-svg-icons/faCopy';
+import { faShare } from '@fortawesome/pro-solid-svg-icons/faShare';
+import { faPencilAlt } from '@fortawesome/pro-solid-svg-icons/faPencilAlt';
+import { faTrashAlt } from '@fortawesome/pro-solid-svg-icons/faTrashAlt';
+import { faUsers } from '@fortawesome/pro-solid-svg-icons/faUsers';
+import { faClock } from '@fortawesome/pro-solid-svg-icons/faClock';
 import '../host.css';
 
 // Stand-ins for the requests the sign-up window makes (nothing leaves the page).
@@ -46,6 +56,10 @@ const FAKE_REQUESTS: any = {
 };
 const RED_SQUARE_THUMB = 'https://d3jvoamd2k4p0s.cloudfront.net/thumbs/builds/5/2/9522c935-6f41-4c67-abd5-e745e7ee2eca.png';
 const SITE_CONFIG: any = { buildId: 2, title: 'The Adventure of a Red Square', owner: { id: 1, username: 'mikey' }, thumbnailUrl: RED_SQUARE_THUMB, siteOrigin: 'https://www.twin-kle.com' };
+
+// The icons the website's header chips and menus use (main.tsx registers
+// them for the website; this entry point has its own registration).
+library.add(faGlobe, faChevronDown, faExternalLinkAlt, faCopy, faShare, faPencilAlt, faTrashAlt, faUsers, faClock);
 
 const params = new URLSearchParams(window.location.search);
 const screen = params.get('screen') || 'card';
@@ -118,7 +132,7 @@ function Harness() {
       return (
         <Page>
           <AppPageHeader>
-            <AddressMenuView t={t} url="https://star-catcher.lumine.app" domains={params.get('domain') ? [params.get('domain')!] : []} canGetOwn copied={false} onCopy={noop} onShare={noop} onGetOwn={noop} onRename={noop} />
+            <AddressMenuView t={t} primaryUrl={params.get('domain') ? `https://${params.get('domain')}/` : 'https://star-catcher.lumine.app/'} freeUrl="https://star-catcher.lumine.app/" domains={params.get('domain') ? [params.get('domain')!] : []} canGetOwn copied={false} onCopy={noop} onShare={noop} onGetOwn={noop} onRename={noop} />
           </AppPageHeader>
         </Page>
       );
