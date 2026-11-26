@@ -58,8 +58,8 @@ export const ADDRESS_TEXT = {
     honestBody:
       'You can also buy domains from other sites like Namecheap or Cloudflare, often for less. If you do, you can connect it here for free. Buying here costs a bit more because we set everything up for you instantly: your app goes live at your new address with no technical steps.',
     useOwnLink: 'Use a domain I already own',
-    askIdeas: 'Ask Zero for ideas',
-    askIdeasCiel: 'Ask Ciel for ideas',
+    // the Ask button's agent (Zero or Ciel, the member's Home choice)
+    askIdeas: (agent: string) => `Ask ${agent} for ideas`,
     moreIdeas: 'More ideas',
     hintPlaceholder: 'A hint, like “space”',
     noResults: 'Nothing free with that name. Try another name or ask for ideas.',
@@ -103,7 +103,7 @@ export const ADDRESS_TEXT = {
     recordType: 'Type',
     recordHost: 'Name',
     recordValue: 'Value',
-    askHelp: 'Ask Zero for help',
+    askHelp: (agent: string) => `Ask ${agent} for help`,
     // receipt
     receiptTitle: 'Receipt',
     receiptLine: (domain: string, total: string) => `${domain}: ${total} for one year`,
@@ -204,8 +204,7 @@ export const ADDRESS_TEXT = {
     honestBody:
       'Namecheap이나 Cloudflare 같은 다른 사이트에서도 도메인을 살 수 있고, 더 저렴한 경우가 많아요. 거기서 사도 여기서 무료로 연결할 수 있어요. 여기서 사면 조금 더 비싼 대신, 모든 설정을 바로 해 드려서 아무것도 손대지 않아도 새 주소로 앱이 열려요.',
     useOwnLink: '이미 가진 주소 연결하기',
-    askIdeas: 'Zero에게 아이디어 묻기',
-    askIdeasCiel: 'Ciel에게 아이디어 묻기',
+    askIdeas: (agent: string) => `${agent}에게 아이디어 묻기`,
     moreIdeas: '아이디어 더 보기',
     hintPlaceholder: '힌트 (예: 우주)',
     noResults: '그 이름으로 남은 주소가 없어요. 다른 이름을 써 보거나 아이디어를 물어보세요.',
@@ -246,7 +245,7 @@ export const ADDRESS_TEXT = {
     recordType: '유형',
     recordHost: '이름',
     recordValue: '값',
-    askHelp: 'Zero에게 도움 받기',
+    askHelp: (agent: string) => `${agent}에게 도움 받기`,
     receiptTitle: '영수증',
     receiptLine: (domain: string, total: string) => `${domain}: 1년 ${total}`,
     ownerTitle: (domain: string) => `${domain}의 주인이 돼요`,

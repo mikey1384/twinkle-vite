@@ -30,8 +30,11 @@ export default function AskAgentButton({
   context: AssistantAskContext;
   style?: React.CSSProperties;
   hideLabel?: boolean;
-  // overrides the default "Ask Zero" text (e.g. "Help me plan")
-  label?: string;
+  // overrides the default "Ask Zero" / "Ask Ciel" text (e.g. "Help me
+  // plan"). A label that names the agent is a function of the agent this
+  // button resolved (the member's Home choice, or `assistant`), so its words
+  // always match the face: label={(name) => `Ask ${name} for ideas`}.
+  label?: string | ((assistant: 'Zero' | 'Ciel') => string);
   assistant?: 'Zero' | 'Ciel';
   // keep the words on a phone too, where the face alone is easy to miss
   // (an Arena question's "Ask about step 2")
@@ -51,7 +54,9 @@ export default function AskAgentButton({
   });
   // the same gate as Home's ask box; no room to talk in yet means no button
   if (!isWebsiteAgentEnabledFor(userId) || !channelId) return null;
-  const text = label || `Ask ${assistant}`;
+  const text =
+    (typeof label === 'function' ? label(assistant) : label) ||
+    `Ask ${assistant}`;
   return (
     <ErrorBoundary componentPath="Buttons/AskAgentButton">
       <Button

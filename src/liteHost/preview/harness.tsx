@@ -145,7 +145,7 @@ function Harness() {
     case 'find':
       return (
         <Page>
-          <FindView t={t} query={query} ideas={IDEAS} loading={false} openBreakdownFor={params.get('open') || undefined} onQuery={setQuery} onSearch={noop} onBuy={noop} onUseOwn={noop} onMoreIdeas={noop} ask={<AskStandIn label={t.askIdeas} />} showAdvanced={params.get('advanced') === '1'} />
+          <FindView t={t} query={query} ideas={IDEAS} loading={false} openBreakdownFor={params.get('open') || undefined} onQuery={setQuery} onSearch={noop} onBuy={noop} onUseOwn={noop} onMoreIdeas={noop} ask={<AskStandIn label={t.askIdeas('Zero')} />} showAdvanced={params.get('advanced') === '1'} />
         </Page>
       );
     case 'parent-request':
@@ -238,19 +238,19 @@ function Harness() {
     case 'connect-enter':
       return (
         <Page>
-          <ConnectView t={t} hostname="starcatcher.games" onHostname={noop} onConnect={noop} stage="enter" providerName={null} providerSteps={[]} domainConnectUrl={null} records={[]} status="waiting" onCheck={noop} ask={<AskStandIn label={t.askHelp} />} />
+          <ConnectView t={t} hostname="starcatcher.games" onHostname={noop} onConnect={noop} stage="enter" providerName={null} providerSteps={[]} domainConnectUrl={null} records={[]} status="waiting" onCheck={noop} ask={<AskStandIn label={t.askHelp('Zero')} />} />
         </Page>
       );
     case 'connect-dc':
       return (
         <Page>
-          <ConnectView t={t} hostname="starcatcher.games" onHostname={noop} onConnect={noop} stage="setup" providerName="Cloudflare" providerSteps={[]} domainConnectUrl="#approve-at-cloudflare" records={RECORDS} status="waiting" onCheck={noop} ask={<AskStandIn label={t.askHelp} />} showRecords={params.get('advanced') === '1'} />
+          <ConnectView t={t} hostname="starcatcher.games" onHostname={noop} onConnect={noop} stage="setup" providerName="Cloudflare" providerSteps={[]} domainConnectUrl="#approve-at-cloudflare" records={RECORDS} status="waiting" onCheck={noop} ask={<AskStandIn label={t.askHelp('Zero')} />} showRecords={params.get('advanced') === '1'} />
         </Page>
       );
     case 'connect-steps':
       return (
         <Page>
-          <ConnectView t={t} hostname="starcatcher.games" onHostname={noop} onConnect={noop} stage="setup" providerName="Namecheap" providerSteps={NAMECHEAP_STEPS} domainConnectUrl={null} records={RECORDS} status={(params.get('status') as any) || 'waiting'} onCheck={noop} ask={<AskStandIn label={t.askHelp} />} />
+          <ConnectView t={t} hostname="starcatcher.games" onHostname={noop} onConnect={noop} stage="setup" providerName="Namecheap" providerSteps={NAMECHEAP_STEPS} domainConnectUrl={null} records={RECORDS} status={(params.get('status') as any) || 'waiting'} onCheck={noop} ask={<AskStandIn label={t.askHelp('Zero')} />} />
         </Page>
       );
     case 'signin':
