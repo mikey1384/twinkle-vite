@@ -433,6 +433,7 @@ export function mountBadge({
   document.body.append(badge);
   let menu: { layer: HTMLElement; card: HTMLElement } | null = null;
   let closingLayer: HTMLElement | null = null;
+  let sheetObserver: MutationObserver | null = null;
   // The badge tucks into the edge after a few seconds, but never moves away
   // from its open menu: then it waits until the menu closes.
   let compactWaiting = false;
@@ -481,8 +482,12 @@ export function mountBadge({
         .finished.then(remove, remove);
     }
     if (restoreFocus) {
-      if (focusReturn) focusReturn();
-      else badge.focus({ preventScroll: true });
+      if (focusReturn) {
+        if (document.activeElement === badge) badge.blur();
+        focusReturn();
+      } else {
+        badge.focus({ preventScroll: true });
+      }
     }
   }
   // A sheet taking over: the menu goes; the sheet owns focus from here.
@@ -491,15 +496,23 @@ export function mountBadge({
   // After a sheet opened from the menu (sign-in, report) goes away, focus
   // goes back to the app (or the ✦) instead of being lost on the page.
   function returnFocusAfterSheet() {
+    sheetObserver?.disconnect();
+    sheetObserver = null;
+    if (typeof MutationObserver !== 'function') return;
     const observer = new MutationObserver(() => {
       if (document.querySelector('.lh-backdrop')) return;
       observer.disconnect();
-      if (!menu && (!document.activeElement || document.activeElement === document.body)) {
+      if (sheetObserver === observer) sheetObserver = null;
+      const active = document.activeElement;
+      if (!menu && (!active || active === document.body || active === document.documentElement)) {
         if (focusReturn) focusReturn();
         else badge.focus({ preventScroll: true });
       }
     });
+    sheetObserver = observer;
     observer.observe(document.body, { childList: true });
+    const hostRoot = document.getElementById('lumine-host-root');
+    if (hostRoot) observer.observe(hostRoot, { childList: true, subtree: true });
   }
 
   function onViewportChange() {

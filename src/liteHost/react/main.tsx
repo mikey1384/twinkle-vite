@@ -606,10 +606,14 @@ async function start() {
       })
   });
   // The app's keys: focus goes back into the frame whenever our UI is done
-  // with it (frameFocus.ts).
+  // with it (frameFocus.ts). Only focus immediately if the page (and its
+  // initial frame document) has already finished loading; otherwise the
+  // frame/window load listener focuses once the document is ready.
   const focusKeeper = installFrameFocusKeeper(frame);
   setHostFocusReturn(focusKeeper.focusApp);
-  focusKeeper.focusApp();
+  if (document.readyState === 'complete') {
+    focusKeeper.focusApp();
+  }
 }
 
 if (document.readyState === 'loading') {

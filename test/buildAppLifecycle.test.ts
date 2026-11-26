@@ -33,17 +33,228 @@ test('an unload waits for a fresh snapshot, but not for an app that cannot give 
   lifecycle.forgetRunningApp(77);
 });
 
-test('a page about to unload asks each app for its place and keeps it at once', async () => {
-  // (11-26) a reload: the app's own pagehide snapshot never reaches this
-  // page, and a snapshot inside the one-per-second gap was lost with it
+function createFakeIndexedDb() {
+  const writes: Array<{ store: string; key: string; value: unknown }> = [];
+  let txCount = 0;
+  let openDb: any = null;
+  const fakeDb = {
+    objectStoreNames: { contains: () => true },
+    createObjectStore: () => ({}),
+    onclose: null as null | (() => void),
+    onversionchange: null as null | (() => void),
+    close() {
+      this.onclose?.();
+    },
+    transaction(_stores: string[], _mode: string) {
+      txCount += 1;
+      const tx: any = {
+        oncomplete: null as null | (() => void),
+        onerror: null as null | (() => void),
+        onabort: null as null | (() => void),
+        objectStore(store: string) {
+          return {
+            put(value: unknown, key: string) {
+              writes.push({ store, key, value });
+              return { result: key };
+            },
+            delete() {
+              return { result: undefined };
+            },
+            get() {
+              return { result: undefined };
+            },
+            openCursor() {
+              return { onsuccess: null, result: null };
+            },
+            openKeyCursor() {
+              return { onsuccess: null, result: null };
+            }
+          };
+        }
+      };
+      queueMicrotask(() => tx.oncomplete?.());
+      return tx;
+    }
+  };
+  const fakeIndexedDB = {
+    open() {
+      const request: any = {
+        result: fakeDb,
+        onupgradeneeded: null,
+        onsuccess: null,
+        onerror: null,
+        onblocked: null
+      };
+      queueMicrotask(() => {
+        openDb = fakeDb;
+        request.onsuccess?.();
+      });
+      return request;
+    }
+  };
+  return {
+    writes,
+    getTxCount: () => txCount,
+    snapshotWrites: () => writes.filter((entry) => entry.store === 'snapshots'),
+    install() {
+      (globalThis as any).indexedDB = fakeIndexedDB;
+    },
+    teardown() {
+      openDb?.onclose?.();
+      openDb = null;
+      delete (globalThis as any).indexedDB;
+    }
+  };
+}
+
+function createFakePageEvents() {
+  const winListeners = new Map<string, Set<(...args: any[]) => void>>();
+  const docListeners = new Map<string, Set<(...args: any[]) => void>>();
+  const prevWinAdd = (globalThis as any).addEventListener;
+  const prevWinRemove = (globalThis as any).removeEventListener;
+  const prevDoc = (globalThis as any).document;
+  const fakeDocument = {
+    visibilityState: 'visible' as 'visible' | 'hidden',
+    addEventListener(type: string, fn: (...args: any[]) => void) {
+      if (!docListeners.has(type)) docListeners.set(type, new Set());
+      docListeners.get(type)!.add(fn);
+    },
+    removeEventListener(type: string, fn: (...args: any[]) => void) {
+      docListeners.get(type)?.delete(fn);
+    }
+  };
+  (globalThis as any).addEventListener = (type: string, fn: (...args: any[]) => void) => {
+    if (!winListeners.has(type)) winListeners.set(type, new Set());
+    winListeners.get(type)!.add(fn);
+  };
+  (globalThis as any).removeEventListener = (type: string, fn: (...args: any[]) => void) => {
+    winListeners.get(type)?.delete(fn);
+  };
+  (globalThis as any).document = fakeDocument;
+  return {
+    document: fakeDocument,
+    emitWindow(type: string, event: any = {}) {
+      for (const fn of [...(winListeners.get(type) || [])]) fn(event);
+    },
+    emitDocument(type: string, event: any = {}) {
+      for (const fn of [...(docListeners.get(type) || [])]) fn(event);
+    },
+    teardown() {
+      (globalThis as any).addEventListener = prevWinAdd;
+      (globalThis as any).removeEventListener = prevWinRemove;
+      if (prevDoc === undefined) delete (globalThis as any).document;
+      else (globalThis as any).document = prevDoc;
+    }
+  };
+}
+
+test('pagehide flushes throttled saves synchronously, requests unload on iOS, and preserves the 1s throttle', async () => {
+  const idb = createFakeIndexedDb();
+  const page = createFakePageEvents();
+  idb.install();
+  const stopWatch = lifecycle.watchAppPageUnload();
+  // Let openDb() cache the IDBDatabase handle before pagehide fires.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
   const asked: string[] = [];
   const off = lifecycle.registerAppLifecycleFrame(79, (reason) => asked.push(reason));
   lifecycle.setAppLifecycleStatus(79, { suspend: true, webgl: 0 });
-  lifecycle.acceptAppLifecycleSnapshot(79, 'k79', { state: { step: 1 }, savedAt: 1, reason: 'autosave' });
-  lifecycle.noteAppPageLeaving();
-  assert.deepEqual(asked, ['unload']);
-  off();
-  lifecycle.forgetRunningApp(79);
+  try {
+    // First snapshot has wait === 0 and writes immediately.
+    lifecycle.acceptAppLifecycleSnapshot(79, 'k79', { state: { step: 1 }, savedAt: 1, reason: 'autosave' });
+    assert.equal(idb.snapshotWrites().length, 1);
+
+    // Second and third snapshots within 1s are throttled (queued behind pendingTimer).
+    lifecycle.acceptAppLifecycleSnapshot(79, 'k79', { state: { step: 2 }, savedAt: 2, reason: 'autosave' });
+    lifecycle.acceptAppLifecycleSnapshot(79, 'k79', { state: { step: 3 }, savedAt: 3, reason: 'autosave' });
+    assert.equal(idb.snapshotWrites().length, 1);
+
+    // iOS Safari skips beforeunload and fires only pagehide: queued snapshot must
+    // start its IndexedDB transaction synchronously without awaiting a microtask,
+    // and the app must still be asked for a fresh unload snapshot.
+    page.emitWindow('pagehide');
+    assert.equal(idb.snapshotWrites().length, 2);
+    assert.deepEqual((idb.snapshotWrites()[1].value as any).state, { step: 3 });
+    assert.deepEqual(asked, ['unload']);
+
+    // The requested unload snapshot writes immediately.
+    lifecycle.acceptAppLifecycleSnapshot(79, 'k79', { state: { step: 4 }, savedAt: 4, reason: 'unload' });
+    assert.equal(idb.snapshotWrites().length, 3);
+    assert.deepEqual((idb.snapshotWrites()[2].value as any).state, { step: 4 });
+
+    // If the leave did not actually unload the page, rapid unrequested snapshots
+    // stay throttled to 1/s instead of triggering an IndexedDB write storm.
+    lifecycle.acceptAppLifecycleSnapshot(79, 'k79', { state: { step: 5 }, savedAt: 5, reason: 'autosave' });
+    lifecycle.acceptAppLifecycleSnapshot(79, 'k79', { state: { step: 6 }, savedAt: 6, reason: 'autosave' });
+    assert.equal(idb.snapshotWrites().length, 3);
+
+    // Restoring from bfcache clears the leaving window and keeps throttling active.
+    page.emitWindow('pageshow', { persisted: true });
+    lifecycle.acceptAppLifecycleSnapshot(79, 'k79', { state: { step: 7 }, savedAt: 7, reason: 'autosave' });
+    assert.equal(idb.snapshotWrites().length, 3);
+  } finally {
+    off();
+    lifecycle.forgetRunningApp(79);
+    stopWatch();
+    page.teardown();
+    idb.teardown();
+  }
+});
+
+test('beforeunload allows at most one unrequested urgent write per app and visibilitychange hidden flushes queued saves synchronously', async () => {
+  const idb = createFakeIndexedDb();
+  const page = createFakePageEvents();
+  idb.install();
+  const stopWatch = lifecycle.watchAppPageUnload();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const asked80: string[] = [];
+  const off80 = lifecycle.registerAppLifecycleFrame(80, (reason) => asked80.push(reason));
+  const asked81: string[] = [];
+  const off81 = lifecycle.registerAppLifecycleFrame(81, (reason) => asked81.push(reason));
+  lifecycle.setAppLifecycleStatus(81, { suspend: true, webgl: 0 });
+  try {
+    // App 80 does not register onSuspend: first writes immediately, second queues.
+    lifecycle.acceptAppLifecycleSnapshot(80, 'k80', { state: { v: 1 }, savedAt: 1, reason: 'autosave' });
+    lifecycle.acceptAppLifecycleSnapshot(80, 'k80', { state: { v: 2 }, savedAt: 2, reason: 'autosave' });
+    assert.equal(idb.snapshotWrites().length, 1);
+
+    // Backgrounding (visibilitychange -> hidden) flushes queued saves synchronously
+    // and requests a fresh hidden snapshot from apps that support onSuspend.
+    page.document.visibilityState = 'hidden';
+    page.emitDocument('visibilitychange');
+    assert.equal(idb.snapshotWrites().length, 2);
+    assert.deepEqual((idb.snapshotWrites()[1].value as any).state, { v: 2 });
+    assert.deepEqual(asked81, ['hidden']);
+    assert.deepEqual(asked80, []);
+
+    // Returning to visible restores normal throttling.
+    page.document.visibilityState = 'visible';
+    lifecycle.acceptAppLifecycleSnapshot(80, 'k80', { state: { v: 3 }, savedAt: 3, reason: 'autosave' });
+    assert.equal(idb.snapshotWrites().length, 2);
+
+    // beforeunload flushes queued save synchronously; pagehide right after does not double-ask.
+    page.emitWindow('beforeunload');
+    assert.equal(idb.snapshotWrites().length, 3);
+    assert.deepEqual((idb.snapshotWrites()[2].value as any).state, { v: 3 });
+    assert.deepEqual(asked81, ['hidden', 'unload']);
+    page.emitWindow('pagehide');
+    assert.deepEqual(asked81, ['hidden', 'unload']);
+
+    // App 80 gets one unrequested urgent leave write, then subsequent writes are throttled.
+    lifecycle.acceptAppLifecycleSnapshot(80, 'k80', { state: { v: 4 }, savedAt: 4, reason: 'unload' });
+    assert.equal(idb.snapshotWrites().length, 4);
+    lifecycle.acceptAppLifecycleSnapshot(80, 'k80', { state: { v: 5 }, savedAt: 5, reason: 'autosave' });
+    assert.equal(idb.snapshotWrites().length, 4);
+  } finally {
+    off80();
+    off81();
+    lifecycle.forgetRunningApp(80);
+    lifecycle.forgetRunningApp(81);
+    stopWatch();
+    page.teardown();
+    idb.teardown();
+  }
 });
 
 test('a closed app is remembered until it starts again', () => {

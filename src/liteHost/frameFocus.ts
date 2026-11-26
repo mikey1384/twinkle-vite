@@ -31,6 +31,31 @@ const TEXT_INPUT_TYPES = new Set([
   'time'
 ]);
 
+const IGNORED_KEYS = new Set([
+  'Shift',
+  'Control',
+  'Alt',
+  'AltGraph',
+  'Meta',
+  'OS',
+  'CapsLock',
+  'NumLock',
+  'ScrollLock',
+  'Insert',
+  'Tab',
+  'Escape',
+  'Home',
+  'End',
+  'PageUp',
+  'PageDown'
+]);
+
+function isIgnoredKey(event: KeyboardEvent) {
+  if (event.ctrlKey || event.metaKey || event.altKey) return true;
+  if (IGNORED_KEYS.has(event.key)) return true;
+  return /^F\d{1,2}$/.test(event.key);
+}
+
 /** A field of ours the player types into (keys stay with it). */
 export function isHostTextEntry(node: Element | null | undefined) {
   if (!node) return false;
@@ -71,10 +96,22 @@ export function installFrameFocusKeeper(
 ): FrameFocusKeeper {
   let disposed = false;
   let scheduled: number | null = null;
+  let scheduledFromGesture = false;
 
   function focusLost() {
     const active = document.activeElement;
-    return !active || active === document.body || active === document.documentElement;
+    if (!active || active === document.body || active === document.documentElement) {
+      return true;
+    }
+    if (active.isConnected === false) return true;
+    if (typeof active.closest === 'function' && active.closest('[inert]')) return true;
+    return false;
+  }
+
+  // Re-focusing the iframe when it is already activeElement is harmless and
+  // required to hand focus into a newly loaded (or unfocused) inner document.
+  function focusEligibleForFrame() {
+    return document.activeElement === frame || focusLost();
   }
 
   function canTake({ fromGesture = false } = {}) {
@@ -83,8 +120,8 @@ export function installFrameFocusKeeper(
     if (!fromGesture && isTouchOnly()) return false;
     if (hostOverlayOpen()) return false;
     const active = document.activeElement;
-    if (active === frame) return false;
     if (isHostTextEntry(active)) return false;
+    if (!fromGesture && !focusEligibleForFrame()) return false;
     return true;
   }
 
@@ -102,12 +139,15 @@ export function installFrameFocusKeeper(
 
   // After the browser has settled focus (a removed element, a closed sheet,
   // a window that just came back), on the next task.
-  function schedule(options?: { onlyIfLost?: boolean }) {
+  function schedule({ fromGesture = false } = {}) {
+    const nextFromGesture = fromGesture || (scheduled !== null && scheduledFromGesture);
     if (scheduled !== null) window.clearTimeout(scheduled);
+    scheduledFromGesture = nextFromGesture;
     scheduled = window.setTimeout(() => {
+      const gesture = scheduledFromGesture;
       scheduled = null;
-      if (options?.onlyIfLost && !focusLost()) return;
-      focusApp();
+      scheduledFromGesture = false;
+      focusApp({ fromGesture: gesture });
     }, 0);
   }
 
@@ -117,30 +157,29 @@ export function installFrameFocusKeeper(
   };
   const onWindowFocus = () => schedule();
   // A press on the page itself (around the frame, under a closed sheet):
-  // the player means the app.
+  // the player means the app. On touch-only devices this is the only gesture
+  // that focuses the frame.
   const onPointerDown = (event: PointerEvent) => {
+    if (event.isTrusted === false) return;
     const target = event.target;
     if (target !== document.body && target !== document.documentElement && target !== frame) {
       return;
     }
-    window.setTimeout(() => focusApp({ fromGesture: true }), 0);
+    schedule({ fromGesture: true });
   };
-  // A click on our UI that opened nothing (a banner's ✕, the toast) leaves
-  // focus on that button or, once it is gone, nowhere: back to the app. A
-  // click that opened a sheet or the menu leaves it to them.
+  // A click on our UI that removed the element (a banner's ✕) or landed on
+  // non-focusable chrome (a toast) leaves focus on body: back to the app on
+  // desktop, never stealing focus from a host control or firing on touch-only.
   const onClick = (event: MouseEvent) => {
+    if (event.isTrusted === false) return;
     const target = event.target as Element | null;
     if (!target || isHostTextEntry(target)) return;
-    window.setTimeout(() => {
-      const active = document.activeElement;
-      if (focusLost() || (active && active.tagName === 'BUTTON' && !active.closest('.lh-backdrop, .lh-pop-layer'))) {
-        focusApp({ fromGesture: true });
-      }
-    }, 0);
+    schedule();
   };
   // Our overlays come and go as body children (sheets, the menu layer, the
-  // banner, the hint) and inside #modal (Twinkle's boxes): when one goes and
-  // focus went with it, the app gets it back.
+  // banner, the hint), inside #modal (Twinkle's boxes) and inside
+  // #lumine-host-root (AppAccountSheet): when one goes and focus went with
+  // it, the app gets it back.
   const observer =
     typeof MutationObserver === 'function'
       ? new MutationObserver((records) => {
@@ -148,38 +187,44 @@ export function installFrameFocusKeeper(
           // Right away (a microtask after the removal), so a key pressed
           // just after the click already reaches the app; again after the
           // browser has settled focus.
-          if (focusLost()) focusApp();
-          schedule({ onlyIfLost: true });
+          if (focusEligibleForFrame()) focusApp();
+          schedule();
         })
       : null;
-  const observeModalRoot = () => {
-    const modal = document.getElementById('modal');
-    if (modal) observer?.observe(modal, { childList: true });
+  const observedRoots = new WeakSet<Element>();
+  const observeRoot = (id: string, subtree: boolean) => {
+    const root = document.getElementById(id);
+    if (root && !observedRoots.has(root)) {
+      observedRoots.add(root);
+      observer?.observe(root, subtree ? { childList: true, subtree: true } : { childList: true });
+    }
+  };
+  const observeHostRoots = () => {
+    observeRoot('modal', false);
+    observeRoot('lumine-host-root', true);
   };
   observer?.observe(document.body, { childList: true });
-  observeModalRoot();
-  // #modal may be added after this runs (main.tsx appends it).
+  observeHostRoots();
+  // #modal and #lumine-host-root may be added after this runs (main.tsx appends them).
   const bodyWatcher =
     typeof MutationObserver === 'function'
-      ? new MutationObserver(() => observeModalRoot())
+      ? new MutationObserver(() => observeHostRoots())
       : null;
   bodyWatcher?.observe(document.body, { childList: true });
 
-  // Last resort: a key pressed on this page while nothing of ours wants it
-  // (focus got here some other way) sends the next ones to the app. This
-  // one key is not forwarded: the app can't be handed a trusted key press.
+  // Last resort: a key pressed on this page while focus is lost on
+  // body/document (not on any host control) or on the iframe element without
+  // inner-document focus sends the next ones to the app. Modifier, shortcut,
+  // and navigation keys are never intercepted.
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.defaultPrevented) return;
-    const active = document.activeElement;
-    if (!focusLost() && !(active && active.tagName === 'BUTTON' && !active.closest('.lh-backdrop, .lh-pop-layer'))) {
-      return;
-    }
-    // Tab, Enter and Space on one of our buttons keep their meaning.
-    if (!focusLost() && (event.key === 'Tab' || event.key === 'Enter' || event.key === ' ')) return;
-    focusApp({ fromGesture: true });
+    if (event.defaultPrevented || event.isTrusted === false || event.isComposing) return;
+    if (!focusEligibleForFrame()) return;
+    if (isIgnoredKey(event)) return;
+    focusApp();
   };
 
   frame.addEventListener('load', onLoad);
+  window.addEventListener('load', onLoad);
   document.addEventListener('keydown', onKeyDown);
   document.addEventListener('visibilitychange', onVisible);
   window.addEventListener('focus', onWindowFocus);
@@ -187,13 +232,18 @@ export function installFrameFocusKeeper(
   document.addEventListener('click', onClick, true);
 
   return {
-    focusApp: () => focusApp({ fromGesture: true }),
+    focusApp: () => focusApp(),
     dispose() {
       disposed = true;
-      if (scheduled !== null) window.clearTimeout(scheduled);
+      if (scheduled !== null) {
+        window.clearTimeout(scheduled);
+        scheduled = null;
+        scheduledFromGesture = false;
+      }
       observer?.disconnect();
       bodyWatcher?.disconnect();
       frame.removeEventListener('load', onLoad);
+      window.removeEventListener('load', onLoad);
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', onWindowFocus);
