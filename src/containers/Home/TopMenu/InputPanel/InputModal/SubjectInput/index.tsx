@@ -45,6 +45,10 @@ import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
 import DraftTabs from './DraftTabs';
+import SponsoredHelpModal from '~/containers/Chat/Modals/SponsoredHelpModal';
+import WandDraftPreview from '~/components/SponsoredHelp/WandDraftPreview';
+import { canMakeOpenWandCard, useWandConfig } from '~/components/SponsoredHelp/config';
+import { appendOpenWandEmbed } from '~/helpers/sponsoredHelp';
 import { useToast } from '~/contexts/Toast';
 import usePostDrafts, {
   isEmptyDraftText,
@@ -172,6 +176,9 @@ function SubjectInput({
   const { attachment, secretAttachment, rewardLevel } = details;
 
   const [attachContentModalShown, setAttachContentModalShown] = useState(false);
+  // an open wand card for the description (the attach modal's "Wand card")
+  const [wandSheetShown, setWandSheetShown] = useState(false);
+  const wandConfig = useWandConfig();
   const [description, setDescription] = useState(details.description);
   const descriptionFieldShownRef = useRef(subject.descriptionFieldShown);
   const [descriptionFieldShown, setDescriptionFieldShown] = useState(
@@ -538,6 +545,10 @@ function SubjectInput({
                   {descriptionExceedsCharLimit.message}
                 </small>
               )}
+              <WandDraftPreview
+                text={description}
+                onChange={handleSetDescription}
+              />
               {descriptionMeetsExtraRewardRequirement && (
                 <div
                   style={{
@@ -677,11 +688,36 @@ function SubjectInput({
       <AttachContentModal
         isOpen={attachContentModalShown}
         onHide={() => setAttachContentModalShown(false)}
+        onAddWandCard={
+          canMakeOpenWandCard(wandConfig)
+            ? () => {
+                setAttachContentModalShown(false);
+                setWandSheetShown(true);
+              }
+            : undefined
+        }
         onConfirm={(content: any) => {
           onSetSubjectAttachment(content);
           setAttachContentModalShown(false);
         }}
       />
+      {wandSheetShown ? (
+        <SponsoredHelpModal
+          open
+          recipientUsername=""
+          objectiveMaxLength={wandConfig?.objectiveMaxLength}
+          openDefaultSponsorCap={wandConfig?.openCardDefaultSponsorCap}
+          openMaxSponsorCap={wandConfig?.openCardMaxSponsorCap}
+          openPerPersonPercent={wandConfig?.openCardPerPersonPercent}
+          onInserted={(openCardId) => {
+            handleSetDescriptionFieldShown(true);
+            handleSetDescription(
+              appendOpenWandEmbed(descriptionRef.current || '', openCardId)
+            );
+          }}
+          onHide={() => setWandSheetShown(false)}
+        />
+      ) : null}
       <div
         className={css`
           position: absolute;

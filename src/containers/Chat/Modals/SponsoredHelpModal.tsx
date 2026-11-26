@@ -6,6 +6,12 @@ import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
+  OPEN_WAND_DEFAULT_SPONSOR_CAP,
+  OPEN_WAND_MAX_SPONSOR_CAP,
+  OPEN_WAND_PER_PERSON_PERCENT,
+  OPEN_WAND_PRESETS,
+  openWandEnergyLine,
+  openWandPresetKey,
   SPONSORED_HELP_MAX_OBJECTIVES,
   SPONSORED_HELP_OBJECTIVE_MAX,
   energyPercentLabel,
@@ -39,6 +45,13 @@ const KIND_ICON: Record<string, string> = {
 // becomes a comment addressed to the person being replied to. The server
 // decides what is possible; this only collects the request and shows the
 // preview it wrote.
+//
+// Open mode (twinkle-api helpers/sponsoredHelp/openCards.ts; the Subject
+// composer's attach menu): a card for anyone who reads the post, inserted
+// into the text being written. One compact sheet: what Zero/Ciel helps with
+// (a pick, preselected, or typed), Zero or Ciel, how many people to
+// sponsor (first come, first served; 0 allowed: after them, or with 0,
+// people use their own AI Energy), the honest worst case, Insert.
 export default function SponsoredHelpModal({
   target,
   recipientUsername,
@@ -46,10 +59,22 @@ export default function SponsoredHelpModal({
   maxObjectives = SPONSORED_HELP_MAX_OBJECTIVES,
   objectiveMaxLength = SPONSORED_HELP_OBJECTIVE_MAX,
   cardsSupported = true,
+  open = false,
+  openDefaultSponsorCap = OPEN_WAND_DEFAULT_SPONSOR_CAP,
+  openMaxSponsorCap = OPEN_WAND_MAX_SPONSOR_CAP,
+  openPerPersonPercent = OPEN_WAND_PER_PERSON_PERCENT,
+  onInserted,
   onHide,
   onSent
 }: {
-  target: SponsoredHelpTarget;
+  target?: SponsoredHelpTarget | null;
+  // an open wand card (see above) instead of an addressed one
+  open?: boolean;
+  openDefaultSponsorCap?: number;
+  openMaxSponsorCap?: number;
+  openPerPersonPercent?: number;
+  // the open card was made: put its embed into the text
+  onInserted?: (openCardId: number) => void;
   recipientUsername: string;
   percents?: number[];
   maxObjectives?: number;
@@ -62,6 +87,14 @@ export default function SponsoredHelpModal({
   const previewSponsoredHelp = useAppContext((v) => v.requestHelpers.previewSponsoredHelp);
   const sendSponsoredHelpCard = useAppContext((v) => v.requestHelpers.sendSponsoredHelpCard);
   const sendSponsoredHelp = useAppContext((v) => v.requestHelpers.sendSponsoredHelp);
+  const createOpenWandCard = useAppContext((v) => v.requestHelpers.createOpenWandCard);
+  const [task, setTask] = useState(OPEN_WAND_PRESETS[0].text);
+  // one key per sheet: a retried Insert (double tap, slow network) returns
+  // the same card instead of making a second one
+  const [clientKey] = useState(
+    () => `ow-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+  );
+  const [sponsorCap, setSponsorCap] = useState(Math.max(0, Math.min(openDefaultSponsorCap, openMaxSponsorCap)));
   const [objectives, setObjectives] = useState<string[]>(['']);
   const [persona, setPersona] = useState<'zero' | 'ciel'>('zero');
   const [percent, setPercent] = useState(percents.includes(10) ? 10 : percents[0]);
@@ -69,7 +102,9 @@ export default function SponsoredHelpModal({
   const [working, setWorking] = useState('');
   const [error, setError] = useState('');
   const personaName = persona === 'ciel' ? 'Ciel' : 'Zero';
-  const isComment = !('channelId' in target);
+  const isComment = !target || !('channelId' in target);
+  const isOpen = open || !target;
+  const canInsert = task.trim().length >= 3 && !working;
   const filled = objectives.map((text) => text.trim()).filter(Boolean);
   const canCheck =
     filled.length > 0 && filled.every((text) => text.length >= 3) && !working;
@@ -81,10 +116,25 @@ export default function SponsoredHelpModal({
       modalKey="SponsoredHelpModal"
       isOpen
       onClose={onHide}
-      title={preview ? `${personaName}’s plan for ${who}` : `Have ${personaName} help ${who}`}
+      title={isOpen ? 'Add a wand card' : preview ? `${personaName}’s plan for ${who}` : `Have ${personaName} help ${who}`}
       size="md"
       footer={
-        preview ? (
+        isOpen ? (
+          <>
+            <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
+              Cancel
+            </Button>
+            <Button
+              color={persona === 'ciel' ? 'pink' : 'logoBlue'}
+              loading={working === 'insert'}
+              disabled={!canInsert}
+              onClick={handleInsert}
+            >
+              <Icon icon="wand-magic-sparkles" style={{ marginRight: '0.7rem' }} />
+              Insert card
+            </Button>
+          </>
+        ) : preview ? (
           <>
             <Button variant="ghost" onClick={() => setPreview(null)} style={{ marginRight: '0.7rem' }}>
               <Icon icon="arrow-left" style={{ marginRight: '0.5rem' }} />
@@ -118,9 +168,117 @@ export default function SponsoredHelpModal({
         )
       }
     >
-      {preview ? renderPreview(preview) : renderCompose()}
+      {isOpen ? renderOpenCompose() : preview ? renderPreview(preview) : renderCompose()}
     </Modal>
   );
+
+  function renderOpenCompose() {
+    const custom = !openWandPresetKey(task);
+    return (
+      <div className={bodyClass} data-wand-open-compose>
+        <span className={labelClass}>What should {personaName} help with?</span>
+        <div className={presetGridClass} role="radiogroup" aria-label="Pick one">
+          {OPEN_WAND_PRESETS.map(({ text: value }) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={task === value}
+              className={cx(choiceClass, presetClass, task === value && (persona === 'ciel' ? cielOnClass : zeroOnClass))}
+              onClick={() => setTask(value)}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+        <input
+          className={cx(ownTaskClass, custom && task ? ownTaskOnClass : '')}
+          aria-label="Or write your own"
+          placeholder="Or write your own"
+          value={custom ? task : ''}
+          maxLength={objectiveMaxLength}
+          onChange={(event) => setTask(event.target.value)}
+        />
+        <div className={rowClass}>
+          <span className={labelClass}>Who helps</span>
+          <div className={choiceRowClass} role="radiogroup" aria-label="Who helps">
+            {(['zero', 'ciel'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={persona === value}
+                className={cx(choiceClass, persona === value && (value === 'ciel' ? cielOnClass : zeroOnClass))}
+                onClick={() => setPersona(value)}
+              >
+                {value === 'ciel' ? 'Ciel' : 'Zero'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={rowClass}>
+          <span className={labelClass} id="wand-sponsor-label">
+            Sponsor up to {sponsorCap} {sponsorCap === 1 ? 'person' : 'people'}
+          </span>
+          <div className={stepperClass} role="group" aria-labelledby="wand-sponsor-label">
+            <button
+              type="button"
+              aria-label="Fewer"
+              disabled={sponsorCap <= 0}
+              onClick={() => setSponsorCap((value) => Math.max(0, value - 1))}
+            >
+              <Icon icon="minus" />
+            </button>
+            <span aria-live="polite">{sponsorCap}</span>
+            <button
+              type="button"
+              aria-label="More"
+              disabled={sponsorCap >= openMaxSponsorCap}
+              onClick={() => setSponsorCap((value) => Math.min(openMaxSponsorCap, value + 1))}
+            >
+              <Icon icon="plus" />
+            </button>
+          </div>
+        </div>
+        <div className={estimateClass}>
+          <Icon icon="bolt" />
+          <div>
+            <strong>{openWandEnergyLine(sponsorCap, openPerPersonPercent)}</strong>
+            <span>
+              {sponsorCap > 0
+                ? `The first ${sponsorCap === 1 ? 'person' : `${sponsorCap} people`} who press it use your Energy (never more than ${openPerPersonPercent}% each), and only what ${personaName} uses comes out. A spot is used when ${personaName} makes someone a plan, even if they then say No thanks. After that, people can still use the card with their own AI Energy. Making the card uses a little too.`
+                : `Everyone who uses it pays with their own AI Energy.`}{' '}
+              Each person can use it once and sees a plan before anything happens.
+            </span>
+          </div>
+        </div>
+        {error ? <p className={errorClass}>{error}</p> : null}
+      </div>
+    );
+  }
+
+  async function handleInsert() {
+    if (!canInsert) return;
+    setWorking('insert');
+    setError('');
+    try {
+      const result = await createOpenWandCard({
+        task: task.trim(),
+        presetKey: openWandPresetKey(task) || undefined,
+        persona,
+        sponsorCap,
+        clientKey
+      });
+      if (result?.openCardId) {
+        onInserted?.(Number(result.openCardId));
+        onHide();
+      }
+    } catch (insertError: any) {
+      setError(insertError?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setWorking('');
+    }
+  }
 
   function renderCompose() {
     return (
@@ -295,7 +453,7 @@ export default function SponsoredHelpModal({
   }
 
   async function handleLegacySend() {
-    if (!canCheck || !('channelId' in target)) return;
+    if (!canCheck || !target || !('channelId' in target)) return;
     setWorking('check');
     setError('');
     try {
@@ -413,6 +571,71 @@ const addClass = css`
   &:hover {
     border-color: ${Color.logoBlue()};
     color: ${Color.logoBlue()};
+  }
+`;
+
+const presetGridClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: -0.4rem;
+`;
+
+const presetClass = css`
+  text-align: left;
+  line-height: 1.35;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 100%;
+  }
+`;
+
+const ownTaskClass = css`
+  width: 100%;
+  font-size: 1.5rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid ${Color.borderGray()};
+  font-family: inherit;
+  &:focus {
+    outline: none;
+    border-color: ${Color.logoBlue()};
+    box-shadow: 0 0 0 3px ${Color.logoBlue(0.15)};
+  }
+`;
+
+const ownTaskOnClass = css`
+  border-color: ${Color.logoBlue()};
+`;
+
+const stepperClass = css`
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid ${Color.borderGray()};
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff;
+  button {
+    width: 4rem;
+    height: 3.6rem;
+    border: none;
+    background: transparent;
+    font-size: 1.3rem;
+    color: ${Color.darkerGray()};
+    cursor: pointer;
+    &:hover:not(:disabled) {
+      background: ${Color.highlightGray()};
+    }
+    &:disabled {
+      color: ${Color.lightGray()};
+      cursor: default;
+    }
+  }
+  span {
+    min-width: 4rem;
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: ${Color.black()};
   }
 `;
 

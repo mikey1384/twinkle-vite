@@ -22,14 +22,18 @@ import { SITE_NAME } from '~/constants/siteBrand';
 const fromTwinkleWebsiteLabel = `from ${SITE_NAME} Website`;
 const videoLabel = 'Video';
 const linkLabel = 'Link';
+const wandCardLabel = 'Wand card';
 const deviceIsMobile = isMobile(navigator);
 
 export default function StartScreen({
   navigateTo,
-  onHide
+  onHide,
+  onAddWandCard
 }: {
   navigateTo: (arg0: string) => void;
   onHide: () => void;
+  // an open wand card for the description (only when the member can make one)
+  onAddWandCard?: () => void;
 }) {
   const onSetSubjectAttachment = useInputContext(
     (v) => v.actions.onSetSubjectAttachment
@@ -56,7 +60,8 @@ export default function StartScreen({
     >
       <div
         style={{
-          width: '50%',
+          // on a computer the site column takes more room for three buttons
+          width: onAddWandCard && !deviceIsMobile ? '38%' : '50%',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center'
@@ -94,7 +99,7 @@ export default function StartScreen({
       </div>
       <div
         style={{
-          width: '50%',
+          width: onAddWandCard && !deviceIsMobile ? '62%' : '50%',
           flexDirection: 'column',
           alignItems: 'center',
           display: 'flex',
@@ -149,6 +154,25 @@ export default function StartScreen({
               {linkLabel}
             </span>
           </Button>
+          {onAddWandCard ? (
+            <Button
+              variant="soft"
+              tone="raised"
+              style={{
+                fontSize: deviceIsMobile ? '1.2rem' : '2rem',
+                whiteSpace: 'nowrap',
+                marginLeft: deviceIsMobile ? '0.75rem' : '1rem',
+                padding: deviceIsMobile ? '0.75rem 1rem' : undefined
+              }}
+              color="purple"
+              onClick={onAddWandCard}
+            >
+              <Icon icon="wand-magic-sparkles" />
+              <span style={{ marginLeft: deviceIsMobile ? '0.5rem' : '1rem' }}>
+                {wandCardLabel}
+              </span>
+            </Button>
+          ) : null}
         </div>
       </div>
       <AlertModal

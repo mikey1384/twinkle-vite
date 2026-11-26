@@ -2946,6 +2946,85 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // open wand cards embedded in rich text (twinkle-api
+    // helpers/sponsoredHelp/openCards.ts)
+    async createOpenWandCard({
+      task,
+      persona,
+      sponsorCap,
+      clientKey,
+      presetKey
+    }: {
+      task: string;
+      persona: 'zero' | 'ciel';
+      sponsorCap: number;
+      // one Insert: a retried request returns the same card
+      clientKey?: string;
+      // one of the sheet's picks: the server fixes its task and capability
+      presetKey?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/open-cards`,
+          { task, persona, sponsorCap, clientKey, presetKey },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadOpenWandCard(openCardId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/sponsored-help/open-cards/${openCardId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // expectedPayer: who pays as the card showed it ('sponsor' | 'self');
+    // the server refuses with payer_changed when that is no longer true
+    async pressOpenWandCard(openCardId: number, expectedPayer?: 'sponsor' | 'self') {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/open-cards/${openCardId}/press`,
+          { expectedPayer },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // Copy link: a draft card becomes public (a posted Subject that embeds
+    // it does the same on the server)
+    async shareOpenWandCard(openCardId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/open-cards/${openCardId}/share`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async closeOpenWandCard(openCardId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/open-cards/${openCardId}/close`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async pressAllSponsoredHelp(cardId: number) {
       try {
         const { data } = await request.post(

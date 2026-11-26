@@ -37,6 +37,10 @@ export interface SponsoredHelpView {
   // the new-member welcome (sponsored by Twinkle; the greeting is the card)
   isWelcome?: boolean;
   greeting?: string;
+  // a press on an open wand card: sender is the card's author; paidBy says
+  // whether the author's Energy or the member's own pays for it
+  openCardId?: number;
+  paidBy?: 'sponsor' | 'self';
   summary?: string;
   steps?: SponsoredHelpStep[];
   cannotDo?: string[];
@@ -457,4 +461,106 @@ export function followUpNotice(
     default:
       return '';
   }
+}
+
+// ---- open wand cards (twinkle-api helpers/sponsoredHelp/openCards.ts) -------
+//
+// A wand card with no addressee, embedded in rich text as
+// ![Wand card](https://www.twin-kle.com/wand/<id>). Anyone who reads it can
+// press it once; each press is help for the presser from the author's AI
+// Energy, up to the author's cap.
+
+// sponsored: a sponsored spot is free; own_energy: it still works, on the
+// reader's own AI Energy (reason: no sponsorship, spots used up, or the
+// author's battery is out today)
+export type OpenWandCardState = 'sponsored' | 'own_energy' | 'coming_soon' | 'closed';
+export type OpenWandOwnEnergyReason = 'not_sponsored' | 'used_up' | 'author_out' | '';
+
+export interface OpenWandCardView {
+  openCardId: number;
+  persona: 'zero' | 'ciel';
+  senderId: number;
+  senderUsername: string;
+  task: string;
+  taskKind: string;
+  sponsorCap: number;
+  sponsoredLeft: number;
+  presses: number;
+  state: OpenWandCardState;
+  reason: OpenWandOwnEnergyReason;
+  viewer: 'author' | 'member' | 'guest';
+  createdAt: number;
+  perPersonPercent: number;
+  mine?: { requestId: number; status: string; paidBy: 'sponsor' | 'self'; assistantPathId: number } | null;
+  // the author only: false while it is a draft (only they can see it until
+  // a posted Subject or Copy link publishes it)
+  published?: boolean;
+  sponsoredUsed?: number;
+  spentPercent?: number;
+}
+
+// Mikey 11-26: "for this promotion i will sponsor up to 10"; 0 is allowed
+export const OPEN_WAND_DEFAULT_SPONSOR_CAP = 10;
+export const OPEN_WAND_MAX_SPONSOR_CAP = 50;
+export const OPEN_WAND_PER_PERSON_PERCENT = 5;
+export const OPEN_WAND_SITE = 'https://www.twin-kle.com';
+
+// What members pick from (or type their own). The first is preselected:
+// Mikey's "you can too" domain announcement. Keys and texts match the API's
+// OPEN_CARD_PRESETS (helpers/sponsoredHelp/openCardRules.ts).
+export const OPEN_WAND_PRESETS: { key: string; text: string }[] = [
+  { key: 'domain', text: 'Get your own web address (domain) for your app' },
+  { key: 'first_game', text: 'Make your first game with Lumine' },
+  { key: 'quiz', text: 'Quiz you on something you’re learning' }
+];
+
+// The pick a task text is (its key goes to the server, which fixes the
+// task and what it needs), or '' for words the member typed.
+export function openWandPresetKey(task: string) {
+  return OPEN_WAND_PRESETS.find((preset) => preset.text === task)?.key || '';
+}
+
+export function openWandPath(openCardId: number) {
+  return `/wand/${openCardId}`;
+}
+
+export function openWandEmbedMarkdown(openCardId: number) {
+  return `![Wand card](${OPEN_WAND_SITE}${openWandPath(openCardId)})`;
+}
+
+// Every open wand card embedded in a text, in order (each once).
+const OPEN_WAND_EMBED = /!\[[^\]]*\]\((?:https?:\/\/)?(?:www\.)?(?:twin-kle\.com|twinkle\.network|localhost:3000)\/wand\/(\d+)\)/g;
+export function openWandIdsInText(text: string) {
+  const ids: number[] = [];
+  for (const match of String(text || '').matchAll(OPEN_WAND_EMBED)) {
+    const id = Number(match[1]);
+    if (id > 0 && !ids.includes(id)) ids.push(id);
+  }
+  return ids;
+}
+
+// The text without that card's embed line (and the blank line it leaves).
+export function removeOpenWandEmbed(text: string, openCardId: number) {
+  return String(text || '')
+    .replace(OPEN_WAND_EMBED, (whole, id) => (Number(id) === openCardId ? '\u0000' : whole))
+    .replace(/\n*\u0000\n*/g, '\n\n')
+    .replace(/^\n+|\n+$/g, '');
+}
+
+// The text with the card's embed on a line of its own at the end.
+export function appendOpenWandEmbed(text: string, openCardId: number) {
+  const current = String(text || '').replace(/\s+$/, '');
+  return `${current ? `${current}\n\n` : ''}${openWandEmbedMarkdown(openCardId)}`;
+}
+
+export function openWandSpotsLine(card: Pick<OpenWandCardView, 'sponsoredLeft' | 'sponsorCap'>) {
+  if (card.sponsorCap <= 0) return '';
+  if (card.sponsoredLeft <= 0) return 'Sponsored spots used up';
+  return `${card.sponsoredLeft} of ${card.sponsorCap} sponsored spot${card.sponsorCap === 1 ? '' : 's'} left`;
+}
+
+// The sheet's honest worst case for the author.
+export function openWandEnergyLine(sponsorCap: number, perPersonPercent: number) {
+  if (sponsorCap <= 0) return 'Only making the card uses a little of your AI Energy';
+  return `Up to ${perPersonPercent}% of your AI Energy per sponsored person (up to ${sponsorCap * perPersonPercent}% in total)`;
 }

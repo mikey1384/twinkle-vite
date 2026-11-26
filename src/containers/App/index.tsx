@@ -154,6 +154,7 @@ const LumineAppSignIn = lazyWithRetry(() => import('~/containers/LumineAppSignIn
 const DomainParentConsent = lazyWithRetry(
   () => import('~/containers/DomainParentConsent')
 );
+const WandCardPage = lazyWithRetry(() => import('~/containers/WandCardPage'));
 const loadContentPage = () => import('~/containers/ContentPage');
 const ContentPage = lazyWithRetry(loadContentPage);
 const AchievementPage = lazyWithRetry(
@@ -1577,6 +1578,7 @@ export default function App() {
                 <Route path="/videos/:videoId/*" element={<VideoPage />} />
                 <Route path="/links/:linkId" element={<LinkPage />} />
                 <Route path="/subjects/:contentId" element={<ContentPage />} />
+                <Route path="/wand/:openCardId" element={<WandCardPage />} />
                 <Route path="/explore" element={<ExploreRedirect />} />
                 <Route
                   path="/ai-cards"
