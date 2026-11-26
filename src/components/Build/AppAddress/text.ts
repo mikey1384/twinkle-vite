@@ -211,7 +211,36 @@ export const ADDRESS_TEXT = {
     refundingBody: (price: string) => `We couldn’t register the address, so we’re refunding ${price}. You’ll get an email once Stripe has finished it.`,
     supportTitle: (domain: string) => `We’re looking into ${domain}`,
     supportBody: 'Your payment went through and something needs a person’s look before your address is ready. We’re on it; your free address keeps working meanwhile.',
-    removeConfirm: 'Tap again to remove (the app stops opening there)'
+    removeConfirm: 'Tap again to remove (the app stops opening there)',
+    // the purchase progress (chip, header notice, order screen)
+    stepEmail: 'Email confirmed',
+    stepSecuring: 'Securing the connection…',
+    progressLabel: 'Your address’s progress',
+    chipSettingUp: 'Setting up…',
+    chipOneStep: '1 step left',
+    chipOnIt: 'We’re on it',
+    oneStepTitle: '1 step left: confirm your email',
+    verifyNudge: (days: number) =>
+      `Check your email from Name.com and click Verify. ${days === 1 ? '1 day' : `${days} days`} left before the address is paused.`,
+    verifyNudgeToday: 'Check your email from Name.com and click Verify today, or the address is paused.',
+    resend: 'Resend',
+    resending: 'Sending…',
+    resent: 'Sent again. Check your inbox (and spam).',
+    resendWait: 'Just sent. You can send it again in a few minutes.',
+    resendFailed: 'Couldn’t send it just now. Please try again in a few minutes.',
+    onItBody: 'Your payment went through. Something needs a person’s look; we’re on it and will email you. Your free address keeps working.',
+    settingUpNotice: (domain: string) => `Setting up ${domain}. This usually takes a few minutes.`,
+    seeProgress: 'See progress',
+    // confirming the owner's email before payment
+    emailConfirmed: 'Confirmed',
+    emailCodeLead: 'We’ll send a 6-digit code to confirm this email.',
+    sendCode: 'Send code',
+    sendingCode: 'Sending…',
+    codeSentTo: (email: string) => `We sent a code to ${email}. It works for 10 minutes.`,
+    codeLabel: 'Code from the email',
+    confirmCode: 'Confirm',
+    sendAgain: 'Send a new code',
+    emailNeedsConfirm: 'Please confirm this email with the code first.'
   },
   ko: {
     // the checkout (step by step)
@@ -401,7 +430,33 @@ export const ADDRESS_TEXT = {
     refundingBody: (price: string) => `주소를 등록하지 못해 ${price}을(를) 환불하고 있어요. Stripe에서 환불이 끝나면 이메일로 알려 드려요.`,
     supportTitle: (domain: string) => `${domain}을(를) 확인하고 있어요`,
     supportBody: '결제는 끝났고, 주소가 준비되기 전에 사람이 한 번 확인해야 할 일이 생겼어요. 처리하고 있으니 그동안 무료 주소는 계속 쓸 수 있어요.',
-    removeConfirm: '한 번 더 누르면 삭제돼요 (이 주소로 앱이 열리지 않아요)'
+    removeConfirm: '한 번 더 누르면 삭제돼요 (이 주소로 앱이 열리지 않아요)',
+    stepEmail: '이메일 확인',
+    stepSecuring: '안전하게 연결하는 중…',
+    progressLabel: '주소 준비 상황',
+    chipSettingUp: '준비 중…',
+    chipOneStep: '1단계 남음',
+    chipOnIt: '확인 중',
+    oneStepTitle: '1단계 남았어요: 이메일 확인',
+    verifyNudge: (days: number) => `Name.com에서 온 메일을 열고 Verify를 눌러 주세요. 주소가 멈추기까지 ${days}일 남았어요.`,
+    verifyNudgeToday: 'Name.com에서 온 메일을 열고 오늘 Verify를 눌러 주세요. 누르지 않으면 주소가 멈춰요.',
+    resend: '다시 보내기',
+    resending: '보내는 중…',
+    resent: '다시 보냈어요. 받은편지함(과 스팸함)을 확인해 주세요.',
+    resendWait: '방금 보냈어요. 몇 분 뒤에 다시 보낼 수 있어요.',
+    resendFailed: '지금은 보내지 못했어요. 몇 분 뒤에 다시 해 주세요.',
+    onItBody: '결제는 끝났어요. 사람이 한 번 확인해야 할 일이 생겨서 처리하고 있고, 이메일로 알려 드릴게요. 무료 주소는 계속 쓸 수 있어요.',
+    settingUpNotice: (domain: string) => `${domain}을(를) 준비하고 있어요. 보통 몇 분 걸려요.`,
+    seeProgress: '진행 상황 보기',
+    emailConfirmed: '확인됨',
+    emailCodeLead: '이 이메일이 맞는지 6자리 코드로 확인해요.',
+    sendCode: '코드 보내기',
+    sendingCode: '보내는 중…',
+    codeSentTo: (email: string) => `${email}(으)로 코드를 보냈어요. 10분 동안 쓸 수 있어요.`,
+    codeLabel: '메일로 받은 코드',
+    confirmCode: '확인',
+    sendAgain: '새 코드 보내기',
+    emailNeedsConfirm: '먼저 코드로 이 이메일을 확인해 주세요.'
   }
 };
 

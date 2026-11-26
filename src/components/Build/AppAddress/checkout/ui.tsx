@@ -1205,6 +1205,7 @@ const fieldClass = css`
 `;
 const fieldLabelTextClass = css``;
 const inputClass = css`
+  box-sizing: border-box;
   width: 100%;
   min-height: 54px;
   padding: 0 16px;

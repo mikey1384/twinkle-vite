@@ -55,3 +55,25 @@ export interface DomainOrderView {
   stage: 'paying' | 'setting_up' | 'support' | 'live' | 'refunding' | 'refunded' | 'stopped';
   failureReason: string | null;
 }
+
+// The purchase progress tracker (GET /build/:id/domain-progress):
+// Paid → Registered → Secure connection → Live → Email confirmed.
+export type ProgressStepKey = 'paid' | 'registered' | 'secure' | 'live' | 'email';
+export interface DomainProgressView {
+  orderId: number;
+  domain: string;
+  stage: 'setting_up' | 'one_step_left' | 'done' | 'support' | 'refunding' | 'refunded';
+  steps: Array<{ key: ProgressStepKey; state: 'done' | 'current' | 'todo' | 'problem' }>;
+  verification:
+    | { state: 'verified'; verifiedAt: number }
+    | { state: 'pending'; verifyBy: number; daysLeft: number; canResend: boolean; resendEligibleAt: number }
+    | null;
+}
+
+// how far along (0..1) for the chip's bar: done steps, plus half the current
+export function progressFraction(progress: DomainProgressView) {
+  if (!progress.steps.length) return 0;
+  const done = progress.steps.filter((step) => step.state === 'done').length;
+  const current = progress.steps.some((step) => step.state === 'current') ? 0.5 : 0;
+  return Math.min(1, (done + current) / progress.steps.length);
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import AppAddress from '~/components/Build/AppAddress';
+import AppAddress, { AppAddressProgressNotice } from '~/components/Build/AppAddress';
 import { css } from '@emotion/css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
@@ -1287,6 +1287,10 @@ export default function Header({
           rewardChip
         )}
       </div>
+      {build.isPublic && contributionStatus === 'none' && isOwner ? (
+        // the owner's purchase under way: Setting up… / 1 step left
+        <AppAddressProgressNotice buildId={Number(build.id)} isOwner />
+      ) : null}
       {isOwner && build.rewardReviewProposal ? (
         <div className={proposalNoticeClass} role="status">
           <span>

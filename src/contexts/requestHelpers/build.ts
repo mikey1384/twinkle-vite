@@ -49,6 +49,17 @@ export interface BuildAppMcpInvocationContext {
   appMcpCallId: string;
 }
 
+// The purchase progress and email-code calls answer on screen (the chip,
+// the Contact step), so every failure comes back as a plain error with the
+// server's message: no global error dialog for a background poll.
+function quietPurchaseError(error: any): never {
+  const known: any = new Error(error?.response?.data?.error || 'Something went wrong');
+  known.status = Number(error?.response?.status || 0);
+  known.code = error?.response?.data?.code;
+  known.attemptsLeft = error?.response?.data?.attemptsLeft;
+  throw known;
+}
+
 function throwLumineAppHostingError(error: any, handleError: (error: any) => any) {
   const status = Number(error?.response?.status || 0);
   if (status >= 400 && status < 500) {
@@ -763,12 +774,55 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
-    async startSelfDomainOrder({ buildId, domain, registrant, agreed, priceCents }: { buildId: number; domain?: string; registrant?: Record<string, string>; agreed?: boolean; priceCents?: number; }) {
+    async startSelfDomainOrder({ buildId, domain, registrant, agreed, priceCents, emailToken }: { buildId: number; domain?: string; registrant?: Record<string, string>; agreed?: boolean; priceCents?: number; emailToken?: string; }) {
       try {
-        const { data } = await request.post(`${URL}/build/${buildId}/domain-orders/self`, { domain, registrant, agreed, priceCents }, auth());
+        const { data } = await request.post(`${URL}/build/${buildId}/domain-orders/self`, { domain, registrant, agreed, priceCents, emailToken }, auth());
         return data;
       } catch (error: any) {
         return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    // Paid → Registered → Secure connection → Live → Email confirmed, with
+    // the Name.com confirmation's days left (owner only; null: no order)
+    async loadDomainProgress({ buildId, orderId }: { buildId: number; orderId?: number; }) {
+      try {
+        const { data } = await request.get(`${URL}/build/${buildId}/domain-progress`, { ...auth(), params: { orderId: orderId || undefined } });
+        return data;
+      } catch (error: any) {
+        return quietPurchaseError(error);
+      }
+    },
+    async resendDomainVerification({ buildId, orderId }: { buildId: number; orderId: number; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/domain-orders/${orderId}/verification/resend`, {}, auth());
+        return data;
+      } catch (error: any) {
+        return quietPurchaseError(error);
+      }
+    },
+    // the member's verified Twinkle email (prefills the Contact step)
+    async loadPurchaseAccountEmail() {
+      try {
+        const { data } = await request.get(`${URL}/build/domain-orders/account-email`, auth());
+        return data;
+      } catch (error: any) {
+        return quietPurchaseError(error);
+      }
+    },
+    async requestPurchaseEmailCode({ email }: { email: string; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/domain-orders/email-code`, { email }, auth());
+        return data;
+      } catch (error: any) {
+        return quietPurchaseError(error);
+      }
+    },
+    async verifyPurchaseEmailCode({ email, code }: { email: string; code: string; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/domain-orders/email-code/verify`, { email, code }, auth());
+        return data;
+      } catch (error: any) {
+        return quietPurchaseError(error);
       }
     },
     async loadDomainStatus({ buildId, hostname }: { buildId: number; hostname?: string; }) {

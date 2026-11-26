@@ -12,8 +12,10 @@ import {
   type DnsRecordView,
   type DomainIdeaView,
   type DomainOrderView,
+  type DomainProgressView,
   type OwnerDetails
 } from './model';
+import { stepLabel, VerifyNudge } from './progress';
 import {
   T,
   CheckIcon,
@@ -368,6 +370,18 @@ type OwnerPage = 0 | 1 | 2 | 3;
 // Adults buying for their own app: they are the legal owner, so they type
 // their own details (name, contact, address: one small screen each), check
 // it all once, then pay on Stripe. One price, nothing pre-ticked.
+export interface EmailCheck {
+  // the email on screen is confirmed (the account's verified email, or a code)
+  verified: boolean;
+  // the (lowercased) email the last code went to
+  sentTo: string;
+  sending: boolean;
+  verifying: boolean;
+  problem: string;
+  onSend: () => void;
+  onVerify: (code: string) => void;
+}
+
 export function OwnerDetailsView({
   t,
   assistant,
@@ -384,9 +398,13 @@ export function OwnerDetailsView({
   onBack,
   phoneDraft,
   onPhoneDraft,
-  startPage = 0
+  startPage = 0,
+  emailCheck
 }: StepBase & {
   idea: DomainIdeaView;
+  // the owner's email must be confirmed before payment: their verified
+  // Twinkle email, or a one-time code (left out: nothing to confirm)
+  emailCheck?: EmailCheck;
   details: OwnerDetails;
   // the phone as typed (calling code + number); details.phone is its E.164
   phoneDraft: PhoneDraft;
@@ -403,12 +421,16 @@ export function OwnerDetailsView({
 }) {
   const [page, setPage] = useState<OwnerPage>(startPage);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [code, setCode] = useState('');
+  const emailVerified = !emailCheck || emailCheck.verified;
+  const emailFormatOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim());
+  const codeSent = Boolean(emailCheck?.sentTo) && emailCheck?.sentTo === details.email.trim().toLowerCase();
   const set = (key: keyof OwnerDetails) => (value: string) => onDetails({ ...details, [key]: value });
   const required = (key: keyof OwnerDetails) => (details[key].trim() ? '' : t.fieldRequired);
   const pageErrors: Record<OwnerPage, Partial<Record<keyof OwnerDetails, string>>> = {
     0: { firstName: required('firstName'), lastName: required('lastName') },
     1: {
-      email: !details.email.trim() ? t.fieldRequired : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim()) ? '' : t.emailInvalid,
+      email: !details.email.trim() ? t.fieldRequired : !emailFormatOk ? t.emailInvalid : emailVerified ? '' : t.emailNeedsConfirm,
       phone: toE164(phoneDraft) ? '' : t.phoneInvalid
     },
     2: {
@@ -424,9 +446,14 @@ export function OwnerDetailsView({
   const errors = errorsFor(page);
   const pageValid = (target: OwnerPage) => Object.values(pageErrors[target]).every((value) => !value);
   const missing = ownerDetailsProblem(t, details);
-  const canPay = !missing && agreed && !busy;
+  const canPay = !missing && agreed && !busy && emailVerified;
 
   function next() {
+    // Enter in the code box confirms the code
+    if (page === 1 && emailCheck && !emailCheck.verified && codeSent && code.length === 6) {
+      emailCheck.onVerify(code);
+      return;
+    }
     if (!pageValid(page)) {
       setChecked((prev) => ({ ...prev, [page]: true }));
       focusFirstInvalid();
@@ -481,7 +508,56 @@ export function OwnerDetailsView({
         )}
         {page === 1 && (
           <div className={stackClass}>
-            <TextField label={t.email} type="email" inputMode="email" value={details.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="you@example.com" autoFocus />
+            <div className={emailStackClass}>
+              <TextField label={t.email} type="email" inputMode="email" value={details.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="you@example.com" autoFocus />
+              {emailCheck && emailFormatOk ? (
+                emailCheck.verified ? (
+                  <p className={emailConfirmedClass}>
+                    <CheckIcon size={14} color={T.green} />
+                    {t.emailConfirmed}
+                  </p>
+                ) : codeSent ? (
+                  <div className={codeBoxClass}>
+                    <p>{t.codeSentTo(details.email.trim())}</p>
+                    <div className={codeRowClass}>
+                      <TextField
+                        label={t.codeLabel}
+                        value={code}
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        placeholder="123456"
+                        onChange={(value) => {
+                          const digits = value.replace(/\D/g, '').slice(0, 6);
+                          setCode(digits);
+                          if (digits.length === 6 && !emailCheck.verifying) emailCheck.onVerify(digits);
+                        }}
+                      />
+                      <PrimaryButton busy={emailCheck.verifying} disabled={code.length !== 6} onClick={() => emailCheck.onVerify(code)}>
+                        {t.confirmCode}
+                      </PrimaryButton>
+                    </div>
+                    <TextButton
+                      onClick={() => {
+                        setCode('');
+                        emailCheck.onSend();
+                      }}
+                    >
+                      {emailCheck.sending ? t.sendingCode : t.sendAgain}
+                    </TextButton>
+                  </div>
+                ) : (
+                  <div className={codeBoxClass}>
+                    <p>{t.emailCodeLead}</p>
+                    <div>
+                      <SecondaryButton disabled={emailCheck.sending} onClick={emailCheck.onSend}>
+                        {emailCheck.sending ? t.sendingCode : t.sendCode}
+                      </SecondaryButton>
+                    </div>
+                  </div>
+                )
+              ) : null}
+              {emailCheck?.problem ? <Notice tone="error">{emailCheck.problem}</Notice> : null}
+            </div>
             <PhoneField
               label={t.phone}
               dialLabel={t.dialCode}
@@ -552,6 +628,7 @@ export function OwnerDetailsView({
 }
 
 // ---------------------------------------------------------------- under 18
+
 
 export function ParentRequestView({
   t,
@@ -660,6 +737,7 @@ export function GoingLiveView({
   title,
   body,
   priceCents,
+  progress,
   onClose
 }: StepBase & {
   domain: string;
@@ -667,11 +745,20 @@ export function GoingLiveView({
   priceCents?: number;
   // how many of Paid, Registered, Secure, Live are done (from the order)
   reached: number;
+  // the tracker's five steps (with Email confirmed) once the server has them
+  progress?: DomainProgressView | null;
   title?: string;
   body?: string;
   onClose: () => void;
 }) {
-  const steps = [t.stepPaid, t.stepRegistered, t.stepSecure, t.stepLive];
+  const fallback = [t.stepPaid, t.stepRegistered, t.stepSecure, t.stepLive].map((label, index) => ({
+    label,
+    state: index < reached ? 'done' : index === reached ? 'current' : 'todo'
+  }));
+  const steps = progress?.steps.length
+    ? progress.steps.map((step) => ({ label: stepLabel(t, step.key, step.state), state: step.state as string }))
+    : fallback;
+  const currentStep = steps.find((step) => step.state === 'current' || step.state === 'problem') || steps[steps.length - 1];
   return (
     <CheckoutLayout
       stepKey={`going-live-${reached}`}
@@ -691,20 +778,17 @@ export function GoingLiveView({
           <LumineAtWork variant="toast" mode="working" />
         </div>
         <p className={srOnlyClass} role="status">
-          {steps[Math.min(reached, steps.length - 1)]}
+          {currentStep?.label}
         </p>
         <ol className={liveStepsClass} aria-label={title || t.settingUpTitle(domain)}>
-          {steps.map((label, index) => {
-            const state = index < reached ? 'done' : index === reached ? 'current' : 'todo';
-            return (
-              <li key={label} data-state={state} aria-current={state === 'current' ? 'step' : undefined}>
-                <span className={liveDotClass} aria-hidden="true">
-                  {state === 'done' ? <CheckIcon size={14} color="#fff" /> : state === 'current' ? <StarMark size={12} /> : index + 1}
-                </span>
-                <span>{label}</span>
-              </li>
-            );
-          })}
+          {steps.map(({ label, state }, index) => (
+            <li key={label} data-state={state} aria-current={state === 'current' ? 'step' : undefined}>
+              <span className={liveDotClass} aria-hidden="true">
+                {state === 'done' ? <CheckIcon size={14} color="#fff" /> : state === 'current' ? <StarMark size={12} /> : state === 'problem' ? '!' : index + 1}
+              </span>
+              <span>{label}</span>
+            </li>
+          ))}
         </ol>
       </div>
       <p className={bodyTextClass}>{body || t.settingUpBody}</p>
@@ -718,6 +802,7 @@ export function LiveView({
   assistant,
   domain,
   note,
+  extra,
   priceCents,
   onOpen,
   onShare,
@@ -725,6 +810,8 @@ export function LiveView({
 }: StepBase & {
   domain: string;
   note?: string;
+  // below the note: the Name.com confirmation nudge with Resend
+  extra?: React.ReactNode;
   priceCents?: number;
   onOpen: () => void;
   // resolves true when the link was copied (no share sheet on this device)
@@ -770,6 +857,7 @@ export function LiveView({
         </p>
       </div>
       {note && <Notice tone="warm">{note}</Notice>}
+      {extra}
     </CheckoutLayout>
   );
 }
@@ -791,12 +879,17 @@ export function OrderStatusView({
   order,
   cancelledReturn = false,
   refreshError = '',
+  progress = null,
+  buildId = 0,
   onOpen,
   onShare,
   onTryAgain,
   onClose
 }: StepBase & {
   order: DomainOrderView;
+  // the tracker for this order (five steps, the Name.com confirmation)
+  progress?: DomainProgressView | null;
+  buildId?: number;
   // back from Stripe's cancel link: the member left without paying
   cancelledReturn?: boolean;
   // the last refresh failed (the screen keeps the order's last known stage)
@@ -807,7 +900,30 @@ export function OrderStatusView({
   onClose: () => void;
 }) {
   if (order.stage === 'live') {
-    return <LiveView t={t} assistant={assistant} domain={order.domain} priceCents={order.priceCents} note={t.confirmEmailNote} onOpen={onOpen} onShare={onShare} onDone={onClose} />;
+    // "1 step left: confirm your email" with days left and Resend; nothing
+    // once Name.com has it confirmed; the general note until we know
+    const pending = progress?.verification?.state === 'pending';
+    const verified = progress?.verification?.state === 'verified';
+    return (
+      <LiveView
+        t={t}
+        assistant={assistant}
+        domain={order.domain}
+        priceCents={order.priceCents}
+        note={pending || verified ? undefined : t.confirmEmailNote}
+        extra={
+          pending && progress ? (
+            <>
+              <h2 className={subheadClass}>{t.oneStepTitle}</h2>
+              <VerifyNudge t={t} buildId={buildId} progress={progress} />
+            </>
+          ) : null
+        }
+        onOpen={onOpen}
+        onShare={onShare}
+        onDone={onClose}
+      />
+    );
   }
   if (order.stage === 'refunded') {
     const why =
@@ -878,6 +994,7 @@ export function OrderStatusView({
       domain={order.domain}
       priceCents={order.priceCents}
       reached={order.status === 'registered' ? 2 : 1}
+      progress={progress}
       onClose={onClose}
     />
   );
@@ -1060,6 +1177,48 @@ const askRowClass = css`
   align-items: center;
   gap: 10px;
   margin: 18px 0 0;
+`;
+const emailStackClass = css`
+  display: grid;
+  gap: 10px;
+`;
+const emailConfirmedClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -4px 0 0;
+  color: ${T.green};
+  font-size: 14px;
+  font-weight: 700;
+`;
+const codeBoxClass = css`
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: ${T.blueTint};
+  p {
+    margin: 0;
+    color: ${T.body};
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  > button {
+    justify-self: start;
+  }
+`;
+const codeRowClass = css`
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  > :first-child {
+    flex: 1;
+    min-width: 0;
+  }
+  > button {
+    flex: none;
+  }
 `;
 const stackClass = css`
   display: grid;
@@ -1520,6 +1679,9 @@ const liveStepsClass = css`
   li[data-state='current'] {
     color: #fff3c4;
   }
+  li[data-state='problem'] {
+    color: #fcd34d;
+  }
 `;
 const liveDotClass = css`
   flex: none;
@@ -1540,6 +1702,10 @@ const liveDotClass = css`
     background: ${T.violet};
     color: #fff3c4;
     animation: ${pulse} 1.6s ease-in-out infinite;
+  }
+  [data-state='problem'] > & {
+    background: #f59e0b;
+    color: #fff;
   }
   @media (prefers-reduced-motion: reduce) {
     [data-state='current'] > & {

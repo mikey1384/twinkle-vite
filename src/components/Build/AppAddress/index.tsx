@@ -9,6 +9,8 @@ import { guessCountry } from './checkout/countries';
 import type { PhoneDraft } from './checkout/phone';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
+import { refreshDomainProgress, useDomainProgress } from './useDomainProgress';
+import { ChipProgressLabel, ProgressNotice, progressMenuItems, progressShowing, useResendVerification } from './checkout/progress';
 import {
   AddressMenuView,
   addressHost,
@@ -27,6 +29,7 @@ import {
   type DnsRecordView,
   type DomainIdeaView,
   type DomainOrderView,
+  type EmailCheck,
   type OwnerDetails
 } from './views';
 
@@ -102,6 +105,9 @@ export default function AppAddress({
   const checkAppDomain = useAppContext((v) => v.requestHelpers.checkAppDomain);
   const checkAppAddressSlug = useAppContext((v) => v.requestHelpers.checkAppAddressSlug);
   const renameAppAddress = useAppContext((v) => v.requestHelpers.renameAppAddress);
+  const loadPurchaseAccountEmail = useAppContext((v) => v.requestHelpers.loadPurchaseAccountEmail);
+  const requestPurchaseEmailCode = useAppContext((v) => v.requestHelpers.requestPurchaseEmailCode);
+  const verifyPurchaseEmailCode = useAppContext((v) => v.requestHelpers.verifyPurchaseEmailCode);
   const [renameValue, setRenameValue] = useState('');
   const [renameStatus, setRenameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [renameMessage, setRenameMessage] = useState('');
@@ -132,6 +138,15 @@ export default function AppAddress({
   const [paying, setPaying] = useState(false);
   const [ownerProblem, setOwnerProblem] = useState('');
   const [order, setOrder] = useState<DomainOrderView | null>(null);
+  // The owner's email is confirmed before payment: the verified Twinkle
+  // email needs nothing; any other gets a one-time code, whose answer is a
+  // short-lived token the order start sends along (the server checks it).
+  const [accountEmail, setAccountEmail] = useState<string | null | undefined>(undefined);
+  const [emailToken, setEmailToken] = useState<{ email: string; token: string } | null>(null);
+  const [codeSentTo, setCodeSentTo] = useState('');
+  const [codeSending, setCodeSending] = useState(false);
+  const [codeVerifying, setCodeVerifying] = useState(false);
+  const [codeProblem, setCodeProblem] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
   // The history entry this checkout pushed (its id is in the entry's
@@ -171,6 +186,20 @@ export default function AppAddress({
   const userId = useKeyContext((v) => v.myState.userId);
   const assistant = useUserAssistant(userId);
   const t = ADDRESS_TEXT[pageLang()];
+  // the purchase tracker (shared with the Build header's notice)
+  const progress = useDomainProgress(buildId, isOwner && Boolean(info?.enabled && info?.domainSalesEnabled));
+  const resend = useResendVerification(t, buildId, progress);
+  // the header notice's "See progress" opens the order screen here
+  useEffect(() => {
+    function onOpen(event: Event) {
+      const detail = (event as CustomEvent<{ buildId: number; orderId: number }>).detail;
+      if (detail?.buildId !== buildId || !detail.orderId) return;
+      setError('');
+      setStep({ kind: 'order', orderId: detail.orderId });
+    }
+    window.addEventListener(OPEN_PROGRESS_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_PROGRESS_EVENT, onOpen);
+  }, [buildId]);
 
   // Back from Stripe Checkout: ?domainOrder=<id> opens the order's status
   // (&cancelled=1: the member left Stripe without paying).
@@ -305,7 +334,10 @@ export default function AppAddress({
         if (!data?.order) throw new Error(t.orderLookupBody);
         failures = 0;
         setOrderLookupError('');
-        setOrder(data.order);
+        setOrder((prev: DomainOrderView | null) => {
+          if (!prev || prev.status !== data.order.status || prev.stage !== data.order.stage) refreshDomainProgress(buildId);
+          return data.order;
+        });
         if (data.order.stage === 'live') {
           const fresh = await loadAppAddress({ buildId }).catch(() => null);
           if (!cancelled && fresh) setInfo(fresh);
@@ -348,6 +380,7 @@ export default function AppAddress({
     const request = claimRequest('pay');
     if (!request) return;
     const registrant = { ...owner, phone: owner.phone.trim() };
+    const typedEmail = registrant.email.trim().toLowerCase();
     setOwnerProblem('');
     setPaying(true);
     try {
@@ -356,7 +389,8 @@ export default function AppAddress({
         domain: idea.domain,
         registrant,
         agreed: ownerAgreed,
-        priceCents: idea.priceCents
+        priceCents: idea.priceCents,
+        emailToken: emailToken && emailToken.email === typedEmail ? emailToken.token : undefined
       });
       // Leaving the check screen (Back, closing) cancels the hand-off; the
       // same server order opens again from Continue to payment.
@@ -367,12 +401,76 @@ export default function AppAddress({
       }
       setOwnerProblem(t.whyOther(idea.domain));
     } catch (e: any) {
-      if (request.current()) setOwnerProblem(e?.message || '');
+      if (!request.current()) return;
+      // the code's token expired (an hour): confirm again
+      if (e?.code === 'email_unverified') {
+        setEmailToken(null);
+        setCodeSentTo('');
+      }
+      setOwnerProblem(e?.message || '');
     } finally {
       request.release();
       setPaying(false);
     }
   }
+
+  const ownerEmail = owner.email.trim().toLowerCase();
+  const emailCheck: EmailCheck = {
+    verified: Boolean(ownerEmail) && (ownerEmail === accountEmail || emailToken?.email === ownerEmail),
+    sentTo: codeSentTo,
+    sending: codeSending,
+    verifying: codeVerifying,
+    problem: codeProblem,
+    async onSend() {
+      if (codeSending) return;
+      const email = ownerEmail;
+      setCodeSending(true);
+      setCodeProblem('');
+      try {
+        const result = await requestPurchaseEmailCode({ email });
+        if (result?.status === 'already_verified') setAccountEmail(email);
+        else setCodeSentTo(email);
+      } catch (e: any) {
+        setCodeProblem(e?.message || '');
+      } finally {
+        setCodeSending(false);
+      }
+    },
+    async onVerify(code: string) {
+      if (codeVerifying) return;
+      const email = ownerEmail;
+      setCodeVerifying(true);
+      setCodeProblem('');
+      try {
+        const result = await verifyPurchaseEmailCode({ email, code });
+        if (result?.token) setEmailToken({ email, token: result.token });
+      } catch (e: any) {
+        setCodeProblem(e?.message || '');
+        if (e?.code === 'code_expired' || e?.code === 'code_attempts') setCodeSentTo('');
+      } finally {
+        setCodeVerifying(false);
+      }
+    }
+  };
+
+  // The verified Twinkle email, once, when the owner's steps open: it
+  // prefills an empty email box (never over what was typed).
+  useEffect(() => {
+    if (step?.kind !== 'owner' || accountEmail !== undefined) return;
+    let cancelled = false;
+    loadPurchaseAccountEmail()
+      .then((data: any) => {
+        if (cancelled) return;
+        const email = typeof data?.email === 'string' ? data.email.trim().toLowerCase() : null;
+        setAccountEmail(email);
+        if (email) setOwner((prev) => (prev.email.trim() ? prev : { ...prev, email }));
+      })
+      .catch(() => !cancelled && setAccountEmail(null));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step?.kind]);
 
   // Close once, however many times it's asked: on the checkout's own entry
   // that's one step back (the reconcile effect below then closes it).
@@ -646,9 +744,19 @@ export default function AppAddress({
     return Boolean(await navigator.clipboard?.writeText(url).then(() => true, () => false));
   };
 
+  const tracking = isOwner && progressShowing(progress) ? progress : null;
+  const progressItems = tracking
+    ? progressMenuItems(t, tracking, resend, () => {
+        setError('');
+        setStep({ kind: 'order', orderId: tracking.orderId });
+      })
+    : [];
+
   return (
     <>
       <AddressMenuView
+        chipLabel={tracking ? <ChipProgressLabel t={t} progress={tracking} /> : undefined}
+        leadItems={progressItems}
         t={t}
         primaryUrl={info.url}
         freeUrl={freeUrl}
@@ -789,6 +897,7 @@ export default function AppAddress({
               onPhoneDraft={setOwnerPhone}
               onAgree={setOwnerAgreed}
               onPay={() => void payAsOwner(step.idea)}
+              emailCheck={emailCheck}
               onBack={() => setStep({ kind: 'find' })}
             />
           )}
@@ -800,6 +909,8 @@ export default function AppAddress({
                 order={order}
                 cancelledReturn={cancelledReturn}
                 refreshError={orderLookupError ? t.refreshFailed : ''}
+                progress={progress && progress.orderId === step.orderId ? progress : null}
+                buildId={buildId}
                 onOpen={() => window.open(`https://${order.domain}`, '_blank', 'noopener,noreferrer')}
                 onShare={() => shareAddress(`https://${order.domain}`)}
                 onTryAgain={() => {
@@ -885,6 +996,25 @@ export default function AppAddress({
         </CheckoutSurface>
       )}
     </>
+  );
+}
+
+// The Build header's notice while the owner's purchase is under way
+// (Setting up → 1 step left: confirm your email → gone once every step is
+// done). Same shared record as the address chip; "See progress" opens the
+// order screen through the chip's AppAddress.
+const OPEN_PROGRESS_EVENT = 'app-address:open-progress';
+export function AppAddressProgressNotice({ buildId, isOwner }: { buildId: number; isOwner: boolean }) {
+  const progress = useDomainProgress(buildId, isOwner);
+  const t = ADDRESS_TEXT[pageLang()];
+  if (!isOwner || !progressShowing(progress)) return null;
+  return (
+    <ProgressNotice
+      t={t}
+      buildId={buildId}
+      progress={progress}
+      onOpen={() => window.dispatchEvent(new CustomEvent(OPEN_PROGRESS_EVENT, { detail: { buildId, orderId: progress.orderId } }))}
+    />
   );
 }
 
