@@ -5,7 +5,7 @@ import AssistantFace from '~/components/AssistantFace';
 import TwinkleLogo from '~/containers/App/Header/TwinkleLogo';
 import { lockBodyScroll } from '~/helpers/bodyScrollLock';
 import { trapModalFocus } from '~/components/Modal';
-import { COUNTRIES } from './countries';
+import { COUNTRY_CODES, POPULAR_COUNTRIES, countryName, isKnownCountry } from './countries';
 import { CALLING_CODES, callingCode, splitInternational, type PhoneDraft } from './phone';
 
 // The own-web-address checkout's look (Mikey 11-26: friendlier than a form
@@ -592,64 +592,51 @@ export function FieldGrid({ children }: { children: React.ReactNode }) {
   return <div className={fieldGridClass}>{children}</div>;
 }
 
-// The country list (the time-zone guess preselected by the caller).
+// The country list: every ISO country (where most Twinkle families live
+// first), so only a real country can be chosen; the caller presets it from
+// guessCountry().
 export function CountrySelect({
   value,
   onChange,
   label,
-  otherLabel = 'Other (type the 2-letter code)',
   className,
   error
 }: {
   value: string;
   onChange: (country: string) => void;
   label: string;
-  otherLabel?: string;
   className?: string;
   error?: string;
 }) {
   const errorId = useId();
-  const known = COUNTRIES.some(([code]) => code === value.toUpperCase());
-  const [other, setOther] = useState(!known && value !== '');
+  const code = value.toUpperCase();
+  const others = COUNTRY_CODES.filter((item) => !POPULAR_COUNTRIES.includes(item))
+    .map((item) => ({ code: item, name: countryName(item) }))
+    .sort((left, right) => left.name.localeCompare(right.name));
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', minWidth: 0 }}>
       <select
         className={className || selectClass}
         aria-label={label}
-        aria-invalid={error && !other ? true : undefined}
+        aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        value={other ? 'OTHER' : value.toUpperCase()}
-        onChange={(event) => {
-          if (event.target.value === 'OTHER') {
-            setOther(true);
-            onChange('');
-          } else {
-            setOther(false);
-            onChange(event.target.value);
-          }
-        }}
+        value={isKnownCountry(code) ? code : ''}
+        onChange={(event) => onChange(event.target.value)}
         style={{ flex: 1, minWidth: 0 }}
       >
-        {COUNTRIES.map(([code, name]) => (
-          <option key={code} value={code}>
-            {name}
+        {!isKnownCountry(code) && <option value="" disabled />}
+        {POPULAR_COUNTRIES.map((item) => (
+          <option key={item} value={item}>
+            {countryName(item)}
           </option>
         ))}
-        <option value="OTHER">{otherLabel}</option>
+        <option disabled>──────────</option>
+        {others.map((item) => (
+          <option key={item.code} value={item.code}>
+            {item.name}
+          </option>
+        ))}
       </select>
-      {other && (
-        <input
-          className={className || inputClass}
-          aria-label={otherLabel}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
-          value={value}
-          maxLength={2}
-          placeholder="FR"
-          onChange={(event) => onChange(event.target.value.replace(/[^a-z]/gi, '').toUpperCase())}
-          style={{ width: '84px', flex: 'none', textTransform: 'uppercase' }}
-        />
-      )}
       {error ? (
         <span id={errorId} className={fieldErrorClass} role="alert" style={{ flexBasis: '100%' }}>
           {error}

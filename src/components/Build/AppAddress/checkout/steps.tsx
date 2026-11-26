@@ -4,6 +4,7 @@ import LumineAtWork from '~/containers/Build/PreviewPanel/LumineAtWork';
 import Confetti from '~/containers/Build/Editor/ChatPanel/Roadmap/Confetti';
 import type { AddressText } from '../text';
 import { toE164, type PhoneDraft } from './phone';
+import { isKnownCountry } from './countries';
 import {
   usd,
   krw,
@@ -381,7 +382,7 @@ export function OwnerDetailsView({
       phone: toE164(phoneDraft) ? '' : t.phoneInvalid
     },
     2: {
-      country: /^[A-Za-z]{2}$/.test(details.country) ? '' : t.fieldRequired,
+      country: isKnownCountry(details.country) ? '' : t.fieldRequired,
       address1: required('address1'),
       city: required('city'),
       state: required('state'),
@@ -467,7 +468,7 @@ export function OwnerDetailsView({
           <FieldGrid>
             <div data-span="2" className={countryFieldClass}>
               <span>{t.country}</span>
-              <CountrySelect value={details.country} onChange={set('country')} label={t.country} otherLabel={t.countryOther} className={selectClass} error={errors.country} />
+              <CountrySelect value={details.country} onChange={set('country')} label={t.country} className={selectClass} error={errors.country} />
             </div>
             <div data-span="2">
               <TextField label={t.address1} value={details.address1} onChange={set('address1')} autoComplete="street-address" error={errors.address1} />

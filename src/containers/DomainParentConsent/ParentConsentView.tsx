@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { PARENT_TEXT } from '~/components/Build/AppAddress/text';
 import { usd, krw } from '~/components/Build/AppAddress/checkout/model';
 import { draftFromPhone, toE164, type PhoneDraft } from '~/components/Build/AppAddress/checkout/phone';
+import { guessCountry, isKnownCountry } from '~/components/Build/AppAddress/checkout/countries';
 import {
   T,
   CheckIcon,
@@ -115,7 +116,8 @@ export default function ParentConsentView({
   initialRegistrant?: Partial<RegistrantInput>;
   startPage?: Page;
 }) {
-  const [registrant, setRegistrant] = useState<RegistrantInput>({ ...EMPTY, ...initialRegistrant });
+  // the country starts at the parent's own (time zone, then browser), not Korea
+  const [registrant, setRegistrant] = useState<RegistrantInput>(() => ({ ...EMPTY, country: guessCountry(), ...initialRegistrant }));
   // the phone as typed; registrant.phone is the E.164 number made from it
   const [phoneDraft, setPhoneDraft] = useState<PhoneDraft>(() => draftFromPhone(registrant.phone, registrant.country));
   const [adult, setAdult] = useState(false);
@@ -142,7 +144,7 @@ export default function ParentConsentView({
       phone: toE164(phoneDraft) ? '' : main.phoneInvalid
     },
     3: {
-      country: /^[A-Za-z]{2}$/.test(registrant.country) ? '' : main.fieldRequired,
+      country: isKnownCountry(registrant.country) ? '' : main.fieldRequired,
       address1: required('address1'),
       city: required('city'),
       state: required('state'),

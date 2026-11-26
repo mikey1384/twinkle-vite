@@ -1,4 +1,5 @@
 import type { AddressText } from '../text';
+import { isKnownCountry } from './countries';
 
 // The app-address flow's data shapes and plain helpers (shared by the
 // checkout screens, the address menu and the parent's page).
@@ -43,7 +44,7 @@ export function ownerDetailsProblem(t: AddressText, details: OwnerDetails) {
   if (required.some((key) => !details[key].trim())) return t.fillAll;
   if (!/^\+[1-9][\d\s.\-()]{7,20}$/.test(details.phone.trim())) return t.phoneNeedsPlus;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim())) return t.fillAll;
-  if (!/^[A-Za-z]{2}$/.test(details.country)) return t.fillAll;
+  if (!isKnownCountry(details.country)) return t.fillAll;
   return '';
 }
 
