@@ -134,7 +134,21 @@ export default function AppAddress({
   const [order, setOrder] = useState<DomainOrderView | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const flowEntryRef = useRef(false);
+  // The history entry this checkout pushed (its id is in the entry's
+  // router state), and whether a close is already going back over it.
+  const ownedEntryRef = useRef<string | null>(null);
+  const closingRef = useRef(false);
+  const markedEntry = (location.state as Record<string, unknown> | null)?.appAddressCheckout;
+  const routePath = `${location.pathname}${location.search}${location.hash}`;
+  // Replace the current entry's URL through the router (deep-link and
+  // Stripe parameters are used once), keeping its state.
+  function replaceQuery(remove: string[]) {
+    const params = new URLSearchParams(location.search);
+    if (!remove.some((key) => params.has(key))) return;
+    remove.forEach((key) => params.delete(key));
+    const search = params.toString();
+    navigate(`${location.pathname}${search ? `?${search}` : ''}${location.hash}`, { replace: true, state: location.state });
+  }
   // Each request the checkout sends belongs to the screen that sent it: a
   // reply that comes back after the member closed the checkout or moved on
   // is dropped (no late Stripe redirect, no screen reopening).
@@ -163,7 +177,7 @@ export default function AppAddress({
     if (!isOwner) return;
     let orderId = 0;
     try {
-      orderId = Number(new URLSearchParams(window.location.search).get('domainOrder') || 0);
+      orderId = Number(new URLSearchParams(location.search).get('domainOrder') || 0);
     } catch {
       orderId = 0;
     }
@@ -177,14 +191,11 @@ export default function AppAddress({
   useEffect(() => {
     if (!isOwner) return;
     try {
-      const params = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(location.search);
       const screen = params.get('appAddress') || '';
       if (!['find', 'buy', 'connect', 'status'].includes(screen)) return;
       setDeepLink({ screen, domain: String(params.get('domain') || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 253) });
-      const url = new URL(window.location.href);
-      url.searchParams.delete('appAddress');
-      url.searchParams.delete('domain');
-      window.history.replaceState(window.history.state, '', url.toString());
+      replaceQuery(['appAddress', 'domain']);
     } catch {
       // no deep link
     }
@@ -337,12 +348,16 @@ export default function AppAddress({
     }
   }
 
+  // Close once, however many times it's asked: on the checkout's own entry
+  // that's one step back (the reconcile effect below then closes it).
   function closeFlow() {
-    if (flowEntryRef.current) {
-      // the checkout's own history entry: Back closes it (see below)
+    if (closingRef.current) return;
+    if (ownedEntryRef.current && markedEntry === ownedEntryRef.current) {
+      closingRef.current = true;
       navigate(-1);
       return;
     }
+    ownedEntryRef.current = null;
     finishClose();
   }
 
@@ -355,34 +370,29 @@ export default function AppAddress({
 
   // Stripe's ?domainOrder= has done its job once the order screen closes
   function clearOrderParam() {
-    try {
-      const url = new URL(window.location.href);
-      if (url.searchParams.has('domainOrder')) {
-        url.searchParams.delete('domainOrder');
-        url.searchParams.delete('cancelled');
-        window.history.replaceState(window.history.state, '', url.toString());
-      }
-    } catch {
-      // nothing to tidy
-    }
+    replaceQuery(['domainOrder', 'cancelled']);
   }
 
   // The checkout adds one history entry while it is open, so the browser's
   // (or a phone's) Back closes it instead of leaving the page.
   const checkoutOpen = Boolean(step && step.kind !== 'rename');
   useEffect(() => {
-    if (!checkoutOpen || flowEntryRef.current) return;
-    flowEntryRef.current = true;
-    navigate(`${window.location.pathname}${window.location.search}${window.location.hash}`, {
-      state: { ...((location.state as Record<string, unknown>) || {}), appAddressCheckout: true }
-    });
+    if (!checkoutOpen || ownedEntryRef.current) return;
+    const id = `${buildId}:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    ownedEntryRef.current = id;
+    navigate(routePath, { state: { ...((location.state as Record<string, unknown>) || {}), appAddressCheckout: id } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkoutOpen]);
+  // Reconcile with the router on every move: the checkout stays open only on
+  // the entry it pushed. Back, a Forward onto an older checkout entry, or
+  // closeFlow's step back closes it; entries from earlier checkouts (after
+  // Forward or a reload) never reopen it.
   useEffect(() => {
-    if (!flowEntryRef.current) return;
-    if ((location.state as Record<string, unknown> | null)?.appAddressCheckout) return;
-    // Back (or closeFlow's navigate(-1)) left the checkout's entry
-    flowEntryRef.current = false;
+    const owned = ownedEntryRef.current;
+    if (!owned) return;
+    if (markedEntry === owned) return;
+    ownedEntryRef.current = null;
+    closingRef.current = false;
     finishClose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.key]);
