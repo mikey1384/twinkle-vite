@@ -407,7 +407,7 @@ export function OwnerDetailsView({
       aside={<OrderSummary t={t} idea={idea} renews={renews} />}
       mobileSummary={<OrderMobileSummary t={t} idea={idea} renews={renews} />}
       actions={
-        <StepActions back={{ label: t.back, onClick: back }}>
+        <StepActions back={busy ? null : { label: t.back, onClick: back }}>
           {page < 3 ? (
             <PrimaryButton type="submit" form="owner-step">
               {t.next}

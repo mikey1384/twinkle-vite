@@ -203,7 +203,7 @@ export default function ParentConsentView({
       aside={summary}
       mobileSummary={mobileSummary}
       actions={
-        <StepActions back={page > 0 ? { label: main.back, onClick: () => setPage((page - 1) as Page) } : null}>
+        <StepActions back={page > 0 && !submitting ? { label: main.back, onClick: () => setPage((page - 1) as Page) } : null}>
           {page === 0 && (
             <SecondaryButton disabled={Boolean(submitting)} onClick={onDecline}>
               {main.decline}
@@ -305,7 +305,7 @@ export default function ParentConsentView({
                 <div key={row.label}>
                   <dt>{row.label}</dt>
                   <dd>{row.value}</dd>
-                  <button type="button" className={textButtonClass} onClick={() => setPage(row.page)}>
+                  <button type="button" className={textButtonClass} disabled={Boolean(submitting)} onClick={() => setPage(row.page)}>
                     {main.edit}
                   </button>
                 </div>

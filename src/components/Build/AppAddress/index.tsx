@@ -135,6 +135,25 @@ export default function AppAddress({
   const location = useLocation();
   const navigate = useNavigate();
   const flowEntryRef = useRef(false);
+  // Each request the checkout sends belongs to the screen that sent it: a
+  // reply that comes back after the member closed the checkout or moved on
+  // is dropped (no late Stripe redirect, no screen reopening).
+  const stepRef = useRef<Step>(null);
+  stepRef.current = step;
+  const flowGenRef = useRef(0);
+  const inFlightRef = useRef<Record<string, boolean>>({});
+  function claimRequest(name: string) {
+    if (inFlightRef.current[name]) return null;
+    inFlightRef.current[name] = true;
+    const gen = flowGenRef.current;
+    const from = stepRef.current;
+    return {
+      current: () => flowGenRef.current === gen && stepRef.current === from,
+      release: () => {
+        inFlightRef.current[name] = false;
+      }
+    };
+  }
   const userId = useKeyContext((v) => v.myState.userId);
   const assistant = useUserAssistant(userId);
   const t = ADDRESS_TEXT[pageLang()];
@@ -288,25 +307,34 @@ export default function AppAddress({
       setOwnerProblem(problem);
       return;
     }
+    // one hand-off to Stripe at a time, for exactly the details on screen
+    const request = claimRequest('pay');
+    if (!request) return;
+    const registrant = { ...owner, phone: owner.phone.trim() };
     setOwnerProblem('');
     setPaying(true);
     try {
       const result = await startSelfDomainOrder({
         buildId,
         domain: idea.domain,
-        registrant: { ...owner, phone: owner.phone.trim() },
+        registrant,
         agreed: ownerAgreed,
         priceCents: idea.priceCents
       });
+      // Leaving the check screen (Back, closing) cancels the hand-off; the
+      // same server order opens again from Continue to payment.
+      if (!request.current()) return;
       if (result?.checkoutUrl) {
         window.location.assign(result.checkoutUrl);
         return;
       }
       setOwnerProblem(t.whyOther(idea.domain));
     } catch (e: any) {
-      setOwnerProblem(e?.message || '');
+      if (request.current()) setOwnerProblem(e?.message || '');
+    } finally {
+      request.release();
+      setPaying(false);
     }
-    setPaying(false);
   }
 
   function closeFlow() {
@@ -319,6 +347,7 @@ export default function AppAddress({
   }
 
   function finishClose() {
+    flowGenRef.current += 1;
     setStep(null);
     setOrder(null);
     clearOrderParam();
@@ -408,6 +437,8 @@ export default function AppAddress({
   }
 
   async function sendToParent(idea: DomainIdeaView) {
+    const request = claimRequest('parent');
+    if (!request) return;
     setSending(true);
     try {
       await startDomainOrder({
@@ -416,16 +447,18 @@ export default function AppAddress({
         parentEmail,
         lang: pageLang()
       });
-      setStep({ kind: 'sent', idea });
+      if (request.current()) setStep({ kind: 'sent', idea });
     } catch (e: any) {
-      setError(e?.message || '');
+      if (request.current()) setError(e?.message || '');
     } finally {
+      request.release();
       setSending(false);
     }
   }
 
-  async function showConnectSetup(domainId: number) {
+  async function showConnectSetup(domainId: number, stillCurrent: () => boolean = () => true) {
     const how = await loadAppDomainConnect({ buildId, domainId });
+    if (!stillCurrent()) return;
     setConnect({
       providerName: how?.provider?.name || how?.domainConnect?.providerName || null,
       providerSteps: how?.provider?.steps || how?.instructions?.plainSteps || [],
@@ -437,12 +470,17 @@ export default function AppAddress({
   }
 
   async function startConnect() {
+    const request = claimRequest('connect');
+    if (!request) return;
     setError('');
     try {
       const added = await addAppDomain({ buildId, hostname });
-      await showConnectSetup(added.domainId);
+      if (!request.current()) return;
+      await showConnectSetup(added.domainId, request.current);
     } catch (e: any) {
-      setError(e?.message || '');
+      if (request.current()) setError(e?.message || '');
+    } finally {
+      request.release();
     }
   }
 

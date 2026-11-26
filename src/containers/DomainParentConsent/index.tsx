@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CheckoutSurface, Notice } from '~/components/Build/AppAddress/checkout/ui';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
@@ -47,6 +47,7 @@ export default function DomainParentConsent() {
   const [done, setDone] = useState<'' | 'approved' | 'declined'>('');
   const [submitting, setSubmitting] = useState<'' | 'approve' | 'decline'>('');
   const [error, setError] = useState('');
+  const decidingRef = useRef(false);
 
   useEffect(() => {
     if (!token) return;
@@ -74,6 +75,9 @@ export default function DomainParentConsent() {
   }, [token]);
 
   async function decide(approve: boolean, registrant?: RegistrantInput) {
+    // one answer at a time (a second tap waits for the first)
+    if (decidingRef.current) return;
+    decidingRef.current = true;
     setSubmitting(approve ? 'approve' : 'decline');
     setError('');
     try {
@@ -91,6 +95,7 @@ export default function DomainParentConsent() {
     } catch (e: any) {
       setError(e?.message || 'error');
     } finally {
+      decidingRef.current = false;
       setSubmitting('');
     }
   }
