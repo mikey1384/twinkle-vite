@@ -6,6 +6,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { useUserAssistant } from '~/helpers/assistantVoice';
 import { CheckoutSurface } from './checkout/ui';
 import { guessCountry } from './checkout/countries';
+import type { PhoneDraft } from './checkout/phone';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
 import {
@@ -125,6 +126,8 @@ export default function AppAddress({
   // Buying here: open for this member? who pays? (server decides)
   const [purchase, setPurchase] = useState<{ open: boolean; buyer?: 'self' | 'parent'; renews?: boolean } | null>(null);
   const [owner, setOwner] = useState<OwnerDetails>(() => emptyOwnerDetails(guessCountry()));
+  // the phone as typed; owner.phone is the E.164 number made from it
+  const [ownerPhone, setOwnerPhone] = useState<PhoneDraft>(() => ({ country: owner.country, national: '' }));
   const [ownerAgreed, setOwnerAgreed] = useState(false);
   const [paying, setPaying] = useState(false);
   const [ownerProblem, setOwnerProblem] = useState('');
@@ -700,6 +703,8 @@ export default function AppAddress({
               busy={paying}
               problem={ownerProblem}
               onDetails={setOwner}
+              phoneDraft={ownerPhone}
+              onPhoneDraft={setOwnerPhone}
               onAgree={setOwnerAgreed}
               onPay={() => void payAsOwner(step.idea)}
               onBack={() => setStep({ kind: 'find' })}

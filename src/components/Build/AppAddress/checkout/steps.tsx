@@ -3,6 +3,7 @@ import { css, keyframes } from '@emotion/css';
 import LumineAtWork from '~/containers/Build/PreviewPanel/LumineAtWork';
 import Confetti from '~/containers/Build/Editor/ChatPanel/Roadmap/Confetti';
 import type { AddressText } from '../text';
+import { toE164, type PhoneDraft } from './phone';
 import {
   usd,
   krw,
@@ -340,10 +341,15 @@ export function OwnerDetailsView({
   onAgree,
   onPay,
   onBack,
+  phoneDraft,
+  onPhoneDraft,
   startPage = 0
 }: StepBase & {
   idea: DomainIdeaView;
   details: OwnerDetails;
+  // the phone as typed (calling code + number); details.phone is its E.164
+  phoneDraft: PhoneDraft;
+  onPhoneDraft: (draft: PhoneDraft) => void;
   agreed: boolean;
   renews: boolean;
   busy: boolean;
@@ -362,7 +368,7 @@ export function OwnerDetailsView({
     0: { firstName: required('firstName'), lastName: required('lastName') },
     1: {
       email: !details.email.trim() ? t.fieldRequired : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim()) ? '' : t.emailInvalid,
-      phone: /^\+[1-9][\d\s.\-()]{7,20}$/.test(details.phone.trim()) ? '' : t.phoneInvalid
+      phone: toE164(phoneDraft) ? '' : t.phoneInvalid
     },
     2: {
       country: /^[A-Za-z]{2}$/.test(details.country) ? '' : t.fieldRequired,
@@ -434,7 +440,16 @@ export function OwnerDetailsView({
         {page === 1 && (
           <div className={stackClass}>
             <TextField label={t.email} type="email" inputMode="email" value={details.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="you@example.com" autoFocus />
-            <PhoneField label={t.phone} dialLabel={t.dialCode} value={details.phone} country={details.country} onChange={set('phone')} error={errors.phone} />
+            <PhoneField
+              label={t.phone}
+              dialLabel={t.dialCode}
+              draft={phoneDraft}
+              onChange={(draft) => {
+                onPhoneDraft(draft);
+                onDetails({ ...details, phone: toE164(draft) });
+              }}
+              error={errors.phone}
+            />
           </div>
         )}
         {page === 2 && (

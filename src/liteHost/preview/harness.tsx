@@ -36,6 +36,7 @@ import { askSignIn, mountBadge, showAiBanner, showGuestHint } from '../ui';
 import { LITE_HOST_TEXT } from '../text';
 import AppAccountSheet from '../react/AppAccountSheet';
 import AppPlayers from '~/components/Build/AppAddress/AppPlayers';
+import { draftFromPhone, type PhoneDraft } from '~/components/Build/AppAddress/checkout/phone';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faGlobe } from '@fortawesome/pro-solid-svg-icons/faGlobe';
 import { faChevronDown } from '@fortawesome/pro-solid-svg-icons/faChevronDown';
@@ -503,7 +504,8 @@ function WandHarness({ stage, place = 'dm' }: { stage: string; place?: 'dm' | 'a
 function OwnerHarness({ filled }: { filled: boolean }) {
   const [details, setDetails] = useState<OwnerDetails>(filled ? FILLED_OWNER : emptyOwnerDetails('KR'));
   const [agreed, setAgreed] = useState(filled);
-  return <OwnerDetailsView t={t} idea={RED_SQUARE} details={details} agreed={agreed} renews={false} busy={false} problem="" onDetails={setDetails} onAgree={setAgreed} onPay={() => {}} onBack={() => {}} />;
+  const [phone, setPhone] = useState<PhoneDraft>(() => draftFromPhone(details.phone, 'KR'));
+  return <OwnerDetailsView t={t} idea={RED_SQUARE} details={details} phoneDraft={phone} onPhoneDraft={setPhone} agreed={agreed} renews={false} busy={false} problem="" onDetails={setDetails} onAgree={setAgreed} onPay={() => {}} onBack={() => {}} startPage={filled ? 3 : 0} />;
 }
 const NAMECHEAP_STEPS = [
   'Sign in to Namecheap and open Domain List.',

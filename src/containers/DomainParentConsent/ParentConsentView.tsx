@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { PARENT_TEXT } from '~/components/Build/AppAddress/text';
 import { usd, krw } from '~/components/Build/AppAddress/checkout/model';
+import { draftFromPhone, toE164, type PhoneDraft } from '~/components/Build/AppAddress/checkout/phone';
 import {
   T,
   CheckIcon,
@@ -114,6 +115,8 @@ export default function ParentConsentView({
   startPage?: Page;
 }) {
   const [registrant, setRegistrant] = useState<RegistrantInput>({ ...EMPTY, ...initialRegistrant });
+  // the phone as typed; registrant.phone is the E.164 number made from it
+  const [phoneDraft, setPhoneDraft] = useState<PhoneDraft>(() => draftFromPhone(registrant.phone, registrant.country));
   const [adult, setAdult] = useState(false);
   const [page, setPage] = useState<Page>(startPage);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
@@ -135,7 +138,7 @@ export default function ParentConsentView({
     1: { lastName: required('lastName'), firstName: required('firstName') },
     2: {
       email: !registrant.email.trim() ? main.fieldRequired : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registrant.email.trim()) ? '' : main.emailInvalid,
-      phone: /^\+[1-9][\d\s.\-()]{7,20}$/.test(registrant.phone.trim()) ? '' : main.phoneInvalid
+      phone: toE164(phoneDraft) ? '' : main.phoneInvalid
     },
     3: {
       country: /^[A-Za-z]{2}$/.test(registrant.country) ? '' : main.fieldRequired,
@@ -256,7 +259,16 @@ export default function ParentConsentView({
             <StepTitle lead={both((t) => t.detailsNote)}>{titles[2]}</StepTitle>
             <div className={stackClass}>
               <TextField label={main.email} type="email" inputMode="email" value={registrant.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="name@example.com" autoFocus />
-              <PhoneField label={main.phoneLabel} dialLabel={main.dialCode} value={registrant.phone} country={registrant.country} onChange={set('phone')} error={errors.phone} />
+              <PhoneField
+                label={main.phoneLabel}
+                dialLabel={main.dialCode}
+                draft={phoneDraft}
+                onChange={(draft) => {
+                  setPhoneDraft(draft);
+                  setRegistrant((prev) => ({ ...prev, phone: toE164(draft) }));
+                }}
+                error={errors.phone}
+              />
             </div>
           </>
         )}

@@ -27,34 +27,6 @@ export const COUNTRIES: Array<[string, string]> = [
   ['MX', 'Mexico']
 ];
 
-// Phone country codes for the list above (the phone field's prefix).
-export const DIAL_CODES: Record<string, string> = {
-  KR: '82',
-  US: '1',
-  CA: '1',
-  GB: '44',
-  AU: '61',
-  NZ: '64',
-  JP: '81',
-  CN: '86',
-  TW: '886',
-  HK: '852',
-  SG: '65',
-  PH: '63',
-  VN: '84',
-  TH: '66',
-  MY: '60',
-  ID: '62',
-  IN: '91',
-  DE: '49',
-  FR: '33',
-  ES: '34',
-  IT: '39',
-  NL: '31',
-  SE: '46',
-  BR: '55',
-  MX: '52'
-};
 
 // Time zones that pin a country better than the browser language (an
 // English browser in Seoul is still in Korea).

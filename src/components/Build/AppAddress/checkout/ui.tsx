@@ -4,7 +4,8 @@ import { css, cx, keyframes } from '@emotion/css';
 import AssistantFace from '~/components/AssistantFace';
 import TwinkleLogo from '~/containers/App/Header/TwinkleLogo';
 import { lockBodyScroll } from '~/helpers/bodyScrollLock';
-import { COUNTRIES, DIAL_CODES } from './countries';
+import { COUNTRIES } from './countries';
+import { CALLING_CODES, callingCode, splitInternational, type PhoneDraft } from './phone';
 
 // The own-web-address checkout's look (Mikey 11-26: friendlier than a form
 // wall, more modern than Namecheap, Twinkle's own fun). It borrows the
@@ -432,29 +433,22 @@ export function TextField({
   );
 }
 
-// Phone with its country code in front: stored as "+82 10 1234 5678".
-export function splitPhone(value: string, country: string) {
-  const trimmed = value.trim();
-  const match = /^\+(\d{1,3})\s*(.*)$/.exec(trimmed);
-  if (match) {
-    const codes = Object.values(DIAL_CODES);
-    // the longest known code that the number starts with
-    for (const length of [3, 2, 1]) {
-      const code = match[1].slice(0, length);
-      if (match[1].length >= length && codes.includes(code)) {
-        return { dial: code, local: `${match[1].slice(length)}${match[2] ? ` ${match[2]}` : ''}`.trim() };
-      }
-    }
-    return { dial: match[1], local: match[2] };
+function regionName(code: string) {
+  try {
+    return new Intl.DisplayNames([document.documentElement.lang || 'en', 'en'], { type: 'region' }).of(code) || code;
+  } catch {
+    return code;
   }
-  return { dial: DIAL_CODES[country] || '82', local: trimmed };
 }
 
+// The phone: a calling-code picker (every country) and the number as the
+// person types it. A full international number typed or pasted into the
+// number box moves its code into the picker. The caller keeps the draft and
+// sends toE164(draft) (./phone.ts).
 export function PhoneField({
   label,
   dialLabel,
-  value,
-  country,
+  draft,
   onChange,
   error,
   hint,
@@ -462,37 +456,48 @@ export function PhoneField({
 }: {
   label: string;
   dialLabel: string;
-  value: string;
-  country: string;
-  onChange: (value: string) => void;
+  draft: PhoneDraft;
+  onChange: (draft: PhoneDraft) => void;
   error?: string;
   hint?: string;
   onBlur?: () => void;
 }) {
   const id = useId();
-  const { dial, local } = splitPhone(value, country);
-  const dialOptions = Array.from(new Set(COUNTRIES.map(([code]) => DIAL_CODES[code]).filter(Boolean)));
-  if (!dialOptions.includes(dial)) dialOptions.unshift(dial);
-  const compose = (nextDial: string, nextLocal: string) =>
-    onChange(nextLocal.trim() ? `+${nextDial} ${nextLocal.replace(/^0(?=\d)/, '')}` : '');
+  const options = Object.keys(CALLING_CODES)
+    .map((code) => ({ code, name: regionName(code), dial: CALLING_CODES[code] }))
+    .sort((a, b) => a.name.localeCompare(b.name));
   return (
     <div className={fieldClass}>
       <label htmlFor={id}>{label}</label>
-      <div className={phoneRowClass} aria-invalid={error ? true : undefined}>
-        <select aria-label={dialLabel} value={dial} onChange={(event) => compose(event.target.value, local)} className={dialClass}>
-          {dialOptions.map((code) => (
-            <option key={code} value={code}>
-              +{code}
-            </option>
-          ))}
-        </select>
+      <div className={phoneRowClass}>
+        <span className={dialWrapClass}>
+          <span className={dialFaceClass} aria-hidden="true">
+            +{callingCode(draft.country) || '…'}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </span>
+          <select
+            aria-label={dialLabel}
+            value={draft.country}
+            autoComplete="tel-country-code"
+            onChange={(event) => onChange({ country: event.target.value, national: draft.national })}
+            className={dialSelectClass}
+          >
+            {options.map((option) => (
+              <option key={option.code} value={option.code}>
+                {option.name} (+{option.dial})
+              </option>
+            ))}
+          </select>
+        </span>
         <input
           id={id}
           type="tel"
           inputMode="tel"
-          autoComplete="tel-national"
-          value={local}
-          onChange={(event) => compose(dial, event.target.value)}
+          autoComplete="tel"
+          value={draft.national}
+          onChange={(event) => onChange(splitInternational(event.target.value, draft.country) || { country: draft.country, national: event.target.value })}
           onBlur={onBlur}
           aria-invalid={error ? true : undefined}
           aria-describedby={error || hint ? `${id}-note` : undefined}
@@ -1175,13 +1180,37 @@ const phoneRowClass = css`
   display: flex;
   gap: 8px;
 `;
-const dialClass = css`
-  ${selectClass};
+const dialWrapClass = css`
+  position: relative;
   flex: none;
-  width: auto;
-  min-width: 92px;
+  min-width: 96px;
+  display: flex;
+  &:focus-within > span:first-child {
+    border-color: ${T.blue};
+    box-shadow: 0 0 0 4px rgba(47, 123, 224, 0.16);
+  }
+`;
+const dialFaceClass = css`
+  ${selectClass};
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 17px;
   font-weight: 650;
+  pointer-events: none;
+`;
+const dialSelectClass = css`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px;
+  &:focus-visible {
+    opacity: 0;
+  }
 `;
 const phoneInputClass = css`
   flex: 1;
