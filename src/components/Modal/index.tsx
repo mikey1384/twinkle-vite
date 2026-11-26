@@ -131,7 +131,9 @@ function stopModalEventPropagation(event: React.SyntheticEvent) {
   event.stopPropagation();
 }
 
-function trapModalFocus(event: KeyboardEvent, modal: HTMLDivElement) {
+// Keeps Tab inside a dialog (also used by full-screen surfaces such as the
+// app-address checkout).
+export function trapModalFocus(event: KeyboardEvent, modal: HTMLDivElement) {
   if (event.defaultPrevented) return;
 
   const focusableElements = Array.from(

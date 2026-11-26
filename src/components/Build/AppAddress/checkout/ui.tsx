@@ -4,6 +4,7 @@ import { css, cx, keyframes } from '@emotion/css';
 import AssistantFace from '~/components/AssistantFace';
 import TwinkleLogo from '~/containers/App/Header/TwinkleLogo';
 import { lockBodyScroll } from '~/helpers/bodyScrollLock';
+import { trapModalFocus } from '~/components/Modal';
 import { COUNTRIES } from './countries';
 import { CALLING_CODES, callingCode, splitInternational, type PhoneDraft } from './phone';
 
@@ -127,16 +128,36 @@ export function CheckoutSurface({
     if (variant !== 'overlay' || typeof document === 'undefined') return;
     return lockBodyScroll(document.body);
   }, [variant]);
+  // A dialog over the Build page: Escape closes it and Tab stays inside it
+  // (the shared Modal's trap), so the editor underneath can't be reached;
+  // Zero and Ciel's floating window keeps its own focus.
   useEffect(() => {
-    if (variant !== 'overlay' || !onClose) return;
+    if (variant !== 'overlay') return;
     function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !event.defaultPrevented) onClose?.();
+      if (event.defaultPrevented) return;
+      if (event.key === 'Escape' && onClose) {
+        onClose();
+        return;
+      }
+      const fromAgentWindow = (event.target as Element | null)?.closest?.('[data-website-agent-ui]');
+      if (event.key === 'Tab' && scrollRef.current && !fromAgentWindow) trapModalFocus(event, scrollRef.current);
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [variant, onClose]);
+  // Focus moves in on open and back to what opened it (the address chip,
+  // or the chip itself after a deep link) on close.
   useEffect(() => {
-    if (variant === 'overlay') scrollRef.current?.focus({ preventScroll: true });
+    if (variant !== 'overlay') return;
+    const opener = document.activeElement as HTMLElement | null;
+    scrollRef.current?.focus({ preventScroll: true });
+    return () => {
+      const target =
+        opener && opener.isConnected && opener !== document.body
+          ? opener
+          : document.querySelector<HTMLElement>('[data-header-chip="address"]');
+      target?.focus({ preventScroll: true });
+    };
   }, [variant]);
   const content = (
     <div
