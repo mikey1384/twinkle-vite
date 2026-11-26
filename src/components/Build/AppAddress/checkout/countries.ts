@@ -110,15 +110,30 @@ export function searchCountries(query: string) {
 
 // Autofill sometimes drops the country's name into "State or province"
 // (a saved Korean address: State = "South Korea"). That value names a
-// country, not a state: it moves to Country. Names that are also states
-// (Georgia, Jersey) stay where they are.
+// country, not a state: it moves to Country. Only a browser's autofill is
+// repaired (`autofilled`: the value arrived whole, not typed or pasted), and
+// only a country's own name: what a person types stays, and region names
+// that are also the UK's nations (Scotland, Wales...) or states (Georgia,
+// Jersey, two-letter codes) are never moved.
 const STATE_NAMES_THAT_ARE_COUNTRIES = new Set(['GE', 'JE']);
-export function countryInStateField(state: string) {
+const REGION_ALIASES = new Set(['england', 'scotland', 'wales', 'northern ireland']);
+export function countryInStateField(state: string, { autofilled = false }: { autofilled?: boolean } = {}) {
+  if (!autofilled) return '';
+  if (REGION_ALIASES.has(normalizeCountryText(state))) return '';
   const code = matchCountry(state);
   if (!code || STATE_NAMES_THAT_ARE_COUNTRIES.has(code)) return '';
   // a two-letter state code (CA, WA, IN...) is a state, not a country
   if (/^[a-z]{2}$/i.test(String(state || '').trim())) return '';
   return code;
+}
+
+// A change the browser made in one go (autofill, a picked suggestion), not
+// typing, deleting or pasting. Chrome's autofill sends no inputType; Safari
+// sends insertReplacementText.
+export function isAutofillChange(event?: Event | null) {
+  if (!event) return false;
+  const inputType = (event as InputEvent).inputType;
+  return !inputType || inputType === 'insertReplacementText';
 }
 
 // Countries where the address doesn't need a state or province (the city

@@ -12,3 +12,11 @@ export function appAddressIntentPath(pathname: string, search: string, hash = ''
   if (!OWNER_INTENT_KEYS.some((key) => params.has(key))) return null;
   return `/build/${match[1]}/domain${search || ''}${hash || ''}`;
 }
+
+// The checkout pages (the owner's /build/<id>/domain and the parent's
+// /domain/parent) have their own header with the Twinkle logo and the way
+// back, so the site's header (top on desktop, bottom nav on phones) is
+// hidden there: no second logo, no nav over the checkout's buttons.
+export function isCheckoutPagePath(pathname: string) {
+  return /^\/build\/\d+\/domain\/?$/.test(String(pathname || '')) || /^\/domain\/parent\/?$/.test(String(pathname || ''));
+}

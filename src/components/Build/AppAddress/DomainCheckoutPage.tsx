@@ -76,6 +76,8 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
   const loadAppDomainConnect = useAppContext((v) => v.requestHelpers.loadAppDomainConnect);
   const checkAppDomain = useAppContext((v) => v.requestHelpers.checkAppDomain);
   const userId = useKeyContext((v) => v.myState.userId);
+  const sessionLoaded = useAppContext((v) => v.user.state.loaded);
+  const onOpenSigninModal = useAppContext((v) => v.user.actions.onOpenSigninModal);
   const realName = useKeyContext((v) => v.myState.realName);
   const verifiedEmail = useKeyContext((v) => v.myState.verifiedEmail);
   const assistant = useUserAssistant(userId);
@@ -155,23 +157,47 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
     };
   }
 
+  // Leaving replaces the checkout's history entry, so the browser's Back
+  // from the editor doesn't reopen the checkout (or Stripe's return).
   function closeFlow() {
     flowGenRef.current += 1;
-    navigate(appPath);
+    navigate(appPath, { replace: true });
   }
 
-  // The app and its address; only the owner buys for it.
+  // The app and its address; only the owner buys for it. A request that
+  // fails is retried, then shown as an error with Try again: a hiccup is
+  // never read as "not the owner" or "hosting off" (that would send the
+  // member back to the editor and lose Stripe's ?domainOrder return).
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   useEffect(() => {
     // wait for the signed-in member (the page can load before them)
     if (!userId) return;
     let cancelled = false;
-    Promise.all([loadBuild(buildId).catch(() => null), loadAppAddress({ buildId }).catch(() => ({ enabled: false }))]).then(
+    const withRetry = async <R,>(run: () => Promise<R>) => {
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          return await run();
+        } catch (error) {
+          if (cancelled || attempt >= 2) throw error;
+          await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+        }
+      }
+    };
+    setLoadFailed(false);
+    Promise.all([withRetry(() => loadBuild(buildId)), withRetry(() => loadAppAddress({ buildId }))]).then(
       ([data, address]: any[]) => {
         if (cancelled) return;
         const build = data?.build;
-        const isOwner = Boolean(build && Number(build.userId) === Number(userId));
-        setApp({ title: String(build?.title || ''), isOwner });
+        if (!build) {
+          setLoadFailed(true);
+          return;
+        }
+        setApp({ title: String(build.title || ''), isOwner: Number(build.userId) === Number(userId) });
         setInfo(address || { enabled: false });
+      },
+      () => {
+        if (!cancelled) setLoadFailed(true);
       }
     );
     return () => {
@@ -179,7 +205,7 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
     };
     // request helpers are stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildId, userId]);
+  }, [buildId, userId, loadAttempt]);
 
   // Where to start: Stripe's return (?domainOrder=<id>, &cancelled=1 when
   // the member left Stripe), a wand plan (?appAddress=find|buy|connect|status
@@ -187,6 +213,15 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
   // buying step), else the intro.
   const [cancelledReturn] = useState(() => new URLSearchParams(location.search).get('cancelled') === '1');
   const startedRef = useRef(false);
+  // Stripe's return opens its order at once: the order is read by its own
+  // request (the server checks it's this member's), so nothing about the
+  // app or its address can send the member away from a paid order.
+  const [returnOrderId] = useState(() => Number(new URLSearchParams(location.search).get('domainOrder') || 0));
+  useEffect(() => {
+    if (startedRef.current || !userId || returnOrderId <= 0) return;
+    startedRef.current = true;
+    setStep({ kind: 'order', orderId: returnOrderId });
+  }, [userId, returnOrderId]);
   useEffect(() => {
     if (startedRef.current || !app || !info) return;
     if (!app.isOwner || !info.enabled || !info.url) {
@@ -195,12 +230,7 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
     }
     startedRef.current = true;
     const params = new URLSearchParams(location.search);
-    const orderId = Number(params.get('domainOrder') || 0);
     const screen = params.get('appAddress') || '';
-    if (orderId > 0) {
-      setStep({ kind: 'order', orderId });
-      return;
-    }
     if (['find', 'buy', 'connect', 'status'].includes(screen)) {
       void openFromWand(screen, String(params.get('domain') || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 253));
       return;
@@ -494,7 +524,34 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
 
   return (
     <CheckoutSurface variant="page" label={pageTitle} onClose={closeFlow} closeLabel={t.backToApp}>
-      {!step && <MessageView t={t} assistant={assistant} stepKey="loading" title={t.renameChecking} body="" primaryLabel={t.backToApp} onPrimary={closeFlow} />}
+      {!step && !userId && sessionLoaded && (
+        <MessageView
+          t={t}
+          assistant={assistant}
+          stepKey="sign-in"
+          title={t.signInTitle}
+          body={t.signInBody}
+          primaryLabel={t.signIn}
+          onPrimary={() => onOpenSigninModal()}
+          secondaryLabel={t.backToApp}
+          onSecondary={closeFlow}
+        />
+      )}
+      {!step && loadFailed && (
+        <MessageView
+          t={t}
+          assistant={assistant}
+          stepKey="load-failed"
+          title={t.pageLoadTitle}
+          tip={t.tipOops}
+          body={t.pageLoadBody}
+          primaryLabel={t.tryAgain}
+          onPrimary={() => setLoadAttempt((value) => value + 1)}
+          secondaryLabel={t.backToApp}
+          onSecondary={closeFlow}
+        />
+      )}
+      {!step && !loadFailed && (userId || !sessionLoaded) && <MessageView t={t} assistant={assistant} stepKey="loading" title={t.renameChecking} body="" primaryLabel={t.backToApp} onPrimary={closeFlow} />}
       {step?.kind === 'intro' && (
         <IntroView
           t={t}

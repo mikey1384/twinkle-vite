@@ -873,6 +873,7 @@ export default function BuildEditor({
     });
   const {
     ensureProjectFilesPersistedBeforePublish,
+    ensureProjectFilesPersistedBeforeLeaving,
     ensureProjectFilesPersistedBeforeRun,
     draftActionPrompt,
     handleApplyRestoredProjectFiles,
@@ -2209,6 +2210,7 @@ export default function BuildEditor({
         onOpenDescriptionModal={handleOpenDescriptionModal}
         onOpenThumbnailModal={handleOpenThumbnailModal}
         onSaveRewardCode={ensureProjectFilesPersistedBeforePublish}
+        onSaveBeforeLeaving={ensureProjectFilesPersistedBeforeLeaving}
         onRewardProposalAccepted={handleBuildReloadFromServer}
         release={release}
         rewardApprovalPrompt={rewardApprovalPrompt}

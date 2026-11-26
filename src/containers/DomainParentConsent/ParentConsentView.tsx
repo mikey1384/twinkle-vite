@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { PARENT_TEXT } from '~/components/Build/AppAddress/text';
 import { usd, krw } from '~/components/Build/AppAddress/checkout/model';
 import { draftFromPhone, toE164, type PhoneDraft } from '~/components/Build/AppAddress/checkout/phone';
-import { STATE_OPTIONAL, countryInStateField, guessCountry, isKnownCountry, stateOrCity } from '~/components/Build/AppAddress/checkout/countries';
+import { STATE_OPTIONAL, countryInStateField, isAutofillChange, guessCountry, isKnownCountry, stateOrCity } from '~/components/Build/AppAddress/checkout/countries';
 import {
   T,
   CheckIcon,
@@ -134,9 +134,9 @@ export default function ParentConsentView({
     </>
   );
   const set = (key: keyof RegistrantInput) => (value: string) => setRegistrant((prev) => ({ ...prev, [key]: value }));
-  // a country's name autofilled into State moves to Country
-  const setState = (value: string) => {
-    const country = countryInStateField(value);
+  // a country's name autofilled into State moves to Country (typing stays)
+  const setState = (value: string, event?: Event) => {
+    const country = countryInStateField(value, { autofilled: isAutofillChange(event) });
     if (country) setRegistrant((prev) => ({ ...prev, country, state: '' }));
     else set('state')(value);
   };

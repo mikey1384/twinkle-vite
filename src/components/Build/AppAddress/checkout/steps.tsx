@@ -4,7 +4,7 @@ import LumineAtWork from '~/containers/Build/PreviewPanel/LumineAtWork';
 import Confetti from '~/containers/Build/Editor/ChatPanel/Roadmap/Confetti';
 import type { AddressText } from '../text';
 import { toE164, type PhoneDraft } from './phone';
-import { STATE_OPTIONAL, countryInStateField, guessCountry, isKnownCountry } from './countries';
+import { STATE_OPTIONAL, countryInStateField, isAutofillChange, guessCountry, isKnownCountry } from './countries';
 import {
   usd,
   krw,
@@ -407,9 +407,9 @@ export function OwnerDetailsView({
   const [page, setPage] = useState<OwnerPage>(startPage);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const set = (key: keyof OwnerDetails) => (value: string) => onDetails((prev) => ({ ...prev, [key]: value }));
-  // a country's name autofilled into State moves to Country
-  const setState = (value: string) => {
-    const country = countryInStateField(value);
+  // a country's name autofilled into State moves to Country (typing stays)
+  const setState = (value: string, event?: Event) => {
+    const country = countryInStateField(value, { autofilled: isAutofillChange(event) });
     if (country) onDetails((prev) => ({ ...prev, country, state: '' }));
     else set('state')(value);
   };
@@ -1319,7 +1319,11 @@ const resultDomainClass = css`
   font-size: 18px;
   font-weight: 760;
   letter-spacing: -0.01em;
-  overflow-wrap: normal;
+  /* breaks after a dot or hyphen (DomainText's <wbr>); a long label
+     with neither breaks where it must, never overflowing the column */
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   word-break: normal;
 `;
 const resultPriceClass = css`

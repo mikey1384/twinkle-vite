@@ -421,6 +421,8 @@ interface HeaderProps {
   onOpenDescriptionModal: () => void;
   onOpenThumbnailModal: () => void;
   onSaveRewardCode: () => Promise<boolean>;
+  // saves unsaved files before leaving for the web-address checkout page
+  onSaveBeforeLeaving?: () => Promise<boolean>;
   // Accepting an admin proposal rewrote the saved app on the server.
   onRewardProposalAccepted?: () => void | Promise<void>;
   rewardApprovalPrompt: number;
@@ -657,6 +659,7 @@ export default function Header({
   onOpenDescriptionModal,
   onOpenThumbnailModal,
   onSaveRewardCode,
+  onSaveBeforeLeaving,
   rewardApprovalPrompt,
   reviewRequestLimits,
   release,
@@ -1281,7 +1284,7 @@ export default function Header({
             isOwner={Boolean(isOwner)}
             appTitle={String(build.title || '')}
             hasUnsavedChanges={hasUnsavedRewardChanges}
-            onSaveChanges={onSaveRewardCode}
+            onSaveChanges={onSaveBeforeLeaving || onSaveRewardCode}
           >
             {rewardChip}
           </AppAddress>

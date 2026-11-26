@@ -8,7 +8,16 @@ test('a profile real name becomes registrant first and last name', () => {
   assert.deepEqual(splitRealName('  Mary Ann   Smith '), { firstName: 'Mary Ann', lastName: 'Smith' });
   assert.deepEqual(splitRealName('김민아'), { firstName: '민아', lastName: '김' });
   assert.deepEqual(splitRealName('김 민아'), { firstName: '민아', lastName: '김' });
-  assert.deepEqual(splitRealName('남궁민수'), { firstName: '궁민수', lastName: '남' });
+  assert.deepEqual(splitRealName('남궁민수'), { firstName: '민수', lastName: '남궁' });
+  assert.deepEqual(splitRealName('황보지훈'), { firstName: '지훈', lastName: '황보' });
+  assert.deepEqual(splitRealName('제갈공명'), { firstName: '공명', lastName: '제갈' });
+  assert.deepEqual(splitRealName('선우재덕'), { firstName: '재덕', lastName: '선우' });
+  // three syllables: one-syllable family name (황 + 보람, 선 + 우진)
+  assert.deepEqual(splitRealName('황보람'), { firstName: '보람', lastName: '황' });
+  assert.deepEqual(splitRealName('선우진'), { firstName: '우진', lastName: '선' });
+  // four syllables without a compound family name
+  assert.deepEqual(splitRealName('김수한무'), { firstName: '수한무', lastName: '김' });
+  assert.deepEqual(splitRealName('남궁 민수'), { firstName: '민수', lastName: '남궁' });
   assert.deepEqual(splitRealName('Cher'), { firstName: 'Cher', lastName: '' });
   assert.deepEqual(splitRealName(''), { firstName: '', lastName: '' });
 });

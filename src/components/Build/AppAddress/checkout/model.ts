@@ -57,6 +57,11 @@ export interface DomainOrderView {
   failureReason: string | null;
 }
 
+// Two-syllable Korean family names. Only a four-syllable name is read this
+// way ("남궁민수" -> 남궁 + 민수); three syllables stay one + two, since
+// "황보람" or "선우진" are as often 황 + 보람, 선 + 우진.
+const KOREAN_COMPOUND_SURNAMES = new Set(['남궁', '황보', '제갈', '선우', '독고', '사공', '서문', '동방', '어금', '망절', '소봉', '장곡']);
+
 // The member's profile real name as registrant first / last name: Hangul
 // names put the family name first ("김민아" -> 김 + 민아, "김 민아" too);
 // other names put it last ("Mikey Lee", "Mary Ann Smith" -> Mary Ann +
@@ -68,6 +73,9 @@ export function splitRealName(realName: string): { firstName: string; lastName: 
     const parts = name.split(' ');
     if (parts.length > 1) return { lastName: parts[0], firstName: parts.slice(1).join(' ') };
     if (name.length < 2) return { firstName: name, lastName: '' };
+    if (name.length === 4 && KOREAN_COMPOUND_SURNAMES.has(name.slice(0, 2))) {
+      return { lastName: name.slice(0, 2), firstName: name.slice(2) };
+    }
     return { lastName: name.slice(0, 1), firstName: name.slice(1) };
   }
   const parts = name.split(' ');

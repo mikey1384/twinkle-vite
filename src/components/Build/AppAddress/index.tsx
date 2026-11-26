@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { css } from '@emotion/css';
 import Modal from '~/components/Modal';
+import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
@@ -87,18 +89,38 @@ export default function AppAddress({
     if (params.has('domainOrder') || params.has('appAddress')) {
       navigate(domainCheckoutPath(buildId, location.search), { replace: true });
     }
-    // read once when the page (or owner) arrives
+    // when the page (or owner) arrives, and for a new query on this page
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildId, isOwner]);
+  }, [buildId, isOwner, location.search]);
+
+  // Where the owner is now: a save that finishes after they opened another
+  // app (or left this page) must not pull them into this app's checkout.
+  const hereRef = useRef({ buildId, pathname: location.pathname, mounted: true });
+  hereRef.current.buildId = buildId;
+  hereRef.current.pathname = location.pathname;
+  useEffect(() => {
+    const here = hereRef.current;
+    here.mounted = true;
+    return () => {
+      here.mounted = false;
+    };
+  }, []);
 
   async function openCheckout() {
     if (leaving) return;
     setLeaveError('');
     // the checkout is its own page: unsaved editor work is saved first
     if (hasUnsavedChanges && onSaveChanges) {
+      const from = { buildId, pathname: location.pathname };
+      const stillHere = () =>
+        hereRef.current.mounted &&
+        hereRef.current.buildId === from.buildId &&
+        hereRef.current.pathname === from.pathname &&
+        window.location.pathname === from.pathname;
       setLeaving(true);
       const saved = await onSaveChanges().catch(() => false);
-      setLeaving(false);
+      if (hereRef.current.mounted) setLeaving(false);
+      if (!stillHere()) return;
       if (!saved) {
         setLeaveError(t.saveBeforeLeaving);
         return;
@@ -233,10 +255,17 @@ export default function AppAddress({
       />
       {children}
       {isOwner && <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />}
-      {leaveError && (
-        <span role="alert" style={{ color: '#c4314b', fontWeight: 700, fontSize: '1.3rem' }}>
-          {leaveError}
-        </span>
+      {(leaving || leaveError) && (
+        // over the page, not at the end of the scrolling chip strip, so it
+        // shows on a phone too
+        <div className={leaveNoticeClass} role={leaveError ? 'alert' : 'status'} data-tone={leaveError ? 'error' : undefined}>
+          <span>{leaveError || t.savingBeforeLeaving}</span>
+          {leaveError && (
+            <button type="button" onClick={() => setLeaveError('')} aria-label={t.close}>
+              ×
+            </button>
+          )}
+        </div>
       )}
       {renameOpen && (
         <Modal modalKey="AppAddressRename" isOpen onClose={() => setRenameOpen(false)} size="md" title={t.renameTitle} closeOnBackdropClick>
@@ -256,3 +285,39 @@ export default function AppAddress({
     </>
   );
 }
+
+const leaveNoticeClass = css`
+  position: fixed;
+  z-index: 100000;
+  left: 50%;
+  top: calc(var(--app-shell-top-offset, 0px) + 12px);
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #1f2433;
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(20, 20, 40, 0.18);
+  &[data-tone='error'] {
+    background: #c4314b;
+  }
+  button {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 1.8rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 6px;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    top: auto;
+    bottom: calc(var(--mobile-nav-total-height, 0px) + 12px);
+    border-radius: 16px;
+  }
+`;

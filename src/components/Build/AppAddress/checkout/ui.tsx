@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { css, cx, keyframes } from '@emotion/css';
 import AssistantFace from '~/components/AssistantFace';
 import TwinkleLogo from '~/containers/App/Header/TwinkleLogo';
@@ -408,7 +408,8 @@ export function TextField({
 }: {
   label: string;
   value: string;
-  onChange: (value: string) => void;
+  // the input event comes along (autofill is told apart from typing)
+  onChange: (value: string, event?: Event) => void;
   error?: string;
   hint?: string;
   type?: 'text' | 'email' | 'tel';
@@ -434,7 +435,7 @@ export function TextField({
         autoFocus={autoFocus}
         aria-invalid={error ? true : undefined}
         aria-describedby={error || hint ? `${id}-note` : undefined}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => onChange(event.target.value, event.nativeEvent)}
         onBlur={onBlur}
         className={inputClass}
       />
@@ -602,8 +603,24 @@ export function CountryField({
   const errorId = `${id}-error`;
   const inputRef = useRef<HTMLInputElement>(null);
   const sheetInputRef = useRef<HTMLInputElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  // while the desktop field has focus it shows what's typed (the chosen
+  // country is its placeholder), so typing never adds to the country's name
+  const [focused, setFocused] = useState(false);
   const [query, setQuery] = useState('');
+  const queryRef = useRef('');
+  queryRef.current = query;
+  // focus put back on the field after choosing or closing doesn't reopen it
+  const quietFocusRef = useRef(false);
+  function focusField() {
+    window.requestAnimationFrame(() => {
+      if (!inputRef.current || document.activeElement === inputRef.current) return;
+      quietFocusRef.current = true;
+      inputRef.current.focus({ preventScroll: true });
+      quietFocusRef.current = false;
+    });
+  }
   const [active, setActive] = useState(0);
   const [phone, setPhone] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 759px)').matches);
   useEffect(() => {
@@ -630,15 +647,44 @@ export function CountryField({
     onChange(next);
     setOpen(false);
     setQuery('');
-    window.requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
+    focusField();
+  }
+  // Leaving the field with a name typed: the field never shows one country
+  // and submits another. An exact name (or the only match) is chosen;
+  // anything else goes back to the chosen country.
+  function commitTyped() {
+    const typed = queryRef.current.trim();
+    if (!typed) return;
+    const results = searchCountries(typed);
+    const pick = matchCountry(typed) || (results.length === 1 ? results[0] : '');
+    if (pick && pick !== code) onChange(pick);
+    setQuery('');
+  }
+  function closeSheet() {
+    setOpen(false);
+    setQuery('');
+    focusField();
   }
   function openList() {
     setQuery('');
     setActive(Math.max(0, options.findIndex((item) => item.code === code)));
-    setOpen(true);
-    if (phone) window.requestAnimationFrame(() => sheetInputRef.current?.focus());
+    if (!phone) {
+      setOpen(true);
+      return;
+    }
+    // iOS only opens the keyboard for a focus made in the tap itself: the
+    // sheet renders now and its search takes focus in the same handler
+    flushSync(() => setOpen(true));
+    sheetInputRef.current?.focus();
   }
   function onKeyDown(event: React.KeyboardEvent) {
+    // Enter or arrows that finish a Korean/Japanese composition aren't ours
+    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+    if (phone && !open && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      openList();
+      return;
+    }
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       if (!open) {
@@ -660,6 +706,7 @@ export function CountryField({
       event.stopPropagation();
       setOpen(false);
       setQuery('');
+      focusField();
     }
   }
   function onType(text: string, fromSheet = false, nativeEvent?: Event) {
@@ -683,8 +730,48 @@ export function CountryField({
     document.getElementById(`${id}-opt-${activeCode}`)?.scrollIntoView({ block: 'nearest' });
   }, [open, activeCode, id]);
 
+  // The phone sheet is a dialog: Tab stays inside it, Escape closes it
+  // wherever focus is, and focus that lands outside comes back in.
+  const sheetOpen = open && phone;
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const focusables = () =>
+      Array.from(sheetRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])') || []);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (event.isComposing) return;
+        event.preventDefault();
+        event.stopPropagation();
+        closeSheet();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const items = focusables();
+      if (!items.length) return;
+      const at = items.indexOf(document.activeElement as HTMLElement);
+      const next = event.shiftKey ? (at <= 0 ? items.length - 1 : at - 1) : at === -1 || at === items.length - 1 ? 0 : at + 1;
+      event.preventDefault();
+      items[next].focus();
+    };
+    const onFocusIn = (event: FocusEvent) => {
+      if (sheetRef.current && !sheetRef.current.contains(event.target as Node)) {
+        sheetInputRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey, true);
+    document.addEventListener('focusin', onFocusIn);
+    return () => {
+      document.removeEventListener('keydown', onKey, true);
+      document.removeEventListener('focusin', onFocusIn);
+    };
+    // closeSheet only sets state and focuses the field
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheetOpen]);
+
   const list = (
-    <ul id={listId} role="listbox" aria-label={label} className={phone ? sheetListClass : popoverClass}>
+    // pressing anywhere in the list (its scrollbar too) keeps focus in the
+    // field, so the list doesn't close under the pointer
+    <ul id={listId} role="listbox" aria-label={label} className={phone ? sheetListClass : popoverClass} onMouseDown={(event) => event.preventDefault()}>
       {options.length === 0 && <li className={noMatchClass}>{noMatch}</li>}
       {options.map((item, index) => (
         <li
@@ -695,7 +782,6 @@ export function CountryField({
           data-active={item.code === activeCode || undefined}
           data-divider={item.divider || undefined}
           className={optionClass}
-          onMouseDown={(event) => event.preventDefault()}
           onMouseEnter={() => setActive(index)}
           onClick={() => choose(item.code)}
         >
@@ -719,14 +805,18 @@ export function CountryField({
           autoComplete="country-name"
           aria-autocomplete="list"
           aria-expanded={open && !phone}
-          aria-controls={listId}
+          aria-haspopup={phone ? 'dialog' : 'listbox'}
+          aria-controls={open && !phone ? listId : undefined}
+          // on phones the field is a button that opens the search sheet
+          readOnly={phone}
           aria-activedescendant={open && !phone && activeCode ? `${id}-opt-${activeCode}` : undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
-          value={open && !phone ? query : selectedName}
+          value={(open || focused) && !phone ? query : selectedName}
           placeholder={selectedName || searchPlaceholder}
           onFocus={() => {
-            if (!phone) openList();
+            setFocused(true);
+            if (!phone && !quietFocusRef.current) openList();
           }}
           onClick={() => {
             if (!open) openList();
@@ -734,7 +824,10 @@ export function CountryField({
           onChange={(event) => onType(event.target.value, false, event.nativeEvent)}
           onKeyDown={onKeyDown}
           onBlur={() => {
-            if (!phone) window.setTimeout(() => setOpen(false), 120);
+            setFocused(false);
+            if (phone) return;
+            commitTyped();
+            window.setTimeout(() => setOpen(false), 120);
           }}
           className={cx(inputClass, comboInputClass)}
         />
@@ -746,10 +839,10 @@ export function CountryField({
       {open &&
         phone &&
         createPortal(
-        <div className={sheetClass} role="dialog" aria-modal="true" aria-label={label}>
+        <div ref={sheetRef} className={sheetClass} role="dialog" aria-modal="true" aria-label={label}>
           <div className={sheetHeadClass}>
             <strong>{label}</strong>
-            <button type="button" className={sheetCloseClass} onClick={() => setOpen(false)} aria-label={closeLabel}>
+            <button type="button" className={sheetCloseClass} onClick={closeSheet} aria-label={closeLabel}>
               <CloseIcon />
             </button>
           </div>
@@ -1192,6 +1285,8 @@ const actionsClass = css`
   margin-top: 28px;
   @media ${PHONE} {
     position: sticky;
+    /* the site's header and bottom nav are hidden on checkout pages
+       (App: isCheckoutPagePath), so this is the screen's bottom */
     bottom: 0;
     z-index: 2;
     margin: 20px -18px 0;
@@ -1213,6 +1308,17 @@ const actionsRightClass = css`
     flex: 1;
     > button {
       flex: 1;
+      min-width: 0;
+      padding: 0 16px;
+    }
+  }
+  /* the longest label ("Continue to payment · $13.99") fits beside Back
+     on a 375px phone: the text shrinks, the button keeps its size */
+  @media (max-width: 400px) {
+    > button {
+      padding: 0 12px;
+      font-size: 15px;
+      letter-spacing: -0.01em;
     }
   }
 `;
@@ -1306,7 +1412,11 @@ const summaryDomainClass = css`
   line-height: 1.2;
   font-weight: 760;
   letter-spacing: -0.01em;
-  overflow-wrap: normal;
+  /* breaks after a dot or hyphen (DomainText's <wbr>); a long label
+     with neither breaks where it must, never overflowing the column */
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   word-break: normal;
   hyphens: none;
 `;
@@ -1633,6 +1743,11 @@ const noticeClass = css`
   color: #1f3f6e;
   font-size: 14.5px;
   line-height: 1.5;
+  /* a long domain named in the message wraps inside the box */
+  > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
   svg {
     margin-top: 3px;
   }

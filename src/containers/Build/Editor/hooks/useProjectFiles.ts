@@ -434,6 +434,8 @@ export default function useProjectFiles({
     draftActionPrompt: projectFileDrafts.draftActionPrompt,
     ensureProjectFilesPersistedBeforePublish:
       projectFileDrafts.ensureProjectFilesPersistedBeforePublish,
+    ensureProjectFilesPersistedBeforeLeaving:
+      projectFileDrafts.ensureProjectFilesPersistedBeforeLeaving,
     ensureProjectFilesPersistedBeforeRun:
       projectFileDrafts.ensureProjectFilesPersistedBeforeRun,
     handleApplyRestoredProjectFiles,
