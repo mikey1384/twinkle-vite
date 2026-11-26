@@ -94,7 +94,11 @@ export default function TourPanel({
   besideDock?: boolean;
 }) {
   const stop = stops[index];
-  const line = finishing ? data.tour.greeting.finishLine[guide] : stop?.lines[guide] || '';
+  const allSeen = stops.every((item) => visited.includes(item.key));
+  // a full finish says so; with stops skipped, the chips are the way back
+  const line = finishing
+    ? (allSeen ? null : data.tour.greeting.partialFinishLine?.[guide]) || data.tour.greeting.finishLine[guide]
+    : stop?.lines[guide] || '';
   const [typed, setTyped] = useState(0);
   const [makeOpen, setMakeOpen] = useState(false);
   const stripRef = useRef<HTMLDivElement | null>(null);
@@ -138,7 +142,6 @@ export default function TourPanel({
   }, [index, finishing]);
 
   if (!stop) return null;
-  const allSeen = stops.every((item) => visited.includes(item.key));
   const typing = typed < line.length;
   const isLast = index === stops.length - 1;
   return (

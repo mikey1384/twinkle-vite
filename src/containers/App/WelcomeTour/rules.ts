@@ -49,6 +49,8 @@ export interface WelcomeTourData {
       line: string;
       afterVideoLine: string;
       finishLine: Record<WelcomeTourGuide, string>;
+      // a finish with stops skipped (an older API: missing, finishLine then)
+      partialFinishLine?: Record<WelcomeTourGuide, string>;
     };
     stops: WelcomeTourStop[];
     makeChoices: MakeChoiceQuestion;
