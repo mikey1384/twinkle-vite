@@ -26,6 +26,7 @@ import {
   askSignIn,
   hideAiBanner,
   mountBadge,
+  setHostFocusReturn,
   showAiBanner,
   showGuestHint,
   showReport,
@@ -34,6 +35,7 @@ import {
 } from '../ui';
 import AppAccountSheet from './AppAccountSheet';
 import { createGuestStore } from '../guestStore';
+import { installFrameFocusKeeper } from '../frameFocus';
 import { LITE_HOST_TEXT, liteHostLang } from '../text';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import {
@@ -603,7 +605,11 @@ async function start() {
         }
       })
   });
-  frame.focus();
+  // The app's keys: focus goes back into the frame whenever our UI is done
+  // with it (frameFocus.ts).
+  const focusKeeper = installFrameFocusKeeper(frame);
+  setHostFocusReturn(focusKeeper.focusApp);
+  focusKeeper.focusApp();
 }
 
 if (document.readyState === 'loading') {
