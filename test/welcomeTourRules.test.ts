@@ -17,6 +17,7 @@ import {
   type WelcomeTourStop
 } from '../src/containers/App/WelcomeTour/rules';
 import { resolveWandActions } from '../src/components/SponsoredHelp/wandActions';
+import { confirmOpenState, projectOpenNavState } from '../src/helpers/sponsoredHelp';
 import {
   enterWelcomeFocusSurface,
   isWelcomeTourStarter,
@@ -200,4 +201,16 @@ test('wand actions: the main button always; chapters and backup only when config
   );
   assert.equal(full.chapters!.length, 2);
   assert.equal(full.backup!.label, 'Maybe later');
+});
+
+test('money: an idea not sent waits unsent in the box, with the server’s plain line when given', () => {
+  assert.deepEqual(projectOpenNavState({ idea: 'Make a game.', autoStart: true }), { initialPrompt: 'Make a game.' });
+  assert.deepEqual(projectOpenNavState({ idea: 'Make a game.' }), { initialDraft: 'Make a game.' });
+  assert.equal(projectOpenNavState({}), undefined);
+  // Confirm on a welcome build that turned out not to be free
+  assert.deepEqual(confirmOpenState({ initialPrompt: '', draft: 'Make a game.', notice: 'Not free.' }), {
+    initialDraft: 'Make a game.',
+    initialNotice: 'Not free.'
+  });
+  assert.deepEqual(confirmOpenState({ initialPrompt: 'Make a game.' }), { initialPrompt: 'Make a game.' });
 });

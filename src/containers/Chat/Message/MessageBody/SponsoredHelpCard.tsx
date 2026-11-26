@@ -11,6 +11,7 @@ import { parseMessageSettings } from './messageSettings';
 import {
   type SponsoredHelpView,
   isSponsoredHelpBusy,
+  confirmOpenState,
   sponsoredHelpPersonaName,
   sponsoredHelpResultLabel,
   sponsoredHelpStatusLine,
@@ -22,7 +23,7 @@ import WandActionBar, { WandQuietButton } from '~/components/SponsoredHelp/WandA
 import { resolveWandActions } from '~/components/SponsoredHelp/wandActions';
 import {
   newerWelcomeTourState,
-  projectOpenPrompt,
+  projectOpenNavState,
   welcomeTourButton,
   welcomeTourResumeKey,
   type WelcomeTourData,
@@ -485,8 +486,8 @@ export default function SponsoredHelpCard({
   // it is still the one that would start (lumineRunSponsored); the editor
   // sends it only while the project has no chat yet.
   function openBuild(buildId: number, from: SponsoredHelpView['result']) {
-    const initialPrompt = projectOpenPrompt(from);
-    navigate(`/build/${buildId}`, initialPrompt ? { state: { initialPrompt } } : undefined);
+    const state = projectOpenNavState(from);
+    navigate(`/build/${buildId}`, state ? { state } : undefined);
   }
 
   async function run(label: string, action: () => Promise<any>) {
@@ -524,7 +525,7 @@ export default function SponsoredHelpCard({
     );
     const action = data?.clientAction;
     if (action?.type === 'open_build' && action.buildId) {
-      navigate(`/build/${action.buildId}`, { state: { initialPrompt: action.initialPrompt } });
+      navigate(`/build/${action.buildId}`, { state: confirmOpenState(action) });
     } else if (action?.type === 'navigate' && action.path) {
       navigate(action.path);
     }

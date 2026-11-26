@@ -569,3 +569,45 @@ export function openWandEnergyLine(sponsorCap: number, perPersonPercent: number)
   if (sponsorCap <= 0) return 'Only making the card uses a little of your AI Energy';
   return `Up to ${perPersonPercent}% of your AI Energy per sponsored person (up to ${sponsorCap * perPersonPercent}% in total)`;
 }
+
+// What opening a Twinkle-made project sends Lumine by itself (review 11-26
+// P0): the idea only while Twinkle's free first run is the one it would
+// start; otherwise nothing, and generation waits for the member's own build
+// action. The editor sends it only while the project has no chat yet.
+export function projectOpenPrompt(
+  from: { idea?: unknown; lumineRunSponsored?: unknown; autoStart?: unknown } | null | undefined
+) {
+  if (!from) return '';
+  const free = from.autoStart === true || from.lumineRunSponsored === true;
+  const idea = typeof from.idea === 'string' ? from.idea.trim() : '';
+  return free && idea ? idea : '';
+}
+
+// The editor's navigation state for opening such a project: the idea sent
+// (Twinkle's unused free run), or waiting unsent in the message box with an
+// optional plain line, or nothing.
+export function projectOpenNavState(
+  from: { idea?: unknown; lumineRunSponsored?: unknown; autoStart?: unknown } | null | undefined,
+  notice = ''
+): { initialPrompt: string } | { initialDraft: string; initialNotice?: string } | undefined {
+  const prompt = projectOpenPrompt(from);
+  if (prompt) return { initialPrompt: prompt };
+  const idea = typeof from?.idea === 'string' ? from.idea.trim() : '';
+  if (!idea && !notice) return undefined;
+  return { initialDraft: idea, ...(notice ? { initialNotice: notice } : {}) };
+}
+
+// Confirm's "open the project" (twinkle-api SponsoredHelpClientAction): the
+// confirmed idea sent, or (a welcome build that turned out not to be free)
+// waiting unsent with the server's plain line.
+export function confirmOpenState(action: {
+  initialPrompt?: string;
+  draft?: string;
+  notice?: string;
+}) {
+  if (action.initialPrompt) return { initialPrompt: action.initialPrompt };
+  return {
+    initialDraft: String(action.draft || ''),
+    ...(action.notice ? { initialNotice: String(action.notice) } : {})
+  };
+}

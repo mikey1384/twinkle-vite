@@ -183,6 +183,12 @@ export default function BuildEditorRoute() {
       ? locationState.initialPromptContext
       : '';
   const forceInitialPrompt = Boolean(locationState?.forceInitialPrompt);
+  // an idea handed over without sending it (opening a project whose run
+  // wouldn't be free): prefilled in the message box, plus one plain line
+  const initialDraft =
+    typeof locationState?.initialDraft === 'string' ? locationState.initialDraft : '';
+  const initialNotice =
+    typeof locationState?.initialNotice === 'string' ? locationState.initialNotice : '';
 
   useEffect(() => {
     setError('');
@@ -403,7 +409,7 @@ export default function BuildEditorRoute() {
               });
             }
           }
-          if (initialPrompt || seedGreeting) {
+          if (initialPrompt || seedGreeting || initialDraft || initialNotice) {
             navigate(location.pathname, { replace: true, state: null });
           }
         } else {
@@ -730,6 +736,8 @@ export default function BuildEditorRoute() {
       initialPrompt={initialPrompt}
       initialPromptContext={initialPromptContext}
       forceInitialPrompt={forceInitialPrompt}
+      initialDraft={initialDraft}
+      initialNotice={initialNotice}
       seedGreeting={seedGreeting}
       onUpdateBuild={setBuild}
       onUpdateChatMessages={setChatMessages}

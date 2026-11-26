@@ -19,7 +19,9 @@ import {
   confirmAllPlanHashes,
   followUpNotice,
   objectiveActions,
+  confirmOpenState,
   objectiveStateLabel,
+  projectOpenNavState,
   sponsoredHelpPersonaName,
   sponsoredHelpResultLabel,
   sponsoredHelpStepLabel,
@@ -398,13 +400,17 @@ export default function WandCard({
             variant={buttonVariant}
             size="sm"
             icon="arrow-right"
-            onClick={() =>
-              objective.result?.buildId
-                ? navigate(`/build/${objective.result.buildId}`, {
-                    state: { initialPrompt: objective.result.idea || project?.idea || '' }
-                  })
-                : navigate(String(objective.result?.path || '/'))
-            }
+            onClick={() => {
+              if (!objective.result?.buildId) return navigate(String(objective.result?.path || '/'));
+              // opening never starts a run the member didn't choose: the idea
+              // is sent only on Twinkle's free first run, otherwise it waits
+              // unsent in the message box
+              const state = projectOpenNavState({
+                ...objective.result,
+                idea: objective.result.idea || project?.idea || ''
+              });
+              navigate(`/build/${objective.result.buildId}`, state ? { state } : undefined);
+            }}
           >
             {objective.result?.buildId ? `Open “${objective.result.buildTitle}”` : sponsoredHelpResultLabel(objective.result)}
           </GameCTAButton>
@@ -597,7 +603,7 @@ export default function WandCard({
 
   function followClientAction(action: any) {
     if (action?.type === 'open_build' && action.buildId) {
-      navigate(`/build/${action.buildId}`, { state: { initialPrompt: action.initialPrompt } });
+      navigate(`/build/${action.buildId}`, { state: confirmOpenState(action) });
     } else if (action?.type === 'navigate' && action.path) {
       navigate(action.path);
     }

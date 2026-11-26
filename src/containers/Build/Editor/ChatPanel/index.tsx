@@ -196,6 +196,8 @@ export default function ChatPanel({
   draftCommentFeedback,
   onDraftCommentFeedbackChange,
   onDraftMessageChange,
+  entryNotice = '',
+  onDismissEntryNotice,
   onSendMessage,
   onContinueScopedPlan,
   onCancelScopedPlan,
@@ -1033,6 +1035,8 @@ export default function ChatPanel({
               onRemoveCommentFeedback={appReferences.removeFeedback}
               submitting={appReferences.submitting}
               submitError={appReferences.error}
+              entryNotice={entryNotice}
+              onDismissEntryNotice={onDismissEntryNotice}
               uploadInFlight={uploadInFlight}
             />
           </div>

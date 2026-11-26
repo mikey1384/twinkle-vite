@@ -244,18 +244,8 @@ export function newerWelcomeTourState(
   return Number(local.runSeq || 0) >= Number(server.runSeq || 0) ? local : server;
 }
 
-// What opening a Twinkle-made project sends Lumine by itself (review 11-26
-// P0): the idea only while Twinkle's free first run is the one it would
-// start; otherwise nothing, and generation waits for the member's own build
-// action. The editor sends it only while the project has no chat yet.
-export function projectOpenPrompt(
-  from: { idea?: unknown; lumineRunSponsored?: unknown; autoStart?: unknown } | null | undefined
-) {
-  if (!from) return '';
-  const free = from.autoStart === true || from.lumineRunSponsored === true;
-  const idea = typeof from.idea === 'string' ? from.idea.trim() : '';
-  return free && idea ? idea : '';
-}
+// What opening a Twinkle-made project sends Lumine (helpers/sponsoredHelp.ts).
+export { projectOpenNavState, projectOpenPrompt } from '../../../helpers/sponsoredHelp';
 
 // The welcome card's tour button: "Start the tour with Zero", or "Continue"
 // with how far they got once they're partway through.

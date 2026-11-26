@@ -64,6 +64,8 @@ interface ComposerProps {
   onRemoveCommentFeedback: (commentId: number) => void;
   submitting: boolean;
   submitError: string;
+  entryNotice?: string;
+  onDismissEntryNotice?: () => void;
 }
 
 export default function Composer({
@@ -89,7 +91,9 @@ export default function Composer({
   commentFeedback,
   onRemoveCommentFeedback,
   submitting,
-  submitError
+  submitError,
+  entryNotice = '',
+  onDismissEntryNotice
 }: ComposerProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -451,6 +455,36 @@ export default function Composer({
           ) : null}
         </div>
       </div>
+      {entryNotice ? (
+        <p
+          role="status"
+          className={css`
+            margin: 0.6rem 0 0;
+            font-size: 1.15rem;
+            color: #4a5068;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            button {
+              background: none;
+              border: none;
+              padding: 0;
+              font: inherit;
+              font-weight: 700;
+              color: inherit;
+              text-decoration: underline;
+              cursor: pointer;
+            }
+          `}
+        >
+          <span>{entryNotice}</span>
+          {onDismissEntryNotice ? (
+            <button type="button" onClick={onDismissEntryNotice}>
+              OK
+            </button>
+          ) : null}
+        </p>
+      ) : null}
       {submitError ? (
         <p
           role="alert"

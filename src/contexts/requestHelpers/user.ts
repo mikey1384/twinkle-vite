@@ -789,11 +789,21 @@ export default function userRequestHelpers({
     },
     // The tour's Lumine stop: makes the project from "What do you want to
     // make?"; on the first tour Twinkle pays its first Lumine run (free).
-    async startWelcomeTourBuild({ idea, title }: { idea: string; title: string }) {
+    // expectFree: the stop showed it as free (the server then sends no
+    // prompt if it isn't free by now)
+    async startWelcomeTourBuild({
+      idea,
+      title,
+      expectFree = false
+    }: {
+      idea: string;
+      title: string;
+      expectFree?: boolean;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/user/welcome-tour/build`,
-          { idea, title },
+          { idea, title, expectFree },
           auth()
         );
         return data;

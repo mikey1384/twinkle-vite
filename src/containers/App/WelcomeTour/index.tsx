@@ -18,7 +18,7 @@ import {
   newWelcomeRunKey,
   newerWelcomeTourState,
   orderWelcomeStops,
-  projectOpenPrompt,
+  projectOpenNavState,
   stopMarks,
   welcomeBannerReady,
   welcomeGreetingLine,
@@ -470,15 +470,23 @@ export default function WelcomeTourHost() {
         if (pathId) navigate(`/chat/${pathId}`);
       } else if (lumine.kind === 'make') {
         try {
-          const result = await startWelcomeTourBuild({ idea, title });
+          // the stop showed it as free: the server sends nothing if it
+          // isn't by now
+          const result = await startWelcomeTourBuild({ idea, title, expectFree: !!data.free.build });
           if (result?.buildId) {
-            // they chose "Build it": their idea goes with it
-            openFromStop(Number(result.buildId), result.initialPrompt || idea);
+            // they chose "Build it": their idea goes with it, unless it was
+            // shown as free and no longer is (then it waits unsent, said so)
+            openFromStop(
+              Number(result.buildId),
+              result.initialPrompt
+                ? { initialPrompt: result.initialPrompt }
+                : { initialDraft: result.draft || idea, initialNotice: result.notice || '' }
+            );
           }
         } catch (error: any) {
           if (error?.code === 'first_project_exists' && error?.project?.buildId) {
             // never a second project: open the one they have, without a prompt
-            openFromStop(Number(error.project.buildId), '');
+            openFromStop(Number(error.project.buildId), undefined);
           } else throw error;
         }
       }
@@ -497,7 +505,7 @@ export default function WelcomeTourHost() {
   // Lumine the idea by itself only while Twinkle's free first run is the one
   // that would start (review 11-26 P0 #2).
   function handleOpenProject(project: WelcomeTourProject) {
-    openFromStop(project.buildId, projectOpenPrompt(project));
+    openFromStop(project.buildId, projectOpenNavState(project));
   }
 
   // The welcome card is planning or running: its own chat finishes it.
@@ -508,9 +516,9 @@ export default function WelcomeTourHost() {
   }
 
   // The stop stays current while the editor is open; coming back moves on.
-  function openFromStop(buildId: number, initialPrompt: string) {
+  function openFromStop(buildId: number, state: Record<string, string> | undefined) {
     if (stop) awaitingReturnFrom.current = stop.key;
-    navigate(`/build/${buildId}`, initialPrompt ? { state: { initialPrompt } } : undefined);
+    navigate(`/build/${buildId}`, state ? { state } : undefined);
   }
 
   // Off to the card's chat: the tour steps aside, the run stays active at
