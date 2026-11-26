@@ -3,8 +3,6 @@ import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { rewardApprovalPresentation } from '~/components/Build/Rewards/approvalPresentation';
-import type { RewardSettings } from '~/components/Build/Rewards/types';
 import {
   BUILD_REVIEW_TYPE_ICONS,
   BUILD_REVIEW_TYPE_LABELS,
@@ -16,22 +14,16 @@ import {
 } from '~/helpers/buildReviewRequests';
 import useCardCraftReviewStatus from './useCardCraftReviewStatus';
 
-// The one place in the workspace where a creator sees everything that waits
-// on Mikey: XP & Coin rewards, project room, file storage and card crafting.
-// Same row for every type: what it is, where it stands, one button at most.
-// Each row reads its type's canonical server state; nothing is optimistic.
+// The workspace notice for requests that wait on Mikey and need the
+// creator's action: project room, file storage and card crafting. Same row
+// for every type: what it is, where it stands, one button at most. Each row
+// reads its type's canonical server state; nothing is optimistic. (XP & Coin
+// rewards are a chip in the header's strip: Rewards/RewardStatusChip.)
 
 export interface WorkspaceReviewRequestsProps {
   buildId: number;
   // The Main project's owner (not a contribution branch).
   isCanonicalOwner: boolean;
-  rewards: {
-    settings: RewardSettings | null;
-    hasUnsavedChanges: boolean;
-    checking: boolean;
-    error: string;
-    onOpen: () => void;
-  };
   limits?: {
     copilotPolicy: {
       limits?: {
@@ -63,7 +55,6 @@ export interface WorkspaceReviewRequestsProps {
 export default function WorkspaceReviewRequests({
   buildId,
   isCanonicalOwner,
-  rewards,
   limits,
   onSaveBeforeRequest,
   hasUnsavedChanges = false
@@ -72,44 +63,6 @@ export default function WorkspaceReviewRequests({
   const rows: Array<
     BuildReviewRow & { key: string; loading?: boolean; note?: string }
   > = [];
-
-  // Rewards keep their existing plain-language states; the action opens the
-  // settings (Publish / Update App is what sends the version for review).
-  if (
-    isCanonicalOwner &&
-    (rewards.checking ||
-      rewards.error ||
-      rewards.settings?.approvalRequired ||
-      (rewards.settings?.state === 'removed' &&
-        !rewards.settings.neverHadRewards))
-  ) {
-    const presentation = rewards.settings
-      ? rewardApprovalPresentation(rewards.settings, rewards.hasUnsavedChanges)
-      : null;
-    rows.push({
-      key: 'rewards',
-      type: 'rewards',
-      tone: rewards.error
-        ? 'problem'
-        : presentation?.state === 'in_review' ||
-            presentation?.state === 'changes_offered'
-          ? 'waiting'
-          : presentation?.state === 'published' ||
-              presentation?.state === 'removed'
-            ? 'done'
-            : 'action',
-      title: rewards.checking
-        ? 'Checking approval…'
-        : rewards.error
-          ? 'Approval status unavailable'
-          : presentation?.title || '',
-      detail:
-        rewards.settings?.liveActive && presentation?.state !== 'published'
-          ? 'Your current published app still has its approved rewards.'
-          : '',
-      action: { kind: 'open-rewards', label: 'Check status' }
-    });
-  }
 
   const policy = limits?.copilotPolicy || null;
   const projectRow = limits
@@ -146,7 +99,6 @@ export default function WorkspaceReviewRequests({
   async function handleAction(row: BuildReviewRow) {
     const action = row.action;
     if (!action) return;
-    if (action.kind === 'open-rewards') return rewards.onOpen();
     if (action.kind === 'request-project-limit') {
       return limits?.onRequestProjectLimitIncrease({
         files: Boolean(action.files),
@@ -204,7 +156,7 @@ function ReviewRequestRow({
       </div>
       {row.action ? (
         <Button
-          variant={row.action.kind === 'open-rewards' ? 'outline' : 'solid'}
+          variant="solid"
           color="logoBlue"
           size="sm"
           loading={busy}

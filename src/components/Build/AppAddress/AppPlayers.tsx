@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import Modal from '~/components/Modal';
+import { HeaderChip } from '~/components/Build/HeaderChip';
 import { useAppContext } from '~/contexts';
 
-// The owner's "Players" box under the app's address (Mikey, 2026-11-25):
+// The owner's "Players" chip in the Build header's strip (Mikey, 2026-11-25):
 // which accounts the app's players use, and everyone who has played on the
 // app's own address. App makers have full authority over their app (standing
 // ruling 11-25): they see every player and can turn one of the app's own
@@ -157,12 +158,14 @@ export default function AppPlayers({
 
   return (
     <>
-      <button type="button" className={openButtonClass} onClick={() => setOpen(true)}>
-        <span>{t.open}</span>
-        <small>
-          {t.accountsLabel}: {t.modes[mode][0]}
-        </small>
-      </button>
+      <HeaderChip
+        chip="players"
+        icon="users"
+        tone="slate"
+        label={`${t.open}: ${t.modes[mode][0]}`}
+        title={`${t.accountsLabel}: ${t.modes[mode][0]}`}
+        onClick={() => setOpen(true)}
+      />
       {open && (
         <Modal modalKey="AppPlayers" isOpen onClose={() => setOpen(false)} size="md" hasHeader={false} closeOnBackdropClick>
           <div className={panelClass}>
@@ -220,28 +223,6 @@ export default function AppPlayers({
   );
 }
 
-const openButtonClass = css`
-  display: flex;
-  align-items: baseline;
-  gap: 0.8rem;
-  width: 100%;
-  margin-top: 0.8rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 1.1rem;
-  background: none;
-  font: inherit;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  small {
-    font-weight: 400;
-    font-size: 1.3rem;
-    color: #5d5d6e;
-  }
-`;
 const panelClass = css`
   font-size: 1.5rem;
   h2 {

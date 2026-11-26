@@ -5,7 +5,7 @@ import { useAppContext } from '~/contexts';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
 import {
-  AddressCardView,
+  AddressMenuView,
   ConnectView,
   FindView,
   IntroView,
@@ -22,10 +22,11 @@ import {
   type OwnerDetails
 } from './views';
 
-// The app's lumine.app address on its page, with Copy / Share and, for the
-// owner, "Get your own .com" (Mikey 11-25 north star). Shows nothing while the
-// hosting switch is off (the API answers { enabled: false }), so it is safe to
-// mount everywhere.
+// The app's address chip in the Build header's strip, with Open / Copy /
+// Share and, for the owner, Change address and "Get your own .com" (Mikey
+// 11-25 north star), then the owner's Players chip. `children` (other strip
+// chips) sit between the two and still show while the hosting switch is off
+// (the API answers { enabled: false }), so it is safe to mount everywhere.
 interface AddressInfo {
   enabled: boolean;
   eligible?: boolean;
@@ -75,12 +76,12 @@ export default function AppAddress({
   buildId,
   isOwner,
   appTitle,
-  wrapperStyle
+  children
 }: {
   buildId: number;
   isOwner: boolean;
   appTitle: string;
-  wrapperStyle?: React.CSSProperties;
+  children?: React.ReactNode;
 }) {
   const loadAppAddress = useAppContext((v) => v.requestHelpers.loadAppAddress);
   const loadDomainIdeas = useAppContext((v) => v.requestHelpers.loadDomainIdeas);
@@ -471,9 +472,11 @@ export default function AppAddress({
   // itself once the member's settings reach us).
   useConnectPolling(step, connect?.status, checkConnect);
 
-  if (!info?.enabled || !info.url) return null;
+  if (!info?.enabled || !info.url) return <>{children}</>;
   const freeHost = info.url.replace(/^https:\/\//, '');
   const liveDomains = (info.domains || []).filter((d) => d.status === 'live').map((d) => d.hostname);
+  // the chip shows (and Copy / Share hand out) a live own domain first
+  const shownUrl = liveDomains[0] ? `https://${liveDomains[0]}` : info.url;
   const askContext = (label: string, excerpt: string) => ({
     kind: 'page',
     id: buildId,
@@ -483,24 +486,24 @@ export default function AppAddress({
   });
 
   return (
-    <div style={wrapperStyle}>
-      <AddressCardView
+    <>
+      <AddressMenuView
         t={t}
         url={info.url}
         domains={liveDomains}
         ownerDomains={isOwner ? info.domains : undefined}
         removableSources={['own']}
         onRemoveDomain={isOwner && info.customDomainsEnabled ? (domainId) => void removeDomain(domainId) : undefined}
-        isOwner={isOwner && Boolean(info.customDomainsEnabled || info.domainSalesEnabled)}
+        canGetOwn={isOwner && Boolean(info.customDomainsEnabled || info.domainSalesEnabled)}
         copied={copied}
         onCopy={() => {
-          void navigator.clipboard?.writeText(info.url || '').catch(() => {});
+          void navigator.clipboard?.writeText(shownUrl).catch(() => {});
           setCopied(true);
           window.setTimeout(() => setCopied(false), 1600);
         }}
         onShare={() => {
-          if (navigator.share) void navigator.share({ title: appTitle, url: info.url || '' }).catch(() => {});
-          else void navigator.clipboard?.writeText(info.url || '').catch(() => {});
+          if (navigator.share) void navigator.share({ title: appTitle, url: shownUrl }).catch(() => {});
+          else void navigator.clipboard?.writeText(shownUrl).catch(() => {});
         }}
         onGetOwn={openOwnFlow}
         onRename={
@@ -515,6 +518,7 @@ export default function AppAddress({
             : undefined
         }
       />
+      {children}
       {isOwner && (
         <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />
       )}
@@ -659,7 +663,7 @@ export default function AppAddress({
           )}
         </Modal>
       )}
-    </div>
+    </>
   );
 }
 

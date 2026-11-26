@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AppAddress from '~/components/Build/AppAddress';
 import { css } from '@emotion/css';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -7,7 +7,14 @@ import EditBuildDetailsButton from '~/components/Build/EditBuildDetailsButton';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReleaseButton from '~/components/Build/ReleaseButton';
 import { ForkHistoryTrigger } from '~/components/Modals/BuildForkHistoryModal';
-import DropdownList from '~/components/DropdownList';
+import {
+  HEADER_CHIP_TONES,
+  HeaderMenu,
+  headerChipClass,
+  headerChipFontFamily,
+  headerChipStripClass,
+  type HeaderMenuItem
+} from '~/components/Build/HeaderChip';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import { Color } from '~/constants/css';
@@ -29,6 +36,9 @@ import RuntimeAssetTransferProgressBar from './RuntimeAssetTransferProgressBar';
 import type { RuntimeAssetTransferProgressPayload } from './helpers/runtimeAssetTransferProgress';
 import ViewAppVersionModal from './ViewAppVersionModal';
 import RewardSettingsModal from '~/components/Build/Rewards/RewardSettingsModal';
+import RewardStatusChip, {
+  shouldShowRewardStatus
+} from '~/components/Build/Rewards/RewardStatusChip';
 import WorkspaceReviewRequests, {
   type WorkspaceReviewRequestsProps
 } from '~/components/Build/ReviewRequests/WorkspaceReviewRequests';
@@ -41,8 +51,7 @@ import {
   BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
 } from './constants';
 
-const displayFontFamily =
-  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+const displayFontFamily = headerChipFontFamily;
 const subtitleUsernameTextStyle: React.CSSProperties = {
   color: 'inherit',
   fontSize: 'inherit',
@@ -166,47 +175,6 @@ const headerActionItemClass = css`
   @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
     display: inline-flex;
     order: var(--mobile-action-order, 10);
-  }
-`;
-
-const badgePillClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 1.1rem;
-  padding: 0.58rem 0.9rem;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 900;
-  font-family: ${displayFontFamily};
-  border: 2px solid transparent;
-  line-height: 1;
-  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.12);
-  text-decoration: none;
-  transition:
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
-  &[href] {
-    cursor: pointer;
-  }
-  &[href]:hover {
-    transform: translateY(-1px);
-    text-decoration: none;
-    box-shadow: 0 3px 0 rgba(15, 23, 42, 0.14);
-  }
-  &[href]:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 2px;
-    text-decoration: none;
-  }
-  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
-    flex: 0 0 auto;
-    gap: 0.3rem;
-    padding: 0.3rem 0.55rem;
-    border-width: 1px;
-    box-shadow: none;
-    font-size: 1rem;
   }
 `;
 
@@ -502,75 +470,25 @@ function HeaderActionItem({
   );
 }
 
-// A settings dropdown whose trigger is a GameCTAButton so it visually matches
-// the other header CTAs.
-function SettingsMenuButton({ menuProps }: { menuProps: any[] }) {
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const [dropdownContext, setDropdownContext] = useState<DOMRect | null>(null);
-
+// The Settings menu: a HeaderMenu whose trigger is a GameCTAButton so it
+// visually matches the other header CTAs.
+function SettingsMenuButton({ menuProps }: { menuProps: HeaderMenuItem[] }) {
   return (
-    <div ref={triggerRef} style={{ position: 'relative' }}>
-      <GameCTAButton
-        variant="neutral"
-        size="md"
-        icon="gear"
-        toggled={!!dropdownContext}
-        onClick={handleToggle}
-      >
-        Settings
-      </GameCTAButton>
-      {dropdownContext ? (
-        <DropdownList
-          dropdownContext={dropdownContext}
-          triggerRef={triggerRef}
-          onHideMenu={handleHide}
-          style={{ minWidth: '15rem' }}
+    <HeaderMenu
+      items={menuProps}
+      renderTrigger={({ open, onToggle }) => (
+        <GameCTAButton
+          variant="neutral"
+          size="md"
+          icon="gear"
+          toggled={open}
+          onClick={onToggle}
         >
-          {menuProps.map((item, index) =>
-            item.separator ? (
-              <hr key={index} />
-            ) : (
-              <li
-                key={index}
-                style={item.style}
-                className={css`
-                  opacity: ${item.disabled ? 0.3 : 1};
-                  cursor: ${item.disabled ? 'default' : 'pointer'};
-                  @media (hover: hover) and (pointer: fine) {
-                    &:hover {
-                      background: ${item.disabled ? '#fff !important' : ''};
-                    }
-                  }
-                `}
-                onClick={
-                  item.disabled
-                    ? undefined
-                    : () => {
-                        setDropdownContext(null);
-                        item.onClick?.();
-                      }
-                }
-              >
-                {item.label}
-              </li>
-            )
-          )}
-        </DropdownList>
-      ) : null}
-    </div>
+          Settings
+        </GameCTAButton>
+      )}
+    />
   );
-
-  function handleToggle() {
-    setDropdownContext(
-      dropdownContext
-        ? null
-        : (triggerRef.current?.getBoundingClientRect() ?? null)
-    );
-  }
-
-  function handleHide() {
-    setDropdownContext(null);
-  }
 }
 
 function BuildVisibilityBadge({ isPublic }: { isPublic: boolean }) {
@@ -583,7 +501,7 @@ function BuildVisibilityBadge({ isPublic }: { isPublic: boolean }) {
 
   return (
     <span
-      className={badgePillClass}
+      className={headerChipClass}
       style={getVisibilityBadgeStyle(isPublic)}
       title={isPublic ? 'Public build' : 'Private build'}
     >
@@ -663,7 +581,7 @@ function BuildReleaseStatusBadge({
 
   return (
     <span
-      className={badgePillClass}
+      className={headerChipClass}
       style={getReleaseStatusBadgeStyle(releaseStatus.state)}
       title="Published app status"
     >
@@ -835,6 +753,21 @@ export default function Header({
     isContributionBranch: Boolean(isContributionFork),
     isPublic: Boolean(build.isPublic)
   });
+  const rewardChipInput = {
+    settings: rewardStatus.settings,
+    hasUnsavedChanges: hasUnsavedRewardChanges || rewardsBeingPrepared,
+    checking: rewardStatus.loading,
+    error: rewardStatus.error
+  };
+  const rewardChipShown = Boolean(
+    isOwner && !isContributionFork && shouldShowRewardStatus(rewardChipInput)
+  );
+  const rewardChip = rewardChipShown ? (
+    <RewardStatusChip
+      {...rewardChipInput}
+      onOpen={() => setRewardsOpen(true)}
+    />
+  ) : null;
   const publishButtonDisabled =
     publishing ||
     (rewardsBeingPrepared &&
@@ -843,7 +776,7 @@ export default function Header({
     (!build.isPublic && !build.code);
 
   function renderSettingsMenu() {
-    const items: any[] = [];
+    const items: HeaderMenuItem[] = [];
     if (canEditMetadata) {
       items.push({
         label: (
@@ -887,7 +820,8 @@ export default function Header({
     if (isOwner && !isContributionFork) {
       // An app that has never used rewards has no reward status to show; the
       // item comes back once saved code uses them (and while status loads).
-      if (!rewardStatus.settings?.neverHadRewards) {
+      // While the XP & Coins chip is in the strip, the chip is the way in.
+      if (!rewardStatus.settings?.neverHadRewards && !rewardChipShown) {
         items.push({
           label: (
             <>
@@ -1101,7 +1035,7 @@ export default function Header({
             ) : null}
             {showContributionStatusBadge ? (
               <span
-                className={badgePillClass}
+                className={headerChipClass}
                 style={getContributionBadgeStyle(contributionStatus)}
                 title={
                   contributionStatus === 'merging'
@@ -1146,7 +1080,7 @@ export default function Header({
             {showContributionStatusBadge ? (
               <HeaderActionItem mobileOrder={2}>
                 <span
-                  className={badgePillClass}
+                  className={headerChipClass}
                   style={getContributionBadgeStyle(contributionStatus)}
                   title={
                     contributionStatus === 'merging'
@@ -1312,6 +1246,20 @@ export default function Header({
           ) : null}
         </div>
       ) : null}
+      <div className={headerChipStripClass}>
+        {build.isPublic && contributionStatus === 'none' ? (
+          // The address chip, then the strip's other chips, then Players.
+          <AppAddress
+            buildId={Number(build.id)}
+            isOwner={Boolean(isOwner)}
+            appTitle={String(build.title || '')}
+          >
+            {rewardChip}
+          </AppAddress>
+        ) : (
+          rewardChip
+        )}
+      </div>
       {isOwner && build.rewardReviewProposal ? (
         <div className={proposalNoticeClass} role="status">
           <span>
@@ -1341,13 +1289,6 @@ export default function Header({
       <WorkspaceReviewRequests
         buildId={Number(build.id)}
         isCanonicalOwner={Boolean(isOwner && !isContributionFork)}
-        rewards={{
-          settings: rewardStatus.settings,
-          hasUnsavedChanges: hasUnsavedRewardChanges || rewardsBeingPrepared,
-          checking: rewardStatus.loading,
-          error: rewardStatus.error,
-          onOpen: () => setRewardsOpen(true)
-        }}
         limits={reviewRequestLimits}
         onSaveBeforeRequest={onSaveRewardCode}
         hasUnsavedChanges={hasUnsavedRewardChanges}
@@ -1380,16 +1321,6 @@ export default function Header({
           changeKey={rewardChangeKey}
         />
       )}
-      {build.isPublic && contributionStatus === 'none' ? (
-        // The app's lumine.app address (renders nothing, not even its
-        // wrapper, while hosting is off).
-        <AppAddress
-          buildId={Number(build.id)}
-          isOwner={Boolean(isOwner)}
-          appTitle={String(build.title || '')}
-          wrapperStyle={{ flexBasis: '100%', width: '100%', marginTop: '0.8rem' }}
-        />
-      ) : null}
     </header>
   );
 }
@@ -1441,84 +1372,29 @@ function getCollaborationButtonLabel(mode: 'private' | 'open_source') {
 }
 
 function getVisibilityBadgeStyle(isPublic: boolean): React.CSSProperties {
-  if (isPublic) {
-    return {
-      background: 'rgba(65, 140, 235, 0.14)',
-      borderColor: 'rgba(65, 140, 235, 0.34)',
-      color: '#1d4ed8'
-    };
-  }
-
-  return {
-    background: 'rgba(100, 116, 139, 0.14)',
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-    color: '#334155'
-  };
+  return HEADER_CHIP_TONES[isPublic ? 'blue' : 'slate'];
 }
 
 function getReleaseStatusBadgeStyle(
   state: 'up_to_date' | 'unpublished_changes' | 'missing_snapshot'
 ): React.CSSProperties {
-  if (state === 'up_to_date') {
-    return {
-      background: 'rgba(34, 197, 94, 0.14)',
-      borderColor: 'rgba(34, 197, 94, 0.34)',
-      color: '#15803d'
-    };
-  }
-  if (state === 'missing_snapshot') {
-    return {
-      background: 'rgba(236, 72, 153, 0.13)',
-      borderColor: 'rgba(236, 72, 153, 0.32)',
-      color: '#be185d'
-    };
-  }
-  return {
-    background: 'rgba(245, 158, 11, 0.16)',
-    borderColor: 'rgba(245, 158, 11, 0.38)',
-    color: '#b45309'
-  };
+  if (state === 'up_to_date') return HEADER_CHIP_TONES.green;
+  if (state === 'missing_snapshot') return HEADER_CHIP_TONES.pink;
+  return HEADER_CHIP_TONES.amber;
 }
 
 function getRelationshipBadgeStyle(
   label: 'fork' | 'contribution'
 ): React.CSSProperties {
-  if (label === 'fork') {
-    return {
-      background: 'rgba(139, 92, 246, 0.14)',
-      borderColor: 'rgba(139, 92, 246, 0.34)',
-      color: '#6d28d9'
-    };
-  }
-  return {
-    background: 'rgba(236, 72, 153, 0.13)',
-    borderColor: 'rgba(236, 72, 153, 0.32)',
-    color: '#be185d'
-  };
+  return HEADER_CHIP_TONES[label === 'fork' ? 'violet' : 'pink'];
 }
 
 function getContributionBadgeStyle(
   status: 'none' | 'draft' | 'merging' | 'merged'
 ): React.CSSProperties {
-  if (status === 'draft') {
-    return {
-      background: 'rgba(65, 140, 235, 0.14)',
-      borderColor: 'rgba(65, 140, 235, 0.34)',
-      color: '#1d4ed8'
-    };
-  }
-  if (status === 'merging') {
-    return {
-      background: 'rgba(236, 72, 153, 0.13)',
-      borderColor: 'rgba(236, 72, 153, 0.32)',
-      color: '#be185d'
-    };
-  }
-  return {
-    background: 'rgba(100, 116, 139, 0.14)',
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-    color: '#334155'
-  };
+  if (status === 'draft') return HEADER_CHIP_TONES.blue;
+  if (status === 'merging') return HEADER_CHIP_TONES.pink;
+  return HEADER_CHIP_TONES.slate;
 }
 
 function formatContributionStatusLabel(

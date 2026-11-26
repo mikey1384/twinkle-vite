@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
+import Icon from '~/components/Icon';
+import { HeaderChip, HeaderMenu, type HeaderMenuItem } from '~/components/Build/HeaderChip';
 import type { AddressText } from './text';
 
 // The app-address screens as plain views (data in, callbacks out), so the
@@ -123,172 +125,168 @@ const fine = css`
   font-size: 1rem;
 `;
 
-export function AddressCardView({
+// One line per menu item; a long address shortens with an ellipsis.
+const addressMenuClass = css`
+  li {
+    white-space: nowrap;
+  }
+  li > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
+// The app's address as a chip in the Build header's strip; its menu holds
+// every address action (open, copy, share, change, remove an own domain,
+// get your own .com). A live own domain is the address the chip shows.
+export function AddressMenuView({
   t,
   url,
   domains,
-  isOwner,
+  ownerDomains,
+  onRemoveDomain,
+  removableSources = ['own'],
+  canGetOwn,
   copied,
   onCopy,
   onShare,
   onGetOwn,
-  getOwnLabel,
-  onRename,
-  ownerDomains,
-  onRemoveDomain,
-  removableSources = ['own']
+  onRename
 }: {
   t: AddressText;
+  // the free lumine.app address
   url: string;
+  // every live own domain
   domains: string[];
   // owner only: every own address with its status, and Remove
   ownerDomains?: Array<{ id: number; hostname: string; status: string; statusLine?: string; source?: string }>;
   onRemoveDomain?: (domainId: number) => void;
   // which kinds can be removed here (a bought address can't, yet)
   removableSources?: string[];
-  isOwner: boolean;
+  canGetOwn: boolean;
   copied: boolean;
   onCopy: () => void;
   onShare: () => void;
   onGetOwn: () => void;
-  getOwnLabel?: string;
   // owner only: change the free lumine.app address
   onRename?: () => void;
 }) {
-  const host = url.replace(/^https:\/\//, '');
-  return (
-    <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-        gap: 0.7rem;
-        padding: 1rem 1.1rem;
-        border: 1px solid ${line};
-        border-radius: 1.1rem;
-        background: #fff;
-        color: ${ink};
-        font-size: 1.05rem;
-      `}
-    >
-      <div className={fine}>{t.liveAt}</div>
-      <div
-        className={css`
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          flex-wrap: wrap;
-        `}
-      >
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={css`
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: ${ink};
-            text-decoration: none;
-            overflow-wrap: anywhere;
-          `}
-        >
-          <span style={{ color: good, marginRight: '0.4rem' }}>●</span>
-          {host}
-        </a>
-        <div className={row} style={{ marginLeft: 'auto' }}>
-          <button type="button" className={secondary} style={{ padding: '0.55rem 1rem' }} onClick={onCopy}>
-            {copied ? t.copied : t.copy}
-          </button>
-          <button type="button" className={secondary} style={{ padding: '0.55rem 1rem' }} onClick={onShare}>
-            {t.share}
-          </button>
-          {onRename && (
-            <button type="button" className={secondary} style={{ padding: '0.55rem 1rem' }} onClick={onRename}>
-              {t.change}
-            </button>
-          )}
-        </div>
-      </div>
-      {ownerDomains && ownerDomains.length > 0 && onRemoveDomain && (
-        <OwnerDomainList t={t} domains={ownerDomains} onRemove={onRemoveDomain} removable={removableSources} />
-      )}
-      {!ownerDomains && domains.length > 0 && (
-        <div className={fine}>
-          {t.alsoAt}:{' '}
-          {domains.map((domain) => (
-            <a key={domain} href={`https://${domain}`} target="_blank" rel="noopener noreferrer" style={{ color: ink, fontWeight: 600, marginRight: '0.6rem' }}>
-              {domain} ✓
-            </a>
-          ))}
-        </div>
-      )}
-      {isOwner && (
-        <button
-          type="button"
-          className={css`
-            ${primary};
-            align-self: flex-start;
-            background: ${accent};
-          `}
-          onClick={onGetOwn}
-        >
-          {getOwnLabel || t.getOwn}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function OwnerDomainList({
-  t,
-  domains,
-  onRemove,
-  removable
-}: {
-  t: AddressText;
-  domains: Array<{ id: number; hostname: string; status: string; statusLine?: string; source?: string }>;
-  onRemove: (domainId: number) => void;
-  removable: string[];
-}) {
   const [confirming, setConfirming] = useState(0);
+  const freeHost = url.replace(/^https:\/\//, '');
+  const hosts = [...domains, freeHost];
+  const items: HeaderMenuItem[] = hosts.map((host) => ({
+    label: (
+      <>
+        <Icon icon="external-link-alt" />
+        <span>{host}</span>
+      </>
+    ),
+    onClick: () => window.open(`https://${host}`, '_blank', 'noopener,noreferrer')
+  }));
+  for (const domain of ownerDomains || []) {
+    if (domain.status === 'live') continue;
+    items.push({
+      label: (
+        <span style={{ display: 'grid', gap: '0.2rem' }}>
+          <span>{domain.hostname}</span>
+          {domain.statusLine ? <small className={fine}>{domain.statusLine}</small> : null}
+        </span>
+      )
+    });
+  }
+  items.push(
+    { separator: true },
+    {
+      label: (
+        <>
+          <Icon icon="copy" />
+          <span>{copied ? t.copied : t.copy}</span>
+        </>
+      ),
+      keepOpen: true,
+      onClick: onCopy
+    },
+    {
+      label: (
+        <>
+          <Icon icon="share" />
+          <span>{t.share}</span>
+        </>
+      ),
+      onClick: onShare
+    }
+  );
+  if (onRename) {
+    items.push({
+      label: (
+        <>
+          <Icon icon="pencil-alt" />
+          <span>{t.change}</span>
+        </>
+      ),
+      onClick: onRename
+    });
+  }
+  if (onRemoveDomain) {
+    for (const domain of ownerDomains || []) {
+      if (!removableSources.includes(String(domain.source || 'own'))) continue;
+      const armed = confirming === domain.id;
+      items.push({
+        label: (
+          <>
+            <Icon icon="trash-alt" />
+            <span>{armed ? t.removeConfirm : `${t.remove} ${domain.hostname}`}</span>
+          </>
+        ),
+        style: { color: armed ? '#b42318' : muted },
+        keepOpen: !armed,
+        onClick: () => {
+          if (armed) {
+            setConfirming(0);
+            onRemoveDomain(domain.id);
+          } else {
+            setConfirming(domain.id);
+          }
+        }
+      });
+    }
+  }
+  if (canGetOwn) {
+    items.push(
+      { separator: true },
+      {
+        label: (
+          <>
+            <Icon icon="globe" />
+            <span>{t.getOwn}</span>
+          </>
+        ),
+        style: { color: accent, fontWeight: 800 },
+        onClick: onGetOwn
+      }
+    );
+  }
   return (
-    <div style={{ display: 'grid', gap: '0.4rem' }}>
-      {domains.map((domain) => (
-        <div
-          key={domain.id}
-          className={css`
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-            font-size: 1rem;
-          `}
-        >
-          {domain.status === 'live' ? (
-            <a href={`https://${domain.hostname}`} target="_blank" rel="noopener noreferrer" style={{ color: ink, fontWeight: 600, overflowWrap: 'anywhere' }}>
-              {domain.hostname} ✓
-            </a>
-          ) : (
-            <span style={{ fontWeight: 600, overflowWrap: 'anywhere' }}>{domain.hostname}</span>
-          )}
-          {domain.status !== 'live' && domain.statusLine && <span className={fine}>{domain.statusLine}</span>}
-          {removable.includes(String(domain.source || 'own')) && <button
-            type="button"
-            className={quiet}
-            style={{ marginLeft: 'auto', color: confirming === domain.id ? '#b42318' : muted, fontSize: '0.95rem' }}
-            onClick={() => {
-              if (confirming === domain.id) {
-                setConfirming(0);
-                onRemove(domain.id);
-              } else {
-                setConfirming(domain.id);
-              }
-            }}
-          >
-            {confirming === domain.id ? t.removeConfirm : t.remove}
-          </button>}
-        </div>
-      ))}
-    </div>
+    <HeaderMenu
+      items={items}
+      menuClassName={addressMenuClass}
+      menuStyle={{ width: 'max-content', maxWidth: 'calc(100vw - 2rem)' }}
+      renderTrigger={({ onToggle }) => (
+        <HeaderChip
+          chip="address"
+          icon="globe"
+          tone="blue"
+          label={hosts[0]}
+          title={hosts[0]}
+          caret
+          onClick={() => {
+            setConfirming(0);
+            onToggle();
+          }}
+        />
+      )}
+    />
   );
 }
 

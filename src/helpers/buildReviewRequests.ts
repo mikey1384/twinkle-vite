@@ -36,7 +36,6 @@ export const BUILD_REVIEW_TYPE_ICONS: Record<BuildReviewRequestType, string> = {
 export type BuildReviewRowTone = 'action' | 'waiting' | 'done' | 'problem';
 
 export type BuildReviewRowActionKind =
-  | 'open-rewards'
   | 'request-project-limit'
   | 'request-storage-limit'
   | 'request-cardcraft';

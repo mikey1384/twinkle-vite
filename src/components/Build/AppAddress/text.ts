@@ -16,8 +16,7 @@ export interface PriceParts {
 
 export const ADDRESS_TEXT = {
   en: {
-    liveAt: 'Your app is live at',
-    change: 'Change',
+    change: 'Change address',
     renameTitle: 'Change your app’s address',
     renameHint: 'Use lowercase letters, numbers and dashes (3 to 40 characters).',
     renameChecking: 'Checking…',
@@ -29,10 +28,7 @@ export const ADDRESS_TEXT = {
     copy: 'Copy',
     copied: 'Copied!',
     share: 'Share',
-    open: 'Open',
-    alsoAt: 'Also at',
     getOwn: 'Get your own .com',
-    getOwnAlt: 'Get your own address',
     // intro: the one moment that teaches "you rent a domain"
     introTitle: 'Your own web address',
     introFree: (free: string) => `Your app already has a free address: ${free}`,
@@ -167,8 +163,7 @@ export const ADDRESS_TEXT = {
     removeConfirm: 'Tap again to remove (the app stops opening there)'
   },
   ko: {
-    liveAt: '앱 주소',
-    change: '바꾸기',
+    change: '주소 바꾸기',
     renameTitle: '앱 주소 바꾸기',
     renameHint: '영어 소문자, 숫자, 하이픈(-)만 쓸 수 있어요 (3~40자).',
     renameChecking: '확인 중…',
@@ -180,10 +175,7 @@ export const ADDRESS_TEXT = {
     copy: '복사',
     copied: '복사했어요!',
     share: '공유',
-    open: '열기',
-    alsoAt: '이 주소로도 열려요',
     getOwn: '나만의 .com 주소 갖기',
-    getOwnAlt: '나만의 주소 갖기',
     introTitle: '나만의 웹 주소',
     introFree: (free: string) => `내 앱은 이미 무료 주소가 있어요: ${free}`,
     introRent: (example: string) =>

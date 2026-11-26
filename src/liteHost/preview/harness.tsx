@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ADDRESS_TEXT } from '~/components/Build/AppAddress/text';
 import {
-  AddressCardView,
+  AddressMenuView,
   ConnectView,
   FindView,
   IntroView,
@@ -118,21 +118,8 @@ function Harness() {
       return (
         <Page>
           <AppPageHeader>
-            <AddressCardView t={t} url="https://star-catcher.lumine.app" domains={params.get('domain') ? [params.get('domain')!] : []} isOwner copied={false} onCopy={noop} onShare={noop} onGetOwn={noop} />
+            <AddressMenuView t={t} url="https://star-catcher.lumine.app" domains={params.get('domain') ? [params.get('domain')!] : []} canGetOwn copied={false} onCopy={noop} onShare={noop} onGetOwn={noop} onRename={noop} />
           </AppPageHeader>
-        </Page>
-      );
-    case 'card-wording':
-      return (
-        <Page wide>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
-            {[t.getOwn, t.getOwnAlt, lang === 'ko' ? '내 .com 연결하기' : 'Use my own .com'].map((label) => (
-              <div key={label}>
-                <div style={{ color: '#5d5d6e', marginBottom: 6 }}>“{label}”</div>
-                <AddressCardView t={t} url="https://star-catcher.lumine.app" domains={[]} isOwner copied={false} onCopy={noop} onShare={noop} onGetOwn={noop} getOwnLabel={label} />
-              </div>
-            ))}
-          </div>
         </Page>
       );
     case 'intro':

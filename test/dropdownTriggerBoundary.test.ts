@@ -63,7 +63,8 @@ test('dropdown wrappers provide their trigger boundary without cooldown timers',
     '../src/components/Buttons/DropdownButton.tsx'
   );
   const starButtonSource = source('../src/components/Buttons/StarButton.tsx');
-  const buildHeaderSource = source('../src/containers/Build/Editor/Header.tsx');
+  // The Build header's menus (Settings, the address chip) share HeaderMenu.
+  const buildHeaderSource = source('../src/components/Build/HeaderChip.tsx');
   const userPopupSource = source('../src/components/UserPopup/Popup.tsx');
   const userPopupOwnerSource = source('../src/components/UserPopup/index.tsx');
   const reactionButtonSource = source(
