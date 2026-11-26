@@ -219,14 +219,18 @@ export default function SponsoredHelpCard({
         bannerText={
           isWelcome
             ? `${persona} · welcome to Twinkle`
-            : `From ${request.senderUsername} · sponsored help`
+            : request.openCardId
+              ? `From ${request.senderUsername}’s wand card${request.paidBy === 'self' ? ' · your own AI Energy' : ''}`
+              : `From ${request.senderUsername} · sponsored help`
         }
         chips={
           <>
             <BuildMessageCardChip icon={isWelcome ? 'gift' : 'bolt'} themeName={themeName}>
               {isWelcome
                 ? 'Free from Twinkle'
-                : `${request.energyPercent}% AI Energy from ${request.senderUsername}`}
+                : request.paidBy === 'self'
+                  ? `Up to ${request.energyPercent}% of your AI Energy`
+                  : `${request.energyPercent}% AI Energy from ${request.senderUsername}`}
             </BuildMessageCardChip>
             {statusLine ? <BuildMessageCardChip muted>{statusLine}</BuildMessageCardChip> : null}
           </>

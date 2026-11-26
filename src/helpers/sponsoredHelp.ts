@@ -37,6 +37,10 @@ export interface SponsoredHelpView {
   // the new-member welcome (sponsored by Twinkle; the greeting is the card)
   isWelcome?: boolean;
   greeting?: string;
+  // a press on an open wand card: sender is the card's author; paidBy says
+  // whether the author's Energy or the member's own pays for it
+  openCardId?: number;
+  paidBy?: 'sponsor' | 'self';
   summary?: string;
   steps?: SponsoredHelpStep[];
   cannotDo?: string[];

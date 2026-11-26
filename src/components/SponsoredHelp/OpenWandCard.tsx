@@ -240,7 +240,9 @@ export default function OpenWandCard({
     setWorking('press');
     setError('');
     try {
-      const data = await pressOpenWandCard(card!.openCardId);
+      // the payer the reader is looking at; the server refuses if it changed
+      const expectedPayer = state === 'sponsored' ? 'sponsor' : 'self';
+      const data = await pressOpenWandCard(card!.openCardId, expectedPayer);
       if (!mounted.current) return;
       if (data?.card) setCard(data.card);
       const path = data?.request?.assistantPathId || data?.card?.mine?.assistantPathId;

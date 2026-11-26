@@ -2979,11 +2979,13 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async pressOpenWandCard(openCardId: number) {
+    // expectedPayer: who pays as the card showed it ('sponsor' | 'self');
+    // the server refuses with payer_changed when that is no longer true
+    async pressOpenWandCard(openCardId: number, expectedPayer?: 'sponsor' | 'self') {
       try {
         const { data } = await request.post(
           `${URL}/chat/sponsored-help/open-cards/${openCardId}/press`,
-          {},
+          { expectedPayer },
           auth()
         );
         return data;
