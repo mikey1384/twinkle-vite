@@ -896,6 +896,7 @@ registerMethods('chat', [
   'createOpenWandCard',
   'loadOpenWandCard',
   'pressOpenWandCard',
+  'shareOpenWandCard',
   'closeOpenWandCard',
   'pressAllSponsoredHelp',
   'confirmAllSponsoredHelp',

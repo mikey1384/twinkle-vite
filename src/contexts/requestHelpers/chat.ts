@@ -2993,6 +2993,20 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // Copy link: a draft card becomes public (a posted Subject that embeds
+    // it does the same on the server)
+    async shareOpenWandCard(openCardId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/open-cards/${openCardId}/share`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async closeOpenWandCard(openCardId: number) {
       try {
         const { data } = await request.post(

@@ -47,6 +47,7 @@ export default function OpenWandCard({
   const loadOpenWandCard = useAppContext((v) => v.requestHelpers.loadOpenWandCard);
   const pressOpenWandCard = useAppContext((v) => v.requestHelpers.pressOpenWandCard);
   const closeOpenWandCard = useAppContext((v) => v.requestHelpers.closeOpenWandCard);
+  const shareOpenWandCard = useAppContext((v) => v.requestHelpers.shareOpenWandCard);
   const onOpenSigninModal = useAppContext((v) => v.user.actions.onOpenSigninModal);
   const [card, setCard] = useState<OpenWandCardView | null>(initialCard);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -163,6 +164,7 @@ export default function OpenWandCard({
       const spent = card!.spentPercent ? ` So far: ${formatPercent(card!.spentPercent)} of your Energy.` : '';
       const used = `${card!.presses} ${card!.presses === 1 ? 'person' : 'people'} used it.`;
       if (state === 'closed') return `You closed this card. ${used}${spent}`;
+      if (card!.published === false) return 'Only you can see this card until you post it.';
       if (card!.sponsorCap <= 0) return `People use it with their own AI Energy. ${used}`;
       return `The first ${card!.sponsorCap} people who press it use up to ${card!.perPersonPercent}% of your AI Energy each; after that, people use their own. ${used}${spent}`;
     }
@@ -278,6 +280,11 @@ export default function OpenWandCard({
 
   async function handleCopy() {
     try {
+      // sharing the link makes a draft card public
+      if (card!.published === false) {
+        const data = await shareOpenWandCard(card!.openCardId);
+        if (mounted.current && data?.card) setCard(data.card);
+      }
       await navigator.clipboard.writeText(`${OPEN_WAND_SITE}${openWandPath(card!.openCardId)}`);
       setCopied(true);
       window.setTimeout(() => mounted.current && setCopied(false), 1800);

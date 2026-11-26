@@ -492,7 +492,9 @@ export interface OpenWandCardView {
   createdAt: number;
   perPersonPercent: number;
   mine?: { requestId: number; status: string; paidBy: 'sponsor' | 'self'; assistantPathId: number } | null;
-  // the author only
+  // the author only: false while it is a draft (only they can see it until
+  // a posted Subject or Copy link publishes it)
+  published?: boolean;
   sponsoredUsed?: number;
   spentPercent?: number;
 }
