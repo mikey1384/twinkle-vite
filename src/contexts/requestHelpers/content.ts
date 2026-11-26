@@ -4127,6 +4127,32 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // The owner deletes one of their own Picture Day pictures (by the day
+    // in the gallery, or by the reflection on its post)
+    async deleteDailyPicture({
+      questionId,
+      responseId,
+      path
+    }: {
+      questionId?: number | null;
+      responseId?: number | null;
+      path: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/picture/delete`,
+          {
+            path,
+            ...(questionId ? { questionId } : {}),
+            ...(responseId && !questionId ? { responseId } : {})
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     // Picture Day edit telemetry; fire-and-forget, never shown to anyone.
     async trackDailyPictureEdit({
       surface,

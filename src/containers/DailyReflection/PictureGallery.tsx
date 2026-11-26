@@ -3,7 +3,10 @@ import { css } from '@emotion/css';
 import { Link, useSearchParams } from 'react-router-dom';
 import Icon from '~/components/Icon';
 import ImageModal from '~/components/Modals/ImageModal';
-import { DailyPictureModal } from '~/components/DailyPictureViewer';
+import {
+  DailyPictureModal,
+  DeleteDailyPictureButton
+} from '~/components/DailyPictureViewer';
 import { useAppContext, useContentContext } from '~/contexts';
 import { mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
@@ -45,6 +48,9 @@ export default function PictureGallery() {
   );
   const trackDailyPictureEdit = useAppContext(
     (v) => v.requestHelpers.trackDailyPictureEdit
+  );
+  const deleteDailyPicture = useAppContext(
+    (v) => v.requestHelpers.deleteDailyPicture
   );
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const [days, setDays] = useState<GalleryDay[]>([]);
@@ -177,6 +183,7 @@ export default function PictureGallery() {
           isOwner
           isCurrent={viewing.path === viewingDay.chosenPath}
           onApply={(args) => handleApply(Number(viewingDay.responseId), args)}
+          onDelete={() => handleDelete(viewingDay, viewing.path)}
           onTrack={(event) =>
             void trackDailyPictureEdit({ surface: 'gallery', event })
           }
@@ -189,6 +196,13 @@ export default function PictureGallery() {
           caption={viewing.prompt}
           hasCaption={!!viewing.prompt}
           downloadable
+          extraActions={
+            viewingDay ? (
+              <DeleteDailyPictureButton
+                onDelete={() => handleDelete(viewingDay, viewing.path)}
+              />
+            ) : null
+          }
         />
       ) : null}
     </div>
@@ -207,7 +221,9 @@ export default function PictureGallery() {
         ...args
       });
       if (!result?.picturePath) {
-        return result?.error || "Couldn't change your picture. Please try again.";
+        return (
+          result?.error || "Couldn't change your picture. Please try again."
+        );
       }
       onEditContent({
         contentType: 'dailyReflection',
@@ -236,7 +252,55 @@ export default function PictureGallery() {
       );
       return null;
     } catch (error: any) {
-      return error?.message || "Couldn't change your picture. Please try again.";
+      return (
+        error?.message || "Couldn't change your picture. Please try again."
+      );
+    }
+  }
+
+  // Deleted on the server first; the page then drops it (and the day, when
+  // it was the last one), and the reflection shows the server's picture.
+  async function handleDelete(
+    day: GalleryDay,
+    path: string
+  ): Promise<string | null> {
+    try {
+      const result = await deleteDailyPicture({
+        questionId: day.questionId,
+        path
+      });
+      if (!result?.success) {
+        return (
+          result?.error || "Couldn't delete your picture. Please try again."
+        );
+      }
+      const picturePath: string = result.picturePath || '';
+      if (day.responseId) {
+        onEditContent({
+          contentType: 'dailyReflection',
+          contentId: day.responseId,
+          data: { picturePath, pictureStyle: result.pictureStyle || '' }
+        });
+      }
+      setViewing(null);
+      setDays((current) =>
+        current
+          .map((item) =>
+            item.questionId !== day.questionId
+              ? item
+              : {
+                  ...item,
+                  chosenPath: picturePath,
+                  pictures: item.pictures.filter((p) => p.path !== path)
+                }
+          )
+          .filter((item) => item.pictures.length > 0)
+      );
+      return null;
+    } catch (error: any) {
+      return (
+        error?.message || "Couldn't delete your picture. Please try again."
+      );
     }
   }
 
