@@ -548,6 +548,6 @@ export function openWandSpotsLine(card: Pick<OpenWandCardView, 'sponsoredLeft' |
 
 // The sheet's honest worst case for the author.
 export function openWandEnergyLine(sponsorCap: number, perPersonPercent: number) {
-  if (sponsorCap <= 0) return 'Nothing comes out of your AI Energy';
+  if (sponsorCap <= 0) return 'Only making the card uses a little of your AI Energy';
   return `Up to ${perPersonPercent}% of your AI Energy per sponsored person (up to ${sponsorCap * perPersonPercent}% in total)`;
 }

@@ -44,5 +44,5 @@ test('spots and the Energy line read plainly, worst case included', () => {
   assert.equal(openWandSpotsLine({ sponsoredLeft: 0, sponsorCap: 10 }), 'Sponsored spots used up');
   assert.equal(openWandSpotsLine({ sponsoredLeft: 0, sponsorCap: 0 }), '');
   assert.equal(openWandEnergyLine(10, 5), 'Up to 5% of your AI Energy per sponsored person (up to 50% in total)');
-  assert.equal(openWandEnergyLine(0, 5), 'Nothing comes out of your AI Energy');
+  assert.equal(openWandEnergyLine(0, 5), 'Only making the card uses a little of your AI Energy');
 });

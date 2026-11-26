@@ -240,7 +240,7 @@ export default function SponsoredHelpModal({
             <strong>{openWandEnergyLine(sponsorCap, openPerPersonPercent)}</strong>
             <span>
               {sponsorCap > 0
-                ? `The first ${sponsorCap === 1 ? 'person' : `${sponsorCap} people`} to start it use your Energy, and only what ${personaName} uses comes out. After that, people can still use the card with their own AI Energy.`
+                ? `The first ${sponsorCap === 1 ? 'person' : `${sponsorCap} people`} who press it use your Energy (never more than ${openPerPersonPercent}% each), and only what ${personaName} uses comes out. After that, people can still use the card with their own AI Energy. Making the card uses a little too.`
                 : `Everyone who uses it pays with their own AI Energy.`}{' '}
               Each person can use it once and sees a plan before anything happens.
             </span>

@@ -164,7 +164,7 @@ export default function OpenWandCard({
       const used = `${card!.presses} ${card!.presses === 1 ? 'person' : 'people'} used it.`;
       if (state === 'closed') return `You closed this card. ${used}${spent}`;
       if (card!.sponsorCap <= 0) return `People use it with their own AI Energy. ${used}`;
-      return `The first ${card!.sponsorCap} to start it use up to ${card!.perPersonPercent}% of your AI Energy each; after that, people use their own. ${used}${spent}`;
+      return `The first ${card!.sponsorCap} people who press it use up to ${card!.perPersonPercent}% of your AI Energy each; after that, people use their own. ${used}${spent}`;
     }
     if (mine) {
       if (mine.status === 'completed') return `${persona} helped you with this.`;
