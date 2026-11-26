@@ -93,3 +93,60 @@ export function shouldAutoVerifyCode(
     nextDigits !== lastSubmittedCode
   );
 }
+
+export interface ScopedBuildData<T> {
+  buildId: number;
+  userId: number | null | undefined;
+  data: T;
+}
+
+// Returns cached build-scoped data only when it belongs to the active build
+// and account, so switching between cached builds never reads stale info on
+// the first render.
+export function readScopedBuildData<T>(
+  scoped: ScopedBuildData<T> | null,
+  buildId: number,
+  userId: number | null | undefined
+): T | null {
+  if (!scoped || scoped.buildId !== buildId || scoped.userId !== userId) return null;
+  return scoped.data;
+}
+
+// Generation & in-flight lock for the owner email verification code flow.
+// Starting a new code send bumps the generation so any in-flight verify
+// attempt is invalidated and cannot overwrite state or collapse the code box.
+export function createEmailCodeGuard() {
+  let gen = 0;
+  let sendInFlightGen: number | null = null;
+  let verifyInFlightGen: number | null = null;
+
+  return {
+    invalidate() {
+      gen += 1;
+      sendInFlightGen = null;
+      verifyInFlightGen = null;
+      return gen;
+    },
+    beginSend(): number | null {
+      if (sendInFlightGen === gen) return null;
+      gen += 1;
+      sendInFlightGen = gen;
+      verifyInFlightGen = null;
+      return gen;
+    },
+    endSend(token: number) {
+      if (sendInFlightGen === token) sendInFlightGen = null;
+    },
+    beginVerify(): number | null {
+      if (sendInFlightGen === gen || verifyInFlightGen === gen) return null;
+      verifyInFlightGen = gen;
+      return gen;
+    },
+    endVerify(token: number) {
+      if (verifyInFlightGen === token) verifyInFlightGen = null;
+    },
+    isCurrent(token: number) {
+      return gen === token;
+    }
+  };
+}

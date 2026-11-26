@@ -473,6 +473,7 @@ export function OwnerDetailsView({
       codeSent &&
       code.length === 6 &&
       !emailCheck.verifying &&
+      !emailCheck.sending &&
       code !== lastSubmittedCodeRef.current
     ) {
       lastSubmittedCodeRef.current = code;
@@ -555,7 +556,14 @@ export function OwnerDetailsView({
                           const digits = value.replace(/\D/g, '').slice(0, 6);
                           if (digits === code) return;
                           setCode(digits);
-                          if (shouldAutoVerifyCode(digits, code, lastSubmittedCodeRef.current, emailCheck.verifying)) {
+                          if (
+                            shouldAutoVerifyCode(
+                              digits,
+                              code,
+                              lastSubmittedCodeRef.current,
+                              emailCheck.verifying || emailCheck.sending
+                            )
+                          ) {
                             lastSubmittedCodeRef.current = digits;
                             emailCheck.onVerify(digits);
                           }
@@ -563,9 +571,9 @@ export function OwnerDetailsView({
                       />
                       <PrimaryButton
                         busy={emailCheck.verifying}
-                        disabled={code.length !== 6}
+                        disabled={code.length !== 6 || emailCheck.sending}
                         onClick={() => {
-                          if (emailCheck.verifying || code.length !== 6) return;
+                          if (emailCheck.verifying || emailCheck.sending || code.length !== 6) return;
                           lastSubmittedCodeRef.current = code;
                           emailCheck.onVerify(code);
                         }}

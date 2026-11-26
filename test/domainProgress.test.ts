@@ -8,6 +8,8 @@ import {
   toTimestampMs
 } from '../src/components/Build/AppAddress/checkout/resendStore';
 import {
+  createEmailCodeGuard,
+  readScopedBuildData,
   shouldAutoVerifyCode,
   type DomainProgressView
 } from '../src/components/Build/AppAddress/checkout/model';
@@ -307,4 +309,134 @@ test('shouldAutoVerifyCode prevents auto-resubmitting a failed or unchanged 6-di
   // Never auto-verifies while already verifying or incomplete
   assert.equal(shouldAutoVerifyCode('123457', '12345', '123456', true), false);
   assert.equal(shouldAutoVerifyCode('12345', '1234', '', false), false);
+});
+
+test('readScopedBuildData drops stale info immediately on cached buildId or account switch', () => {
+  const buildAInfo = {
+    buildId: 10,
+    userId: 1,
+    data: { enabled: true, url: 'https://a.lumine.app', domainSalesEnabled: true }
+  };
+  assert.equal(readScopedBuildData(buildAInfo, 10, 1), buildAInfo.data);
+  // Switching to cached build 20 must return null on the first render (before effects run)
+  assert.equal(readScopedBuildData(buildAInfo, 20, 1), null);
+  // Switching accounts on the same build must also return null immediately
+  assert.equal(readScopedBuildData(buildAInfo, 10, 2), null);
+  assert.equal(readScopedBuildData(null, 10, 1), null);
+});
+
+test('resendStore preserves wait/sent status and falls back to future cooldown when resendEligibleAt is in the past', async () => {
+  let clock = 1_700_001_000_000;
+  const store = createResendStore({ now: () => clock });
+  const pastEligibleAtSec = Math.floor((clock - 60_000) / 1000);
+  const progressWithPastTs = makeProgress({
+    orderId: 303,
+    verification: {
+      state: 'pending',
+      verifyBy: 1_800_000_000,
+      daysLeft: 14,
+      canResend: false,
+      resendEligibleAt: pastEligibleAtSec
+    }
+  });
+
+  // Past resendEligibleAt allows clicking Resend after countdown expires
+  assert.equal(store.getSnapshot(1, 42, progressWithPastTs).canResend, true);
+
+  // Server answers wait without resendEligibleAt: must keep wait status and future cooldown
+  await store.trigger(
+    1,
+    42,
+    progressWithPastTs,
+    async () => ({ status: 'wait' }),
+    () => {}
+  );
+  const waitNoTs = store.getSnapshot(1, 42, progressWithPastTs);
+  assert.equal(waitNoTs.status, 'wait');
+  assert.equal(waitNoTs.canResend, false);
+  assert.equal(waitNoTs.cooldownRemainingMs, RESEND_COOLDOWN_MS);
+
+  // Advance past cooldown and test server wait with an exact-now/past resendEligibleAt
+  clock += RESEND_COOLDOWN_MS;
+  store.clearExpired(1, 42, 303);
+  await store.trigger(
+    1,
+    42,
+    progressWithPastTs,
+    async () => ({ status: 'wait', resendEligibleAt: Math.floor(clock / 1000) }),
+    () => {}
+  );
+  const waitPastTs = store.getSnapshot(1, 42, progressWithPastTs);
+  assert.equal(waitPastTs.status, 'wait');
+  assert.equal(waitPastTs.canResend, false);
+  assert.equal(waitPastTs.cooldownRemainingMs, RESEND_COOLDOWN_MS);
+
+  // Future server resendEligibleAt is still respected verbatim
+  clock += RESEND_COOLDOWN_MS;
+  store.clearExpired(1, 42, 303);
+  const futureSec = Math.floor((clock + 120_000) / 1000);
+  await store.trigger(
+    1,
+    42,
+    progressWithPastTs,
+    async () => ({ status: 'wait', resendEligibleAt: futureSec }),
+    () => {}
+  );
+  const waitFutureTs = store.getSnapshot(1, 42, progressWithPastTs);
+  assert.equal(waitFutureTs.status, 'wait');
+  assert.equal(waitFutureTs.canResend, false);
+  assert.equal(waitFutureTs.cooldownRemainingMs, 120_000);
+
+  // Sent response with a non-future timestamp also falls back to RESEND_COOLDOWN_MS
+  clock += 120_000;
+  store.clearExpired(1, 42, 303);
+  await store.trigger(
+    1,
+    42,
+    progressWithPastTs,
+    async () => ({ status: 'sent', resendEligibleAt: Math.floor((clock - 5_000) / 1000) }),
+    () => {}
+  );
+  const sentPastTs = store.getSnapshot(1, 42, progressWithPastTs);
+  assert.equal(sentPastTs.status, 'sent');
+  assert.equal(sentPastTs.canResend, false);
+  assert.equal(sentPastTs.cooldownRemainingMs, RESEND_COOLDOWN_MS);
+});
+
+test('createEmailCodeGuard invalidates in-flight verify when sending a new code', () => {
+  const guard = createEmailCodeGuard();
+
+  const firstSend = guard.beginSend();
+  assert.notEqual(firstSend, null);
+  // Duplicate send while in-flight is blocked
+  assert.equal(guard.beginSend(), null);
+  // Verify cannot start while a send is still in-flight
+  assert.equal(guard.beginVerify(), null);
+  guard.endSend(firstSend!);
+
+  // Start verifying a 6-digit code
+  const staleVerify = guard.beginVerify();
+  assert.notEqual(staleVerify, null);
+  assert.equal(guard.isCurrent(staleVerify!), true);
+  // Duplicate verify while in-flight is blocked
+  assert.equal(guard.beginVerify(), null);
+
+  // User clicks "Send a new code" while verify is still in-flight
+  const newSend = guard.beginSend();
+  assert.notEqual(newSend, null);
+  assert.equal(guard.isCurrent(newSend!), true);
+  // Superseded verify is now stale and cannot overwrite state or collapse the code box
+  assert.equal(guard.isCurrent(staleVerify!), false);
+  guard.endVerify(staleVerify!);
+  assert.equal(guard.isCurrent(newSend!), true);
+
+  // Once the new send finishes, verifying the new code succeeds normally
+  guard.endSend(newSend!);
+  const freshVerify = guard.beginVerify();
+  assert.notEqual(freshVerify, null);
+  assert.equal(guard.isCurrent(freshVerify!), true);
+
+  // Email or account switch invalidates everything in-flight
+  guard.invalidate();
+  assert.equal(guard.isCurrent(freshVerify!), false);
 });

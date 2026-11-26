@@ -29,13 +29,16 @@ import {
   LiveView,
   RenameView,
   orderStatusTitle,
+  createEmailCodeGuard,
   emptyOwnerDetails,
   ownerDetailsProblem,
+  readScopedBuildData,
   type DnsRecordView,
   type DomainIdeaView,
   type DomainOrderView,
   type EmailCheck,
-  type OwnerDetails
+  type OwnerDetails,
+  type ScopedBuildData
 } from './views';
 
 // The app's address chip in the Build header's strip, with Open / Copy /
@@ -117,7 +120,7 @@ export default function AppAddress({
   const [renameStatus, setRenameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [renameMessage, setRenameMessage] = useState('');
   const [renaming, setRenaming] = useState(false);
-  const [info, setInfo] = useState<AddressInfo | null>(null);
+  const [infoState, setInfoState] = useState<ScopedBuildData<AddressInfo> | null>(null);
   const [copied, setCopied] = useState(false);
   const [step, setStep] = useState<Step>(null);
   const [query, setQuery] = useState('');
@@ -189,6 +192,7 @@ export default function AppAddress({
     };
   }
   const userId = useKeyContext((v) => v.myState.userId);
+  const info = readScopedBuildData(infoState, buildId, userId);
   const assistant = useUserAssistant(userId);
   const t = ADDRESS_TEXT[pageLang()];
   // the purchase tracker (shared with the Build header's notice)
@@ -353,7 +357,13 @@ export default function AppAddress({
         if (changed) refreshDomainProgress(buildId);
         if (data.order.stage === 'live') {
           const fresh = await loadAppAddress({ buildId }).catch(() => null);
-          if (!cancelled && fresh) setInfo(fresh);
+          if (!cancelled && fresh) {
+            setInfoState((prev) =>
+              prev && (prev.buildId !== buildId || prev.userId !== userId)
+                ? prev
+                : { buildId, userId, data: fresh }
+            );
+          }
           return;
         }
         // keep asking while payment or setup is still going (a webhook can
@@ -432,28 +442,22 @@ export default function AppAddress({
   const ownerEmail = owner.email.trim().toLowerCase();
   const ownerEmailRef = useRef(ownerEmail);
   ownerEmailRef.current = ownerEmail;
-  const emailFlowGenRef = useRef(0);
-  const codeSendInFlightRef = useRef<number | null>(null);
-  const codeVerifyInFlightRef = useRef<number | null>(null);
+  const [emailCodeGuard] = useState(createEmailCodeGuard);
   const prevOwnerEmailRef = useRef(ownerEmail);
   useEffect(() => {
     if (prevOwnerEmailRef.current === ownerEmail) return;
     prevOwnerEmailRef.current = ownerEmail;
-    emailFlowGenRef.current += 1;
-    codeSendInFlightRef.current = null;
-    codeVerifyInFlightRef.current = null;
+    emailCodeGuard.invalidate();
     setCodeSending(false);
     setCodeVerifying(false);
     setCodeProblem('');
-  }, [ownerEmail]);
+  }, [emailCodeGuard, ownerEmail]);
 
   const prevUserIdRef = useRef(userId);
   useEffect(() => {
     if (prevUserIdRef.current === userId) return;
     prevUserIdRef.current = userId;
-    emailFlowGenRef.current += 1;
-    codeSendInFlightRef.current = null;
-    codeVerifyInFlightRef.current = null;
+    emailCodeGuard.invalidate();
     setAccountEmail(undefined);
     setEmailToken(null);
     setCodeSentTo('');
@@ -467,7 +471,7 @@ export default function AppAddress({
     setOwnerAgreed(false);
     setOwnerProblem('');
     setOrder(null);
-  }, [userId]);
+  }, [emailCodeGuard, userId]);
 
   const emailCheck: EmailCheck = {
     verified: Boolean(ownerEmail) && (ownerEmail === accountEmail || emailToken?.email === ownerEmail),
@@ -476,43 +480,42 @@ export default function AppAddress({
     verifying: codeVerifying,
     problem: codeProblem,
     async onSend() {
-      const gen = emailFlowGenRef.current;
-      if (codeSendInFlightRef.current === gen) return;
-      codeSendInFlightRef.current = gen;
+      const gen = emailCodeGuard.beginSend();
+      if (gen === null) return;
       const email = ownerEmailRef.current;
       setCodeSending(true);
+      setCodeVerifying(false);
       setCodeProblem('');
       try {
         const result = await requestPurchaseEmailCode({ email });
-        if (emailFlowGenRef.current !== gen) return;
+        if (!emailCodeGuard.isCurrent(gen)) return;
         if (result?.status === 'already_verified') setAccountEmail(email);
         else setCodeSentTo(email);
       } catch (e: any) {
-        if (emailFlowGenRef.current !== gen) return;
+        if (!emailCodeGuard.isCurrent(gen)) return;
         setCodeProblem(e?.message || '');
       } finally {
-        if (codeSendInFlightRef.current === gen) codeSendInFlightRef.current = null;
-        if (emailFlowGenRef.current === gen) setCodeSending(false);
+        emailCodeGuard.endSend(gen);
+        if (emailCodeGuard.isCurrent(gen)) setCodeSending(false);
       }
     },
     async onVerify(code: string) {
-      const gen = emailFlowGenRef.current;
-      if (codeVerifyInFlightRef.current === gen) return;
-      codeVerifyInFlightRef.current = gen;
+      const gen = emailCodeGuard.beginVerify();
+      if (gen === null) return;
       const email = ownerEmailRef.current;
       setCodeVerifying(true);
       setCodeProblem('');
       try {
         const result = await verifyPurchaseEmailCode({ email, code });
-        if (emailFlowGenRef.current !== gen) return;
+        if (!emailCodeGuard.isCurrent(gen)) return;
         if (result?.token) setEmailToken({ email, token: result.token });
       } catch (e: any) {
-        if (emailFlowGenRef.current !== gen) return;
+        if (!emailCodeGuard.isCurrent(gen)) return;
         setCodeProblem(e?.message || '');
         if (e?.code === 'code_expired' || e?.code === 'code_attempts') setCodeSentTo('');
       } finally {
-        if (codeVerifyInFlightRef.current === gen) codeVerifyInFlightRef.current = null;
-        if (emailFlowGenRef.current === gen) setCodeVerifying(false);
+        emailCodeGuard.endVerify(gen);
+        if (emailCodeGuard.isCurrent(gen)) setCodeVerifying(false);
       }
     }
   };
@@ -590,16 +593,16 @@ export default function AppAddress({
   useEffect(() => {
     let cancelled = false;
     if (hostingKnownOff) {
-      setInfo({ enabled: false });
+      setInfoState({ buildId, userId, data: { enabled: false } });
       return;
     }
-    setInfo(null);
+    setInfoState(null);
     loadAppAddress({ buildId })
       .then((data: AddressInfo) => {
         if (data && data.enabled === false) hostingKnownOff = true;
-        if (!cancelled) setInfo(data);
+        if (!cancelled) setInfoState({ buildId, userId, data });
       })
-      .catch(() => !cancelled && setInfo({ enabled: false }));
+      .catch(() => !cancelled && setInfoState({ buildId, userId, data: { enabled: false } }));
     return () => {
       cancelled = true;
     };
@@ -690,11 +693,19 @@ export default function AppAddress({
   }
 
   async function removeDomain(domainId: number) {
+    const targetBuildId = buildId;
+    const targetUserId = userId;
     setError('');
     try {
-      await removeAppDomain({ buildId, domainId });
-      const fresh = await loadAppAddress({ buildId }).catch(() => null);
-      if (fresh) setInfo(fresh);
+      await removeAppDomain({ buildId: targetBuildId, domainId });
+      const fresh = await loadAppAddress({ buildId: targetBuildId }).catch(() => null);
+      if (fresh) {
+        setInfoState((prev) =>
+          prev && prev.buildId === targetBuildId && prev.userId === targetUserId
+            ? { buildId: targetBuildId, userId: targetUserId, data: fresh }
+            : prev
+        );
+      }
     } catch (e: any) {
       setError(e?.message || '');
     }
@@ -744,24 +755,35 @@ export default function AppAddress({
   }, [renameValue, step?.kind]);
 
   async function saveRename() {
+    const targetBuildId = buildId;
+    const targetUserId = userId;
     setRenaming(true);
     try {
-      const result = await renameAppAddress({ buildId, slug: renameValue.trim() });
+      const result = await renameAppAddress({ buildId: targetBuildId, slug: renameValue.trim() });
       // the answer is the new free address; a live bought domain stays the
       // shared address, so ask the server for the whole record again
-      setInfo((prev) =>
-        prev
+      setInfoState((prev) =>
+        prev && prev.buildId === targetBuildId && prev.userId === targetUserId
           ? {
               ...prev,
-              slug: result.slug,
-              lumineUrl: result.url,
-              url: prev.url === (prev.lumineUrl || prev.url) ? result.url : prev.url
+              data: {
+                ...prev.data,
+                slug: result.slug,
+                lumineUrl: result.url,
+                url: prev.data.url === (prev.data.lumineUrl || prev.data.url) ? result.url : prev.data.url
+              }
             }
           : prev
       );
       setStep(null);
-      const fresh = await loadAppAddress({ buildId }).catch(() => null);
-      if (fresh) setInfo(fresh);
+      const fresh = await loadAppAddress({ buildId: targetBuildId }).catch(() => null);
+      if (fresh) {
+        setInfoState((prev) =>
+          prev && prev.buildId === targetBuildId && prev.userId === targetUserId
+            ? { buildId: targetBuildId, userId: targetUserId, data: fresh }
+            : prev
+        );
+      }
     } catch (e: any) {
       setRenameStatus('taken');
       setRenameMessage(e?.message || '');

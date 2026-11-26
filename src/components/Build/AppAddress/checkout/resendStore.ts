@@ -39,6 +39,11 @@ export function toTimestampMs(value?: number | null): number {
   return n < 1e12 ? n * 1000 : n;
 }
 
+function futureTimestampMs(value: number | null | undefined, currentNow: number): number {
+  const ts = toTimestampMs(value);
+  return ts > currentNow ? ts : 0;
+}
+
 export function formatResendCountdown(remainingMs: number): string {
   const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
   const minutes = Math.floor(totalSeconds / 60);
@@ -184,12 +189,13 @@ export function createResendStore(options: { now?: () => number } = {}) {
       if (result?.status === 'sent') {
         record.status = 'sent';
         record.cooldownUntil =
-          toTimestampMs(result.resendEligibleAt) || currentNow + RESEND_COOLDOWN_MS;
+          futureTimestampMs(result.resendEligibleAt, currentNow) ||
+          currentNow + RESEND_COOLDOWN_MS;
       } else if (result?.status === 'wait') {
         record.status = 'wait';
         record.cooldownUntil =
-          toTimestampMs(result.resendEligibleAt) ||
-          toTimestampMs(pending.resendEligibleAt) ||
+          futureTimestampMs(result.resendEligibleAt, currentNow) ||
+          futureTimestampMs(pending.resendEligibleAt, currentNow) ||
           currentNow + RESEND_COOLDOWN_MS;
       } else if (result?.status === 'verified') {
         record.status = 'idle';
