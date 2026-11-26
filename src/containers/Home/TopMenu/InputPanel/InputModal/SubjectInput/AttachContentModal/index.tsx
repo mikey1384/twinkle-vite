@@ -27,11 +27,13 @@ const sectionObj: Record<string, any> = {
 export default function AttachContentModal({
   isOpen,
   onConfirm,
-  onHide
+  onHide,
+  onAddWandCard
 }: {
   isOpen: boolean;
   onConfirm: (arg0?: Record<string, any>) => void;
   onHide: () => void;
+  onAddWandCard?: () => void;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
   const doneColorKey = doneRole.colorKey;
@@ -65,7 +67,7 @@ export default function AttachContentModal({
       }
     >
       {section === 'start' && (
-        <StartScreen navigateTo={setSection} onHide={onHide} />
+        <StartScreen navigateTo={setSection} onHide={onHide} onAddWandCard={onAddWandCard} />
       )}
       {section === 'selectVideo' && (
         <SelectAttachmentScreen

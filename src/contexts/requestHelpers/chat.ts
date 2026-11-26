@@ -2946,6 +2946,63 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    // open wand cards embedded in rich text (twinkle-api
+    // helpers/sponsoredHelp/openCards.ts)
+    async createOpenWandCard({
+      task,
+      persona,
+      cap
+    }: {
+      task: string;
+      persona: 'zero' | 'ciel';
+      cap: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/open-cards`,
+          { task, persona, cap },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadOpenWandCard(openCardId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/sponsored-help/open-cards/${openCardId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async pressOpenWandCard(openCardId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/open-cards/${openCardId}/press`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async closeOpenWandCard(openCardId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/sponsored-help/open-cards/${openCardId}/close`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async pressAllSponsoredHelp(cardId: number) {
       try {
         const { data } = await request.post(

@@ -10,6 +10,7 @@ import AICardComponent from './AICardComponent';
 import SharedPromptComponent from './SharedPromptComponent';
 import AchievementUnlockComponent from './AchievementUnlockComponent';
 import AchievementComponent from './AchievementComponent';
+import OpenWandCard from '~/components/SponsoredHelp/OpenWandCard';
 import type {
   RichTextEmbedPreviewMode,
   RichTextSubjectPreviewVariant
@@ -140,6 +141,9 @@ export default function InternalComponent({
           src={src}
         />
       );
+    }
+    if (linkType === 'wand' && Number(contentId) > 0) {
+      return <OpenWandCard openCardId={Number(contentId)} />;
     }
     if (linkType === 'shared-prompts') {
       return <SharedPromptComponent src={src} isPreview={isPreview} isChat={rootType === 'chat'} />;

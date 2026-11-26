@@ -22,14 +22,18 @@ import { SITE_NAME } from '~/constants/siteBrand';
 const fromTwinkleWebsiteLabel = `from ${SITE_NAME} Website`;
 const videoLabel = 'Video';
 const linkLabel = 'Link';
+const wandCardLabel = 'Wand card';
 const deviceIsMobile = isMobile(navigator);
 
 export default function StartScreen({
   navigateTo,
-  onHide
+  onHide,
+  onAddWandCard
 }: {
   navigateTo: (arg0: string) => void;
   onHide: () => void;
+  // an open wand card for the description (only when the member can make one)
+  onAddWandCard?: () => void;
 }) {
   const onSetSubjectAttachment = useInputContext(
     (v) => v.actions.onSetSubjectAttachment
@@ -149,6 +153,31 @@ export default function StartScreen({
               {linkLabel}
             </span>
           </Button>
+          {onAddWandCard ? (
+            <Button
+              variant="soft"
+              tone="raised"
+              style={{
+                fontSize: deviceIsMobile ? '1.2rem' : '2rem',
+                whiteSpace: 'nowrap',
+                marginLeft: deviceIsMobile ? '0.75rem' : '1rem',
+                padding: deviceIsMobile ? '0.75rem 1rem' : undefined
+              }}
+              color="purple"
+              onClick={onAddWandCard}
+            >
+              <Icon icon="wand-magic-sparkles" />
+              {/* the longest label: smaller text on one line, same icon */}
+              <span
+                style={{
+                  marginLeft: deviceIsMobile ? '0.5rem' : '1rem',
+                  fontSize: deviceIsMobile ? undefined : '1.6rem'
+                }}
+              >
+                {wandCardLabel}
+              </span>
+            </Button>
+          ) : null}
         </div>
       </div>
       <AlertModal

@@ -458,3 +458,81 @@ export function followUpNotice(
       return '';
   }
 }
+
+// ---- open wand cards (twinkle-api helpers/sponsoredHelp/openCards.ts) -------
+//
+// A wand card with no addressee, embedded in rich text as
+// ![Wand card](https://www.twin-kle.com/wand/<id>). Anyone who reads it can
+// press it once; each press is help for the presser from the author's AI
+// Energy, up to the author's cap.
+
+export type OpenWandCardState = 'open' | 'used_up' | 'author_out' | 'coming_soon' | 'closed';
+
+export interface OpenWandCardView {
+  openCardId: number;
+  persona: 'zero' | 'ciel';
+  senderId: number;
+  senderUsername: string;
+  task: string;
+  taskKind: string;
+  cap: number;
+  used: number;
+  left: number;
+  state: OpenWandCardState;
+  viewer: 'author' | 'member' | 'guest';
+  createdAt: number;
+  mine?: { requestId: number; status: string; assistantPathId: number } | null;
+  perPersonPercent?: number;
+  spentPercent?: number;
+}
+
+export const OPEN_WAND_DEFAULT_CAP = 20;
+export const OPEN_WAND_MAX_CAP = 50;
+export const OPEN_WAND_PER_PERSON_PERCENT = 5;
+export const OPEN_WAND_SITE = 'https://www.twin-kle.com';
+
+// What members pick from (or type their own). The first is preselected:
+// Mikey's "you can too" domain announcement.
+export const OPEN_WAND_PRESETS = [
+  'Get your own web address (domain) for your app',
+  'Make your first game with Lumine',
+  'Quiz you on something you’re learning'
+];
+
+export function openWandPath(openCardId: number) {
+  return `/wand/${openCardId}`;
+}
+
+export function openWandEmbedMarkdown(openCardId: number) {
+  return `![Wand card](${OPEN_WAND_SITE}${openWandPath(openCardId)})`;
+}
+
+// Every open wand card embedded in a text, in order (each once).
+const OPEN_WAND_EMBED = /!\[[^\]]*\]\((?:https?:\/\/)?(?:www\.)?(?:twin-kle\.com|twinkle\.network|localhost:3000)\/wand\/(\d+)\)/g;
+export function openWandIdsInText(text: string) {
+  const ids: number[] = [];
+  for (const match of String(text || '').matchAll(OPEN_WAND_EMBED)) {
+    const id = Number(match[1]);
+    if (id > 0 && !ids.includes(id)) ids.push(id);
+  }
+  return ids;
+}
+
+// The text without that card's embed line (and the blank line it leaves).
+export function removeOpenWandEmbed(text: string, openCardId: number) {
+  return String(text || '')
+    .replace(OPEN_WAND_EMBED, (whole, id) => (Number(id) === openCardId ? '\u0000' : whole))
+    .replace(/\n*\u0000\n*/g, '\n\n')
+    .replace(/^\n+|\n+$/g, '');
+}
+
+// The text with the card's embed on a line of its own at the end.
+export function appendOpenWandEmbed(text: string, openCardId: number) {
+  const current = String(text || '').replace(/\s+$/, '');
+  return `${current ? `${current}\n\n` : ''}${openWandEmbedMarkdown(openCardId)}`;
+}
+
+export function openWandSlotsLine(card: Pick<OpenWandCardView, 'left' | 'cap'>) {
+  if (card.left <= 0) return `All ${card.cap} used`;
+  return `${card.left} of ${card.cap} left`;
+}

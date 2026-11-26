@@ -145,16 +145,19 @@ export default function CommentInputArea({
             targetCommentId={targetCommentId}
             theme={theme}
             extraButton={
-              disableReason ? null : (
-                <CommentWandButton
-                  parent={parent}
-                  rootCommentId={rootCommentId}
-                  targetCommentId={targetCommentId}
-                  subjectId={subjectId}
-                  addressee={inputTypeLabel === 'reply' ? parent.uploader : null}
-                  theme={theme}
-                />
-              )
+              disableReason
+                ? null
+                : ({ insertText }) => (
+                    <CommentWandButton
+                      parent={parent}
+                      rootCommentId={rootCommentId}
+                      targetCommentId={targetCommentId}
+                      subjectId={subjectId}
+                      addressee={inputTypeLabel === 'reply' ? parent.uploader : null}
+                      theme={theme}
+                      insertText={insertText}
+                    />
+                  )
             }
           />
           {uploading && (

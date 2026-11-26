@@ -102,16 +102,19 @@ export default function ReplyInputArea({
             theme={theme}
             targetCommentId={targetCommentId}
             extraButton={
-              disableReason || !targetCommentId ? null : (
-                <CommentWandButton
-                  parent={parent}
-                  rootCommentId={rootCommentId}
-                  targetCommentId={targetCommentId}
-                  subjectId={parent.subjectId}
-                  addressee={targetCommentPoster}
-                  theme={theme}
-                />
-              )
+              disableReason || !targetCommentId
+                ? null
+                : ({ insertText }) => (
+                    <CommentWandButton
+                      parent={parent}
+                      rootCommentId={rootCommentId}
+                      targetCommentId={targetCommentId}
+                      subjectId={parent.subjectId}
+                      addressee={targetCommentPoster}
+                      theme={theme}
+                      insertText={insertText}
+                    />
+                  )
             }
           />
         )}

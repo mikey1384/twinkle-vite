@@ -1,3 +1,4 @@
+import WandDraftPreview from '~/components/SponsoredHelp/WandDraftPreview';
 import React, {
   useCallback,
   useState,
@@ -73,7 +74,11 @@ function InputForm({
   extraButton
 }: {
   // a button shown beside the upload button (the comment box's magic wand)
-  extraButton?: React.ReactNode;
+  // a button beside the box; as a function it can also put text into the
+  // box (the comment wand inserts an open wand card's embed this way)
+  extraButton?:
+    | React.ReactNode
+    | ((api: { insertText: (update: (text: string) => string) => void }) => React.ReactNode);
   isComment?: boolean;
   autoFocus?: boolean;
   className?: string;
@@ -506,6 +511,9 @@ function InputForm({
               {commentExceedsCharLimit.message}
             </small>
           )}
+          {isComment ? (
+            <WandDraftPreview text={text} onChange={handleSetText} />
+          ) : null}
         </div>
         {(!textIsEmpty || attachment) && (
           <div
@@ -579,7 +587,9 @@ function InputForm({
         />
       ) : (
         <div style={extraButton ? { display: 'flex', alignItems: 'flex-start' } : undefined}>
-          {extraButton}
+          {typeof extraButton === 'function'
+            ? extraButton({ insertText: (update) => handleSetText(update(textRef.current || '')) })
+            : extraButton}
           {userId && (
             <UploadButton
               onFileSelect={handleUploadButtonFileSelect}
