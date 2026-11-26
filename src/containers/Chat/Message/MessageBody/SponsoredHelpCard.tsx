@@ -16,16 +16,18 @@ import {
   sponsoredHelpStatusLine,
   sponsoredHelpStepLabel
 } from '~/helpers/sponsoredHelp';
-import MakeChoice from '~/containers/App/WelcomeTour/MakeChoice';
 import { GUIDE_PICTURE } from '~/containers/App/WelcomeTour/Greeter';
 import { startWelcomeTour, welcomeTourProgress } from '~/containers/App/WelcomeTour/store';
+import WandActionBar, { WandQuietButton } from '~/components/SponsoredHelp/WandActionBar';
+import { resolveWandActions } from '~/components/SponsoredHelp/wandActions';
 import {
+  newerWelcomeTourState,
+  projectOpenPrompt,
   welcomeTourButton,
   welcomeTourResumeKey,
   type WelcomeTourData,
   type WelcomeTourProject
 } from '~/containers/App/WelcomeTour/rules';
-import { GUIDE_COLOR, GUIDE_SOFT } from '~/containers/App/WelcomeTour/styles';
 
 // A sponsored "Have Zero/Ciel do this" request (twinkle-api
 // helpers/sponsoredHelp/service.ts), in two places:
@@ -62,9 +64,7 @@ export default function SponsoredHelpCard({
   const [changing, setChanging] = useState(false);
   const [note, setNote] = useState('');
   const [ideaShown, setIdeaShown] = useState(false);
-  // the welcome card: "What do you want to make?" before Show me! plans the
-  // first build (never a random one), and the same tour's stops
-  const [choosing, setChoosing] = useState(false);
+  // the welcome tour (its stops are the welcome card's chapters)
   const [tour, setTour] = useState<WelcomeTourData | null>(null);
   // where this tab's running tour is (the card's "Continue the tour")
   const tourProgress = useSyncExternalStore(welcomeTourProgress.subscribe, welcomeTourProgress.get);
@@ -143,6 +143,7 @@ export default function SponsoredHelpCard({
   }, [showsTour]);
   const isSender = myId === request.senderId;
   const themeName = request.persona === 'ciel' ? 'pink' : 'logoBlue';
+  const buttonVariant = request.persona === 'ciel' ? 'pink' : 'logoBlue';
   const statusLine = sponsoredHelpStatusLine(request, { isSender, isRecipient, variant });
 
   if (variant === 'dm') {
@@ -166,48 +167,7 @@ export default function SponsoredHelpCard({
               ) : null}
             </>
           }
-          actions={
-            isRecipient && request.status === 'sent' ? (
-              <>
-                <GameCTAButton
-                  variant={request.persona === 'ciel' ? 'pink' : 'logoBlue'}
-                  size="md"
-                  icon="wand-magic-sparkles"
-                  loading={working === 'press'}
-                  onClick={() => handlePress()}
-                >
-                  Have {persona} do this
-                </GameCTAButton>
-                <GameCTAButton
-                  variant="neutral"
-                  size="md"
-                  loading={working === 'decline'}
-                  onClick={handleDecline}
-                >
-                  No thanks
-                </GameCTAButton>
-              </>
-            ) : isRecipient && (request.status === 'awaiting_confirm' || request.status === 'planning') ? (
-              <GameCTAButton
-                variant={request.persona === 'ciel' ? 'pink' : 'logoBlue'}
-                size="md"
-                icon="comment"
-                loading={working === 'press'}
-                onClick={() => handlePress()}
-              >
-                Open in {persona} chat
-              </GameCTAButton>
-            ) : isSender && request.status === 'sent' ? (
-              <GameCTAButton
-                variant="neutral"
-                size="md"
-                loading={working === 'cancel'}
-                onClick={handleCancel}
-              >
-                Take back
-              </GameCTAButton>
-            ) : null
-          }
+          actions={renderDmActions()}
         >
           <p className={taskClass}>{request.task}</p>
           {error ? <p className={errorClass}>{error}</p> : null}
@@ -330,183 +290,203 @@ export default function SponsoredHelpCard({
             </div>
           </div>
         ) : null}
-        {isWelcome && choosing && request.status === 'sent' && tour ? (
-          <div
-            className={makeBoxClass}
-            style={
-              {
-                '--guide': GUIDE_COLOR[request.persona],
-                '--guide-soft': GUIDE_SOFT[request.persona]
-              } as React.CSSProperties
-            }
-          >
-            <MakeChoice
-              tree={tour.tour.makeChoices}
-              free={tour.free.card}
-              working={working === 'press'}
-              onDone={({ idea }) => handlePress(idea)}
-              onCancel={() => setChoosing(false)}
-            />
-          </div>
-        ) : null}
         {error ? <p className={errorClass}>{error}</p> : null}
       </BuildMessageCard>
     </div>
   );
 
-  function renderAssistantActions() {
-    if (!isRecipient) return null;
-    if (request.status === 'awaiting_confirm' && !changing) {
-      return (
-        <>
-          {steps.length > 0 ? (
-            <GameCTAButton
-              variant={request.persona === 'ciel' ? 'pink' : 'logoBlue'}
-              size="md"
-              icon="check"
-              loading={working === 'confirm'}
-              onClick={handleConfirm}
-            >
-              Confirm
-            </GameCTAButton>
-          ) : null}
-          {(request.changesLeft || 0) > 0 ? (
-            <GameCTAButton variant="neutral" size="md" icon="pencil-alt" onClick={() => setChanging(true)}>
-              Change
-            </GameCTAButton>
-          ) : null}
-          <GameCTAButton
-            variant="neutral"
-            size="md"
-            loading={working === 'decline'}
-            onClick={handleDecline}
-          >
-            No thanks
-          </GameCTAButton>
-        </>
-      );
-    }
-    if (isWelcome && request.status === 'sent') {
-      if (choosing && tour) return null;
-      // The greeting's own button: first "What do you want to make?", then
-      // press plans right here in this card from their choice.
-      return (
-        <>
-          <GameCTAButton
-            variant={request.persona === 'ciel' ? 'pink' : 'logoBlue'}
-            size="md"
-            icon="wand-magic-sparkles"
-            loading={working === 'press'}
-            onClick={() => (tour ? setChoosing(true) : handlePress())}
-          >
-            {request.failureCode ? 'Try again' : 'Show me!'}
-          </GameCTAButton>
-          <GameCTAButton
-            variant="neutral"
-            size="md"
-            loading={working === 'decline'}
-            onClick={handleDecline}
-          >
-            Maybe later
-          </GameCTAButton>
-          {showsTour && tour ? (
-            // the card's own first build stays the primary here; the tour
-            // is a quiet link beside it
-            <button type="button" className={quietLinkClass} onClick={handleStartTour}>
-              Or take the tour first
-            </button>
-          ) : null}
-        </>
-      );
-    }
-    // The welcome card after its first build (or once it's closed): ONE
-    // primary, the whole guided tour (Mikey 11-26), which opens their new
-    // project live on its Lumine stop. Opening the project directly stays
-    // a small secondary link. The tour's own stop strip handles jumping.
-    if (showsTour && tour && !['sent', 'planning', 'asking', 'awaiting_confirm'].includes(request.status)) {
-      const button = welcomeTourButton({
-        guideName: persona,
-        stops: tour.tour.stops,
-        resumeKey: welcomeTourResumeKey(tourProgress || tour.state)
-      });
-      return (
-        <>
-          <GameCTAButton
-            variant={request.persona === 'ciel' ? 'pink' : 'logoBlue'}
-            size="md"
-            onClick={handleStartTour}
-          >
-            <span className={tourButtonInnerClass}>
-              <img src={GUIDE_PICTURE[request.persona]} alt="" />
-              {button.label}
-              {button.progress ? <small>{button.progress}</small> : null}
-            </span>
-          </GameCTAButton>
-          {cardProject ? (
-            <button type="button" className={quietLinkClass} onClick={handleOpenProject}>
-              Open “{cardProject.title}”
-            </button>
-          ) : request.status === 'completed' && result.path ? (
-            <button type="button" className={quietLinkClass} onClick={() => navigate(String(result.path))}>
-              {sponsoredHelpResultLabel(result)}
-            </button>
-          ) : null}
-        </>
-      );
-    }
-    if (request.status === 'sent' && request.failureCode) {
-      return (
-        <GameCTAButton
-          variant={request.persona === 'ciel' ? 'pink' : 'logoBlue'}
-          size="md"
-          icon="redo"
-          loading={working === 'press'}
-          onClick={() => handlePress()}
-        >
-          Try again
-        </GameCTAButton>
-      );
-    }
-    if (request.status === 'completed' && result.buildId) {
-      return (
-        <GameCTAButton
-          variant={request.persona === 'ciel' ? 'pink' : 'logoBlue'}
-          size="md"
-          icon="arrow-right"
-          onClick={() =>
-            navigate(`/build/${result.buildId}`, {
-              state: { initialPrompt: result.idea || '' }
-            })
+  // The one wand action model (components/SponsoredHelp/wandActions.ts): the
+  // server's definition for this card, or the card's own defaults on an
+  // older API. The welcome card's chapters are the tour's stops.
+  function actionModel() {
+    return resolveWandActions(request.actions, {
+      mainAction: {
+        label: isWelcome ? `Start the tour with ${persona}` : `Have ${persona} do this`,
+        runs: 'all'
+      },
+      ...(isWelcome && tour
+        ? {
+            chaptersTitle: `Take the tour with ${persona}:`,
+            chapters: tour.tour.stops.map((stop) => ({ id: stop.key, label: stop.title }))
           }
-        >
-          Open “{result.buildTitle}”
-        </GameCTAButton>
+        : {}),
+      backup: { label: isWelcome ? 'Maybe later' : 'No thanks', action: 'decline' }
+    });
+  }
+
+  function renderDmActions() {
+    const model = actionModel();
+    if (isRecipient && request.status === 'sent') {
+      return (
+        <WandActionBar
+          model={model}
+          variant={buttonVariant}
+          mainIcon="wand-magic-sparkles"
+          mainLoading={working === 'press'}
+          onMain={() => handlePress()}
+          onBackup={handleDecline}
+          backupLoading={working === 'decline'}
+        />
       );
     }
-    if (request.status === 'completed' && result.path) {
+    if (isRecipient && (request.status === 'awaiting_confirm' || request.status === 'planning')) {
       return (
-        <GameCTAButton
-          variant={request.persona === 'ciel' ? 'pink' : 'logoBlue'}
-          size="md"
-          icon="arrow-right"
-          onClick={() => navigate(String(result.path))}
-        >
-          {sponsoredHelpResultLabel(result)}
-        </GameCTAButton>
+        <WandActionBar
+          model={model}
+          variant={buttonVariant}
+          mainLabel={`Open in ${persona} chat`}
+          mainIcon="comment"
+          mainLoading={working === 'press'}
+          onMain={() => handlePress()}
+        />
+      );
+    }
+    if (isSender && request.status === 'sent') {
+      return (
+        <WandActionBar
+          model={model}
+          variant={buttonVariant}
+          extras={
+            <WandQuietButton loading={working === 'cancel'} onClick={handleCancel}>
+              Take back
+            </WandQuietButton>
+          }
+        />
       );
     }
     return null;
   }
 
-  function handleStartTour() {
-    startWelcomeTour({ guide: request.persona, source: 'card', project: cardProject });
+  function renderAssistantActions() {
+    if (!isRecipient) return null;
+    const model = actionModel();
+    if (request.status === 'awaiting_confirm' && !changing) {
+      // the plan's own confirmation: Confirm runs it, Change and No thanks
+      return (
+        <WandActionBar
+          model={model}
+          variant={buttonVariant}
+          mainLabel="Confirm"
+          mainIcon="check"
+          mainLoading={working === 'confirm'}
+          onMain={steps.length > 0 ? handleConfirm : undefined}
+          onBackup={handleDecline}
+          backupLoading={working === 'decline'}
+          extras={
+            (request.changesLeft || 0) > 0 ? (
+              <WandQuietButton onClick={() => setChanging(true)}>Change</WandQuietButton>
+            ) : null
+          }
+        />
+      );
+    }
+    // The welcome card (Mikey 11-26): the main button runs the whole tour in
+    // its order, its Lumine stop being the free first build ("What do you
+    // want to make?" then this card's plan) or, once made, their project;
+    // the chips start the tour at one stop; "Maybe later" while it waits.
+    if (showsTour && tour && !['planning', 'asking', 'awaiting_confirm'].includes(request.status)) {
+      const button = welcomeTourButton({
+        guideName: persona,
+        stops: tour.tour.stops,
+        resumeKey: welcomeTourResumeKey(tourResumeState())
+      });
+      return (
+        <WandActionBar
+          model={model}
+          variant={buttonVariant}
+          mainLabel={button.progress ? 'Continue the tour' : undefined}
+          mainProgress={button.progress}
+          mainPortrait={GUIDE_PICTURE[request.persona]}
+          onMain={() => handleStartTour()}
+          onChapter={(stopKey) => handleStartTour(stopKey)}
+          onBackup={request.status === 'sent' ? handleDecline : undefined}
+          backupLoading={working === 'decline'}
+          extras={
+            cardProject ? (
+              <WandQuietButton onClick={handleOpenProject}>Open “{cardProject.title}”</WandQuietButton>
+            ) : request.status === 'completed' && result.path ? (
+              <WandQuietButton onClick={() => navigate(String(result.path))}>
+                {sponsoredHelpResultLabel(result)}
+              </WandQuietButton>
+            ) : null
+          }
+        />
+      );
+    }
+    if (isWelcome && request.status === 'sent') {
+      // the tour isn't available: the card's own first build
+      return (
+        <WandActionBar
+          model={model}
+          variant={buttonVariant}
+          mainLabel={request.failureCode ? 'Try again' : 'Show me!'}
+          mainIcon="wand-magic-sparkles"
+          mainLoading={working === 'press'}
+          onMain={() => handlePress()}
+          onBackup={handleDecline}
+          backupLoading={working === 'decline'}
+        />
+      );
+    }
+    if (request.status === 'sent' && request.failureCode) {
+      return (
+        <WandActionBar
+          model={model}
+          variant={buttonVariant}
+          mainLabel="Try again"
+          mainIcon="redo"
+          mainLoading={working === 'press'}
+          onMain={() => handlePress()}
+        />
+      );
+    }
+    if (request.status === 'completed' && result.buildId) {
+      return (
+        <WandActionBar
+          model={model}
+          variant={buttonVariant}
+          mainLabel={`Open “${result.buildTitle}”`}
+          mainIcon="arrow-right"
+          onMain={() => openBuild(Number(result.buildId), result)}
+        />
+      );
+    }
+    if (request.status === 'completed' && result.path) {
+      return (
+        <WandActionBar
+          model={model}
+          variant={buttonVariant}
+          mainLabel={sponsoredHelpResultLabel(result)}
+          mainIcon="arrow-right"
+          onMain={() => navigate(String(result.path))}
+        />
+      );
+    }
+    return null;
+  }
+
+  // where the tour stands: the server's state, or this account's newer
+  // confirmed one from the running tour (never another account's)
+  function tourResumeState() {
+    return newerWelcomeTourState(tour?.state || null, tourProgress, myId);
+  }
+
+  function handleStartTour(stopKey?: string) {
+    startWelcomeTour({ guide: request.persona, source: 'card', stopKey, project: cardProject });
   }
 
   function handleOpenProject() {
     if (!cardProject) return;
-    navigate(`/build/${cardProject.buildId}`, {
-      state: { initialPrompt: cardProject.idea || '' }
-    });
+    openBuild(cardProject.buildId, result);
+  }
+
+  // Opening a project never starts a run the member didn't choose (review
+  // 11-26 P0): the idea goes along only while Twinkle's free first run on
+  // it is still the one that would start (lumineRunSponsored); the editor
+  // sends it only while the project has no chat yet.
+  function openBuild(buildId: number, from: SponsoredHelpView['result']) {
+    const initialPrompt = projectOpenPrompt(from);
+    navigate(`/build/${buildId}`, initialPrompt ? { state: { initialPrompt } } : undefined);
   }
 
   async function run(label: string, action: () => Promise<any>) {
@@ -534,7 +514,6 @@ export default function SponsoredHelpCard({
 
   async function handlePress(memberChoice?: string) {
     const data = await run('press', () => pressSponsoredHelp(request.id, memberChoice));
-    if (data) setChoosing(false);
     const pathId = Number(data?.request?.assistantPathId || request.assistantPathId || 0);
     if (data && variant === 'dm' && pathId) navigate(`/chat/${pathId}`);
   }
@@ -753,52 +732,3 @@ const startChipClass = css`
   white-space: nowrap;
 `;
 
-// "What do you want to make?" in the welcome tour's own dialogue look
-const makeBoxClass = css`
-  margin-top: 1rem;
-  padding: 1.2rem 1.4rem;
-  border-radius: 1.2rem;
-  background: #121833;
-  color: #f3f5ff;
-`;
-
-// the welcome card's tour button: the guide's portrait, the label, and how
-// far they got ("3 of 6") when they're partway through
-const tourButtonInnerClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  img {
-    width: 2.6rem;
-    height: 2.6rem;
-    margin: -0.3rem 0 -0.3rem -0.4rem;
-    border-radius: 50%;
-    object-fit: cover;
-    object-position: 50% 8%;
-    background: rgba(255, 255, 255, 0.25);
-    border: 2px solid rgba(255, 255, 255, 0.7);
-  }
-  small {
-    font-size: 0.85em;
-    font-weight: 700;
-    opacity: 0.85;
-  }
-`;
-
-// a quiet secondary action next to (or under) the card's one primary
-const quietLinkClass = css`
-  background: none;
-  border: none;
-  padding: 0.4rem 0.2rem;
-  cursor: pointer;
-  font-size: 1.35rem;
-  font-weight: 600;
-  color: ${Color.darkerGray()};
-  text-decoration: underline;
-  text-decoration-color: ${Color.borderGray()};
-  text-underline-offset: 0.3rem;
-  &:hover {
-    color: ${Color.logoBlue()};
-    text-decoration-color: currentColor;
-  }
-`;

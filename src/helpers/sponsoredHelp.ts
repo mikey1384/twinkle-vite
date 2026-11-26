@@ -1,3 +1,4 @@
+import type { WandActionModel } from '../components/SponsoredHelp/wandActions';
 // Sponsored Zero/Ciel help requests (SponsoredHelpCard.tsx,
 // SponsoredHelpModal.tsx). Kept free of app imports so node tests can load
 // it. The view is the server's (twinkle-api helpers/sponsoredHelp/service.ts
@@ -57,6 +58,8 @@ export interface SponsoredHelpView {
   };
   failureCode?: string | null;
   assistantPathId?: number;
+  // the card's actions (twinkle-api helpers/sponsoredHelp/wandActions.ts)
+  actions?: Partial<WandActionModel>;
 }
 
 export const SPONSORED_HELP_ROOT_TYPE = 'sponsoredHelp';
@@ -226,6 +229,7 @@ export interface SponsoredHelpCardView {
   viewer: 'recipient' | 'sender' | 'bystander';
   // on a secret post this viewer hasn't unlocked: no text, plans or amounts
   locked?: boolean;
+  actions?: Partial<WandActionModel>;
 }
 
 export interface SponsoredHelpPreview {
@@ -497,6 +501,7 @@ export interface OpenWandCardView {
   published?: boolean;
   sponsoredUsed?: number;
   spentPercent?: number;
+  actions?: Partial<WandActionModel>;
 }
 
 // Mikey 11-26: "for this promotion i will sponsor up to 10"; 0 is allowed
