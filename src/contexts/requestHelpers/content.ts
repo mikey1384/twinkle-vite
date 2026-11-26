@@ -3614,6 +3614,23 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // The owner deletes an image from My Images (also from its Picture Day
+    // when it is one of those pictures)
+    async deleteAIImageHistoryItem(id: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/content/image/ai/history/${id}`,
+          auth()
+        );
+        return data as {
+          success: boolean;
+          id: number;
+          pictureDays: Array<{ questionId: number; picturePath: string }>;
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadAIImageHistoryItem(id: number) {
       try {
         const { data } = await request.get(

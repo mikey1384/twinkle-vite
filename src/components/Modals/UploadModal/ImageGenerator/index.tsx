@@ -263,6 +263,9 @@ export default function ImageGenerator({
   const loadAIImageHistoryImage = useAppContext(
     (v) => v.requestHelpers.loadAIImageHistoryImage
   );
+  const deleteAIImageHistoryItem = useAppContext(
+    (v) => v.requestHelpers.deleteAIImageHistoryItem
+  );
 
   const updateImageGenerationSettings = useAppContext(
     (v) => v.requestHelpers.updateImageGenerationSettings
@@ -922,6 +925,7 @@ export default function ImageGenerator({
           }
           onSelect={handleSelectHistoryImage}
           onLoadFullImage={loadHistoryImageUrl}
+          onDelete={handleDeleteHistoryImage}
         />
       )}
 
@@ -1600,6 +1604,25 @@ export default function ImageGenerator({
       setError("Couldn't open that image. Please try again.");
     } finally {
       setHistorySelectingId(null);
+    }
+  }
+
+  // Deleted on the server first (also from its Picture Day); the list then
+  // drops it.
+  async function handleDeleteHistoryImage(
+    image: AIImageHistoryItem
+  ): Promise<string | null> {
+    try {
+      const result = await deleteAIImageHistoryItem(image.id);
+      if (!result?.success) {
+        return "Couldn't delete this image. Please try again.";
+      }
+      setHistoryImages((current) =>
+        current.filter((item) => item.id !== image.id)
+      );
+      return null;
+    } catch (error: any) {
+      return error?.message || "Couldn't delete this image. Please try again.";
     }
   }
 

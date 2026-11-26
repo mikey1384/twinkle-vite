@@ -544,6 +544,7 @@ registerMethods('content', [
   'loadAIImageResult',
   'loadAIImageHistory',
   'loadAIImageHistoryItem',
+  'deleteAIImageHistoryItem',
   'loadAIImageHistoryImage',
   'loadAIImageCollections',
   'createAIImageCollection',
