@@ -116,7 +116,10 @@ export default function OpenWandCard({
   const themeName = card.persona === 'ciel' ? 'pink' : 'logoBlue';
   const buttonVariant = card.persona === 'ciel' ? 'pink' : 'logoBlue';
   const viewer = asReader ? 'member' : card.viewer;
-  const mine = asReader ? null : card.mine;
+  // the reader's own press; one whose start never got going (no chat yet)
+  // shows the normal button again, and pressing resumes that same press
+  const mine =
+    asReader || !card.mine || (card.mine.status === 'sent' && !card.mine.assistantPathId) ? null : card.mine;
   // the composer's preview: what a reader sees (a domain card is drawn as
   // for a reader who can use it)
   const state =
@@ -186,7 +189,7 @@ export default function OpenWandCard({
       if (state === 'closed') return `You closed this card. ${used}${spent}`;
       if (card!.published === false) return 'Only you can see this card until you post it.';
       if (card!.sponsorCap <= 0) return `People use it with their own AI Energy. ${used}`;
-      return `The first ${card!.sponsorCap} people who press it use up to ${card!.perPersonPercent}% of your AI Energy each; after that, people use their own. ${used}${spent}`;
+      return `The first ${card!.sponsorCap} people who press it use up to ${card!.perPersonPercent}% of your AI Energy each; a spot is used once ${persona} makes someone a plan, even if they then say No thanks. After that, people use their own. ${used}${spent}`;
     }
     if (mine) {
       if (mine.status === 'completed') return `${persona} helped you with this.`;
