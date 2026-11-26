@@ -3314,11 +3314,17 @@ export default function buildRequestHelpers({
       questions,
       images,
       runtimeRelease,
-      appMcpInvocation
+      appMcpInvocation,
+      guest = false,
+      guestSessionId
     }: {
       buildId: number;
       state: unknown;
       questions: Record<string, unknown>;
+      // a guest on a published public app: the public decision route (no
+      // account; counted per address on the server), never with images
+      guest?: boolean;
+      guestSessionId?: string;
       // Twinkle.ai.decide with images (preview): already serialized by the host
       images?: Record<string, unknown>;
       runtimeRelease?: { source: 'published' | 'workspace'; artifactVersionId: number | null };
@@ -3326,9 +3332,11 @@ export default function buildRequestHelpers({
     }) {
       try {
         const { data } = await request.post(
-          `${URL}/build/${buildId}/runtime-ai-decision`,
-          { state, questions, ...(images ? { images } : {}), runtimeRelease, ...appMcpInvocation },
-          auth()
+          `${URL}/build/${buildId}/${guest ? 'public-ai-decision' : 'runtime-ai-decision'}`,
+          guest
+            ? { state, questions, guestSessionId, runtimeRelease }
+            : { state, questions, ...(images ? { images } : {}), runtimeRelease, ...appMcpInvocation },
+          guest ? undefined : auth()
         );
         return data;
       } catch (error: any) {

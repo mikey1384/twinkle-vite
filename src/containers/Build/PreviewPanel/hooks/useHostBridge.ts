@@ -2975,7 +2975,13 @@ export function useHostBridge({
 
           case 'ai:decide':
           case 'ai:decide-images': {
-            if (!previewAuth.userIdRef.current) {
+            // A JEV decision is game logic, not an AI feature (Mikey
+            // 2026-11-26): a guest on a published public app decides too,
+            // through the public route (no account, no AI banner). Decisions
+            // that look at pictures stay a member feature.
+            const guestDecision =
+              type === 'ai:decide' && isGuestViewerActive(previewAuth);
+            if (!previewAuth.userIdRef.current && !guestDecision) {
               triggerGuestRestriction(previewAuth);
             }
             // Preview: pictures arrive as upload URLs or Blob snapshots and
@@ -2989,6 +2995,12 @@ export function useHostBridge({
               buildId: activeBuild.id,
               state: payload.state,
               questions: payload.questions,
+              ...(guestDecision
+                ? {
+                    guest: true,
+                    guestSessionId: ensureGuestSessionId(previewAuth)
+                  }
+                : {}),
               ...(decisionImages ? { images: decisionImages } : {}),
               runtimeRelease: getAppInfoRelease({
                 runtimeOnly: runtimeOnlyRef.current,
