@@ -1021,6 +1021,11 @@ const bubbleClass = css`
   max-width: 440px;
 `;
 const titleClass = css`
+  /* focused by code when a screen opens (the start point for keyboards
+     and screen readers), not a control: no focus ring */
+  &:focus {
+    outline: none;
+  }
   margin: 0 0 8px;
   font-size: 30px;
   line-height: 1.18;

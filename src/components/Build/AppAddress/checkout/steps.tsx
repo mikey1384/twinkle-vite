@@ -1571,6 +1571,11 @@ const celebrateSceneClass = css`
   }
 `;
 const liveTitleClass = css`
+  /* focused by code when a screen opens (the start point for keyboards
+     and screen readers), not a control: no focus ring */
+  &:focus {
+    outline: none;
+  }
   margin: 4px 0 12px;
   font-size: 30px;
   line-height: 1.2;
