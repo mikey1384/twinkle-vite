@@ -16,8 +16,10 @@ import {
 import {
   T,
   CheckIcon,
+  CHECKOUT_TITLE_ID,
   CheckoutLayout,
   Companion,
+  focusFirstInvalid,
   CountrySelect,
   FieldGrid,
   MobileSummary,
@@ -260,12 +262,20 @@ export function FindView({
       </form>
       {ideas.length === 0 && !loading && <p className={mutedTextClass}>{t.noResults}</p>}
       {ideas.length > 0 && (
-        <div role="radiogroup" aria-label={t.findTitle} className={resultsClass} aria-busy={loading || undefined}>
+        <div role="radiogroup" aria-labelledby={CHECKOUT_TITLE_ID} className={resultsClass} aria-busy={loading || undefined}>
           {ideas.map((idea, index) => {
             const on = selected?.domain === idea.domain;
             return (
               <div key={idea.domain} className={resultClass} data-on={on || undefined}>
-                <button type="button" role="radio" aria-checked={on} className={resultButtonClass} onClick={() => setPicked(idea.domain)}>
+                <label className={resultButtonClass}>
+                  <input
+                    type="radio"
+                    name="checkout-pick"
+                    value={idea.domain}
+                    checked={on}
+                    onChange={() => setPicked(idea.domain)}
+                    className={radioInputClass}
+                  />
                   <span className={radioClass} aria-hidden="true">
                     {on ? <CheckIcon size={14} color="#fff" /> : null}
                   </span>
@@ -282,7 +292,7 @@ export function FindView({
                     <b>{usd(idea.priceCents)}</b>
                     <small>{idea.approxKrw ? t.approxKrw(krw(idea.approxKrw)) : t.perYearShort}</small>
                   </span>
-                </button>
+                </label>
                 {on && (
                   <div className={resultRevealClass}>
                     <Reveal label={t.whatsInPrice} defaultOpen={openBreakdownFor === idea.domain}>
@@ -388,6 +398,7 @@ export function OwnerDetailsView({
   function next() {
     if (!pageValid(page)) {
       setChecked((prev) => ({ ...prev, [page]: true }));
+      focusFirstInvalid();
       return;
     }
     setPage((page + 1) as OwnerPage);
@@ -456,7 +467,7 @@ export function OwnerDetailsView({
           <FieldGrid>
             <div data-span="2" className={countryFieldClass}>
               <span>{t.country}</span>
-              <CountrySelect value={details.country} onChange={set('country')} label={t.country} otherLabel={t.countryOther} className={selectClass} />
+              <CountrySelect value={details.country} onChange={set('country')} label={t.country} otherLabel={t.countryOther} className={selectClass} error={errors.country} />
             </div>
             <div data-span="2">
               <TextField label={t.address1} value={details.address1} onChange={set('address1')} autoComplete="street-address" error={errors.address1} />
@@ -643,7 +654,10 @@ export function GoingLiveView({
         <div className={stageSceneClass}>
           <LumineAtWork variant="toast" mode="working" />
         </div>
-        <ol className={liveStepsClass} aria-label={t.settingUpTitle(domain)}>
+        <p className={srOnlyClass} role="status">
+          {steps[Math.min(reached, steps.length - 1)]}
+        </p>
+        <ol className={liveStepsClass} aria-label={title || t.settingUpTitle(domain)}>
           {steps.map((label, index) => {
             const state = index < reached ? 'done' : index === reached ? 'current' : 'todo';
             return (
@@ -695,7 +709,9 @@ export function LiveView({
           <LumineAtWork variant="toast" mode="idle" startPose="celebrate" />
         </div>
         <Companion assistant={assistant ?? null}>{t.tipLive}</Companion>
-        <h1 className={liveTitleClass}>{t.liveCaption(domain)}</h1>
+        <h1 id={CHECKOUT_TITLE_ID} tabIndex={-1} className={liveTitleClass}>
+          {t.liveCaption(domain)}
+        </h1>
         <p className={bodyTextClass} style={{ textAlign: 'center' }}>
           {t.liveBody}
         </p>
@@ -1131,6 +1147,7 @@ const resultClass = css`
   }
 `;
 const resultButtonClass = css`
+  position: relative;
   width: 100%;
   min-height: 64px;
   display: flex;
@@ -1148,6 +1165,24 @@ const resultButtonClass = css`
     outline: 3px solid rgba(47, 123, 224, 0.35);
     outline-offset: 2px;
   }
+`;
+const radioInputClass = css`
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  &:focus-visible + span {
+    outline: 3px solid rgba(47, 123, 224, 0.35);
+    outline-offset: 2px;
+  }
+`;
+const srOnlyClass = css`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 `;
 const radioClass = css`
   flex: none;

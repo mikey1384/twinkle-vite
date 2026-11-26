@@ -37,6 +37,14 @@ export const T = {
 };
 
 const PHONE = '(max-width: 759px)';
+// the visible step's heading, which names the dialog
+export const CHECKOUT_TITLE_ID = 'app-address-checkout-title';
+// the first field that needs fixing, after Next found a problem
+export function focusFirstInvalid() {
+  window.requestAnimationFrame(() => {
+    document.querySelector<HTMLElement>('[data-checkout-surface] [aria-invalid="true"]')?.focus();
+  });
+}
 const WIDE = '(min-width: 900px)';
 
 // ---------------------------------------------------------------- icons
@@ -124,6 +132,7 @@ export function CheckoutSurface({
   children: React.ReactNode;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [opener] = useState(() => (typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null)));
   useLayoutEffect(() => {
     if (variant !== 'overlay' || typeof document === 'undefined') return;
     return lockBodyScroll(document.body);
@@ -149,8 +158,7 @@ export function CheckoutSurface({
   // or the chip itself after a deep link) on close.
   useEffect(() => {
     if (variant !== 'overlay') return;
-    const opener = document.activeElement as HTMLElement | null;
-    scrollRef.current?.focus({ preventScroll: true });
+    if (!scrollRef.current?.contains(document.activeElement)) scrollRef.current?.focus({ preventScroll: true });
     return () => {
       const target =
         opener && opener.isConnected && opener !== document.body
@@ -158,6 +166,8 @@ export function CheckoutSurface({
           : document.querySelector<HTMLElement>('[data-header-chip="address"]');
       target?.focus({ preventScroll: true });
     };
+    // the opener is fixed at first render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant]);
   const content = (
     <div
@@ -165,7 +175,8 @@ export function CheckoutSurface({
       tabIndex={-1}
       role={variant === 'overlay' ? 'dialog' : undefined}
       aria-modal={variant === 'overlay' ? true : undefined}
-      aria-label={label}
+      aria-label={variant === 'overlay' ? undefined : label}
+      aria-labelledby={variant === 'overlay' ? CHECKOUT_TITLE_ID : undefined}
       className={cx(surfaceClass, variant === 'overlay' && overlayClass)}
       data-checkout-surface=""
     >
@@ -227,11 +238,17 @@ export function CheckoutLayout({
   wide?: boolean;
 }) {
   const hasAside = Boolean(aside) && !wide;
+  // Each new screen starts at its heading (keyboard and screen readers)
+  const cardRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const heading = cardRef.current?.querySelector<HTMLElement>(`#${CHECKOUT_TITLE_ID}`);
+    heading?.focus({ preventScroll: false });
+  }, [stepKey]);
   return (
     <div className={cx(layoutClass, hasAside && layoutWithAsideClass)}>
       {progress && <ProgressBar progress={progress} />}
       {mobileSummary && hasAside && <div className={mobileSummaryWrapClass}>{mobileSummary}</div>}
-      <main className={cardClass}>
+      <main ref={cardRef} className={cardClass}>
         <div key={stepKey} className={stepEnterClass}>
           {error ? (
             <div className={layoutErrorClass}>
@@ -292,7 +309,9 @@ export function Companion({ assistant, children }: { assistant: 'Zero' | 'Ciel' 
 export function StepTitle({ children, lead }: { children: React.ReactNode; lead?: React.ReactNode }) {
   return (
     <>
-      <h1 className={titleClass}>{children}</h1>
+      <h1 id={CHECKOUT_TITLE_ID} tabIndex={-1} className={titleClass}>
+        {children}
+      </h1>
       {lead ? <p className={leadClass}>{lead}</p> : null}
     </>
   );
@@ -365,7 +384,7 @@ export function MobileSummary({ domain, price, children }: { domain: string; pri
         {children ? <ChevronIcon open={open} /> : null}
       </button>
       {children ? (
-        <div id={id} className={revealBodyClass} data-open={open || undefined}>
+        <div id={id} className={revealBodyClass} data-reveal-body="" data-open={open || undefined} inert={!open}>
           <div>
             <div className={mobileSummaryBodyClass}>{children}</div>
           </div>
@@ -384,7 +403,7 @@ export function Reveal({ label, children, defaultOpen = false }: { label: string
         {label}
         <ChevronIcon open={open} />
       </button>
-      <div id={id} className={revealBodyClass} data-open={open || undefined}>
+      <div id={id} className={revealBodyClass} data-reveal-body="" data-open={open || undefined} inert={!open}>
         <div>
           <div className={revealInnerClass}>{children}</div>
         </div>
@@ -579,21 +598,26 @@ export function CountrySelect({
   onChange,
   label,
   otherLabel = 'Other (type the 2-letter code)',
-  className
+  className,
+  error
 }: {
   value: string;
   onChange: (country: string) => void;
   label: string;
   otherLabel?: string;
   className?: string;
+  error?: string;
 }) {
+  const errorId = useId();
   const known = COUNTRIES.some(([code]) => code === value.toUpperCase());
   const [other, setOther] = useState(!known && value !== '');
   return (
-    <div style={{ display: 'flex', gap: '8px', minWidth: 0 }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', minWidth: 0 }}>
       <select
         className={className || selectClass}
         aria-label={label}
+        aria-invalid={error && !other ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         value={other ? 'OTHER' : value.toUpperCase()}
         onChange={(event) => {
           if (event.target.value === 'OTHER') {
@@ -617,6 +641,8 @@ export function CountrySelect({
         <input
           className={className || inputClass}
           aria-label={otherLabel}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           value={value}
           maxLength={2}
           placeholder="FR"
@@ -624,6 +650,11 @@ export function CountrySelect({
           style={{ width: '84px', flex: 'none', textTransform: 'uppercase' }}
         />
       )}
+      {error ? (
+        <span id={errorId} className={fieldErrorClass} role="alert" style={{ flexBasis: '100%' }}>
+          {error}
+        </span>
+      ) : null}
     </div>
   );
 }

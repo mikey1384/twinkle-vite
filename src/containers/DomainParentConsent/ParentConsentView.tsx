@@ -21,6 +21,7 @@ import {
   StepTitle,
   SummaryCard,
   TextField,
+  focusFirstInvalid,
   selectClass,
   textButtonClass
 } from '~/components/Build/AppAddress/checkout/ui';
@@ -155,6 +156,7 @@ export default function ParentConsentView({
   function next() {
     if (!valid(page)) {
       setChecked((prev) => ({ ...prev, [page]: true }));
+      focusFirstInvalid();
       return;
     }
     setPage((page + 1) as Page);
@@ -278,7 +280,7 @@ export default function ParentConsentView({
             <FieldGrid>
               <div data-span="2" className={countryFieldClass}>
                 <span>{main.country}</span>
-                <CountrySelect value={registrant.country} onChange={set('country')} label={main.country} className={selectClass} />
+                <CountrySelect value={registrant.country} onChange={set('country')} label={main.country} className={selectClass} error={errors.country} />
               </div>
               <div data-span="2">
                 <TextField label={main.address} value={registrant.address1} onChange={set('address1')} autoComplete="street-address" error={errors.address1} />
