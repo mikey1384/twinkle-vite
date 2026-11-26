@@ -9,7 +9,7 @@ test('after Stripe, the going-live and live screens carry the order’s own pric
   // payment confirming, setting up and live all pass the server-recorded price
   assert.match(steps, /title=\{t\.paymentCheckingTitle\}[\s\S]{0,120}priceCents=\{order\.priceCents\}/);
   assert.match(steps, /domain=\{order\.domain\}\s+priceCents=\{order\.priceCents\}\s+reached=/);
-  assert.match(steps, /<LiveView t=\{t\} assistant=\{assistant\} domain=\{order\.domain\} priceCents=\{order\.priceCents\}/);
+  assert.match(steps, /<LiveView\s+t=\{t\}\s+assistant=\{assistant\}\s+domain=\{order\.domain\}\s+priceCents=\{order\.priceCents\}/);
   // and the receipt is the summary beside them
   assert.match(steps, /aside=\{priceCents \? <ReceiptSummary/);
 });

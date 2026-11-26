@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css, keyframes } from '@emotion/css';
 import LumineAtWork from '~/containers/Build/PreviewPanel/LumineAtWork';
 import Confetti from '~/containers/Build/Editor/ChatPanel/Roadmap/Confetti';
@@ -9,6 +9,7 @@ import {
   usd,
   krw,
   ownerDetailsProblem,
+  shouldAutoVerifyCode,
   type DnsRecordView,
   type DomainIdeaView,
   type DomainOrderView,
@@ -422,9 +423,24 @@ export function OwnerDetailsView({
   const [page, setPage] = useState<OwnerPage>(startPage);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const [code, setCode] = useState('');
+  const lastSubmittedCodeRef = useRef('');
+  const normalizedEmail = details.email.trim().toLowerCase();
+  const prevEmailRef = useRef(normalizedEmail);
   const emailVerified = !emailCheck || emailCheck.verified;
   const emailFormatOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim());
-  const codeSent = Boolean(emailCheck?.sentTo) && emailCheck?.sentTo === details.email.trim().toLowerCase();
+  const codeSent = Boolean(emailCheck?.sentTo) && emailCheck?.sentTo === normalizedEmail;
+  useEffect(() => {
+    if (prevEmailRef.current === normalizedEmail) return;
+    prevEmailRef.current = normalizedEmail;
+    setCode('');
+    lastSubmittedCodeRef.current = '';
+  }, [normalizedEmail]);
+  useEffect(() => {
+    if (!codeSent) {
+      setCode('');
+      lastSubmittedCodeRef.current = '';
+    }
+  }, [codeSent]);
   const set = (key: keyof OwnerDetails) => (value: string) => onDetails({ ...details, [key]: value });
   const required = (key: keyof OwnerDetails) => (details[key].trim() ? '' : t.fieldRequired);
   const pageErrors: Record<OwnerPage, Partial<Record<keyof OwnerDetails, string>>> = {
@@ -449,8 +465,17 @@ export function OwnerDetailsView({
   const canPay = !missing && agreed && !busy && emailVerified;
 
   function next() {
-    // Enter in the code box confirms the code
-    if (page === 1 && emailCheck && !emailCheck.verified && codeSent && code.length === 6) {
+    // Enter in the code box confirms a new 6-digit code, but never re-submits one that already failed
+    if (
+      page === 1 &&
+      emailCheck &&
+      !emailCheck.verified &&
+      codeSent &&
+      code.length === 6 &&
+      !emailCheck.verifying &&
+      code !== lastSubmittedCodeRef.current
+    ) {
+      lastSubmittedCodeRef.current = code;
       emailCheck.onVerify(code);
       return;
     }
@@ -528,17 +553,31 @@ export function OwnerDetailsView({
                         placeholder="123456"
                         onChange={(value) => {
                           const digits = value.replace(/\D/g, '').slice(0, 6);
+                          if (digits === code) return;
                           setCode(digits);
-                          if (digits.length === 6 && !emailCheck.verifying) emailCheck.onVerify(digits);
+                          if (shouldAutoVerifyCode(digits, code, lastSubmittedCodeRef.current, emailCheck.verifying)) {
+                            lastSubmittedCodeRef.current = digits;
+                            emailCheck.onVerify(digits);
+                          }
                         }}
                       />
-                      <PrimaryButton busy={emailCheck.verifying} disabled={code.length !== 6} onClick={() => emailCheck.onVerify(code)}>
+                      <PrimaryButton
+                        busy={emailCheck.verifying}
+                        disabled={code.length !== 6}
+                        onClick={() => {
+                          if (emailCheck.verifying || code.length !== 6) return;
+                          lastSubmittedCodeRef.current = code;
+                          emailCheck.onVerify(code);
+                        }}
+                      >
                         {t.confirmCode}
                       </PrimaryButton>
                     </div>
                     <TextButton
                       onClick={() => {
+                        if (emailCheck.sending) return;
                         setCode('');
+                        lastSubmittedCodeRef.current = '';
                         emailCheck.onSend();
                       }}
                     >
@@ -556,7 +595,7 @@ export function OwnerDetailsView({
                   </div>
                 )
               ) : null}
-              {emailCheck?.problem ? <Notice tone="error">{emailCheck.problem}</Notice> : null}
+              {emailCheck?.problem && !emailCheck.verified ? <Notice tone="error">{emailCheck.problem}</Notice> : null}
             </div>
             <PhoneField
               label={t.phone}
@@ -1210,14 +1249,25 @@ const codeBoxClass = css`
 `;
 const codeRowClass = css`
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 10px;
   > :first-child {
-    flex: 1;
+    flex: 1 1 180px;
     min-width: 0;
   }
   > button {
     flex: none;
+  }
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+    > :first-child {
+      flex: none;
+    }
+    > button {
+      width: 100%;
+    }
   }
 `;
 const stackClass = css`

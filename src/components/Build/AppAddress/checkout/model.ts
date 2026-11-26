@@ -77,3 +77,19 @@ export function progressFraction(progress: DomainProgressView) {
   const current = progress.steps.some((step) => step.state === 'current') ? 0.5 : 0;
   return Math.min(1, (done + current) / progress.steps.length);
 }
+
+// Auto-submit a 6-digit email confirmation code only when the user actually
+// changed the code to a new 6-digit value that hasn't already been submitted.
+export function shouldAutoVerifyCode(
+  nextDigits: string,
+  prevCode: string,
+  lastSubmittedCode: string,
+  verifying: boolean
+) {
+  return (
+    !verifying &&
+    nextDigits.length === 6 &&
+    nextDigits !== prevCode &&
+    nextDigits !== lastSubmittedCode
+  );
+}

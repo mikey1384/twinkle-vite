@@ -9,7 +9,12 @@ import { guessCountry } from './checkout/countries';
 import type { PhoneDraft } from './checkout/phone';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
-import { refreshDomainProgress, useDomainProgress } from './useDomainProgress';
+import {
+  refreshDomainProgress,
+  setDomainProgressAllowed,
+  useDomainProgress,
+  useDomainProgressAllowed
+} from './useDomainProgress';
 import { ChipProgressLabel, ProgressNotice, progressMenuItems, progressShowing, useResendVerification } from './checkout/progress';
 import {
   AddressMenuView,
@@ -187,7 +192,12 @@ export default function AppAddress({
   const assistant = useUserAssistant(userId);
   const t = ADDRESS_TEXT[pageLang()];
   // the purchase tracker (shared with the Build header's notice)
-  const progress = useDomainProgress(buildId, isOwner && Boolean(info?.enabled && info?.domainSalesEnabled));
+  const domainProgressAllowed = Boolean(info?.enabled && info?.url && info?.domainSalesEnabled);
+  useEffect(() => {
+    setDomainProgressAllowed(buildId, domainProgressAllowed);
+    return () => setDomainProgressAllowed(buildId, false);
+  }, [buildId, domainProgressAllowed]);
+  const progress = useDomainProgress(buildId, isOwner && domainProgressAllowed);
   const resend = useResendVerification(t, buildId, progress);
   // the header notice's "See progress" opens the order screen here
   useEffect(() => {
@@ -327,6 +337,8 @@ export default function AppAddress({
     let cancelled = false;
     let timer = 0;
     let failures = 0;
+    let lastStatus = '';
+    let lastStage = '';
     async function poll() {
       try {
         const data = await loadDomainOrder({ buildId, orderId });
@@ -334,10 +346,11 @@ export default function AppAddress({
         if (!data?.order) throw new Error(t.orderLookupBody);
         failures = 0;
         setOrderLookupError('');
-        setOrder((prev: DomainOrderView | null) => {
-          if (!prev || prev.status !== data.order.status || prev.stage !== data.order.stage) refreshDomainProgress(buildId);
-          return data.order;
-        });
+        const changed = !lastStatus || lastStatus !== data.order.status || lastStage !== data.order.stage;
+        lastStatus = data.order.status;
+        lastStage = data.order.stage;
+        setOrder(data.order);
+        if (changed) refreshDomainProgress(buildId);
         if (data.order.stage === 'live') {
           const fresh = await loadAppAddress({ buildId }).catch(() => null);
           if (!cancelled && fresh) setInfo(fresh);
@@ -402,10 +415,12 @@ export default function AppAddress({
       setOwnerProblem(t.whyOther(idea.domain));
     } catch (e: any) {
       if (!request.current()) return;
-      // the code's token expired (an hour): confirm again
+      // the code's token expired (or account email is no longer verified): confirm again
       if (e?.code === 'email_unverified') {
+        setAccountEmail(null);
         setEmailToken(null);
         setCodeSentTo('');
+        setCodeProblem('');
       }
       setOwnerProblem(e?.message || '');
     } finally {
@@ -415,6 +430,45 @@ export default function AppAddress({
   }
 
   const ownerEmail = owner.email.trim().toLowerCase();
+  const ownerEmailRef = useRef(ownerEmail);
+  ownerEmailRef.current = ownerEmail;
+  const emailFlowGenRef = useRef(0);
+  const codeSendInFlightRef = useRef<number | null>(null);
+  const codeVerifyInFlightRef = useRef<number | null>(null);
+  const prevOwnerEmailRef = useRef(ownerEmail);
+  useEffect(() => {
+    if (prevOwnerEmailRef.current === ownerEmail) return;
+    prevOwnerEmailRef.current = ownerEmail;
+    emailFlowGenRef.current += 1;
+    codeSendInFlightRef.current = null;
+    codeVerifyInFlightRef.current = null;
+    setCodeSending(false);
+    setCodeVerifying(false);
+    setCodeProblem('');
+  }, [ownerEmail]);
+
+  const prevUserIdRef = useRef(userId);
+  useEffect(() => {
+    if (prevUserIdRef.current === userId) return;
+    prevUserIdRef.current = userId;
+    emailFlowGenRef.current += 1;
+    codeSendInFlightRef.current = null;
+    codeVerifyInFlightRef.current = null;
+    setAccountEmail(undefined);
+    setEmailToken(null);
+    setCodeSentTo('');
+    setCodeSending(false);
+    setCodeVerifying(false);
+    setCodeProblem('');
+    setPurchase(null);
+    const country = guessCountry();
+    setOwner(emptyOwnerDetails(country));
+    setOwnerPhone({ country, national: '' });
+    setOwnerAgreed(false);
+    setOwnerProblem('');
+    setOrder(null);
+  }, [userId]);
+
   const emailCheck: EmailCheck = {
     verified: Boolean(ownerEmail) && (ownerEmail === accountEmail || emailToken?.email === ownerEmail),
     sentTo: codeSentTo,
@@ -422,41 +476,53 @@ export default function AppAddress({
     verifying: codeVerifying,
     problem: codeProblem,
     async onSend() {
-      if (codeSending) return;
-      const email = ownerEmail;
+      const gen = emailFlowGenRef.current;
+      if (codeSendInFlightRef.current === gen) return;
+      codeSendInFlightRef.current = gen;
+      const email = ownerEmailRef.current;
       setCodeSending(true);
       setCodeProblem('');
       try {
         const result = await requestPurchaseEmailCode({ email });
+        if (emailFlowGenRef.current !== gen) return;
         if (result?.status === 'already_verified') setAccountEmail(email);
         else setCodeSentTo(email);
       } catch (e: any) {
+        if (emailFlowGenRef.current !== gen) return;
         setCodeProblem(e?.message || '');
       } finally {
-        setCodeSending(false);
+        if (codeSendInFlightRef.current === gen) codeSendInFlightRef.current = null;
+        if (emailFlowGenRef.current === gen) setCodeSending(false);
       }
     },
     async onVerify(code: string) {
-      if (codeVerifying) return;
-      const email = ownerEmail;
+      const gen = emailFlowGenRef.current;
+      if (codeVerifyInFlightRef.current === gen) return;
+      codeVerifyInFlightRef.current = gen;
+      const email = ownerEmailRef.current;
       setCodeVerifying(true);
       setCodeProblem('');
       try {
         const result = await verifyPurchaseEmailCode({ email, code });
+        if (emailFlowGenRef.current !== gen) return;
         if (result?.token) setEmailToken({ email, token: result.token });
       } catch (e: any) {
+        if (emailFlowGenRef.current !== gen) return;
         setCodeProblem(e?.message || '');
         if (e?.code === 'code_expired' || e?.code === 'code_attempts') setCodeSentTo('');
       } finally {
-        setCodeVerifying(false);
+        if (codeVerifyInFlightRef.current === gen) codeVerifyInFlightRef.current = null;
+        if (emailFlowGenRef.current === gen) setCodeVerifying(false);
       }
     }
   };
 
   // The verified Twinkle email, once, when the owner's steps open: it
-  // prefills an empty email box (never over what was typed).
+  // prefills an empty email box (never over what was typed). Transient
+  // failures leave accountEmail undefined so reopening retries.
+  const needsAccountEmail = accountEmail === undefined;
   useEffect(() => {
-    if (step?.kind !== 'owner' || accountEmail !== undefined) return;
+    if (step?.kind !== 'owner' || !needsAccountEmail) return;
     let cancelled = false;
     loadPurchaseAccountEmail()
       .then((data: any) => {
@@ -465,12 +531,12 @@ export default function AppAddress({
         setAccountEmail(email);
         if (email) setOwner((prev) => (prev.email.trim() ? prev : { ...prev, email }));
       })
-      .catch(() => !cancelled && setAccountEmail(null));
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step?.kind]);
+  }, [step?.kind, userId, needsAccountEmail]);
 
   // Close once, however many times it's asked: on the checkout's own entry
   // that's one step back (the reconcile effect below then closes it).
@@ -527,6 +593,7 @@ export default function AppAddress({
       setInfo({ enabled: false });
       return;
     }
+    setInfo(null);
     loadAppAddress({ buildId })
       .then((data: AddressInfo) => {
         if (data && data.enabled === false) hostingKnownOff = true;
@@ -537,7 +604,7 @@ export default function AppAddress({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildId]);
+  }, [buildId, userId]);
 
   async function loadIdeas({ more = false, hint = '' } = {}) {
     setLoading(true);
@@ -1005,9 +1072,10 @@ export default function AppAddress({
 // order screen through the chip's AppAddress.
 const OPEN_PROGRESS_EVENT = 'app-address:open-progress';
 export function AppAddressProgressNotice({ buildId, isOwner }: { buildId: number; isOwner: boolean }) {
-  const progress = useDomainProgress(buildId, isOwner);
+  const allowed = useDomainProgressAllowed(buildId);
+  const progress = useDomainProgress(buildId, isOwner && allowed);
   const t = ADDRESS_TEXT[pageLang()];
-  if (!isOwner || !progressShowing(progress)) return null;
+  if (!isOwner || !allowed || !progressShowing(progress)) return null;
   return (
     <ProgressNotice
       t={t}

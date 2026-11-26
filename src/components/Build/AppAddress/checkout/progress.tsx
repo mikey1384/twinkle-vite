@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css, keyframes } from '@emotion/css';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
+import {
+  BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY,
+  BUILD_WORKSPACE_COMPACT_MEDIA_QUERY
+} from '~/containers/Build/Editor/constants';
 import type { AddressText } from '../text';
 import { refreshDomainProgress } from '../useDomainProgress';
 import { progressFraction, type DomainProgressView, type ProgressStepKey } from './model';
+import { formatResendCountdown, resendStore } from './resendStore';
 import { T, CheckIcon, StarMark } from './ui';
 import type { HeaderMenuItem } from '~/components/Build/HeaderChip';
 
@@ -61,29 +66,68 @@ export function ProgressTrack({ t, progress }: { t: AddressText; progress: Domai
 }
 
 // Resend Name.com's confirmation email (one per 15 minutes per record).
+// Shared across the chip menu, Build header notice, and Live order screen.
 export function useResendVerification(t: AddressText, buildId: number, progress: DomainProgressView | null) {
   const resendDomainVerification = useAppContext((v) => v.requestHelpers.resendDomainVerification);
-  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'wait' | 'failed'>('idle');
-  const verification = progress?.verification;
-  const pending = verification?.state === 'pending' ? verification : null;
-  async function resend() {
-    if (!progress || state === 'sending') return;
-    setState('sending');
-    try {
-      const result = await resendDomainVerification({ buildId, orderId: progress.orderId });
-      setState(result?.status === 'sent' ? 'sent' : result?.status === 'wait' ? 'wait' : result?.status === 'verified' ? 'idle' : 'failed');
-      refreshDomainProgress(buildId);
-    } catch {
-      setState('failed');
-    }
-  }
+  const rawUserId = useKeyContext((v) => v.myState.userId);
+  const userId = Number(rawUserId || 0);
+  const orderId = progress?.orderId || 0;
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    resendStore.syncUser(userId || null);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId || !buildId || !orderId) return;
+    return resendStore.subscribe(userId, buildId, orderId, () => setTick((value) => value + 1));
+  }, [userId, buildId, orderId]);
+
+  const snapshot = resendStore.getSnapshot(userId, buildId, progress);
+  const cooldownUntil = snapshot.cooldownUntil;
+
+  useEffect(() => {
+    if (!cooldownUntil || cooldownUntil <= Date.now()) return;
+    const timer = window.setInterval(() => {
+      if (Date.now() >= cooldownUntil) {
+        resendStore.clearExpired(userId, buildId, orderId);
+        window.clearInterval(timer);
+      }
+      setTick((value) => value + 1);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [cooldownUntil, userId, buildId, orderId]);
+
+  const countdown =
+    snapshot.cooldownRemainingMs > 0 ? formatResendCountdown(snapshot.cooldownRemainingMs) : '';
+  const label =
+    snapshot.status === 'sending'
+      ? t.resending
+      : countdown
+        ? `${t.resend} (${countdown})`
+        : t.resend;
+
   return {
-    pending,
-    state,
-    canResend: Boolean(pending?.canResend) && state !== 'sent' && state !== 'wait' && state !== 'sending',
-    message: state === 'sent' ? t.resent : state === 'wait' ? t.resendWait : state === 'failed' ? t.resendFailed : '',
-    nudge: pending ? (pending.daysLeft > 0 ? t.verifyNudge(pending.daysLeft) : t.verifyNudgeToday) : '',
-    resend
+    pending: snapshot.pending,
+    state: snapshot.status,
+    canResend: snapshot.canResend,
+    countdown,
+    label,
+    message:
+      snapshot.status === 'sent'
+        ? t.resent
+        : snapshot.status === 'wait'
+          ? t.resendWait
+          : snapshot.status === 'failed'
+            ? t.resendFailed
+            : '',
+    nudge: snapshot.pending
+      ? snapshot.pending.daysLeft > 0
+        ? t.verifyNudge(snapshot.pending.daysLeft)
+        : t.verifyNudgeToday
+      : '',
+    resend: () =>
+      resendStore.trigger(userId, buildId, progress, resendDomainVerification, refreshDomainProgress)
   };
 }
 
@@ -110,7 +154,7 @@ export function progressMenuItems(
     },
     oneStep
       ? {
-          label: <span>{resend.state === 'sending' ? t.resending : t.resend}</span>,
+          label: <span>{resend.label}</span>,
           disabled: !resend.canResend,
           keepOpen: true,
           style: { color: '#4b3cf0', fontWeight: 800 },
@@ -133,7 +177,7 @@ export function VerifyNudge({ t, buildId, progress, compact = false }: { t: Addr
       <p>{resend.nudge}</p>
       <div className={nudgeRowClass}>
         <button type="button" className={resendClass} disabled={!resend.canResend} onClick={() => void resend.resend()}>
-          {resend.state === 'sending' ? t.resending : t.resend}
+          {resend.label}
         </button>
         <span role="status" className={nudgeStatusClass}>
           {resend.message}
@@ -144,6 +188,8 @@ export function VerifyNudge({ t, buildId, progress, compact = false }: { t: Addr
 }
 
 // The Build header's notice for the owner while a purchase is under way.
+// On phones it collapses to a compact single-line bar so the locked Build
+// workspace underneath keeps its height, with a toggle to inspect details.
 export function ProgressNotice({
   t,
   buildId,
@@ -155,21 +201,63 @@ export function ProgressNotice({
   progress: DomainProgressView;
   onOpen: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const resend = useResendVerification(t, buildId, progress);
   const oneStep = progress.stage === 'one_step_left';
   const support = progress.stage === 'support';
+  useEffect(() => {
+    setExpanded(false);
+  }, [buildId, progress.orderId]);
   return (
-    <section className={noticeClass} data-stage={progress.stage} aria-label={t.progressLabel}>
+    <section className={noticeClass} data-stage={progress.stage} data-expanded={expanded || undefined} aria-label={t.progressLabel}>
       <div className={noticeHeadClass}>
         <strong>{oneStep ? t.oneStepTitle : support ? t.supportTitle(progress.domain) : t.settingUpNotice(progress.domain)}</strong>
-        {!oneStep && (
-          <button type="button" className={linkButtonClass} onClick={onOpen}>
-            {t.seeProgress}
+        <div className={noticeActionsClass}>
+          {oneStep ? (
+            !expanded ? (
+              <button type="button" className={mobileResendClass} disabled={!resend.canResend} onClick={() => void resend.resend()}>
+                {resend.label}
+              </button>
+            ) : null
+          ) : (
+            <button type="button" className={linkButtonClass} onClick={onOpen}>
+              {t.seeProgress}
+            </button>
+          )}
+          <button
+            type="button"
+            className={mobileToggleClass}
+            aria-expanded={expanded}
+            aria-label={t.progressLabel}
+            onClick={() => setExpanded((prev) => !prev)}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.18s ease' }}
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
           </button>
-        )}
+        </div>
       </div>
-      {support && <p className={noticeBodyClass}>{t.onItBody}</p>}
-      <ProgressTrack t={t} progress={progress} />
-      {oneStep && <VerifyNudge t={t} buildId={buildId} progress={progress} compact />}
+      {oneStep && resend.message && !expanded ? (
+        <span role="status" className={mobileStatusClass}>
+          {resend.message}
+        </span>
+      ) : null}
+      <div className={noticeDetailsClass} data-expanded={expanded || undefined}>
+        {support && <p className={noticeBodyClass}>{t.onItBody}</p>}
+        <ProgressTrack t={t} progress={progress} />
+        {oneStep && <VerifyNudge t={t} buildId={buildId} progress={progress} compact />}
+      </div>
     </section>
   );
 }
@@ -188,12 +276,18 @@ const shimmer = keyframes`
 const menuStatusClass = css`
   display: grid;
   gap: 0.3rem;
+  min-width: 0;
   max-width: 26rem;
   white-space: normal;
+  overflow-wrap: anywhere;
   line-height: 1.4;
+  strong {
+    overflow-wrap: anywhere;
+  }
   small {
     color: #5d5d6e;
     font-size: 1.15rem;
+    overflow-wrap: anywhere;
   }
 `;
 const chipLabelClass = css`
@@ -368,6 +462,15 @@ const noticeClass = css`
     background: #fffbeb;
     color: ${T.ink};
   }
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 10px;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    gap: 0.3rem;
+    padding: 0.3rem 0.65rem;
+  }
 `;
 const noticeHeadClass = css`
   display: flex;
@@ -375,9 +478,110 @@ const noticeHeadClass = css`
   align-items: baseline;
   justify-content: space-between;
   gap: 0.4rem 1rem;
+  min-width: 0;
   strong {
     font-size: 1.35rem;
     overflow-wrap: anywhere;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+    strong {
+      flex: 1;
+      min-width: 0;
+      font-size: 1.2rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    strong {
+      font-size: 1.1rem;
+    }
+  }
+`;
+const noticeActionsClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+`;
+const noticeDetailsClass = css`
+  display: grid;
+  gap: 0.8rem;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    display: none;
+    &[data-expanded] {
+      display: grid;
+      gap: 0.55rem;
+    }
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    &[data-expanded] {
+      max-height: 28vh;
+      overflow-y: auto;
+    }
+  }
+`;
+const mobileResendClass = css`
+  display: none;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.6rem;
+    padding: 0 0.9rem;
+    border-radius: 999px;
+    border: 1.5px solid ${T.blue};
+    background: #fff;
+    color: ${T.blueDeep};
+    font: inherit;
+    font-size: 1.15rem;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    min-height: 2.2rem;
+    padding: 0 0.75rem;
+    font-size: 1.05rem;
+  }
+`;
+const mobileToggleClass = css`
+  display: none;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(20, 21, 28, 0.06);
+    color: inherit;
+    cursor: pointer;
+    flex: none;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_LANDSCAPE_MEDIA_QUERY} {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+`;
+const mobileStatusClass = css`
+  display: none;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    display: block;
+    font-size: 1.1rem;
+    color: ${T.muted};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `;
 const noticeBodyClass = css`
@@ -396,4 +600,9 @@ const linkButtonClass = css`
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
+  white-space: nowrap;
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    padding: 0.2rem 0;
+    font-size: 1.15rem;
+  }
 `;
