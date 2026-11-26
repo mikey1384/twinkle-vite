@@ -40,6 +40,36 @@ function loadImagesHelper() {
   return exports;
 }
 
+function loadErrorMessageHelpers() {
+  const source = fs.readFileSync('src/helpers/errorMessageHelpers.ts', 'utf8');
+  const exports = {};
+  vm.runInNewContext(
+    ts.transpileModule(source, {
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2022
+      }
+    }).outputText,
+    { exports, TextDecoder, ArrayBuffer, Uint8Array }
+  );
+  return exports;
+}
+
+function loadPreviewBridgeErrors() {
+  const source = fs.readFileSync('src/containers/Build/PreviewPanel/helpers/previewBridgeErrors.ts', 'utf8');
+  const exports = {};
+  vm.runInNewContext(
+    ts.transpileModule(source, {
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2022
+      }
+    }).outputText,
+    { exports }
+  );
+  return exports;
+}
+
 const run = decisionBridge();
 const runImages = decisionBridge('ai:decide-images');
 
@@ -109,6 +139,7 @@ test('the guest request helper calls the public route with no pass, pictures or 
       if (name === './axiosInstance') return { post: async (...args) => { calls.push(args); return { data: { answers: {} } }; } };
       if (name === '~/constants/URL') return 'https://fixture.invalid';
       if (name === '~/helpers/buildRewardRuntimeRenewal') return { createRewardRuntimeRenewal: () => async () => { throw new Error('unused'); } };
+      if (name === '~/helpers/errorMessageHelpers') return loadErrorMessageHelpers();
       return {};
     },
     console
@@ -143,6 +174,7 @@ test('the authenticated request helper preserves canonical usage errors and neve
       if (name === '~/constants/URL') return 'https://fixture.invalid';
       // constructed when the helpers are built; unused by decisions
       if (name === '~/helpers/buildRewardRuntimeRenewal') return { createRewardRuntimeRenewal: () => async () => { throw new Error('unused'); } };
+      if (name === '~/helpers/errorMessageHelpers') return loadErrorMessageHelpers();
       return {};
     },
     console
@@ -175,6 +207,7 @@ test('the request helper forwards serialized images and keeps an image decision\
       } };
       if (name === '~/constants/URL') return 'https://fixture.invalid';
       if (name === '~/helpers/buildRewardRuntimeRenewal') return { createRewardRuntimeRenewal: () => async () => { throw new Error('unused'); } };
+      if (name === '~/helpers/errorMessageHelpers') return loadErrorMessageHelpers();
       return {};
     },
     console
@@ -188,6 +221,72 @@ test('the request helper forwards serialized images and keeps an image decision\
     return true;
   });
   assert.equal(calls[0][1].images, images);
+});
+
+test('the request helper preserves 429 retry metadata so the bridge forwards it to the game', async () => {
+  const source = fs.readFileSync('src/contexts/requestHelpers/build.ts', 'utf8');
+  const exports = {};
+  const responses = [
+    {
+      response: {
+        status: 429,
+        headers: { 'retry-after': '12' },
+        data: { code: 'ai_decision_rate_limited', error: 'Too many decisions', retryable: true }
+      }
+    },
+    {
+      response: {
+        status: 429,
+        data: { code: 'ai_decision_rate_limited', error: 'Too many decisions', retryable: true, retryAfterSeconds: 7 }
+      }
+    }
+  ];
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
+  vm.runInNewContext(compiled, {
+    exports,
+    require(name) {
+      if (name === './axiosInstance') return { post: async () => { throw responses.shift(); } };
+      if (name === '~/constants/URL') return 'https://fixture.invalid';
+      if (name === '~/helpers/buildRewardRuntimeRenewal') return { createRewardRuntimeRenewal: () => async () => { throw new Error('unused'); } };
+      if (name === '~/helpers/errorMessageHelpers') return loadErrorMessageHelpers();
+      return {};
+    },
+    console
+  });
+  const helpers = exports.default({ auth: () => ({ headers: {} }), handleError: error => Promise.reject(error) });
+  const { buildPreviewBridgeErrorDetails } = loadPreviewBridgeErrors();
+
+  await assert.rejects(
+    helpers.callBuildRuntimeAiDecision({ buildId: 91, state: 's', questions: {}, guest: true, guestSessionId: 'guest_x' }),
+    error => {
+      assert.equal(error.status, 429);
+      assert.equal(error.code, 'ai_decision_rate_limited');
+      assert.equal(error.retryable, true);
+      assert.equal(error.retryAfterSeconds, 12);
+      const details = buildPreviewBridgeErrorDetails('ai:decide', error);
+      assert.equal(details.status, 429);
+      assert.equal(details.code, 'ai_decision_rate_limited');
+      assert.equal(details.retryable, true);
+      assert.equal(details.retryAfterSeconds, 12);
+      return true;
+    }
+  );
+
+  await assert.rejects(
+    helpers.callBuildRuntimeAiDecision({ buildId: 91, state: 's', questions: {} }),
+    error => {
+      assert.equal(error.status, 429);
+      assert.equal(error.code, 'ai_decision_rate_limited');
+      assert.equal(error.retryable, true);
+      assert.equal(error.retryAfterSeconds, 7);
+      const details = buildPreviewBridgeErrorDetails('ai:decide', error);
+      assert.equal(details.status, 429);
+      assert.equal(details.code, 'ai_decision_rate_limited');
+      assert.equal(details.retryable, true);
+      assert.equal(details.retryAfterSeconds, 7);
+      return true;
+    }
+  );
 });
 
 test('image decisions serialize Blob snapshots, pass uploads through and require the server to have seen every picture', async () => {

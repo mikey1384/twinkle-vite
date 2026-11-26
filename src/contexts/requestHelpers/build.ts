@@ -10,6 +10,7 @@ import { trackCoinSpend, trackEvent } from '~/helpers/analytics';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import type { BuildRuntimeSource } from '~/helpers/buildRuntimeSource';
 import { toBuildRewardRequestError } from '~/helpers/buildRewardRequestError';
+import { normalizeBuildRuntimeAiDecisionError } from '~/helpers/errorMessageHelpers';
 import { runRewardBankGeneration } from '~/helpers/buildRewardBankRecovery';
 import { createRewardRuntimeRenewal } from '~/helpers/buildRewardRuntimeRenewal';
 import {
@@ -3341,24 +3342,21 @@ export default function buildRequestHelpers({
         return data;
       } catch (error: any) {
         const response = error?.response;
-        if (response?.data?.code || response?.data?.aiUsagePolicy || response?.data?.requestId) {
-          return Promise.reject({
-            status: response.status,
-            message:
-              response.data.error || response.data.message || 'Decision failed',
-            code: response.data.code,
-            ...(typeof response.data.requestId === 'string' &&
-              /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(response.data.requestId)
-              ? { requestId: response.data.requestId }
-              : {}),
-            ...(typeof response.data.reason === 'string' &&
-              /^[a-z_]{2,40}$/.test(response.data.reason)
-              ? { reason: response.data.reason }
-              : {}),
-            aiUsagePolicy: response.data.aiUsagePolicy
-          });
+        const status = Number(response?.status || 0);
+        if (
+          !response ||
+          status === 401 ||
+          status === 426 ||
+          status === 301 ||
+          response?.data?.code === 'client_refresh_required'
+        ) {
+          try {
+            await handleError(error);
+          } catch {
+            // Host-level side effects (401/426/301) ran; normalize below.
+          }
         }
-        return handleError(error);
+        return Promise.reject(normalizeBuildRuntimeAiDecisionError(error));
       }
     },
 
