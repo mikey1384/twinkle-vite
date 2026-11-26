@@ -125,18 +125,6 @@ const fine = css`
   font-size: 1rem;
 `;
 
-// One line per menu item; a long address shortens with an ellipsis.
-const addressMenuClass = css`
-  li {
-    white-space: nowrap;
-  }
-  li > span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-`;
-
 // The app's address as a chip in the Build header's strip; its menu holds
 // every address action (open, copy, share, change, remove an own domain,
 // get your own .com). A live own domain is the address the chip shows.
@@ -270,8 +258,6 @@ export function AddressMenuView({
   return (
     <HeaderMenu
       items={items}
-      menuClassName={addressMenuClass}
-      menuStyle={{ width: 'max-content', maxWidth: 'calc(100vw - 2rem)' }}
       renderTrigger={({ onToggle }) => (
         <HeaderChip
           chip="address"

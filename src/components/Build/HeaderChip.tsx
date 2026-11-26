@@ -116,7 +116,8 @@ const stripChipClass = css`
     flex: 0 0 auto;
   }
   @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
-    flex: 0 1 auto;
+    flex: 0 0 auto;
+    max-width: 22rem;
     gap: 0.4rem;
     padding: 0.45rem 0.75rem;
     font-size: 1.15rem;
@@ -139,8 +140,9 @@ const caretClass = css`
   font-size: 0.9em;
 `;
 
-// The row of chips under the title. It wraps; on a phone each chip keeps
-// its own line length and long addresses shorten with an ellipsis.
+// The row of chips under the title. It wraps on wide screens; on a phone it
+// is one line that scrolls sideways (like the action row above it), padded
+// so the chips' touch reach isn't clipped by the scroller.
 export const headerChipStripClass = css`
   grid-column: 1 / -1;
   flex: 0 0 100%;
@@ -155,12 +157,24 @@ export const headerChipStripClass = css`
   &:empty {
     display: none;
   }
-  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
-    gap: 0.45rem;
-    margin-top: 0;
-  }
   @media (pointer: coarse) {
     gap: 1.2rem 0.55rem;
+  }
+  @media ${BUILD_WORKSPACE_COMPACT_MEDIA_QUERY} {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    width: auto;
+    margin: -0.7rem -0.75rem;
+    padding: 0.7rem 0.75rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    > * {
+      flex: 0 0 auto;
+    }
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 `;
 
@@ -230,13 +244,11 @@ export interface HeaderMenuItem {
 export function HeaderMenu({
   items,
   renderTrigger,
-  menuStyle,
-  menuClassName
+  menuStyle
 }: {
   items: HeaderMenuItem[];
   renderTrigger: (props: { open: boolean; onToggle: () => void }) => React.ReactNode;
   menuStyle?: React.CSSProperties;
-  menuClassName?: string;
 }) {
   const triggerRef = useRef<HTMLDivElement>(null);
   const [dropdownContext, setDropdownContext] = useState<DOMRect | null>(null);
@@ -249,8 +261,8 @@ export function HeaderMenu({
           dropdownContext={dropdownContext}
           triggerRef={triggerRef}
           onHideMenu={handleHide}
-          className={menuClassName}
-          style={{ minWidth: '15rem', ...menuStyle }}
+          className={menuListClass}
+          style={{ minWidth: '15rem', width: 'max-content', ...menuStyle }}
         >
           {items.map((item, index) =>
             item.separator ? (
@@ -305,6 +317,26 @@ export function HeaderMenu({
     setDropdownContext(null);
   }
 }
+
+// Menu rows read left to right, one line each, with their icons in one
+// column; a long address shortens with an ellipsis.
+const menuListClass = css`
+  max-width: calc(100vw - 2rem);
+  && li {
+    justify-content: flex-start;
+    text-align: left;
+    white-space: nowrap;
+  }
+  && li > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  && li > svg:first-child {
+    flex: 0 0 1.25em;
+    width: 1.25em;
+  }
+`;
 
 const menuTriggerClass = css`
   position: relative;

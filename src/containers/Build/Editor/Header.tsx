@@ -185,21 +185,9 @@ const mobileTitleBadgeGroupClass = css`
     align-items: center;
     justify-content: flex-end;
     gap: 0.3rem;
-    flex-wrap: nowrap;
-    min-width: 0;
-    max-width: min(42vw, 17rem);
-    overflow-x: auto;
-    padding-bottom: 0.25rem;
-    -webkit-overflow-scrolling: auto;
-    scrollbar-width: none;
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    flex: 0 0 auto;
     > * {
       flex: 0 0 auto;
-    }
-    button {
-      padding: 0.42rem 0.65rem;
       white-space: nowrap;
     }
   }
@@ -510,6 +498,48 @@ function BuildVisibilityBadge({ isPublic }: { isPublic: boolean }) {
   );
 }
 
+// Phone: visibility and published state in one chip beside the title.
+function BuildPhoneStatusBadge({
+  isPublic,
+  releaseStatus
+}: {
+  isPublic: boolean;
+  releaseStatus: ReturnType<typeof normalizeBuildReleaseStatus>;
+}) {
+  const unpublished = Boolean(
+    releaseStatus &&
+      (releaseStatus.hasUnpublishedChanges ||
+        releaseStatus.state === 'missing_snapshot')
+  );
+  const label = !isPublic
+    ? 'Private'
+    : !releaseStatus
+      ? 'Public'
+      : unpublished
+        ? 'Public · Unpublished'
+        : 'Public · Live';
+  return (
+    <span
+      className={headerChipClass}
+      style={
+        isPublic && releaseStatus
+          ? getReleaseStatusBadgeStyle(releaseStatus.state)
+          : getVisibilityBadgeStyle(isPublic)
+      }
+      title={
+        isPublic
+          ? unpublished
+            ? 'Public build · Unpublished changes'
+            : 'Public build · Published app is live'
+          : 'Private build'
+      }
+    >
+      <Icon icon={isPublic ? 'globe' : 'lock'} />
+      {label}
+    </span>
+  );
+}
+
 function BuildViewAppButton({
   buildId,
   defaultRuntimeSource,
@@ -782,7 +812,7 @@ export default function Header({
         label: (
           <>
             <Icon icon="pencil-alt" />
-            <span style={{ marginLeft: '1rem' }}>
+            <span>
               {build.description?.trim() ? 'Edit details' : 'Add details'}
             </span>
           </>
@@ -797,7 +827,7 @@ export default function Header({
         label: (
           <>
             <Icon icon="pencil-alt" />
-            <span style={{ marginLeft: '1rem', whiteSpace: 'nowrap' }}>
+            <span style={{ whiteSpace: 'nowrap' }}>
               Suggest a new name
             </span>
           </>
@@ -810,7 +840,7 @@ export default function Header({
         label: (
           <>
             <Icon icon="image" />
-            <span style={{ marginLeft: '1rem' }}>Thumbnail</span>
+            <span>Thumbnail</span>
           </>
         ),
         disabled: savingThumbnail || publishing,
@@ -826,7 +856,7 @@ export default function Header({
           label: (
             <>
               <Icon icon="coins" />
-              <span style={{ marginLeft: '1rem' }}>XP & Coin rewards</span>
+              <span>XP & Coin rewards</span>
             </>
           ),
           onClick: () => setRewardsOpen(true)
@@ -838,7 +868,7 @@ export default function Header({
             <Icon
               icon={collaborationMode === 'private' ? 'users' : 'code-branch'}
             />
-            <span style={{ marginLeft: '1rem' }}>
+            <span>
               {getCollaborationButtonLabel(collaborationMode)}
             </span>
           </>
@@ -851,7 +881,7 @@ export default function Header({
         label: (
           <>
             <Icon icon="eye-slash" />
-            <span style={{ marginLeft: '1rem' }}>Unpublish</span>
+            <span>Unpublish</span>
           </>
         ),
         disabled: publishing || banned?.build,
@@ -866,7 +896,7 @@ export default function Header({
         label: (
           <>
             <Icon icon="trash-alt" />
-            <span style={{ marginLeft: '1rem' }}>Delete</span>
+            <span>Delete</span>
           </>
         ),
         style: { color: Color.red(), fontWeight: 800 },
@@ -881,7 +911,7 @@ export default function Header({
         label: (
           <>
             <Icon icon="right-from-bracket" />
-            <span style={{ marginLeft: '1rem' }}>Leave team</span>
+            <span>Leave team</span>
           </>
         ),
         style: { color: Color.red(), fontWeight: 800 },
@@ -975,6 +1005,7 @@ export default function Header({
 
   const settingsMenu = renderSettingsMenu();
   const mobileHeaderActionsShown = Boolean(
+    viewAppTarget.visible ||
     shouldShowMergeBranch ||
     showContributionButton ||
     showForkButton ||
@@ -1017,21 +1048,13 @@ export default function Header({
               <EditBuildDetailsButton onClick={onOpenDescriptionModal} />
             ) : null}
           </div>
+          {/* Phone: the title's one status chip (Public · Live). */}
           <div className={mobileTitleBadgeGroupClass}>
             {showVisibilityBadge ? (
-              <BuildVisibilityBadge isPublic={Boolean(build.isPublic)} />
-            ) : null}
-            {viewAppTarget.visible ? (
-              <BuildViewAppButton
-                buildId={Number(build.id)}
-                defaultRuntimeSource={viewAppTarget.source}
-                promptForVersion={shouldPromptForRuntimeVersion}
-                runtimeBackState={runtimeBackState}
-                size="sm"
+              <BuildPhoneStatusBadge
+                isPublic={Boolean(build.isPublic)}
+                releaseStatus={releaseStatus}
               />
-            ) : null}
-            {build.isPublic && releaseStatus ? (
-              <BuildReleaseStatusBadge releaseStatus={releaseStatus} />
             ) : null}
             {showContributionStatusBadge ? (
               <span
@@ -1179,6 +1202,22 @@ export default function Header({
       {mobileHeaderActionsShown ? (
         <div className={mobileButtonRowsClass}>
           <div className={mobileButtonRowClass}>
+            {viewAppTarget.visible ? (
+              <BuildViewAppButton
+                buildId={Number(build.id)}
+                defaultRuntimeSource={viewAppTarget.source}
+                promptForVersion={shouldPromptForRuntimeVersion}
+                runtimeBackState={runtimeBackState}
+              />
+            ) : null}
+            {isOwner && !isContributionFork ? (
+              <ReleaseButton
+                release={release}
+                onClick={onTogglePublish}
+                disabled={publishButtonDisabled || Boolean(banned?.build)}
+                shiny={publicAppNeedsUpdate}
+              />
+            ) : null}
             {shouldShowMergeBranch ? renderMergeBranchAction() : null}
             {showContributionButton ? (
               <GameCTAButton
@@ -1223,16 +1262,6 @@ export default function Header({
             <RuntimeAssetTransferProgressBar
               progress={runtimeAssetTransferProgress}
             />
-          ) : null}
-          {isOwner && !isContributionFork ? (
-            <div className={mobileButtonRowClass}>
-              <ReleaseButton
-                release={release}
-                onClick={onTogglePublish}
-                disabled={publishButtonDisabled || Boolean(banned?.build)}
-                shiny={publicAppNeedsUpdate}
-              />
-            </div>
           ) : null}
           {contributionActionError ? (
             <span
