@@ -157,7 +157,7 @@ function Harness() {
     case 'sent':
       return (
         <Page>
-          <MessageView title={t.sentTitle} body={t.sentBody('starcatcher.com')} primaryLabel={t.done} onPrimary={noop} />
+          <MessageView body={t.sentBody('starcatcher.com')} primaryLabel={t.done} onPrimary={noop} />
         </Page>
       );
     case 'parent-consent':
@@ -198,7 +198,7 @@ function Harness() {
     case 'live':
       return (
         <Page>
-          <MessageView title={t.liveTitle('starcatcher.com')} body={t.liveBody} primaryLabel={t.openIt} onPrimary={noop} secondaryLabel={t.done} onSecondary={noop} celebrate />
+          <MessageView body={t.liveBody} primaryLabel={t.openIt} onPrimary={noop} secondaryLabel={t.done} onSecondary={noop} celebrate />
         </Page>
       );
     case 'wand-sent':

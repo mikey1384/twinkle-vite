@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
+import Button from '~/components/Button';
+import Input from '~/components/Texts/Input';
+import ModalFooter from '~/components/Modal/Footer';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { HeaderChip, HeaderMenu, type HeaderMenuItem } from '~/components/Build/HeaderChip';
 import type { AddressText } from './text';
 
 // The app-address screens as plain views (data in, callbacks out), so the
 // containers own requests and the preview harness renders the same views.
+// The flow's steps are bodies of the site's standard Modal (see below); the
+// card styles here (panelClass) are for the parent's consent page.
 
 export interface DomainIdeaView {
   domain: string;
@@ -30,7 +36,6 @@ const ink = '#16161f';
 const muted = '#5d5d6e';
 const line = 'rgba(22,22,31,0.1)';
 const accent = '#4b3cf0';
-const good = '#118a55';
 
 export const panelClass = css`
   width: 100%;
@@ -59,44 +64,6 @@ export const panelClass = css`
   }
 `;
 
-const primary = css`
-  appearance: none;
-  border: 0;
-  border-radius: 999px;
-  padding: 0.85rem 1.3rem;
-  font: inherit;
-  font-size: 1.05rem;
-  font-weight: 700;
-  background: ${ink};
-  color: #fff;
-  cursor: pointer;
-  &:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
-`;
-const secondary = css`
-  ${primary};
-  background: #f0f0f6;
-  color: ${ink};
-`;
-const quiet = css`
-  appearance: none;
-  border: 0;
-  background: none;
-  padding: 0.3rem 0;
-  font: inherit;
-  font-size: 1rem;
-  color: ${accent};
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-`;
-const row = css`
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-`;
 const field = css`
   flex: 1;
   min-width: 0;
@@ -107,18 +74,6 @@ const field = css`
   font: inherit;
   font-size: 1.05rem;
   background: #fafafd;
-`;
-const note = css`
-  margin: 1rem 0;
-  padding: 0.9rem 1rem;
-  border-radius: 1rem;
-  background: #f4f3ff;
-  color: ${ink};
-  font-size: 1rem;
-  strong {
-    display: block;
-    margin-bottom: 0.2rem;
-  }
 `;
 const fine = css`
   color: ${muted};
@@ -299,11 +254,130 @@ export function AddressMenuView({
   );
 }
 
+// ---------------------------------------------------------------------------
+// The "own web address" flow. Each step is the body of the site's standard
+// Modal (AppAddress gives it the step's title) with its actions in the
+// standard ModalFooter: readable modal type, no card inside the modal.
+
+const flowClass = css`
+  width: 100%;
+  color: ${Color.black()};
+  font-size: 1.5rem;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  p {
+    margin: 0 0 1.2rem;
+  }
+  > :last-child {
+    margin-bottom: 0;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.45rem;
+  }
+`;
+const quietText = css`
+  color: ${Color.darkGray()};
+  font-size: 1.35rem;
+  line-height: 1.55;
+`;
+const calloutClass = css`
+  margin: 1.4rem 0;
+  padding: 1.1rem 1.3rem;
+  border-radius: ${borderRadius};
+  background: ${Color.logoBlue(0.07)};
+  font-size: 1.4rem;
+  line-height: 1.55;
+  strong {
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+`;
+const noticeClass = css`
+  ${calloutClass};
+  background: ${Color.orange(0.12)};
+`;
+const errorClass = css`
+  margin: 0 0 1.2rem;
+  color: ${Color.rose()};
+  font-weight: 700;
+`;
+// rows separated by lines (results, addresses, records): a list, not cards
+const rowsClass = css`
+  margin: 0 0 1.4rem;
+  border-top: 1px solid var(--ui-border);
+  > * {
+    padding: 1.2rem 0;
+    border-bottom: 1px solid var(--ui-border);
+  }
+`;
+const linkButtonClass = css`
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0.3rem 0;
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: ${Color.logoBlue()};
+  cursor: pointer;
+  text-align: left;
+  &:focus-visible {
+    outline: 2px solid ${Color.logoBlue()};
+    outline-offset: 2px;
+  }
+`;
+const fieldLabelClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: ${Color.darkGray()};
+`;
+const inlineFormClass = css`
+  display: flex;
+  gap: 0.8rem;
+  align-items: stretch;
+  margin: 0 0 1.4rem;
+  > :first-child {
+    flex: 1;
+    min-width: 0;
+  }
+`;
+const domainNameClass = css`
+  font-weight: 800;
+  font-size: 1.65rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+`;
+const selectClass = css`
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 1rem;
+  line-height: 2rem;
+  font: inherit;
+  font-size: 1.6rem;
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  background: #fff;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: calc(16 * var(--px));
+  }
+`;
+
+function FlowFooter({ children }: { children: React.ReactNode }) {
+  return <ModalFooter>{children}</ModalFooter>;
+}
+
 export function IntroView({
   t,
   freeHost,
   onFind,
   onHaveOne,
+  onClose,
   ask,
   exampleDomain
 }: {
@@ -314,63 +388,51 @@ export function IntroView({
   onFind?: () => void;
   // absent while connecting your own is switched off
   onHaveOne?: () => void;
+  onClose?: () => void;
   ask?: React.ReactNode;
 }) {
   const example = exampleDomain || `${freeHost.split('.')[0].replace(/-/g, '')}.com`;
+  const option = (tag: string, tagColor: string, host: string, line: string) => (
+    <div
+      className={css`
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.2rem 1rem;
+        align-items: baseline;
+      `}
+    >
+      <div className={domainNameClass}>{host}</div>
+      <div style={{ color: tagColor, fontWeight: 800, fontSize: '1.3rem', whiteSpace: 'nowrap' }}>{tag}</div>
+      <div className={quietText} style={{ gridColumn: '1 / -1' }}>
+        {line}
+      </div>
+    </div>
+  );
   return (
-    <div className={panelClass}>
-      <h2>{t.introTitle}</h2>
-      <div
-        className={css`
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 0.6rem;
-          margin: 0.4rem 0 1.1rem;
-          @media (max-width: 420px) {
-            grid-template-columns: 1fr;
-          }
-        `}
-        aria-hidden="true"
-      >
-        <div
-          className={css`
-            padding: 0.8rem;
-            border-radius: 1rem;
-            background: #effaf4;
-          `}
-        >
-          <div style={{ fontSize: '0.95rem', color: good, fontWeight: 700 }}>{t.freeTag} ✓</div>
-          <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{freeHost}</div>
-        </div>
-        <div
-          className={css`
-            padding: 0.8rem;
-            border-radius: 1rem;
-            background: #f4f3ff;
-          `}
-        >
-          <div style={{ fontSize: '0.95rem', color: accent, fontWeight: 700 }}>{t.rentTag}</div>
-          <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{example}</div>
-        </div>
+    <div className={flowClass}>
+      <div className={rowsClass}>
+        {option(`${t.freeTag} ✓`, Color.green(), freeHost, t.introFree(freeHost))}
+        {option(t.rentTag, Color.logoBlue(), example, t.introRent(example))}
       </div>
-      <p>
-        <strong>{t.introFree(freeHost)}</strong>
-      </p>
-      <p>{t.introRent(example)}</p>
       <p>{onFind ? t.introChoice : onHaveOne ? t.introConnectOnly : t.notOpenYet}</p>
-      <div className={row} style={{ marginTop: '1.2rem' }}>
-        {onFind && (
-          <button type="button" className={primary} onClick={onFind}>
-            {t.findOne}
-          </button>
-        )}
+      {ask}
+      <FlowFooter>
         {onHaveOne && (
-          <button type="button" className={onFind ? secondary : primary} onClick={onHaveOne}>
+          <Button variant={onFind ? 'ghost' : 'solid'} color="logoBlue" onClick={onHaveOne}>
             {t.haveOne}
-          </button>
+          </Button>
         )}
-      </div>
-      {ask && <div style={{ marginTop: '1rem' }}>{ask}</div>}
+        {onFind && (
+          <Button color="logoBlue" onClick={onFind}>
+            {t.findOne}
+          </Button>
+        )}
+        {!onFind && !onHaveOne && onClose && (
+          <Button color="logoBlue" onClick={onClose}>
+            {t.close}
+          </Button>
+        )}
+      </FlowFooter>
     </div>
   );
 }
@@ -379,11 +441,11 @@ export function PriceBreakdown({ t, idea, open }: { t: AddressText; idea: Domain
   const [shown, setShown] = useState(Boolean(open));
   return (
     <div>
-      <button type="button" className={quiet} style={{ fontSize: '0.95rem' }} onClick={() => setShown(!shown)} aria-expanded={shown}>
+      <button type="button" className={linkButtonClass} onClick={() => setShown(!shown)} aria-expanded={shown}>
         {t.whatsInPrice} {shown ? '▴' : '▾'}
       </button>
       {shown && (
-        <div className={fine} style={{ marginTop: '0.3rem', fontSize: '0.95rem' }}>
+        <div className={quietText} style={{ marginTop: '0.4rem' }}>
           <div>
             {t.breakdown({
               registry: usd(idea.breakdown.registryCents),
@@ -392,11 +454,15 @@ export function PriceBreakdown({ t, idea, open }: { t: AddressText; idea: Domain
               total: usd(idea.priceCents)
             })}
           </div>
-          <div style={{ marginTop: '0.3rem' }}>{t.breakdownNote}</div>
+          <div style={{ marginTop: '0.4rem' }}>{t.breakdownNote}</div>
         </div>
       )}
     </div>
   );
+}
+
+function priceLine(t: AddressText, idea: DomainIdeaView) {
+  return `${t.perYear(usd(idea.priceCents))}${idea.approxKrw ? ` · ${t.approxKrw(krw(idea.approxKrw))}` : ''}`;
 }
 
 export function FindView({
@@ -410,6 +476,7 @@ export function FindView({
   onBuy,
   onUseOwn,
   onMoreIdeas,
+  onClose,
   ask,
   showAdvanced = false
 }: {
@@ -423,86 +490,120 @@ export function FindView({
   onBuy: (idea: DomainIdeaView) => void;
   onUseOwn?: () => void;
   onMoreIdeas: () => void;
+  onClose?: () => void;
   ask?: React.ReactNode;
   showAdvanced?: boolean;
 }) {
   const [advanced, setAdvanced] = useState(showAdvanced);
   return (
-    <div className={panelClass}>
-      <h2>{t.findTitle}</h2>
+    <div className={flowClass}>
       <form
-        className={row}
+        className={inlineFormClass}
         onSubmit={(event) => {
           event.preventDefault();
           onSearch();
         }}
       >
-        <input className={field} value={query} placeholder={t.findPlaceholder} onChange={(event) => onQuery(event.target.value)} aria-label={t.findPlaceholder} />
-        <button type="submit" className={primary} disabled={loading}>
+        <Input value={query} placeholder={t.findPlaceholder} onChange={onQuery} aria-label={t.findPlaceholder} />
+        <Button color="logoBlue" loading={loading} onClick={onSearch}>
           {t.search}
-        </button>
+        </Button>
       </form>
-      <div style={{ marginTop: '1rem', display: 'grid', gap: '0.6rem' }}>
-        {ideas.length === 0 && !loading && <p className={fine}>{t.noResults}</p>}
-        {ideas.map((idea, index) => (
-          <div
-            key={idea.domain}
-            className={css`
-              display: grid;
-              grid-template-columns: 1fr auto;
-              gap: 0.2rem 0.8rem;
-              align-items: center;
-              padding: 0.85rem 1rem;
-              border: 1px solid ${index === 0 ? accent : line};
-              border-radius: 1rem;
-              background: ${index === 0 ? '#faf9ff' : '#fff'};
-            `}
-          >
-            <div style={{ minWidth: 0 }}>
-              {index === 0 && <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent }}>{t.bestMatch}</div>}
-              <div style={{ fontWeight: 700, fontSize: '1.15rem', overflowWrap: 'anywhere' }}>{idea.domain}</div>
-              <div className={fine}>
-                {t.perYear(usd(idea.priceCents))}
-                {idea.approxKrw ? ` · ${t.approxKrw(krw(idea.approxKrw))}` : ''}
+      {ideas.length === 0 && !loading && <p className={quietText}>{t.noResults}</p>}
+      {ideas.length > 0 && (
+        <div className={rowsClass}>
+          {ideas.map((idea, index) => (
+            <div
+              key={idea.domain}
+              className={css`
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 0.3rem 1.2rem;
+                align-items: center;
+              `}
+            >
+              <div style={{ minWidth: 0 }}>
+                {index === 0 && (
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: Color.logoBlue(), textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {t.bestMatch}
+                  </div>
+                )}
+                <div className={domainNameClass}>{idea.domain}</div>
+                <div className={quietText}>{priceLine(t, idea)}</div>
+              </div>
+              <Button color="logoBlue" variant={index === 0 ? 'solid' : 'soft'} onClick={() => onBuy(idea)}>
+                {t.buy}
+              </Button>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <PriceBreakdown t={t} idea={idea} open={openBreakdownFor === idea.domain} />
               </div>
             </div>
-            <button type="button" className={primary} onClick={() => onBuy(idea)}>
-              {t.buy}
-            </button>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <PriceBreakdown t={t} idea={idea} open={openBreakdownFor === idea.domain} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className={row} style={{ marginTop: '0.9rem', alignItems: 'center' }}>
-        {ask}
-        <button type="button" className={secondary} style={{ padding: '0.6rem 1.1rem' }} onClick={onMoreIdeas}>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', alignItems: 'center' }}>
+        <Button variant="soft" color="logoBlue" onClick={onMoreIdeas}>
           {t.moreIdeas}
-        </button>
+        </Button>
+        {ask}
       </div>
-      <div className={note}>
+      <div className={calloutClass}>
         <strong>{t.honestTitle}</strong>
         {t.honestBody}
         {onUseOwn && (
-          <div style={{ marginTop: '0.6rem' }}>
-            <button type="button" className={secondary} style={{ padding: '0.6rem 1.1rem' }} onClick={onUseOwn}>
-              {t.useOwnLink}
+          <div style={{ marginTop: '0.5rem' }}>
+            <button type="button" className={linkButtonClass} onClick={onUseOwn}>
+              {t.useOwnLink} →
             </button>
           </div>
         )}
       </div>
-      {ideas[0] && <p className={fine} style={{ marginBottom: '0.3rem' }}>{t.oneYearLine}</p>}
-      <p className={fine}>{t.privacyLine}</p>
-      <button type="button" className={quiet} onClick={() => setAdvanced(!advanced)} aria-expanded={advanced}>
+      {ideas[0] && <p className={quietText} style={{ marginBottom: '0.4rem' }}>{t.oneYearLine}</p>}
+      <p className={quietText} style={{ marginBottom: '0.6rem' }}>
+        {t.privacyLine}
+      </p>
+      <button type="button" className={linkButtonClass} onClick={() => setAdvanced(!advanced)} aria-expanded={advanced}>
         {t.advanced} {advanced ? '▴' : '▾'}
       </button>
       {advanced && (
-        <ul className={fine} style={{ margin: '0.4rem 0 0', paddingLeft: '1.2rem' }}>
+        <ul className={quietText} style={{ margin: '0.4rem 0 0', paddingLeft: '1.4rem' }}>
           {/* only what exists today: no renewals or transfers yet (one year, no auto-renew) */}
           <li>{t.otherEndings}</li>
         </ul>
       )}
+      {onClose && (
+        <FlowFooter>
+          <Button variant="ghost" onClick={onClose}>
+            {t.close}
+          </Button>
+        </FlowFooter>
+      )}
+    </div>
+  );
+}
+
+// The chosen name and its one price, at the top of the buy steps.
+function ChosenName({ t, idea, renews }: { t: AddressText; idea: DomainIdeaView; renews?: boolean }) {
+  return (
+    <div className={rowsClass}>
+      <div
+        className={css`
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 0.2rem 1.2rem;
+          align-items: baseline;
+        `}
+      >
+        <div className={domainNameClass}>{idea.domain}</div>
+        <div style={{ fontWeight: 800, fontSize: '1.8rem', whiteSpace: 'nowrap' }}>{usd(idea.priceCents)}</div>
+        <div className={quietText}>{renews ? t.renewsLine(usd(idea.priceCents)) : t.oneYearLine}</div>
+        <div className={quietText} style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+          {idea.approxKrw ? t.approxKrw(krw(idea.approxKrw)) : ''}
+        </div>
+        <div style={{ gridColumn: '1 / -1' }}>
+          <PriceBreakdown t={t} idea={idea} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -524,37 +625,48 @@ export function ParentRequestView({
   onSend: () => void;
   onBack: () => void;
 }) {
+  const ready = !sending && email.includes('@');
   return (
-    <div className={panelClass}>
-      <h2>{t.parentTitle}</h2>
+    <div className={flowClass}>
+      <ChosenName t={t} idea={idea} />
       <p>{t.parentBody(idea.domain, usd(idea.priceCents))}</p>
-      <PriceBreakdown t={t} idea={idea} />
-      <div style={{ marginTop: '1rem' }} className={row}>
-        <input className={field} type="email" value={email} placeholder={t.parentEmail} aria-label={t.parentEmail} onChange={(event) => onEmail(event.target.value)} />
-      </div>
-      <div className={row} style={{ marginTop: '1rem' }}>
-        <button type="button" className={primary} disabled={sending || !email.includes('@')} onClick={onSend}>
-          {t.sendToParent}
-        </button>
-        <button type="button" className={secondary} onClick={onBack}>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (ready) onSend();
+        }}
+      >
+        <label className={fieldLabelClass}>
+          {t.parentEmail}
+          <Input type="email" value={email} placeholder={t.parentEmail} onChange={onEmail} />
+        </label>
+      </form>
+      <FlowFooter>
+        <Button variant="ghost" onClick={onBack}>
           {t.back}
-        </button>
-      </div>
+        </Button>
+        <Button color="logoBlue" loading={sending} disabled={!ready} onClick={onSend}>
+          {t.sendToParent}
+        </Button>
+      </FlowFooter>
     </div>
   );
 }
 
+// A result or a stop in the flow (live, sent, refunded, nothing charged...).
+// The Modal's header carries the title.
 export function MessageView({
-  title,
   body,
+  note,
   primaryLabel,
   onPrimary,
   secondaryLabel,
   onSecondary,
   celebrate
 }: {
-  title: string;
   body: string;
+  // an extra line under the body (e.g. "check your email")
+  note?: string;
   primaryLabel: string;
   onPrimary: () => void;
   secondaryLabel?: string;
@@ -562,26 +674,30 @@ export function MessageView({
   celebrate?: boolean;
 }) {
   return (
-    <div className={panelClass} style={{ textAlign: 'center' }}>
+    <div className={flowClass}>
       {celebrate && (
-        <div aria-hidden="true" style={{ fontSize: '2.6rem', marginBottom: '0.4rem' }}>
+        <div aria-hidden="true" style={{ fontSize: '4rem', lineHeight: 1, margin: '0.4rem 0 1.2rem', textAlign: 'center' }}>
           🎉
         </div>
       )}
-      <h2 style={{ overflowWrap: 'anywhere' }}>{title}</h2>
-      <p>{body}</p>
-      <div className={row} style={{ justifyContent: 'center', marginTop: '1rem' }}>
-        <button type="button" className={primary} onClick={onPrimary}>
-          {primaryLabel}
-        </button>
+      <p style={celebrate ? { textAlign: 'center' } : undefined}>{body}</p>
+      {note && <div className={noticeClass}>{note}</div>}
+      <FlowFooter>
         {secondaryLabel && onSecondary && (
-          <button type="button" className={secondary} onClick={onSecondary}>
+          <Button variant="ghost" onClick={onSecondary}>
             {secondaryLabel}
-          </button>
+          </Button>
         )}
-      </div>
+        <Button color="logoBlue" onClick={onPrimary}>
+          {primaryLabel}
+        </Button>
+      </FlowFooter>
     </div>
   );
+}
+
+export function connectViewTitle(t: AddressText, stage: 'enter' | 'setup', hostname: string) {
+  return stage === 'enter' ? t.connectTitle : hostname;
 }
 
 export function ConnectView({
@@ -589,6 +705,7 @@ export function ConnectView({
   hostname,
   onHostname,
   onConnect,
+  onClose,
   stage,
   providerName,
   providerSteps,
@@ -603,6 +720,7 @@ export function ConnectView({
   hostname: string;
   onHostname: (value: string) => void;
   onConnect: () => void;
+  onClose?: () => void;
   stage: 'enter' | 'setup';
   providerName: string | null;
   providerSteps: string[];
@@ -617,125 +735,131 @@ export function ConnectView({
   const [copiedValue, setCopiedValue] = useState('');
   if (stage === 'enter') {
     return (
-      <div className={panelClass}>
-        <h2>{t.connectTitle}</h2>
+      <div className={flowClass}>
         <form
-          className={row}
           onSubmit={(event) => {
             event.preventDefault();
             onConnect();
           }}
         >
-          <input className={field} value={hostname} placeholder={t.connectPlaceholder} aria-label={t.connectPlaceholder} onChange={(event) => onHostname(event.target.value)} />
-          <button type="submit" className={primary}>
-            {t.connectGo}
-          </button>
+          <label className={fieldLabelClass}>
+            {t.connectPlaceholder}
+            <Input value={hostname} placeholder={t.connectPlaceholder} onChange={onHostname} autoFocus />
+          </label>
         </form>
-        {ask && <div style={{ marginTop: '1rem' }}>{ask}</div>}
+        {ask && <div style={{ marginTop: '1.4rem' }}>{ask}</div>}
+        <FlowFooter>
+          {onClose && (
+            <Button variant="ghost" onClick={onClose}>
+              {t.close}
+            </Button>
+          )}
+          <Button color="logoBlue" disabled={!hostname.trim()} onClick={onConnect}>
+            {t.connectGo}
+          </Button>
+        </FlowFooter>
       </div>
     );
   }
-  const statusColor = status === 'connected' ? good : status === 'securing' ? accent : muted;
-  const statusText =
-    status === 'connected' ? t.connected : status === 'securing' ? t.securing : status === 'checking' ? t.checking : t.waiting;
-  // The two records, with the first one's plain value up front.
+  const connected = status === 'connected';
+  const statusColor = connected ? Color.green() : status === 'securing' ? Color.logoBlue() : Color.darkGray();
+  const statusText = connected ? t.connected : status === 'securing' ? t.securing : status === 'checking' ? t.checking : t.waiting;
   return (
-    <div className={panelClass}>
-      <h2 style={{ overflowWrap: 'anywhere' }}>{hostname}</h2>
+    <div className={flowClass}>
       <div
         role="status"
-        className={css`
-          display: flex;
-          gap: 0.6rem;
-          align-items: center;
-          padding: 0.8rem 1rem;
-          border-radius: 1rem;
-          background: ${status === 'connected' ? '#effaf4' : '#f6f6fa'};
-          color: ${statusColor};
-          font-weight: 600;
-          margin-bottom: 1rem;
-        `}
+        style={{ display: 'flex', gap: '0.7rem', alignItems: 'baseline', color: statusColor, fontWeight: 700, fontSize: '1.4rem', margin: '0 0 1.4rem' }}
       >
-        <span aria-hidden="true">{status === 'connected' ? '✓' : '●'}</span>
+        <span aria-hidden="true" style={{ flex: 'none' }}>
+          {connected ? '✓' : '●'}
+        </span>
         <span>{statusText}</span>
       </div>
-      {status !== 'connected' && domainConnectUrl && (
-        <div style={{ marginBottom: '1rem' }}>
-          <a href={domainConnectUrl} className={primary} style={{ display: 'inline-block', textDecoration: 'none', background: accent }}>
-            {t.connectAuto(providerName || 'your domain company')}
-          </a>
-          <p className={fine} style={{ marginTop: '0.5rem' }}>
-            {t.connectAutoNote}
-          </p>
-        </div>
-      )}
-      {status !== 'connected' && !domainConnectUrl && (
+      {!connected && domainConnectUrl && (
         <>
-          <p style={{ fontWeight: 700 }}>{providerName ? t.connectSteps(providerName) : t.connectStepsGeneric}</p>
-          <ol style={{ margin: '0 0 1rem', paddingLeft: '1.3rem' }}>
+          <p style={{ marginBottom: '0.6rem' }}>
+            <Button color="logoBlue" onClick={() => window.location.assign(domainConnectUrl)}>
+              {t.connectAuto(providerName || 'your domain company')}
+            </Button>
+          </p>
+          <p className={quietText}>{t.connectAutoNote}</p>
+        </>
+      )}
+      {!connected && !domainConnectUrl && (
+        <>
+          <p style={{ fontWeight: 700, marginBottom: '0.6rem' }}>{providerName ? t.connectSteps(providerName) : t.connectStepsGeneric}</p>
+          <ol style={{ margin: '0 0 1.4rem', paddingLeft: '1.6rem' }}>
             {providerSteps.map((step) => (
-              <li key={step} style={{ marginBottom: '0.3rem' }}>
+              <li key={step} style={{ marginBottom: '0.4rem' }}>
                 {step}
               </li>
             ))}
           </ol>
-          {records.map((record) => (
-            <div
-              key={record.type + record.host}
-              className={css`
-                display: grid;
-                grid-template-columns: auto 1fr auto;
-                grid-template-areas: 'type host copy' 'value value value';
-                gap: 0.35rem 0.6rem;
-                align-items: center;
-                padding: 0.7rem 0.85rem;
-                margin-bottom: 0.5rem;
-                border: 1px solid ${line};
-                border-radius: 0.9rem;
-                font-size: 1rem;
-              `}
-            >
-              <strong style={{ gridArea: 'type', padding: '0.1rem 0.5rem', borderRadius: 6, background: '#f0f0f6', fontSize: '0.9rem' }}>{record.type}</strong>
-              <span className={fine} style={{ gridArea: 'host', fontSize: '0.95rem', overflowWrap: 'anywhere' }}>
-                {t.recordHost}: <code>{record.host}</code>
-              </span>
-              <button
-                type="button"
-                className={secondary}
-                style={{ gridArea: 'copy', padding: '0.45rem 0.8rem', fontSize: '0.95rem' }}
-                onClick={() => {
-                  void navigator.clipboard?.writeText(record.value).catch(() => {});
-                  setCopiedValue(record.value);
-                }}
+          <div className={rowsClass}>
+            {records.map((record) => (
+              <div
+                key={record.type + record.host}
+                className={css`
+                  display: grid;
+                  grid-template-columns: auto minmax(0, 1fr) auto;
+                  grid-template-areas: 'type host copy' 'value value value';
+                  gap: 0.5rem 0.8rem;
+                  align-items: center;
+                `}
               >
-                {copiedValue === record.value ? t.copied : t.copyValue}
-              </button>
-              <code style={{ gridArea: 'value', wordBreak: 'break-all', fontSize: '0.98rem', background: '#fafafd', borderRadius: 8, padding: '0.45rem 0.6rem' }}>{record.value}</code>
-            </div>
-          ))}
+                <strong style={{ gridArea: 'type', padding: '0.1rem 0.6rem', borderRadius: 6, background: Color.logoBlue(0.1), color: Color.logoBlue(), fontSize: '1.25rem' }}>
+                  {record.type}
+                </strong>
+                <span className={quietText} style={{ gridArea: 'host', overflowWrap: 'anywhere' }}>
+                  {t.recordHost}: <code>{record.host}</code>
+                </span>
+                <span style={{ gridArea: 'copy' }}>
+                  <Button
+                    variant="soft"
+                    color="logoBlue"
+                    size="sm"
+                    onClick={() => {
+                      void navigator.clipboard?.writeText(record.value).catch(() => {});
+                      setCopiedValue(record.value);
+                    }}
+                  >
+                    {copiedValue === record.value ? t.copied : t.copyValue}
+                  </Button>
+                </span>
+                <code style={{ gridArea: 'value', wordBreak: 'break-all', fontSize: '1.35rem', background: Color.wellGray(0.5), borderRadius: 6, padding: '0.5rem 0.7rem' }}>
+                  {record.value}
+                </code>
+              </div>
+            ))}
+          </div>
         </>
       )}
-      <div className={row} style={{ marginTop: '0.6rem', alignItems: 'center' }}>
-        {status !== 'connected' && (
-          <button type="button" className={secondary} onClick={onCheck}>
-            {t.checkNow}
-          </button>
-        )}
-        {ask}
-      </div>
-      {domainConnectUrl && status !== 'connected' && (
-        <>
-          <button type="button" className={quiet} style={{ marginTop: '0.8rem' }} onClick={() => setAdvanced(!advanced)} aria-expanded={advanced}>
+      {ask}
+      {domainConnectUrl && !connected && (
+        <div style={{ marginTop: '1rem' }}>
+          <button type="button" className={linkButtonClass} onClick={() => setAdvanced(!advanced)} aria-expanded={advanced}>
             {t.rawRecords} {advanced ? '▴' : '▾'}
           </button>
           {advanced &&
             records.map((record) => (
-              <div key={record.type + record.host} className={fine} style={{ fontSize: '0.95rem' }}>
+              <div key={record.type + record.host} className={quietText} style={{ overflowWrap: 'anywhere' }}>
                 {record.type} · {record.fullName} → <code>{record.value}</code>
               </div>
             ))}
-        </>
+        </div>
       )}
+      <FlowFooter>
+        {onClose && (
+          <Button variant={connected ? 'solid' : 'ghost'} color="logoBlue" onClick={onClose}>
+            {connected ? t.done : t.close}
+          </Button>
+        )}
+        {!connected && (
+          <Button color="logoBlue" loading={status === 'checking'} onClick={onCheck}>
+            {t.checkNow}
+          </Button>
+        )}
+      </FlowFooter>
     </div>
   );
 }
@@ -761,78 +885,71 @@ export function RenameView({
   onSave: () => void;
   onCancel: () => void;
 }) {
+  const canSave = status === 'available' && !saving;
   return (
-    <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-        gap: 0.8rem;
-        color: ${ink};
-      `}
-    >
-      <h2 style={{ margin: 0, fontSize: '1.5rem' }}>{t.renameTitle}</h2>
+    <div className={flowClass}>
       <label
         className={css`
           display: flex;
           align-items: center;
-          border: 1px solid ${line};
-          border-radius: 0.8rem;
-          padding: 0 0.8rem;
-          font-size: 1.15rem;
+          border: 1px solid var(--ui-border);
+          border-radius: ${borderRadius};
+          padding: 0 1rem;
+          font-size: 1.7rem;
+          background: #fff;
           &:focus-within {
-            border-color: ${ink};
+            border-color: var(--ui-border-strong);
+          }
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: calc(16 * var(--px));
           }
         `}
       >
         <input
           autoFocus
+          aria-label={t.renameTitle}
           value={value}
           maxLength={40}
           spellCheck={false}
           autoCapitalize="none"
           autoCorrect="off"
-          onChange={(event) =>
-            onChange(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
-          }
+          onChange={(event) => onChange(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
           onKeyDown={(event) => {
-            if (event.key === 'Enter' && status === 'available' && !saving) onSave();
+            if (event.key === 'Enter' && canSave) onSave();
           }}
           className={css`
             flex: 1;
             min-width: 0;
             border: 0;
             outline: none;
-            padding: 0.7rem 0;
+            padding: 1rem 0;
+            line-height: 2rem;
             font: inherit;
             background: transparent;
           `}
         />
-        <span style={{ color: '#6b6b78', whiteSpace: 'nowrap' }}>.{root}</span>
+        <span style={{ color: Color.darkGray(), whiteSpace: 'nowrap' }}>.{root}</span>
       </label>
-      <div className={fine} style={{ minHeight: '1.3em', color: status === 'available' ? good : status === 'taken' ? '#b42318' : undefined }}>
-        {status === 'checking'
-          ? t.renameChecking
-          : status === 'available'
-            ? t.renameAvailable
-            : status === 'taken'
-              ? message
-              : t.renameHint}
-      </div>
-      <div className={fine}>{t.renameOldWorks}</div>
-      <div className={row}>
-        <button
-          type="button"
-          className={primary}
-          disabled={status !== 'available' || saving}
-          style={{ opacity: status !== 'available' || saving ? 0.5 : 1 }}
-          onClick={onSave}
-        >
-          {saving ? t.renameSaving : t.renameSave}
-        </button>
-        <button type="button" className={secondary} onClick={onCancel}>
+      <p
+        className={quietText}
+        style={{
+          minHeight: '1.5em',
+          margin: '0.6rem 0 1rem',
+          fontWeight: status === 'available' || status === 'taken' ? 700 : undefined,
+          color: status === 'available' ? Color.green() : status === 'taken' ? Color.rose() : undefined
+        }}
+      >
+        {status === 'checking' ? t.renameChecking : status === 'available' ? t.renameAvailable : status === 'taken' ? message : t.renameHint}
+      </p>
+      <p className={quietText}>{t.renameOldWorks}</p>
+      <FlowFooter>
+        <Button variant="ghost" onClick={onCancel}>
           {t.renameCancel}
-        </button>
-      </div>
+        </Button>
+        <Button color="logoBlue" loading={saving} disabled={!canSave} onClick={onSave}>
+          {t.renameSave}
+        </Button>
+      </FlowFooter>
     </div>
   );
 }
@@ -945,16 +1062,6 @@ export function ownerDetailsProblem(t: AddressText, details: OwnerDetails) {
   return '';
 }
 
-const labelled = css`
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  min-width: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: ${muted};
-`;
-
 // Adults buying for their own app: they are the legal owner, so they type
 // their own details here, then pay on Stripe. One price, its breakdown, the
 // honest "cheaper elsewhere", nothing pre-ticked.
@@ -983,73 +1090,34 @@ export function OwnerDetailsView({
   onPay: () => void;
   onBack: () => void;
 }) {
-  const set = (key: keyof OwnerDetails) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    onDetails({ ...details, [key]: event.target.value });
-  const input = (key: keyof OwnerDetails, label: string, props: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
-    <label className={labelled}>
+  const input = (
+    key: keyof OwnerDetails,
+    label: string,
+    props: { type?: 'text' | 'email' | 'tel'; autoComplete?: string; placeholder?: string } = {}
+  ) => (
+    <label className={fieldLabelClass}>
       {label}
-      <input className={field} value={details[key]} onChange={set(key)} {...props} />
+      <Input value={details[key]} onChange={(value: string) => onDetails({ ...details, [key]: value })} {...props} />
     </label>
   );
   const missing = ownerDetailsProblem(t, details);
+  const canPay = !missing && agreed && !busy;
   return (
-    <div className={panelClass}>
-      <h2 style={{ overflowWrap: 'anywhere' }}>{t.ownerTitle(idea.domain)}</h2>
-      <div
-        className={css`
-          display: grid;
-          grid-template-columns: 1fr auto;
-          align-items: center;
-          gap: 0.2rem 1rem;
-          margin: 0.2rem 0 1rem;
-          padding: 1rem 1.1rem;
-          border: 1px solid ${accent};
-          border-radius: 1rem;
-          background: #faf9ff;
-          @media (max-width: 520px) {
-            grid-template-columns: 1fr;
-          }
-        `}
-      >
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 800, fontSize: '1.2rem', overflowWrap: 'break-word' }}>{idea.domain}</div>
-          <div className={fine}>{renews ? t.renewsLine(usd(idea.priceCents)) : t.oneYearLine}</div>
-        </div>
-        <div
-          className={css`
-            text-align: right;
-            @media (max-width: 520px) {
-              text-align: left;
-              display: flex;
-              align-items: baseline;
-              gap: 0.5rem;
-            }
-          `}
-        >
-          <div style={{ fontWeight: 800, fontSize: '1.35rem' }}>{usd(idea.priceCents)}</div>
-          {idea.approxKrw ? (
-            <div className={fine} style={{ fontSize: '0.9rem' }}>
-              {t.approxKrw(krw(idea.approxKrw))}
-            </div>
-          ) : null}
-        </div>
-        <div style={{ gridColumn: '1 / -1' }}>
-          <PriceBreakdown t={t} idea={idea} />
-        </div>
-      </div>
+    <div className={flowClass}>
+      <ChosenName t={t} idea={idea} renews={renews} />
       <p>{t.ownerIntro}</p>
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (!missing && agreed && !busy) onPay();
+          if (canPay) onPay();
         }}
       >
         <div
           className={css`
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.7rem;
-            @media (max-width: 520px) {
+            gap: 1.2rem 1.2rem;
+            @media (max-width: ${mobileMaxWidth}) {
               grid-template-columns: 1fr;
             }
           `}
@@ -1057,45 +1125,56 @@ export function OwnerDetailsView({
           {input('firstName', t.firstName, { autoComplete: 'given-name' })}
           {input('lastName', t.lastName, { autoComplete: 'family-name' })}
           {input('email', t.email, { type: 'email', autoComplete: 'email' })}
-          <label className={labelled}>
+          <label className={fieldLabelClass}>
             {t.phone}
-            <input className={field} value={details.phone} onChange={set('phone')} type="tel" autoComplete="tel" placeholder="+82 10 1234 5678" />
-            <span style={{ fontWeight: 400, fontSize: '0.88rem' }}>{t.phoneHint}</span>
+            <Input value={details.phone} onChange={(phone: string) => onDetails({ ...details, phone })} type="tel" autoComplete="tel" placeholder="+82 10 1234 5678" />
+            <span className={quietText} style={{ fontWeight: 400, fontSize: '1.25rem' }}>
+              {t.phoneHint}
+            </span>
           </label>
           <div style={{ gridColumn: '1 / -1' }}>{input('address1', t.address1, { autoComplete: 'street-address' })}</div>
           {input('city', t.city, { autoComplete: 'address-level2' })}
           {input('state', t.state, { autoComplete: 'address-level1' })}
           {input('zip', t.zip, { autoComplete: 'postal-code' })}
-          <label className={labelled}>
+          <label className={fieldLabelClass}>
             {t.country}
-            <CountrySelect value={details.country} onChange={(country) => onDetails({ ...details, country })} label={t.country} otherLabel={t.countryOther} />
+            <CountrySelect
+              value={details.country}
+              onChange={(country) => onDetails({ ...details, country })}
+              label={t.country}
+              otherLabel={t.countryOther}
+              className={selectClass}
+            />
           </label>
         </div>
-        <p className={fine} style={{ margin: '0.6rem 0 0' }}>
+        <p className={quietText} style={{ margin: '1rem 0 0' }}>
           {t.ownerPrivate}
         </p>
-        <div className={note}>{t.cheaperElsewhere}</div>
-        <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', cursor: 'pointer', margin: '0.2rem 0 1rem' }}>
-          <input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} style={{ width: '1.2rem', height: '1.2rem', marginTop: '0.2rem', flex: 'none' }} />
+        <div className={calloutClass}>{t.cheaperElsewhere}</div>
+        <label style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start', cursor: 'pointer', margin: '0 0 1.2rem' }}>
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(event) => onAgree(event.target.checked)}
+            style={{ width: '1.8rem', height: '1.8rem', marginTop: '0.2rem', flex: 'none' }}
+          />
           <span>{t.confirmOwner}</span>
         </label>
         {problem && (
-          <div role="alert" style={{ color: '#b42318', marginBottom: '0.7rem' }}>
+          <div role="alert" className={errorClass}>
             {problem}
           </div>
         )}
-        <div className={row} style={{ alignItems: 'center' }}>
-          <button type="submit" className={primary} disabled={Boolean(missing) || !agreed || busy}>
-            {busy ? t.opening : t.payButton(usd(idea.priceCents))}
-          </button>
-          <button type="button" className={secondary} onClick={onBack}>
-            {t.back}
-          </button>
-        </div>
-        <p className={fine} style={{ margin: '0.8rem 0 0' }}>
-          {t.payNote}
-        </p>
+        <p className={quietText}>{t.payNote}</p>
       </form>
+      <FlowFooter>
+        <Button variant="ghost" onClick={onBack}>
+          {t.back}
+        </Button>
+        <Button color="logoBlue" loading={busy} disabled={!canPay} onClick={onPay}>
+          {busy ? t.opening : t.payButton(usd(idea.priceCents))}
+        </Button>
+      </FlowFooter>
     </div>
   );
 }
@@ -1106,6 +1185,16 @@ export interface DomainOrderView {
   status: string;
   stage: 'paying' | 'setting_up' | 'support' | 'live' | 'refunding' | 'refunded' | 'stopped';
   failureReason: string | null;
+}
+
+// The Modal title for an order's current stage.
+export function orderStatusTitle(t: AddressText, order: DomainOrderView) {
+  if (order.stage === 'live') return t.liveTitle(order.domain);
+  if (order.stage === 'refunded') return t.refundedTitle;
+  if (order.stage === 'refunding') return t.refundingTitle;
+  if (order.stage === 'support') return t.supportTitle(order.domain);
+  if (order.stage !== 'setting_up') return t.notPaidTitle;
+  return t.settingUpTitle(order.domain);
 }
 
 // After Stripe: where the order is, in four plain steps.
@@ -1124,24 +1213,15 @@ export function OrderStatusView({
 }) {
   if (order.stage === 'live') {
     return (
-      <div className={panelClass} style={{ textAlign: 'center' }}>
-        <div aria-hidden="true" style={{ fontSize: '2.6rem', marginBottom: '0.4rem' }}>
-          🎉
-        </div>
-        <h2 style={{ overflowWrap: 'anywhere' }}>{t.liveTitle(order.domain)}</h2>
-        <p>{t.liveBody}</p>
-        <p className={fine} style={{ textAlign: 'left', background: '#fff8e6', borderRadius: '0.9rem', padding: '0.8rem 0.95rem', color: ink }}>
-          {t.confirmEmailNote}
-        </p>
-        <div className={row} style={{ justifyContent: 'center', marginTop: '1rem' }}>
-          <button type="button" className={primary} onClick={onOpen}>
-            {t.openIt}
-          </button>
-          <button type="button" className={secondary} onClick={onClose}>
-            {t.done}
-          </button>
-        </div>
-      </div>
+      <MessageView
+        celebrate
+        body={t.liveBody}
+        note={t.confirmEmailNote}
+        primaryLabel={t.openIt}
+        onPrimary={onOpen}
+        secondaryLabel={t.done}
+        onSecondary={onClose}
+      />
     );
   }
   if (order.stage === 'refunded') {
@@ -1152,55 +1232,58 @@ export function OrderStatusView({
           ? t.whyPrice(order.domain)
           : t.whyOther(order.domain);
     return (
-      <MessageView title={t.refundedTitle} body={t.refundedBody(order.domain, usd(order.priceCents), why)} primaryLabel={t.tryAgain} onPrimary={onTryAgain} secondaryLabel={t.close} onSecondary={onClose} />
+      <MessageView body={t.refundedBody(order.domain, usd(order.priceCents), why)} primaryLabel={t.tryAgain} onPrimary={onTryAgain} secondaryLabel={t.close} onSecondary={onClose} />
     );
   }
   if (order.stage === 'refunding') {
-    return <MessageView title={t.refundingTitle} body={t.refundingBody(usd(order.priceCents))} primaryLabel={t.close} onPrimary={onClose} />;
+    return <MessageView body={t.refundingBody(usd(order.priceCents))} primaryLabel={t.close} onPrimary={onClose} />;
   }
   if (order.stage === 'support') {
-    return <MessageView title={t.supportTitle(order.domain)} body={t.supportBody} primaryLabel={t.close} onPrimary={onClose} />;
+    return <MessageView body={t.supportBody} primaryLabel={t.close} onPrimary={onClose} />;
   }
   if (order.stage !== 'setting_up') {
     // paying (Checkout left or cancelled) or stopped: nothing was charged
-    return <MessageView title={t.notPaidTitle} body={t.notPaidBody} primaryLabel={t.tryAgain} onPrimary={onTryAgain} secondaryLabel={t.close} onSecondary={onClose} />;
+    return <MessageView body={t.notPaidBody} primaryLabel={t.tryAgain} onPrimary={onTryAgain} secondaryLabel={t.close} onSecondary={onClose} />;
   }
   const reached = order.status === 'registered' ? 2 : 1;
   const steps = [t.stepPaid, t.stepRegistered, t.stepSecure, t.stepLive];
   return (
-    <div className={panelClass}>
-      <h2 style={{ overflowWrap: 'anywhere' }}>{t.settingUpTitle(order.domain)}</h2>
+    <div className={flowClass}>
       <ol
         aria-label={t.settingUpTitle(order.domain)}
         className={css`
           list-style: none;
-          margin: 0.6rem 0 1rem;
+          margin: 0 0 1.6rem;
           padding: 0;
           display: grid;
-          gap: 0.55rem;
+          gap: 1rem;
         `}
       >
         {steps.map((label, index) => {
           const done = index < reached;
           const current = index === reached;
           return (
-            <li key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', fontWeight: current ? 700 : 500, color: done || current ? ink : muted }}>
+            <li
+              key={label}
+              aria-current={current ? 'step' : undefined}
+              style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontWeight: current ? 800 : 600, color: done || current ? Color.black() : Color.gray() }}
+            >
               <span
                 aria-hidden="true"
                 className={css`
-                  width: 1.6rem;
-                  height: 1.6rem;
+                  width: 2.4rem;
+                  height: 2.4rem;
                   border-radius: 50%;
                   display: grid;
                   place-items: center;
                   flex: none;
-                  font-size: 0.9rem;
+                  font-size: 1.25rem;
                   font-weight: 800;
                   color: #fff;
-                  background: ${done ? good : current ? accent : '#d9d9e3'};
+                  background: ${done ? Color.green() : current ? Color.logoBlue() : Color.borderGray()};
                   ${current
                     ? `animation: lumineOrderPulse 1.6s ease-in-out infinite;
-                  @keyframes lumineOrderPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(75,60,240,0.35); } 50% { box-shadow: 0 0 0 7px rgba(75,60,240,0); } }
+                  @keyframes lumineOrderPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(65,140,235,0.4); } 50% { box-shadow: 0 0 0 8px rgba(65,140,235,0); } }
                   @media (prefers-reduced-motion: reduce) { animation: none; }`
                     : ''}
                 `}
@@ -1213,12 +1296,12 @@ export function OrderStatusView({
         })}
       </ol>
       <p>{t.settingUpBody}</p>
-      <p className={fine} style={{ background: '#fff8e6', borderRadius: '0.9rem', padding: '0.8rem 0.95rem', color: ink }}>
-        {t.confirmEmailNote}
-      </p>
-      <button type="button" className={secondary} onClick={onClose}>
-        {t.close}
-      </button>
+      <div className={noticeClass}>{t.confirmEmailNote}</div>
+      <FlowFooter>
+        <Button color="logoBlue" onClick={onClose}>
+          {t.close}
+        </Button>
+      </FlowFooter>
     </div>
   );
 }

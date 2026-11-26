@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { css } from '@emotion/css';
+import { Color } from '~/constants/css';
 import Modal from '~/components/Modal';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import { useAppContext } from '~/contexts';
@@ -15,6 +17,8 @@ import {
   OwnerDetailsView,
   ParentRequestView,
   RenameView,
+  connectViewTitle,
+  orderStatusTitle,
   emptyOwnerDetails,
   ownerDetailsProblem,
   type DnsRecordView,
@@ -503,6 +507,29 @@ export default function AppAddress({
     excerpt: `App web address screen for "${appTitle}". Free address: ${freeHost}. ${excerpt}`.slice(0, 600)
   });
 
+  // the standard Modal header names the step
+  const flowTitle = !step
+    ? ''
+    : step.kind === 'rename'
+      ? t.renameTitle
+      : step.kind === 'intro'
+        ? t.introTitle
+        : step.kind === 'find'
+          ? t.findTitle
+          : step.kind === 'parent'
+            ? t.parentTitle
+            : step.kind === 'owner'
+              ? t.ownerTitle(step.idea.domain)
+              : step.kind === 'order'
+                ? order
+                  ? orderStatusTitle(t, order)
+                  : t.introTitle
+                : step.kind === 'live'
+                  ? t.liveTitle(step.hostname)
+                  : step.kind === 'sent'
+                    ? t.sentTitle
+                    : connectViewTitle(t, connect ? 'setup' : 'enter', hostname);
+
   return (
     <>
       <AddressMenuView
@@ -542,8 +569,21 @@ export default function AppAddress({
         <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />
       )}
       {step && (
-        <Modal modalKey="AppAddressFlow" isOpen onClose={closeFlow} size="md" hasHeader={false} closeOnBackdropClick>
-          {error && <div style={{ color: '#b42318', marginBottom: '0.6rem' }}>{error}</div>}
+        <Modal
+          modalKey="AppAddressFlow"
+          isOpen
+          onClose={closeFlow}
+          size="md"
+          title={flowTitle}
+          loading={step.kind === 'order' && !order}
+          closeOnBackdropClick
+        >
+          <div style={{ width: '100%', minWidth: 0 }}>
+          {error && (
+            <div role="alert" className={flowErrorClass}>
+              {error}
+            </div>
+          )}
           {step.kind === 'rename' && (
             <RenameView
               t={t}
@@ -571,7 +611,8 @@ export default function AppAddress({
                   : undefined
               }
               onHaveOne={info.customDomainsEnabled ? () => setStep({ kind: 'connect' }) : undefined}
-              ask={<AskAgentButton context={askContext('getting my own web address', 'Step: what a domain is.')} />}
+              onClose={closeFlow}
+              ask={<AskAgentButton showLabelOnMobile context={askContext('getting my own web address', 'Step: what a domain is.')} />}
             />
           )}
           {step.kind === 'find' && (
@@ -588,8 +629,9 @@ export default function AppAddress({
               }}
               onUseOwn={info.customDomainsEnabled ? () => setStep({ kind: 'connect' }) : undefined}
               onMoreIdeas={() => loadIdeas({ more: true })}
+              onClose={closeFlow}
               ask={
-                <AskAgentButton
+                <AskAgentButton showLabelOnMobile
                   label={t.askIdeas}
                   context={askContext(
                     'ideas for my app’s web address',
@@ -642,7 +684,6 @@ export default function AppAddress({
           )}
           {step.kind === 'live' && (
             <MessageView
-              title={t.liveTitle(step.hostname)}
               body={t.liveBody}
               primaryLabel={t.openIt}
               onPrimary={() => window.open(`https://${step.hostname}`, '_blank', 'noopener,noreferrer')}
@@ -652,7 +693,7 @@ export default function AppAddress({
             />
           )}
           {step.kind === 'sent' && (
-            <MessageView title={t.sentTitle} body={t.sentBody(step.idea.domain)} primaryLabel={t.done} onPrimary={() => setStep(null)} />
+            <MessageView body={t.sentBody(step.idea.domain)} primaryLabel={t.done} onPrimary={() => setStep(null)} />
           )}
           {step.kind === 'connect' && (
             <ConnectView
@@ -660,6 +701,7 @@ export default function AppAddress({
               hostname={hostname}
               onHostname={setHostname}
               onConnect={startConnect}
+              onClose={closeFlow}
               stage={connect ? 'setup' : 'enter'}
               providerName={connect?.providerName || null}
               providerSteps={connect?.providerSteps || []}
@@ -668,7 +710,7 @@ export default function AppAddress({
               status={connect?.status || 'waiting'}
               onCheck={() => checkConnect(step.domainId)}
               ask={
-                <AskAgentButton
+                <AskAgentButton showLabelOnMobile
                   label={t.askHelp}
                   context={askContext(
                     'connecting my domain',
@@ -680,6 +722,7 @@ export default function AppAddress({
               }
             />
           )}
+          </div>
         </Modal>
       )}
     </>
@@ -699,3 +742,11 @@ function useConnectPolling(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domainId, status]);
 }
+
+const flowErrorClass = css`
+  width: 100%;
+  margin: 0 0 1.2rem;
+  color: ${Color.rose()};
+  font-size: 1.45rem;
+  font-weight: 700;
+`;
