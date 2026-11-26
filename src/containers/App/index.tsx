@@ -23,11 +23,13 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import API_URL from '~/constants/URL';
 import {
   matchPath,
+  Navigate,
   useLocation,
   useNavigate,
   Routes,
   Route
 } from 'react-router-dom';
+import { appAddressIntentPath } from '~/helpers/appAddressLinks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   APP_SHELL_HEADER_OFFSET_STYLE,
@@ -320,6 +322,11 @@ function SessionRecovery({
 }
 
 function BuildRuntimeKeepAliveRoute() {
+  const location = useLocation();
+  // Stripe's return and the wand's app-address links open the Build page's
+  // checkout (helpers/appAddressLinks.ts).
+  const appAddressIntent = appAddressIntentPath(location.pathname, location.search, location.hash);
+  if (appAddressIntent) return <Navigate to={appAddressIntent} replace />;
   return <BuildRuntimeLoading />;
 }
 
@@ -695,8 +702,10 @@ export default function App() {
   const usingBuildAppRuntime = useMemo(
     // Match the deep-link splat too (e.g. /app/884/432-some-slug) so the keep-
     // alive host actually mounts for shared book links, not just /app/:buildId.
-    () => routeMatches('/app/:buildId/*', location.pathname),
-    [location.pathname]
+    () =>
+      routeMatches('/app/:buildId/*', location.pathname) &&
+      !appAddressIntentPath(location.pathname, location.search),
+    [location.pathname, location.search]
   );
   const usingEmbeddedBuildAppRuntime = useMemo(
     () =>
