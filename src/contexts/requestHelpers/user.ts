@@ -744,27 +744,42 @@ export default function userRequestHelpers({
     // Bridge Builder path 3: my show-around tours and the next step
     // The welcome greeter and guided tour (twinkle-api helpers/welcomeTour):
     // the stops and words, whether the banner shows, where the member is.
-    async loadWelcomeTour() {
+    // fresh: resuming, so read where they are from the server's writer
+    async loadWelcomeTour({ fresh = false }: { fresh?: boolean } = {}) {
       try {
-        const { data } = await request.get(`${URL}/user/welcome-tour`, auth());
+        const { data } = await request.get(
+          `${URL}/user/welcome-tour${fresh ? '?fresh=1' : ''}`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
       }
     },
+    // skip = "Skip tour" (ended early at stopKey); each event is also the
+    // daily run's tour telemetry. source: where a tour was started from.
     async updateWelcomeTourState({
       event,
       guide,
-      stopKey
+      stopKey,
+      source,
+      runKey,
+      runId,
+      seq
     }: {
-      event: 'shown' | 'start' | 'stop' | 'finish' | 'decline';
+      event: 'shown' | 'start' | 'stop' | 'skip' | 'finish' | 'decline';
       guide?: 'zero' | 'ciel';
       stopKey?: string;
+      source?: 'card' | 'banner' | 'chip';
+      // runs: the start's key; a step's run and number
+      runKey?: string;
+      runId?: number;
+      seq?: number;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/user/welcome-tour/state`,
-          { event, guide, stopKey },
+          { event, guide, stopKey, source, runKey, runId, seq },
           auth()
         );
         return data;
@@ -774,16 +789,33 @@ export default function userRequestHelpers({
     },
     // The tour's Lumine stop: makes the project from "What do you want to
     // make?"; on the first tour Twinkle pays its first Lumine run (free).
-    async startWelcomeTourBuild({ idea, title }: { idea: string; title: string }) {
+    // expectFree: the stop showed it as free (the server then sends no
+    // prompt if it isn't free by now)
+    async startWelcomeTourBuild({
+      idea,
+      title,
+      expectFree = false
+    }: {
+      idea: string;
+      title: string;
+      expectFree?: boolean;
+    }) {
       try {
         const { data } = await request.post(
           `${URL}/user/welcome-tour/build`,
-          { idea, title },
+          { idea, title, expectFree },
           auth()
         );
         return data;
-      } catch (error) {
-        return handleError(error);
+      } catch (error: any) {
+        // a refusal because a first project exists names it (opened, never
+        // remade)
+        const project = error?.response?.data?.project;
+        try {
+          return await handleError(error);
+        } catch (handled: any) {
+          throw project ? { ...handled, project } : handled;
+        }
       }
     },
     async loadBridgeTour() {

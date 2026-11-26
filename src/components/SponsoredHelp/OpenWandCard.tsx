@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import WandActionBar from './WandActionBar';
+import { resolveWandActions } from './wandActions';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -227,36 +229,45 @@ export default function OpenWandCard({
         </>
       );
     }
+    // the reader's actions in the shared wand model (wandActions.ts): one
+    // main button, no chapters (one task) and no backup
+    const model = resolveWandActions(card!.actions, {
+      mainAction: { label: `Have ${persona} help me`, runs: 'all' }
+    });
     if (mine) {
       return mine.assistantPathId ? (
-        <GameCTAButton
+        <WandActionBar
+          model={model}
           variant={buttonVariant}
           size="sm"
-          icon="comment"
-          onClick={() => navigate(`/chat/${mine.assistantPathId}`)}
-        >
-          Open in {persona} chat
-        </GameCTAButton>
+          mainLabel={`Open in ${persona} chat`}
+          mainIcon="comment"
+          onMain={() => navigate(`/chat/${mine.assistantPathId}`)}
+        />
       ) : null;
     }
     if (state !== 'sponsored' && state !== 'own_energy') return null;
     if (viewer === 'guest') {
       return (
-        <GameCTAButton variant={buttonVariant} size="sm" icon="key" onClick={() => onOpenSigninModal()}>
-          Sign in to use it
-        </GameCTAButton>
+        <WandActionBar
+          model={model}
+          variant={buttonVariant}
+          size="sm"
+          mainLabel="Sign in to use it"
+          mainIcon="key"
+          onMain={() => onOpenSigninModal()}
+        />
       );
     }
     return (
-      <GameCTAButton
+      <WandActionBar
+        model={model}
         variant={buttonVariant}
         size="sm"
-        icon="wand-magic-sparkles"
-        loading={working === 'press'}
-        onClick={asReader ? () => {} : handlePress}
-      >
-        Have {persona} help me
-      </GameCTAButton>
+        mainIcon="wand-magic-sparkles"
+        mainLoading={working === 'press'}
+        onMain={asReader ? () => {} : handlePress}
+      />
     );
   }
 
