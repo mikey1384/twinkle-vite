@@ -574,12 +574,14 @@ export function MessageView({
   onPrimary,
   secondaryLabel,
   onSecondary,
+  noteTone = 'warm',
   stepKey = 'message'
 }: StepBase & {
   title: string;
   tip?: string;
   body: string;
   note?: string;
+  noteTone?: 'warm' | 'error';
   primaryLabel: string;
   onPrimary: () => void;
   secondaryLabel?: string;
@@ -598,8 +600,8 @@ export function MessageView({
     >
       {tip && <Companion assistant={assistant ?? null}>{tip}</Companion>}
       <StepTitle>{title}</StepTitle>
-      <p className={bodyTextClass}>{body}</p>
-      {note && <Notice tone="warm">{note}</Notice>}
+      {body ? <p className={bodyTextClass}>{body}</p> : null}
+      {note && <Notice tone={noteTone}>{note}</Notice>}
     </CheckoutLayout>
   );
 }
@@ -610,19 +612,25 @@ export function MessageView({
 export function GoingLiveView({
   t,
   assistant,
+  error,
   domain,
   reached,
+  title,
+  body,
   onClose
 }: StepBase & {
   domain: string;
   // how many of Paid, Registered, Secure, Live are done (from the order)
   reached: number;
+  title?: string;
+  body?: string;
   onClose: () => void;
 }) {
   const steps = [t.stepPaid, t.stepRegistered, t.stepSecure, t.stepLive];
   return (
     <CheckoutLayout
-      stepKey="going-live"
+      stepKey={`going-live-${reached}`}
+      error={error}
       actions={
         <StepActions>
           <SecondaryButton onClick={onClose}>{t.backToApp}</SecondaryButton>
@@ -630,7 +638,7 @@ export function GoingLiveView({
       }
     >
       <Companion assistant={assistant ?? null}>{t.tipWorking}</Companion>
-      <StepTitle>{t.settingUpTitle(domain)}</StepTitle>
+      <StepTitle>{title || t.settingUpTitle(domain)}</StepTitle>
       <div className={stageClass}>
         <div className={stageSceneClass}>
           <LumineAtWork variant="toast" mode="working" />
@@ -649,7 +657,7 @@ export function GoingLiveView({
           })}
         </ol>
       </div>
-      <p className={bodyTextClass}>{t.settingUpBody}</p>
+      <p className={bodyTextClass}>{body || t.settingUpBody}</p>
       <Notice tone="warm">{t.confirmEmailNote}</Notice>
     </CheckoutLayout>
   );
@@ -712,12 +720,18 @@ export function OrderStatusView({
   t,
   assistant,
   order,
+  cancelledReturn = false,
+  refreshError = '',
   onOpen,
   onShare,
   onTryAgain,
   onClose
 }: StepBase & {
   order: DomainOrderView;
+  // back from Stripe's cancel link: the member left without paying
+  cancelledReturn?: boolean;
+  // the last refresh failed (the screen keeps the order's last known stage)
+  refreshError?: string;
   onOpen: () => void;
   onShare?: () => void;
   onTryAgain: () => void;
@@ -754,8 +768,23 @@ export function OrderStatusView({
   if (order.stage === 'support') {
     return <MessageView t={t} assistant={assistant} stepKey="support" title={t.supportTitle(order.domain)} body={t.supportBody} primaryLabel={t.close} onPrimary={onClose} />;
   }
+  if (order.stage === 'paying' && !cancelledReturn) {
+    // back from Stripe before its confirmation reached us: wait for it
+    return (
+      <GoingLiveView
+        t={t}
+        assistant={assistant}
+        error={refreshError}
+        domain={order.domain}
+        reached={0}
+        title={t.paymentCheckingTitle}
+        body={t.paymentCheckingBody}
+        onClose={onClose}
+      />
+    );
+  }
   if (order.stage !== 'setting_up') {
-    // paying (Checkout left or cancelled) or stopped: nothing was charged
+    // stopped, or Stripe's cancel link: nothing was charged
     return (
       <MessageView
         t={t}
@@ -771,7 +800,7 @@ export function OrderStatusView({
       />
     );
   }
-  return <GoingLiveView t={t} assistant={assistant} domain={order.domain} reached={order.status === 'registered' ? 2 : 1} onClose={onClose} />;
+  return <GoingLiveView t={t} assistant={assistant} error={refreshError} domain={order.domain} reached={order.status === 'registered' ? 2 : 1} onClose={onClose} />;
 }
 
 // ---------------------------------------------------------------- connect your own

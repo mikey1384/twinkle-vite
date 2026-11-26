@@ -172,7 +172,9 @@ export default function AppAddress({
   const assistant = useUserAssistant(userId);
   const t = ADDRESS_TEXT[pageLang()];
 
-  // Back from Stripe Checkout: ?domainOrder=<id> opens the order's status.
+  // Back from Stripe Checkout: ?domainOrder=<id> opens the order's status
+  // (&cancelled=1: the member left Stripe without paying).
+  const [cancelledReturn] = useState(() => new URLSearchParams(location.search).get('cancelled') === '1');
   useEffect(() => {
     if (!isOwner) return;
     let orderId = 0;
@@ -273,15 +275,23 @@ export default function AppAddress({
 
   // While an order is being set up, ask again every 5 s (each ask may move
   // it forward on the server); stop once it is live or refunded.
+  // A failed read keeps the order id: it shows (with Check again) and is
+  // retried by itself, a little later each time.
   const orderId = step?.kind === 'order' ? step.orderId : 0;
+  const [orderLookupError, setOrderLookupError] = useState('');
+  const [orderAttempt, setOrderAttempt] = useState(0);
   useEffect(() => {
     if (!orderId) return;
     let cancelled = false;
     let timer = 0;
+    let failures = 0;
     async function poll() {
       try {
         const data = await loadDomainOrder({ buildId, orderId });
-        if (cancelled || !data?.order) return;
+        if (cancelled) return;
+        if (!data?.order) throw new Error(t.orderLookupBody);
+        failures = 0;
+        setOrderLookupError('');
         setOrder(data.order);
         if (data.order.stage === 'live') {
           const fresh = await loadAppAddress({ buildId }).catch(() => null);
@@ -292,7 +302,10 @@ export default function AppAddress({
         // land after the buyer is back from Stripe)
         if (['paying', 'setting_up', 'refunding'].includes(data.order.stage)) timer = window.setTimeout(poll, 5000);
       } catch (e: any) {
-        if (!cancelled) setError(e?.message || '');
+        if (cancelled) return;
+        failures += 1;
+        setOrderLookupError(e?.message || t.orderLookupBody);
+        if (failures < 6) timer = window.setTimeout(poll, 5000 * failures);
       }
     }
     void poll();
@@ -301,7 +314,7 @@ export default function AppAddress({
       window.clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId, buildId]);
+  }, [orderId, buildId, orderAttempt]);
 
   function openOwnFlow() {
     setError('');
@@ -764,6 +777,8 @@ export default function AppAddress({
                 t={t}
                 assistant={assistant}
                 order={order}
+                cancelledReturn={cancelledReturn}
+                refreshError={orderLookupError ? t.refreshFailed : ''}
                 onOpen={() => window.open(`https://${order.domain}`, '_blank', 'noopener,noreferrer')}
                 onShare={() => shareAddress(`https://${order.domain}`)}
                 onTryAgain={() => {
@@ -772,6 +787,24 @@ export default function AppAddress({
                   openOwnFlow();
                 }}
                 onClose={closeFlow}
+              />
+            ) : orderLookupError ? (
+              <MessageView
+                t={t}
+                assistant={assistant}
+                stepKey="order-lookup-failed"
+                title={t.orderLookupTitle}
+                tip={t.tipOops}
+                body={t.orderLookupBody}
+                note={orderLookupError}
+                noteTone="error"
+                primaryLabel={t.checkAgain}
+                onPrimary={() => {
+                  setOrderLookupError('');
+                  setOrderAttempt((value) => value + 1);
+                }}
+                secondaryLabel={t.backToApp}
+                onSecondary={closeFlow}
               />
             ) : (
               <MessageView t={t} assistant={assistant} stepKey="order-loading" title={t.renameChecking} body="" primaryLabel={t.backToApp} onPrimary={closeFlow} />
