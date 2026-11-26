@@ -264,8 +264,9 @@ export interface BuildExecutionPlan {
     } | null;
     smaller?: BuildRoadmapSmallerOption | null;
     hardestNote?: string | null;
-    // The latest run's hand-off for the next run / day ("Next: ...").
-    handoffNote?: string | null;
+    // The current milestone's next open step, in the planner's kid-facing
+    // words (the server keeps the run's own hand-off note to itself).
+    nextStep?: string | null;
     // Lumine's assistant message that proposed this roadmap (when sent).
     proposalMessageId?: number | null;
     // A typed "stop" on a running plan: Lumine asked to confirm (unix

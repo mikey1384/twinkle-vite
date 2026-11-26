@@ -321,7 +321,7 @@ function stallOf(milestone: BuildExecutionPlanChunk): RoadmapStallView | null {
   return null;
 }
 
-// "Next: add the lava stage" from a hand-off note ("Next: …" or plain).
+// "Next: add the lava stage" from the plan's next step ("Next: …" or plain).
 export function formatHandoffNext(note: unknown) {
   const text = cleanText(note, 140)
     .replace(/^\s*next\s*[:\-–—]\s*/i, '')
@@ -528,7 +528,9 @@ export function resolveRoadmapView(
           }
         : null,
     hardestNote: cleanText(plan.plan.hardestNote, 200),
-    nextNote: formatHandoffNext(plan.plan.handoffNote),
+    // the server's member-facing next step; the run's own hand-off note
+    // never reaches the page
+    nextNote: formatHandoffNext(plan.plan.nextStep),
     replan: latestReplanOf(plan),
     stopConfirm:
       plan.status === 'running' &&

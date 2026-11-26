@@ -492,10 +492,8 @@ export function FindView({
       </button>
       {advanced && (
         <ul className={fine} style={{ margin: '0.4rem 0 0', paddingLeft: '1.2rem' }}>
+          {/* only what exists today: no renewals or transfers yet (one year, no auto-renew) */}
           <li>{t.otherEndings}</li>
-          <li>{t.autoRenewOff}</li>
-          <li>{t.transferOut}</li>
-          <li>{t.renewalHistory}</li>
         </ul>
       )}
     </div>

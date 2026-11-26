@@ -95,7 +95,7 @@ function roadmapPlan({
       mode: 'large' as const,
       kind: 'roadmap',
       summary: 'A platform fighter',
-      handoffNote: null as string | null,
+      nextStep: null as string | null,
       title: 'Platform Brawl',
       energyDays: 6,
       smaller: {
@@ -330,7 +330,9 @@ test('acceptance criteria replace steps; NEEDS_WORK and hand-off read kindly', (
     verdict: 'NEEDS_WORK',
     findings: [{ text: 'Lava does no damage yet.' }]
   };
-  plan.plan.handoffNote = 'Next: make the lava hurt';
+  // a raw hand-off note, should an old server still send one, is never shown
+  (plan.plan as any).handoffNote = 'lava dmg 0; arena.js 470/500 split first';
+  plan.plan.nextStep = 'Make the lava hurt';
   const view = resolveRoadmapView(plan, { generating: false })!;
   assert.deepEqual(
     view.current?.criteria.map((c) => [c.title, c.done]),
@@ -344,7 +346,7 @@ test('acceptance criteria replace steps; NEEDS_WORK and hand-off read kindly', (
     view.current?.fixingNote,
     'Almost! Lumine is fixing: lava does no damage yet'
   );
-  assert.equal(view.nextNote, 'Next: make the lava hurt');
+  assert.equal(view.nextNote, 'Next: Make the lava hurt');
   // Finished milestones count every criterion as passed and drop the note.
   (plan.plan.chunks[0] as any).acceptanceCriteria = ['Runs and jumps'];
   (plan.plan.chunks[0] as any).evaluation = {
