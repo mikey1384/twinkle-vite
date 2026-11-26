@@ -3,7 +3,7 @@
 // "Show me around Twinkle" chip open the tour; the XP video player says
 // whether a video is playing; an Arena sitting says a sitting is on.
 // No app imports: node tests load it.
-import type { MediaState, WelcomeTourGuide } from './rules';
+import type { MediaState, WelcomeTourGuide, WelcomeTourProject, WelcomeTourSource } from './rules';
 
 type Listener = () => void;
 
@@ -27,17 +27,27 @@ function signal<T>(initial: T) {
 }
 
 // ---- open the tour from anywhere ------------------------------------------
-export interface WelcomeTourOpenRequest {
-  // jump straight to this stop (the DM card's stop list)
+export interface WelcomeTourOpenOptions {
+  // jump straight to this stop; without one the tour resumes where the
+  // member left off (or starts over once they finished it)
   stopKey?: string;
   guide?: WelcomeTourGuide;
+  source?: WelcomeTourSource;
+  // the welcome card's own project, for an API that doesn't send it yet
+  project?: WelcomeTourProject | null;
+}
+export interface WelcomeTourOpenRequest extends WelcomeTourOpenOptions {
   at: number;
 }
 export const welcomeTourOpenRequest = signal<WelcomeTourOpenRequest | null>(null);
 
-export function startWelcomeTour(options: { stopKey?: string; guide?: WelcomeTourGuide } = {}) {
+export function startWelcomeTour(options: WelcomeTourOpenOptions = {}) {
   welcomeTourOpenRequest.set({ ...options, at: Date.now() });
 }
+
+// Where the running tour is, so the welcome card's button can say
+// "Continue the tour" (2 of 6) without asking the server again.
+export const welcomeTourProgress = signal<{ status: string | null; stopKey: string } | null>(null);
 
 // The starter chip text the API sends newcomers (twinkle-api
 // helpers/ai/websiteAgent/starters.ts NEWCOMER_TOUR): tapping it opens this

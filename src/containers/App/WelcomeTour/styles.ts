@@ -303,6 +303,8 @@ export const tourHeadClass = css`
   align-items: flex-start;
   gap: 0.8rem;
   padding-left: 8.4rem;
+  /* room for Skip tour in the corner */
+  padding-right: 7.6rem;
   min-height: 4.4rem;
   @media (max-width: ${mobileMaxWidth}) {
     padding-left: 7rem;
@@ -469,6 +471,94 @@ export const primaryButtonClass = css`
   &:disabled {
     opacity: 0.6;
     cursor: default;
+  }
+`;
+
+// "Skip tour" (Close on the last screen), quiet, in the panel's corner
+export const skipTourClass = css`
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  border: none;
+  background: transparent;
+  color: ${MUTED};
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  &:hover {
+    background: ${PANEL_RAISED};
+    color: ${INK};
+  }
+  &:focus-visible {
+    outline: 2px solid ${INK};
+    outline-offset: 1px;
+  }
+`;
+
+const pop = keyframes`
+  0% { opacity: 0; transform: scale(0.4) rotate(-20deg); }
+  60% { opacity: 1; transform: scale(1.18) rotate(8deg); }
+  100% { opacity: 1; transform: none; }
+`;
+
+// the "You've seen it all!" moment: a small party horn that pops in
+export const celebrateClass = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--guide);
+  color: #fff;
+  font-size: 1.5rem;
+  animation: ${pop} 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+// the Lumine stop with the project Twinkle already made them
+export const projectCardClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--guide);
+  background: ${PANEL_RAISED};
+  .thumb {
+    flex-shrink: 0;
+    width: 4.4rem;
+    height: 4.4rem;
+    border-radius: 0.8rem;
+    background: #0d1229;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--guide);
+    font-size: 1.8rem;
+  }
+  .text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  b {
+    font-size: 1.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  small {
+    color: ${MUTED};
+    font-size: 1.15rem;
+  }
+  button {
+    flex-shrink: 0;
   }
 `;
 

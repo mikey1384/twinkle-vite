@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -17,8 +17,14 @@ import {
   sponsoredHelpStepLabel
 } from '~/helpers/sponsoredHelp';
 import MakeChoice from '~/containers/App/WelcomeTour/MakeChoice';
-import { startWelcomeTour } from '~/containers/App/WelcomeTour/store';
-import type { WelcomeTourData } from '~/containers/App/WelcomeTour/rules';
+import { GUIDE_PICTURE } from '~/containers/App/WelcomeTour/Greeter';
+import { startWelcomeTour, welcomeTourProgress } from '~/containers/App/WelcomeTour/store';
+import {
+  welcomeTourButton,
+  welcomeTourResumeKey,
+  type WelcomeTourData,
+  type WelcomeTourProject
+} from '~/containers/App/WelcomeTour/rules';
 import { GUIDE_COLOR, GUIDE_SOFT } from '~/containers/App/WelcomeTour/styles';
 
 // A sponsored "Have Zero/Ciel do this" request (twinkle-api
@@ -60,6 +66,8 @@ export default function SponsoredHelpCard({
   // first build (never a random one), and the same tour's stops
   const [choosing, setChoosing] = useState(false);
   const [tour, setTour] = useState<WelcomeTourData | null>(null);
+  // where this tab's running tour is (the card's "Continue the tour")
+  const tourProgress = useSyncExternalStore(welcomeTourProgress.subscribe, welcomeTourProgress.get);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -211,6 +219,14 @@ export default function SponsoredHelpCard({
   const steps = request.steps || [];
   const project = steps.find((step) => step.action === 'create_lumine_project');
   const result = request.result || {};
+  const cardProject: WelcomeTourProject | null =
+    request.status === 'completed' && Number(result.buildId) > 0
+      ? {
+          buildId: Number(result.buildId),
+          title: String(result.buildTitle || 'your project'),
+          idea: String(result.idea || '')
+        }
+      : null;
   return (
     <div className={inMessageRow ? rowWrapClass : wrapClass} data-sponsored-help-card={request.id}>
       <BuildMessageCard
@@ -333,22 +349,6 @@ export default function SponsoredHelpCard({
             />
           </div>
         ) : null}
-        {showsTour && tour ? (
-          <div className={tourListClass}>
-            <span>Take the tour with {persona}:</span>
-            <div>
-              {tour.tour.stops.map((stop) => (
-                <button
-                  key={stop.key}
-                  type="button"
-                  onClick={() => startWelcomeTour({ stopKey: stop.key, guide: request.persona })}
-                >
-                  {stop.title}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
         {error ? <p className={errorClass}>{error}</p> : null}
       </BuildMessageCard>
     </div>
@@ -409,6 +409,48 @@ export default function SponsoredHelpCard({
           >
             Maybe later
           </GameCTAButton>
+          {showsTour && tour ? (
+            // the card's own first build stays the primary here; the tour
+            // is a quiet link beside it
+            <button type="button" className={quietLinkClass} onClick={handleStartTour}>
+              Or take the tour first
+            </button>
+          ) : null}
+        </>
+      );
+    }
+    // The welcome card after its first build (or once it's closed): ONE
+    // primary, the whole guided tour (Mikey 11-26), which opens their new
+    // project live on its Lumine stop. Opening the project directly stays
+    // a small secondary link. The tour's own stop strip handles jumping.
+    if (showsTour && tour && !['sent', 'planning', 'asking', 'awaiting_confirm'].includes(request.status)) {
+      const button = welcomeTourButton({
+        guideName: persona,
+        stops: tour.tour.stops,
+        resumeKey: welcomeTourResumeKey(tourProgress || tour.state)
+      });
+      return (
+        <>
+          <GameCTAButton
+            variant={request.persona === 'ciel' ? 'pink' : 'logoBlue'}
+            size="md"
+            onClick={handleStartTour}
+          >
+            <span className={tourButtonInnerClass}>
+              <img src={GUIDE_PICTURE[request.persona]} alt="" />
+              {button.label}
+              {button.progress ? <small>{button.progress}</small> : null}
+            </span>
+          </GameCTAButton>
+          {cardProject ? (
+            <button type="button" className={quietLinkClass} onClick={handleOpenProject}>
+              Open “{cardProject.title}”
+            </button>
+          ) : request.status === 'completed' && result.path ? (
+            <button type="button" className={quietLinkClass} onClick={() => navigate(String(result.path))}>
+              {sponsoredHelpResultLabel(result)}
+            </button>
+          ) : null}
         </>
       );
     }
@@ -454,6 +496,17 @@ export default function SponsoredHelpCard({
       );
     }
     return null;
+  }
+
+  function handleStartTour() {
+    startWelcomeTour({ guide: request.persona, source: 'card', project: cardProject });
+  }
+
+  function handleOpenProject() {
+    if (!cardProject) return;
+    navigate(`/build/${cardProject.buildId}`, {
+      state: { initialPrompt: cardProject.idea || '' }
+    });
   }
 
   async function run(label: string, action: () => Promise<any>) {
@@ -709,38 +762,43 @@ const makeBoxClass = css`
   color: #f3f5ff;
 `;
 
-// the same tour's stops: each opens the guided tour at that stop
-const tourListClass = css`
-  margin-top: 1.2rem;
-  > span {
-    display: block;
-    font-size: 1.25rem;
+// the welcome card's tour button: the guide's portrait, the label, and how
+// far they got ("3 of 6") when they're partway through
+const tourButtonInnerClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  img {
+    width: 2.6rem;
+    height: 2.6rem;
+    margin: -0.3rem 0 -0.3rem -0.4rem;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 50% 8%;
+    background: rgba(255, 255, 255, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.7);
+  }
+  small {
+    font-size: 0.85em;
     font-weight: 700;
-    color: ${Color.darkerGray()};
-    margin-bottom: 0.5rem;
+    opacity: 0.85;
   }
-  > div {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  button {
-    border: 1px solid ${Color.borderGray()};
-    background: #fff;
-    border-radius: 999px;
-    padding: 0.35rem 0.9rem;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: ${Color.darkerGray()};
-    cursor: pointer;
-    &:hover {
-      border-color: ${Color.logoBlue()};
-      color: ${Color.logoBlue()};
-    }
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    button {
-      font-size: 1.2rem;
-    }
+`;
+
+// a quiet secondary action next to (or under) the card's one primary
+const quietLinkClass = css`
+  background: none;
+  border: none;
+  padding: 0.4rem 0.2rem;
+  cursor: pointer;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: ${Color.darkerGray()};
+  text-decoration: underline;
+  text-decoration-color: ${Color.borderGray()};
+  text-underline-offset: 0.3rem;
+  &:hover {
+    color: ${Color.logoBlue()};
+    text-decoration-color: currentColor;
   }
 `;

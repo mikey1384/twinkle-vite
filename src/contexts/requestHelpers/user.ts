@@ -752,19 +752,23 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    // skip = "Skip tour" (ended early at stopKey); each event is also the
+    // daily run's tour telemetry. source: where a tour was started from.
     async updateWelcomeTourState({
       event,
       guide,
-      stopKey
+      stopKey,
+      source
     }: {
-      event: 'shown' | 'start' | 'stop' | 'finish' | 'decline';
+      event: 'shown' | 'start' | 'stop' | 'skip' | 'finish' | 'decline';
       guide?: 'zero' | 'ciel';
       stopKey?: string;
+      source?: 'card' | 'banner' | 'chip';
     }) {
       try {
         const { data } = await request.post(
           `${URL}/user/welcome-tour/state`,
-          { event, guide, stopKey },
+          { event, guide, stopKey, source },
           auth()
         );
         return data;

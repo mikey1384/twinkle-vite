@@ -8,6 +8,8 @@ import {
   stopMarks,
   welcomeBannerReady,
   welcomeGreetingLine,
+  welcomeTourButton,
+  welcomeTourResumeKey,
   type WelcomeTourStop
 } from '../src/containers/App/WelcomeTour/rules';
 import {
@@ -73,6 +75,31 @@ const stops = ['chat', 'lumine', 'apps', 'arena'].map(stop);
 test('Chat comes first, unless the tour started on Chat: then it is last', () => {
   assert.deepEqual(orderWelcomeStops(stops, '/').map((s) => s.key), ['chat', 'lumine', 'apps', 'arena']);
   assert.deepEqual(orderWelcomeStops(stops, '/chat/12').map((s) => s.key), ['lumine', 'apps', 'arena', 'chat']);
+  // the welcome card sits in a chat, but its tour keeps the tour's own order
+  assert.deepEqual(
+    orderWelcomeStops(stops, '/chat/12', { keepOrder: true }).map((s) => s.key),
+    ['chat', 'lumine', 'apps', 'arena']
+  );
+});
+
+test('the welcome card’s one button starts the tour, or continues it where they left off', () => {
+  assert.equal(welcomeTourResumeKey({ status: 'started', stopKey: 'apps' }), 'apps');
+  // Skip tour keeps the stop; a finished tour starts over
+  assert.equal(welcomeTourResumeKey({ status: 'declined', stopKey: 'apps' }), 'apps');
+  assert.equal(welcomeTourResumeKey({ status: 'finished', stopKey: 'arena' }), '');
+  assert.equal(welcomeTourResumeKey(null), '');
+  assert.deepEqual(welcomeTourButton({ guideName: 'Zero', stops, resumeKey: '' }), {
+    label: 'Start the tour with Zero',
+    progress: ''
+  });
+  // still on the first stop: nothing to continue yet
+  assert.equal(welcomeTourButton({ guideName: 'Ciel', stops, resumeKey: 'chat' }).label, 'Start the tour with Ciel');
+  assert.deepEqual(welcomeTourButton({ guideName: 'Ciel', stops, resumeKey: 'apps' }), {
+    label: 'Continue the tour with Ciel',
+    progress: '3 of 4'
+  });
+  // a stop this tour doesn't have (an older stop key): start
+  assert.equal(welcomeTourButton({ guideName: 'Zero', stops, resumeKey: 'videos' }).progress, '');
 });
 
 test('the strip marks done, skipped, current and upcoming; a replay keeps its done mark elsewhere', () => {

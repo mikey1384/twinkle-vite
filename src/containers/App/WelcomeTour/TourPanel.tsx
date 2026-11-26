@@ -3,19 +3,27 @@ import Icon from '~/components/Icon';
 import { GUIDE_PICTURE } from './Greeter';
 import MakeChoice from './MakeChoice';
 import { TourApps, TourArenaExams } from './StopExtras';
-import type { StopMark, WelcomeTourData, WelcomeTourGuide, WelcomeTourStop } from './rules';
+import type {
+  StopMark,
+  WelcomeTourData,
+  WelcomeTourGuide,
+  WelcomeTourProject,
+  WelcomeTourStop
+} from './rules';
 import {
   GUIDE_COLOR,
   GUIDE_NAME,
   GUIDE_SOFT,
   actionsClass,
   badgeClass,
-  closeClass,
+  celebrateClass,
   extraClass,
   freeBadgeClass,
   ghostButtonClass,
   primaryButtonClass,
+  projectCardClass,
   skipButtonClass,
+  skipTourClass,
   stripChipClass,
   stripClass,
   tourDockClass,
@@ -29,8 +37,10 @@ import {
 const TYPE_MS_PER_CHAR = 22;
 
 // One tour stop: the guide on the panel's corner, the stop strip (jump to any
-// stop, seen or not), the guide's line typed out, the stop's extra (make
-// something, the apps, the Arena's exams), and Ask / Skip / Next.
+// stop, seen or not), "2 of 6", the guide's line typed out, the stop's extra
+// (their first project or make something, the apps, the Arena's exams), and
+// Ask / Back / Next, with Skip tour in the corner. The last Next shows the
+// "You've seen it all!" moment.
 export default function TourPanel({
   guide,
   stops,
@@ -41,12 +51,14 @@ export default function TourPanel({
   finishing,
   making,
   makeError,
+  project,
   onJump,
-  onSkip,
+  onBack,
   onNext,
   onAsk,
-  onClose,
+  onSkipTour,
   onMake,
+  onOpenProject,
   onOpenApp,
   besideDock = false
 }: {
@@ -60,12 +72,15 @@ export default function TourPanel({
   finishing: boolean;
   making: boolean;
   makeError: string;
+  // the project Twinkle already made them: the Lumine stop opens it
+  project: WelcomeTourProject | null;
   onJump: (index: number) => void;
-  onSkip: () => void;
+  onBack: () => void;
   onNext: () => void;
   onAsk: () => void;
-  onClose: () => void;
+  onSkipTour: () => void;
   onMake: (result: { idea: string; title: string }) => void;
+  onOpenProject: (project: WelcomeTourProject) => void;
   onOpenApp: (buildId: number) => void;
   // the guide's chat window is open: the panel moves to the other side
   besideDock?: boolean;
@@ -122,10 +137,10 @@ export default function TourPanel({
         }
       >
         <img className={tourSpriteClass} src={GUIDE_PICTURE[guide]} alt={GUIDE_NAME[guide]} />
-        <button type="button" className={closeClass} aria-label="End the tour" onClick={onClose}>
-          <Icon icon="times" />
+        <button type="button" className={skipTourClass} onClick={onSkipTour}>
+          {finishing ? 'Close' : 'Skip tour'}
         </button>
-        <div className={tourHeadClass} style={{ paddingRight: '3.2rem' }}>
+        <div className={tourHeadClass}>
           <div className={stripClass} ref={stripRef} role="tablist" aria-label="Tour stops">
             {stops.map((item, i) => (
               <button
@@ -134,26 +149,33 @@ export default function TourPanel({
                 role="tab"
                 aria-selected={i === index}
                 className={stripChipClass}
-                data-mark={marks[i]}
+                data-mark={finishing ? 'done' : marks[i]}
                 onClick={() => onJump(i)}
               >
-                {marks[i] === 'done' ? <Icon icon="check" /> : null}
+                {finishing || marks[i] === 'done' ? <Icon icon="check" /> : null}
                 {item.short}
               </button>
             ))}
           </div>
         </div>
         <div className={tourTitleRowClass}>
-          <h3>{finishing ? 'Tour complete' : stop.title}</h3>
+          {finishing ? (
+            <span className={celebrateClass} aria-hidden>
+              <Icon icon="party-horn" />
+            </span>
+          ) : null}
+          <h3>{finishing ? 'You’ve seen it all!' : stop.title}</h3>
           {replay && !finishing ? (
             <span className={badgeClass}>
               <Icon icon="undo" /> Seen before
             </span>
           ) : null}
           <span style={{ flex: 1 }} />
-          <span className={badgeClass}>
-            {index + 1} / {stops.length}
-          </span>
+          {finishing ? null : (
+            <span className={badgeClass} aria-label={`Stop ${index + 1} of ${stops.length}`}>
+              {index + 1} of {stops.length}
+            </span>
+          )}
         </div>
         <p
           className={tourLineClass}
@@ -165,7 +187,20 @@ export default function TourPanel({
         </p>
         {!finishing && stop.extra ? (
           <div className={extraClass}>
-            {stop.extra === 'make' ? (
+            {stop.extra === 'make' && project ? (
+              <div className={projectCardClass}>
+                <span className="thumb" aria-hidden>
+                  <Icon icon="code-branch" />
+                </span>
+                <span className="text">
+                  <b>{project.title}</b>
+                  <small>Your first project, made with Lumine</small>
+                </span>
+                <button type="button" className={primaryButtonClass} onClick={() => onOpenProject(project)}>
+                  Open it <Icon icon="arrow-right" />
+                </button>
+              </div>
+            ) : stop.extra === 'make' ? (
               makeOpen ? (
                 <MakeChoice
                   tree={data.tour.makeChoices}
@@ -212,9 +247,9 @@ export default function TourPanel({
             </button>
           ) : null}
           <span className="spacer" />
-          {!finishing && !isLast ? (
-            <button type="button" className={skipButtonClass} onClick={onSkip}>
-              Skip
+          {!finishing && index > 0 ? (
+            <button type="button" className={skipButtonClass} onClick={onBack}>
+              <Icon icon="arrow-left" /> Back
             </button>
           ) : null}
           <button type="button" className={primaryButtonClass} onClick={onNext}>

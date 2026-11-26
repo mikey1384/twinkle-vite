@@ -120,7 +120,7 @@ export default function AgentSuggestions({
             // "Show me around Twinkle" opens the scripted welcome tour
             // (where they left it), not an AI-made one
             if (isWelcomeTourStarter(idea)) {
-              startWelcomeTour();
+              startWelcomeTour({ source: 'chip' });
               return;
             }
             onPick(idea);

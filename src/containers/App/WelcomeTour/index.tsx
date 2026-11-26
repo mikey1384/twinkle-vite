@@ -17,14 +17,18 @@ import {
   stopMarks,
   welcomeBannerReady,
   welcomeGreetingLine,
+  welcomeTourResumeKey,
   type WelcomeTourData,
   type WelcomeTourGuide,
+  type WelcomeTourProject,
+  type WelcomeTourSource,
   type WelcomeTourStop
 } from './rules';
 import {
   welcomeFocusSurfaces,
   welcomeMedia,
   welcomeTourOpenRequest,
+  welcomeTourProgress,
   reportWelcomeMedia
 } from './store';
 import { GUIDE_COLOR, GUIDE_NAME, spotlightClass } from './styles';
@@ -50,7 +54,6 @@ export default function WelcomeTourHost() {
   const [stops, setStops] = useState<WelcomeTourStop[]>([]);
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState<string[]>([]);
-  const [skipped, setSkipped] = useState<string[]>([]);
   const [replay, setReplay] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [making, setMaking] = useState(false);
@@ -60,6 +63,12 @@ export default function WelcomeTourHost() {
   const [now, setNow] = useState(() => Date.now());
   const pageLoadedAt = useRef(Date.now());
   const pendingStopKey = useRef<string>('');
+  // how the next tour opens: from the welcome card (its own order and project)
+  const pendingOpen = useRef<{ source: WelcomeTourSource; keepOrder: boolean }>({
+    source: 'banner',
+    keepOrder: false
+  });
+  const [projectHint, setProjectHint] = useState<WelcomeTourProject | null>(null);
   const skipNavigateOnce = useRef(false);
   const shownRecorded = useRef(false);
   // the guide's chat (text or call) opened from the tour follows its stops
@@ -136,10 +145,19 @@ export default function WelcomeTourHost() {
     if (!openRequest || !userId) return;
     welcomeTourOpenRequest.set(null);
     (async () => {
-      const loaded = data || (await refresh());
+      // fresh: where they left off may have moved since the page loaded
+      const loaded = (await refresh()) || data;
       if (!loaded) return;
       setData(loaded);
-      pendingStopKey.current = openRequest.stopKey || loaded.state.stopKey || '';
+      // no stop asked for: pick up where they left off (from the start once
+      // they finished); this tab's own progress first, the server's otherwise
+      pendingStopKey.current =
+        openRequest.stopKey || welcomeTourResumeKey(welcomeTourProgress.get() || loaded.state);
+      pendingOpen.current = {
+        source: openRequest.source || 'chip',
+        keepOrder: openRequest.source === 'card'
+      };
+      if (openRequest.project) setProjectHint(openRequest.project);
       const chosen = openRequest.guide || loaded.state.guide;
       if (chosen) startTour(chosen, loaded);
       else setMode('picker');
@@ -170,8 +188,8 @@ export default function WelcomeTourHost() {
   }, [mode, stop?.key, guide]);
 
   const marks = useMemo(
-    () => stopMarks({ stops, index, done, skipped }),
-    [stops, index, done, skipped]
+    () => stopMarks({ stops, index, done, skipped: [] }),
+    [stops, index, done]
   );
 
   if (!userId || !data) return null;
@@ -202,12 +220,14 @@ export default function WelcomeTourHost() {
             finishing={finishing}
             making={making}
             makeError={makeError}
+            project={data.firstProject || projectHint}
             onJump={(next) => goTo(next)}
-            onSkip={handleSkip}
+            onBack={() => goTo(index - 1)}
             onNext={handleNext}
             onAsk={handleAsk}
-            onClose={handleDecline}
+            onSkipTour={handleSkipTour}
             onMake={handleMake}
+            onOpenProject={handleOpenProject}
             onOpenApp={(buildId) => navigate(`/app/${buildId}`)}
             besideDock={dockOpen}
           />
@@ -226,7 +246,11 @@ export default function WelcomeTourHost() {
   }
 
   function startTour(picked: WelcomeTourGuide, source: WelcomeTourData) {
-    const ordered = orderWelcomeStops(source.tour.stops, location.pathname);
+    const open = mode === 'banner' ? { source: 'banner' as const, keepOrder: false } : pendingOpen.current;
+    pendingOpen.current = { source: 'banner', keepOrder: false };
+    const ordered = orderWelcomeStops(source.tour.stops, location.pathname, {
+      keepOrder: open.keepOrder
+    });
     const startAt = Math.max(
       0,
       ordered.findIndex((item) => item.key === pendingStopKey.current)
@@ -239,14 +263,15 @@ export default function WelcomeTourHost() {
     setStops(ordered);
     setIndex(startAt);
     setDone([]);
-    setSkipped([]);
     setReplay(false);
     setFinishing(false);
     setMode('tour');
+    welcomeTourProgress.set({ status: 'started', stopKey: ordered[startAt]?.key || '' });
     updateWelcomeTourState({
       event: 'start',
       guide: picked,
-      stopKey: ordered[startAt]?.key
+      stopKey: ordered[startAt]?.key,
+      source: open.source
     })
       .then(() => refresh())
       .then((loaded: WelcomeTourData | null) => loaded && setData(loaded))
@@ -259,6 +284,7 @@ export default function WelcomeTourHost() {
     setFinishing(false);
     setMakeError('');
     setIndex(next);
+    welcomeTourProgress.set({ status: 'started', stopKey: stops[next].key });
     updateWelcomeTourState({ event: 'stop', guide, stopKey: stops[next].key }).catch(() => {});
   }
 
@@ -272,17 +298,19 @@ export default function WelcomeTourHost() {
     goTo(index + 1);
   }
 
-  // Skip goes straight on, even mid-line (the panel restarts its narration).
-  function handleSkip() {
-    if (stop && !done.includes(stop.key) && !skipped.includes(stop.key)) {
-      setSkipped((current) => [...current, stop.key]);
-    }
-    if (index >= stops.length - 1) return finish();
-    goTo(index + 1);
+  // Skip tour: ends it here; the welcome card's button picks up at this stop.
+  function handleSkipTour() {
+    setMode('idle');
+    setFinishing(false);
+    setData((current) => (current ? { ...current, banner: { ...current.banner, show: false } } : current));
+    if (finishing) return;
+    welcomeTourProgress.set({ status: 'declined', stopKey: stop?.key || '' });
+    updateWelcomeTourState({ event: 'skip', guide, stopKey: stop?.key }).catch(() => {});
   }
 
   function finish() {
     setFinishing(true);
+    welcomeTourProgress.set({ status: 'finished', stopKey: stop?.key || '' });
     updateWelcomeTourState({ event: 'finish', guide, stopKey: stop?.key }).catch(() => {});
     setData((current) => (current ? { ...current, banner: { ...current.banner, show: false } } : current));
   }
@@ -333,6 +361,17 @@ export default function WelcomeTourHost() {
     } finally {
       setMaking(false);
     }
+  }
+
+  // The Lumine stop with the project Twinkle already made them: open it live
+  // (its first open sends Lumine the idea); the tour waits while the editor
+  // is open and picks up at the next stop when they come back.
+  function handleOpenProject(project: WelcomeTourProject) {
+    if (stop && !done.includes(stop.key)) setDone((current) => [...current, stop.key]);
+    advanceWithoutNavigating();
+    navigate(`/build/${project.buildId}`, {
+      state: project.idea ? { initialPrompt: project.idea } : undefined
+    });
   }
 
   // After "Build it" the member goes to their project (the tour waits while
