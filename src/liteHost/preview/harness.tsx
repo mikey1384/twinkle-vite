@@ -13,6 +13,7 @@ import {
   FindView,
   IntroView,
   MessageView,
+  LiveView,
   OrderStatusView,
   OwnerDetailsView,
   ParentRequestView,
@@ -145,7 +146,7 @@ function Harness() {
     case 'find':
       return (
         <Page>
-          <FindView t={t} query={query} ideas={IDEAS} loading={false} openBreakdownFor={params.get('open') || undefined} onQuery={setQuery} onSearch={noop} onBuy={noop} onUseOwn={noop} onMoreIdeas={noop} ask={<AskStandIn label={t.askIdeas('Zero')} />} showAdvanced={params.get('advanced') === '1'} />
+          <FindView t={t} freeHost="star-catcher.lumine.app" query={query} ideas={IDEAS} loading={false} openBreakdownFor={params.get('open') || undefined} onQuery={setQuery} onSearch={noop} onBuy={noop} onUseOwn={noop} onMoreIdeas={noop} ask={<AskStandIn label={t.askIdeas('Zero')} />} showAdvanced={params.get('advanced') === '1'} />
         </Page>
       );
     case 'parent-request':
@@ -157,7 +158,7 @@ function Harness() {
     case 'sent':
       return (
         <Page>
-          <MessageView body={t.sentBody('starcatcher.com')} primaryLabel={t.done} onPrimary={noop} />
+          <MessageView t={t} title={t.sentTitle} tip={t.tipSent} body={t.sentBody('starcatcher.com')} primaryLabel={t.done} onPrimary={noop} />
         </Page>
       );
     case 'parent-consent':
@@ -166,7 +167,6 @@ function Harness() {
           <ParentConsentView
             order={{ domain: 'starcatcher.com', appTitle: 'Star Catcher', childUsername: 'mikey', priceCents: 1399, breakdown: IDEAS[0].breakdown, approxKrw: 20000, status: 'awaiting_parent' }}
             mode={(params.get('mode') as any) || 'ko'}
-            onMode={noop}
             submitting=""
             onApprove={noop}
             onDecline={noop}
@@ -198,7 +198,7 @@ function Harness() {
     case 'live':
       return (
         <Page>
-          <MessageView body={t.liveBody} primaryLabel={t.openIt} onPrimary={noop} secondaryLabel={t.done} onSecondary={noop} celebrate />
+          <LiveView t={t} domain="starcatcher.com" onOpen={noop} onShare={noop} onDone={noop} />
         </Page>
       );
     case 'wand-sent':

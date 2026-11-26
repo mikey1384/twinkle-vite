@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { css } from '@emotion/css';
+import { CheckoutSurface, Notice } from '~/components/Build/AppAddress/checkout/ui';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '~/contexts';
 import { PARENT_TEXT } from '~/components/Build/AppAddress/text';
 import ParentConsentView, {
+  ParentLangToggle,
+  ParentStateView,
   type ParentLangMode,
   type ParentOrderView,
   type RegistrantInput
@@ -112,37 +114,32 @@ export default function DomainParentConsent() {
                 : status === 'awaiting_parent'
                   ? null
                   : { title: t.expiredTitle, body: t.expiredBody };
+  const changeMode = (next: ParentLangMode) => {
+    setMode(next);
+    try {
+      window.localStorage.setItem(LANG_KEY, next);
+    } catch {
+      // ignore
+    }
+  };
   return (
-    <div
-      className={css`
-        min-height: 100vh;
-        padding: 2rem 1rem 4rem;
-        background: #f6f6fb;
-      `}
-    >
-      {error && <p style={{ textAlign: 'center', color: '#b42318' }}>{error}</p>}
-      {stateMessage ? (
-        <div style={{ maxWidth: '34rem', margin: '0 auto', background: '#fff', borderRadius: '1.4rem', padding: '1.6rem' }}>
-          <h2>{stateMessage.title}</h2>
-          <p>{stateMessage.body}</p>
+    <CheckoutSurface variant="page" label={t.kicker} topRight={<ParentLangToggle mode={mode} onMode={changeMode} />}>
+      {error && (
+        <div style={{ maxWidth: 640, margin: '0 auto 12px', padding: '0 20px' }}>
+          <Notice tone="error">{error}</Notice>
         </div>
+      )}
+      {stateMessage ? (
+        <ParentStateView title={stateMessage.title} body={stateMessage.body} celebrate={status === 'live' || done === 'approved'} />
       ) : order ? (
         <ParentConsentView
           order={order}
           mode={mode}
-          onMode={(next) => {
-            setMode(next);
-            try {
-              window.localStorage.setItem(LANG_KEY, next);
-            } catch {
-              // ignore
-            }
-          }}
           submitting={submitting}
           onApprove={(registrant) => decide(true, registrant)}
           onDecline={() => decide(false)}
         />
       ) : null}
-    </div>
+    </CheckoutSurface>
   );
 }

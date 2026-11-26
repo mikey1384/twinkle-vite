@@ -1,7 +1,31 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { PARENT_TEXT } from '~/components/Build/AppAddress/text';
-import { CountrySelect, panelClass, usd, krw } from '~/components/Build/AppAddress/views';
+import { usd, krw } from '~/components/Build/AppAddress/checkout/model';
+import {
+  T,
+  CheckIcon,
+  CheckoutLayout,
+  CountrySelect,
+  FieldGrid,
+  MobileSummary,
+  Notice,
+  PhoneField,
+  PrimaryButton,
+  Reveal,
+  SecondaryButton,
+  ShieldIcon,
+  StarMark,
+  StepActions,
+  StepTitle,
+  SummaryCard,
+  TextField,
+  selectClass,
+  textButtonClass
+} from '~/components/Build/AppAddress/checkout/ui';
+import Confetti from '~/containers/Build/Editor/ChatPanel/Roadmap/Confetti';
+import trio720 from '~/containers/LumineAppSignIn/assets/trio-720.webp';
+import trio1200 from '~/containers/LumineAppSignIn/assets/trio-1200.webp';
 
 export interface ParentOrderView {
   domain: string;
@@ -39,6 +63,7 @@ const EMPTY: RegistrantInput = {
 
 // 'both' when the parent's language is unknown: Korean first, English under it.
 export type ParentLangMode = 'ko' | 'en' | 'both';
+type ParentText = (typeof PARENT_TEXT)['en'];
 
 function breakdownText(lang: 'ko' | 'en', order: ParentOrderView) {
   const parts = {
@@ -52,168 +77,550 @@ function breakdownText(lang: 'ko' | 'en', order: ParentOrderView) {
     : `Domain registry fee ${parts.registry} · Card payment fee ${parts.card} · Twinkle (refunds and support) ${parts.twinkle} = ${parts.total}/year`;
 }
 
+// The 한국어 / English switch in the page's top bar.
+export function ParentLangToggle({ mode, onMode }: { mode: ParentLangMode; onMode: (mode: ParentLangMode) => void }) {
+  return (
+    <div className={langToggleClass} role="group" aria-label="Language">
+      {(['ko', 'en'] as const).map((value) => (
+        <button key={value} type="button" aria-pressed={mode === value} onClick={() => onMode(value)}>
+          {value === 'ko' ? '한국어' : 'English'}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+type Page = 0 | 1 | 2 | 3 | 4;
+
+// /domain/parent: the parent says yes (or no thanks) one small screen at a
+// time: what their child asked for, their name, how to reach them, their
+// address, then one check with every promise and the consent. The price and
+// what it includes stay beside every step.
 export default function ParentConsentView({
   order,
   mode,
-  onMode,
   submitting,
   onApprove,
   onDecline,
-  initialRegistrant
+  initialRegistrant,
+  startPage = 0
 }: {
   order: ParentOrderView;
   mode: ParentLangMode;
-  onMode: (mode: ParentLangMode) => void;
   submitting: '' | 'approve' | 'decline';
   onApprove: (registrant: RegistrantInput) => void;
   onDecline: () => void;
   initialRegistrant?: Partial<RegistrantInput>;
+  startPage?: Page;
 }) {
   const [registrant, setRegistrant] = useState<RegistrantInput>({ ...EMPTY, ...initialRegistrant });
   const [adult, setAdult] = useState(false);
-  const [showBreakdown, setShowBreakdown] = useState(true);
+  const [page, setPage] = useState<Page>(startPage);
+  const [checked, setChecked] = useState<Record<number, boolean>>({});
   const langs: Array<'ko' | 'en'> = mode === 'both' ? ['ko', 'en'] : [mode];
-  const main = PARENT_TEXT[langs[0]];
-  const both = (pick: (t: (typeof PARENT_TEXT)['en']) => string) => (
+  const main: ParentText = PARENT_TEXT[langs[0]];
+  const both = (pick: (t: ParentText) => string) => (
     <>
       {langs.map((lang, index) => (
-        <span key={lang} lang={lang} style={index ? { display: 'block', color: '#5d5d6e', fontSize: '0.95rem', marginTop: '0.2rem' } : undefined}>
+        <span key={lang} lang={lang} className={index ? secondLangClass : undefined}>
           {pick(PARENT_TEXT[lang])}
         </span>
       ))}
     </>
   );
-  const input = css`
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px solid rgba(22, 22, 31, 0.12);
-    border-radius: 0.8rem;
-    padding: 0.7rem 0.8rem;
-    font: inherit;
-    font-size: 1.05rem;
-    background: #fafafd;
-  `;
-  const set = (key: keyof RegistrantInput) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    setRegistrant((prev) => ({ ...prev, [key]: event.target.value }));
-  const complete =
-    adult &&
-    registrant.firstName &&
-    registrant.lastName &&
-    registrant.email.includes('@') &&
-    /^\+[1-9][\d\s.\-()]{7,20}$/.test(registrant.phone.trim()) &&
-    registrant.address1 &&
-    registrant.city &&
-    registrant.state &&
-    registrant.zip &&
-    /^[A-Za-z]{2}$/.test(registrant.country);
-  const section = css`
-    margin: 1.1rem 0 0;
-    h3 {
-      margin: 0 0 0.35rem;
-      font-size: 1.15rem;
+  const set = (key: keyof RegistrantInput) => (value: string) => setRegistrant((prev) => ({ ...prev, [key]: value }));
+  const required = (key: keyof RegistrantInput) => (registrant[key].trim() ? '' : main.fieldRequired);
+  const pageErrors: Record<Page, Partial<Record<keyof RegistrantInput, string>>> = {
+    0: {},
+    1: { lastName: required('lastName'), firstName: required('firstName') },
+    2: {
+      email: !registrant.email.trim() ? main.fieldRequired : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registrant.email.trim()) ? '' : main.emailInvalid,
+      phone: /^\+[1-9][\d\s.\-()]{7,20}$/.test(registrant.phone.trim()) ? '' : main.phoneInvalid
+    },
+    3: {
+      country: /^[A-Za-z]{2}$/.test(registrant.country) ? '' : main.fieldRequired,
+      address1: required('address1'),
+      city: required('city'),
+      state: required('state'),
+      zip: required('zip')
+    },
+    4: {}
+  };
+  const errors = checked[page] ? pageErrors[page] : {};
+  const valid = (target: Page) => Object.values(pageErrors[target]).every((value) => !value);
+  const complete = adult && valid(1) && valid(2) && valid(3);
+  function next() {
+    if (!valid(page)) {
+      setChecked((prev) => ({ ...prev, [page]: true }));
+      return;
     }
-  `;
+    setPage((page + 1) as Page);
+  }
+  const approx = (lang: 'ko' | 'en') => (order.approxKrw ? (lang === 'ko' ? `약 ${krw(order.approxKrw)}` : `about ${krw(order.approxKrw)}`) : null);
+  const summary = (
+    <SummaryCard
+      heading={main.summaryHeading}
+      domain={order.domain}
+      price={usd(order.priceCents)}
+      period={main.perYearShort}
+      approx={approx(langs[0])}
+      checks={[main.noAutoRenew, main.includedSetup, main.includedPrivacy, main.includedOwner, main.includedFree]}
+      reveal={{
+        label: main.whatsInPrice,
+        body: langs.map((lang) => (
+          <span key={lang} lang={lang} style={{ display: 'block', marginBottom: 4 }}>
+            {breakdownText(lang, order)}
+          </span>
+        ))
+      }}
+      notes={[
+        { icon: 'info', text: both((t) => t.krwNote) },
+        { icon: 'shield', text: both((t) => t.refund) }
+      ]}
+    />
+  );
+  const mobileSummary = (
+    <MobileSummary domain={order.domain} price={usd(order.priceCents)}>
+      <ul className={mobileChecksClass}>
+        {[main.noAutoRenew, main.includedSetup, main.includedPrivacy, main.includedOwner].map((line) => (
+          <li key={line}>
+            <CheckIcon size={14} />
+            {line}
+          </li>
+        ))}
+      </ul>
+      <Reveal label={main.whatsInPrice}>{breakdownText(langs[0], order)}</Reveal>
+    </MobileSummary>
+  );
+  const titles = [null, main.nameTitle, main.contactTitle, main.addressTitle, main.reviewTitle];
   return (
-    <div className={panelClass} style={{ maxWidth: '38rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', marginBottom: '0.8rem' }}>
-        <span style={{ color: '#4b3cf0', fontWeight: 700, fontSize: '0.95rem' }}>{main.kicker}</span>
-        <div style={{ display: 'flex', gap: '0.3rem' }}>
-          {(['ko', 'en'] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={mode === value}
-              onClick={() => onMode(value)}
-              style={{
-                border: '1px solid rgba(22,22,31,0.15)',
-                borderRadius: 999,
-                padding: '0.3rem 0.7rem',
-                background: mode === value ? '#16161f' : '#fff',
-                color: mode === value ? '#fff' : '#16161f',
-                font: 'inherit',
-                fontSize: '0.9rem',
-                cursor: 'pointer'
-              }}
-            >
-              {value === 'ko' ? '한국어' : 'English'}
-            </button>
-          ))}
-        </div>
-      </div>
-      <h2>{both((t) => t.title(order.childUsername))}</h2>
-      <p>{both((t) => t.intro(order.appTitle, order.domain))}</p>
-      <div className={section}>
-        <h3>{both((t) => t.whatTitle)}</h3>
-        <p>{both((t) => t.whatBody)}</p>
-      </div>
-      <div className={section}>
-        <h3>{both((t) => t.priceTitle)}</h3>
-        <p style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.2rem' }}>
-          {both((t) => t.priceLine(usd(order.priceCents), order.approxKrw ? krw(order.approxKrw) : null))}
-        </p>
-        <p style={{ color: '#5d5d6e', fontSize: '0.95rem' }}>{both((t) => t.krwNote)}</p>
-        <button
-          type="button"
-          onClick={() => setShowBreakdown(!showBreakdown)}
-          aria-expanded={showBreakdown}
-          style={{ border: 0, background: 'none', padding: 0, color: '#4b3cf0', font: 'inherit', fontWeight: 600, cursor: 'pointer' }}
-        >
-          {main.whatsInPrice} {showBreakdown ? '▴' : '▾'}
-        </button>
-        {showBreakdown && (
-          <p style={{ color: '#5d5d6e', fontSize: '1rem', marginTop: '0.3rem' }}>
-            {langs.map((lang) => (
-              <span key={lang} lang={lang} style={{ display: 'block' }}>
-                {breakdownText(lang, order)}
-              </span>
-            ))}
-          </p>
+    <CheckoutLayout
+      stepKey={`parent-${page}`}
+      progress={{ labels: main.progressLabels, current: page, text: main.stepOf(page + 1, main.progressLabels.length) }}
+      aside={summary}
+      mobileSummary={mobileSummary}
+      actions={
+        <StepActions back={page > 0 ? { label: main.back, onClick: () => setPage((page - 1) as Page) } : null}>
+          {page === 0 && (
+            <SecondaryButton disabled={Boolean(submitting)} onClick={onDecline}>
+              {main.decline}
+            </SecondaryButton>
+          )}
+          {page < 4 ? (
+            <PrimaryButton type="submit" form="parent-step">
+              {page === 0 ? main.start : main.next}
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton busy={submitting === 'approve'} disabled={!complete || Boolean(submitting)} onClick={() => onApprove(registrant)}>
+              {main.approve} · {usd(order.priceCents)}
+            </PrimaryButton>
+          )}
+        </StepActions>
+      }
+    >
+      <form
+        id="parent-step"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (page < 4) next();
+          else if (complete && !submitting) onApprove(registrant);
+        }}
+      >
+        {page === 0 && (
+          <>
+            <figure className={artClass} aria-hidden="true">
+              <img src={trio720} srcSet={`${trio720} 720w, ${trio1200} 1200w`} sizes="(min-width: 900px) 600px, 100vw" alt="" decoding="async" />
+            </figure>
+            <div className={kickerClass}>{main.kicker}</div>
+            <StepTitle lead={both((t) => t.intro(order.appTitle, order.domain))}>{both((t) => t.title(order.childUsername))}</StepTitle>
+            <div className={explainClass}>
+              <h2>{both((t) => t.whatTitle)}</h2>
+              <p>{both((t) => t.whatBody)}</p>
+            </div>
+            <Notice>{both((t) => t.honest)}</Notice>
+            <p className={quietClass}>{both((t) => t.noPressure)}</p>
+          </>
         )}
-      </div>
-      <div style={{ margin: '1rem 0', padding: '0.9rem 1rem', borderRadius: '1rem', background: '#f4f3ff' }}>
-        {both((t) => t.honest)}
-      </div>
-      <p>{both((t) => t.renewal)}</p>
-      <p>{both((t) => t.ownership)}</p>
-      <p>{both((t) => t.refund)}</p>
-      <div className={section}>
-        <h3>{both((t) => t.detailsTitle)}</h3>
-        <p style={{ color: '#5d5d6e', fontSize: '1rem' }}>{both((t) => t.detailsNote)}</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))', gap: '0.6rem' }}>
-          <input className={input} placeholder={main.lastName} value={registrant.lastName} onChange={set('lastName')} aria-label={main.lastName} />
-          <input className={input} placeholder={main.firstName} value={registrant.firstName} onChange={set('firstName')} aria-label={main.firstName} />
-          <input className={input} placeholder={main.email} value={registrant.email} onChange={set('email')} aria-label={main.email} type="email" />
-          <input className={input} placeholder={main.phone} value={registrant.phone} onChange={set('phone')} aria-label={main.phone} />
-          <input className={input} placeholder={main.address} value={registrant.address1} onChange={set('address1')} aria-label={main.address} style={{ gridColumn: '1 / -1' }} />
-          <input className={input} placeholder={main.city} value={registrant.city} onChange={set('city')} aria-label={main.city} />
-          <input className={input} placeholder={main.state} value={registrant.state} onChange={set('state')} aria-label={main.state} />
-          <input className={input} placeholder={main.zip} value={registrant.zip} onChange={set('zip')} aria-label={main.zip} />
-          <CountrySelect className={input} label={main.country} value={registrant.country} onChange={(country) => setRegistrant((prev) => ({ ...prev, country }))} />
-        </div>
-      </div>
-      <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', margin: '1.1rem 0 0.4rem', cursor: 'pointer' }}>
-        <input type="checkbox" checked={adult} onChange={(event) => setAdult(event.target.checked)} style={{ width: '1.2rem', height: '1.2rem', marginTop: '0.2rem' }} />
-        <span>{both((t) => t.confirmAdult)}</span>
-      </label>
-      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '1rem' }}>
-        <button
-          type="button"
-          disabled={!complete || Boolean(submitting)}
-          onClick={() => onApprove(registrant)}
-          style={{ border: 0, borderRadius: 999, padding: '0.9rem 1.4rem', background: '#16161f', color: '#fff', font: 'inherit', fontWeight: 700, opacity: !complete || submitting ? 0.5 : 1, cursor: complete ? 'pointer' : 'default' }}
-        >
-          {main.approve}
-        </button>
-        <button
-          type="button"
-          disabled={Boolean(submitting)}
-          onClick={onDecline}
-          style={{ border: 0, borderRadius: 999, padding: '0.9rem 1.4rem', background: '#f0f0f6', color: '#16161f', font: 'inherit', fontWeight: 700, cursor: 'pointer' }}
-        >
-          {main.decline}
-        </button>
-      </div>
-      <p style={{ color: '#5d5d6e', fontSize: '0.95rem', marginTop: '0.9rem' }}>{both((t) => t.noPressure)}</p>
-    </div>
+        {page === 1 && (
+          <>
+            <StepTitle lead={both((t) => t.detailsNote)}>{titles[1]}</StepTitle>
+            <FieldGrid>
+              <TextField label={main.lastName} value={registrant.lastName} onChange={set('lastName')} autoComplete="family-name" error={errors.lastName} autoFocus />
+              <TextField label={main.firstName} value={registrant.firstName} onChange={set('firstName')} autoComplete="given-name" error={errors.firstName} />
+            </FieldGrid>
+          </>
+        )}
+        {page === 2 && (
+          <>
+            <StepTitle lead={both((t) => t.detailsNote)}>{titles[2]}</StepTitle>
+            <div className={stackClass}>
+              <TextField label={main.email} type="email" inputMode="email" value={registrant.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="name@example.com" autoFocus />
+              <PhoneField label={main.phoneLabel} dialLabel={main.dialCode} value={registrant.phone} country={registrant.country} onChange={set('phone')} error={errors.phone} />
+            </div>
+          </>
+        )}
+        {page === 3 && (
+          <>
+            <StepTitle lead={both((t) => t.detailsNote)}>{titles[3]}</StepTitle>
+            <FieldGrid>
+              <div data-span="2" className={countryFieldClass}>
+                <span>{main.country}</span>
+                <CountrySelect value={registrant.country} onChange={set('country')} label={main.country} className={selectClass} />
+              </div>
+              <div data-span="2">
+                <TextField label={main.address} value={registrant.address1} onChange={set('address1')} autoComplete="street-address" error={errors.address1} />
+              </div>
+              <TextField label={main.state} value={registrant.state} onChange={set('state')} autoComplete="address-level1" error={errors.state} />
+              <TextField label={main.city} value={registrant.city} onChange={set('city')} autoComplete="address-level2" error={errors.city} />
+              <TextField label={main.zip} value={registrant.zip} onChange={set('zip')} autoComplete="postal-code" error={errors.zip} />
+            </FieldGrid>
+          </>
+        )}
+        {page === 4 && (
+          <>
+            <StepTitle>{titles[4]}</StepTitle>
+            <dl className={reviewListClass}>
+              {[
+                { label: main.reviewName, value: langs[0] === 'ko' ? `${registrant.lastName}${registrant.firstName}` : `${registrant.firstName} ${registrant.lastName}`, page: 1 as Page },
+                { label: main.reviewContact, value: [registrant.email, registrant.phone].filter(Boolean).join('\n'), page: 2 as Page },
+                {
+                  label: main.reviewAddress,
+                  value: [registrant.address1, [registrant.city, registrant.state, registrant.zip].filter(Boolean).join(', '), registrant.country].filter(Boolean).join('\n'),
+                  page: 3 as Page
+                }
+              ].map((row) => (
+                <div key={row.label}>
+                  <dt>{row.label}</dt>
+                  <dd>{row.value}</dd>
+                  <button type="button" className={textButtonClass} onClick={() => setPage(row.page)}>
+                    {main.edit}
+                  </button>
+                </div>
+              ))}
+            </dl>
+            <ul className={promiseListClass}>
+              {[(t: ParentText) => t.renewal, (t: ParentText) => t.ownership, (t: ParentText) => t.refund].map((pick, index) => (
+                <li key={index}>
+                  <CheckIcon size={15} />
+                  <span>{both(pick)}</span>
+                </li>
+              ))}
+            </ul>
+            <label className={consentClass}>
+              <input type="checkbox" checked={adult} onChange={(event) => setAdult(event.target.checked)} />
+              <span className={consentBoxClass} aria-hidden="true">
+                <CheckIcon size={14} color="#fff" />
+              </span>
+              <span>{both((t) => t.confirmAdult)}</span>
+            </label>
+            <p className={payNoteClass}>
+              <ShieldIcon size={14} />
+              <span>{both((t) => t.krwNote)}</span>
+            </p>
+            <div className={declineRowClass}>
+              <button type="button" className={textButtonClass} disabled={Boolean(submitting)} onClick={onDecline}>
+                {main.decline}
+              </button>
+            </div>
+          </>
+        )}
+        <button type="submit" hidden aria-hidden="true" tabIndex={-1} />
+      </form>
+    </CheckoutLayout>
   );
 }
+
+// After the parent's answer (approved, declined, paid, live, refunded,
+// expired): one calm card with what happens now.
+export function ParentStateView({ title, body, celebrate = false }: { title: string; body: string; celebrate?: boolean }) {
+  return (
+    <CheckoutLayout stepKey={`state-${title}`}>
+      <div className={stateClass}>
+        {celebrate && <Confetti />}
+        <span className={stateMarkClass} aria-hidden="true">
+          {celebrate ? <CheckIcon size={26} color="#fff" /> : <StarMark size={24} />}
+        </span>
+        <StepTitle>{title}</StepTitle>
+        <p>{body}</p>
+      </div>
+    </CheckoutLayout>
+  );
+}
+
+const stateClass = css`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 12px 0 4px;
+  p {
+    margin: 0;
+    max-width: 460px;
+    color: ${T.body};
+    font-size: 16px;
+    line-height: 1.6;
+  }
+`;
+const stateMarkClass = css`
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  background: ${T.violet};
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(91, 75, 255, 0.3);
+`;
+const secondLangClass = css`
+  display: block;
+  margin-top: 4px;
+  color: ${T.muted};
+  font-size: 0.82em;
+  font-weight: 500;
+`;
+const langToggleClass = css`
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 20, 40, 0.08);
+  button {
+    min-height: 38px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: ${T.muted};
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button[aria-pressed='true'] {
+    background: ${T.ink};
+    color: #fff;
+  }
+  button:focus-visible {
+    outline: 3px solid rgba(47, 123, 224, 0.35);
+    outline-offset: 2px;
+  }
+`;
+const artClass = css`
+  margin: -8px -12px 20px;
+  height: 168px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #241650;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 42%;
+    display: block;
+  }
+  @media (max-width: 759px) {
+    margin: -4px -4px 18px;
+    height: 140px;
+  }
+`;
+const kickerClass = css`
+  margin-bottom: 6px;
+  color: ${T.violet};
+  font-size: 14px;
+  font-weight: 750;
+`;
+const explainClass = css`
+  margin: 4px 0 0;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: #f6f7fb;
+  h2 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 750;
+  }
+  p {
+    margin: 0;
+    color: ${T.body};
+    font-size: 15px;
+    line-height: 1.55;
+  }
+`;
+const quietClass = css`
+  margin: 14px 0 0;
+  color: ${T.muted};
+  font-size: 14px;
+`;
+const stackClass = css`
+  display: grid;
+  gap: 18px;
+`;
+const countryFieldClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  > span:first-child {
+    font-size: 14.5px;
+    font-weight: 700;
+  }
+`;
+const reviewListClass = css`
+  margin: 0;
+  display: grid;
+  border: 1.5px solid ${T.line};
+  border-radius: 18px;
+  > div {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    align-items: start;
+    padding: 14px 16px;
+  }
+  > div + div {
+    border-top: 1px solid ${T.line};
+  }
+  dt {
+    font-size: 14px;
+    font-weight: 700;
+    color: ${T.muted};
+    padding-top: 2px;
+  }
+  dd {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+  button {
+    min-height: 28px;
+  }
+  @media (pointer: coarse) {
+    button {
+      min-height: 44px;
+      margin: -8px 0;
+    }
+  }
+  @media (max-width: 420px) {
+    > div {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    dd {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+  }
+`;
+const promiseListClass = css`
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: ${T.body};
+  li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  svg {
+    flex: none;
+    margin-top: 4px;
+  }
+`;
+const consentClass = css`
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #f6f7fb;
+  font-size: 15.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+  input:focus-visible + span {
+    outline: 3px solid rgba(47, 123, 224, 0.35);
+    outline-offset: 2px;
+  }
+  input:checked + span {
+    background: ${T.blue};
+    border-color: ${T.blue};
+  }
+  input:checked + span svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+const consentBoxClass = css`
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  border-radius: 8px;
+  border: 2px solid #b9bfd0;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  svg {
+    opacity: 0;
+    transform: scale(0.6);
+    transition:
+      opacity 0.15s ease,
+      transform 0.2s ${T.ease};
+  }
+`;
+const payNoteClass = css`
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 14px 0 0;
+  color: ${T.muted};
+  font-size: 14px;
+  line-height: 1.5;
+  svg {
+    margin-top: 3px;
+  }
+`;
+const declineRowClass = css`
+  margin-top: 8px;
+  button {
+    color: ${T.muted};
+    font-weight: 650;
+  }
+`;
+const mobileChecksClass = css`
+  list-style: none;
+  margin: 0;
+  padding: 12px 0 0;
+  border-top: 1px solid ${T.line};
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  color: ${T.body};
+  li {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  svg {
+    flex: none;
+    margin-top: 3px;
+  }
+`;

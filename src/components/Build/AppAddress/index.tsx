@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Modal from '~/components/Modal';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
+import { useUserAssistant } from '~/helpers/assistantVoice';
+import { CheckoutSurface } from './checkout/ui';
+import { guessCountry } from './checkout/countries';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
 import {
@@ -16,8 +18,8 @@ import {
   OrderStatusView,
   OwnerDetailsView,
   ParentRequestView,
+  LiveView,
   RenameView,
-  connectViewTitle,
   orderStatusTitle,
   emptyOwnerDetails,
   ownerDetailsProblem,
@@ -29,7 +31,11 @@ import {
 
 // The app's address chip in the Build header's strip, with Open / Copy /
 // Share and, for the owner, Change address and "Get your own .com" (Mikey
-// 11-25 north star), then the owner's Players chip. `children` (other strip
+// 11-25 north star), then the owner's Players chip. "Get your own" opens a
+// full-screen, step-by-step checkout over the page (./checkout): the
+// workspace underneath stays as it was, the wand's deep links and Stripe's
+// return (?appAddress=…, ?domainOrder=…) open it straight at their step, and
+// the browser's Back closes it. `children` (other strip
 // chips) sit between the two and still show while the hosting switch is off
 // (the API answers { enabled: false }), so it is safe to mount everywhere.
 interface AddressInfo {
@@ -57,16 +63,6 @@ type Step =
   | { kind: 'connect'; domainId?: number }
   | { kind: 'rename' }
   | null;
-
-// The buyer's country guess for the form (they can change it).
-function guessCountry() {
-  try {
-    const region = new Intl.Locale(navigator.language).maximize().region || '';
-    return /^[A-Z]{2}$/.test(region) ? region : 'KR';
-  } catch {
-    return 'KR';
-  }
-}
 
 function pageLang(): AddressLang {
   try {
@@ -133,6 +129,11 @@ export default function AppAddress({
   const [paying, setPaying] = useState(false);
   const [ownerProblem, setOwnerProblem] = useState('');
   const [order, setOrder] = useState<DomainOrderView | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const flowEntryRef = useRef(false);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const assistant = useUserAssistant(userId);
   const t = ADDRESS_TEXT[pageLang()];
 
   // Back from Stripe Checkout: ?domainOrder=<id> opens the order's status.
@@ -306,8 +307,22 @@ export default function AppAddress({
   }
 
   function closeFlow() {
+    if (flowEntryRef.current) {
+      // the checkout's own history entry: Back closes it (see below)
+      navigate(-1);
+      return;
+    }
+    finishClose();
+  }
+
+  function finishClose() {
     setStep(null);
     setOrder(null);
+    clearOrderParam();
+  }
+
+  // Stripe's ?domainOrder= has done its job once the order screen closes
+  function clearOrderParam() {
     try {
       const url = new URL(window.location.href);
       if (url.searchParams.has('domainOrder')) {
@@ -319,6 +334,26 @@ export default function AppAddress({
       // nothing to tidy
     }
   }
+
+  // The checkout adds one history entry while it is open, so the browser's
+  // (or a phone's) Back closes it instead of leaving the page.
+  const checkoutOpen = Boolean(step && step.kind !== 'rename');
+  useEffect(() => {
+    if (!checkoutOpen || flowEntryRef.current) return;
+    flowEntryRef.current = true;
+    navigate(`${window.location.pathname}${window.location.search}${window.location.hash}`, {
+      state: { ...((location.state as Record<string, unknown>) || {}), appAddressCheckout: true }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkoutOpen]);
+  useEffect(() => {
+    if (!flowEntryRef.current) return;
+    if ((location.state as Record<string, unknown> | null)?.appAddressCheckout) return;
+    // Back (or closeFlow's navigate(-1)) left the checkout's entry
+    flowEntryRef.current = false;
+    finishClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
 
   useEffect(() => {
     let cancelled = false;
@@ -507,28 +542,24 @@ export default function AppAddress({
     excerpt: `App web address screen for "${appTitle}". Free address: ${freeHost}. ${excerpt}`.slice(0, 600)
   });
 
-  // the standard Modal header names the step
+  // the checkout's name for screen readers (each screen shows its own title)
   const flowTitle = !step
     ? ''
-    : step.kind === 'rename'
-      ? t.renameTitle
-      : step.kind === 'intro'
-        ? t.introTitle
-        : step.kind === 'find'
-          ? t.findTitle
-          : step.kind === 'parent'
-            ? t.parentTitle
-            : step.kind === 'owner'
-              ? t.ownerTitle(step.idea.domain)
-              : step.kind === 'order'
-                ? order
-                  ? orderStatusTitle(t, order)
-                  : t.introTitle
-                : step.kind === 'live'
-                  ? t.liveTitle(step.hostname)
-                  : step.kind === 'sent'
-                    ? t.sentTitle
-                    : connectViewTitle(t, connect ? 'setup' : 'enter', hostname);
+    : step.kind === 'owner'
+      ? t.ownerTitle(step.idea.domain)
+      : step.kind === 'order' && order
+        ? orderStatusTitle(t, order)
+        : step.kind === 'live'
+          ? t.liveTitle(step.hostname)
+          : step.kind === 'connect'
+            ? t.connectTitle
+            : step.kind === 'parent'
+              ? t.parentTitle
+              : t.introTitle;
+  const shareAddress = (url: string) => {
+    if (navigator.share) void navigator.share({ title: appTitle, url }).catch(() => {});
+    else void navigator.clipboard?.writeText(url).catch(() => {});
+  };
 
   return (
     <>
@@ -568,45 +599,36 @@ export default function AppAddress({
       {isOwner && (
         <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />
       )}
-      {step && (
-        <Modal
-          modalKey="AppAddressFlow"
-          isOpen
-          onClose={closeFlow}
-          size="md"
-          title={flowTitle}
-          loading={step.kind === 'order' && !order}
-          closeOnBackdropClick
-        >
-          <div style={{ width: '100%', minWidth: 0 }}>
-          {error && (
-            <div role="alert" className={flowErrorClass}>
-              {error}
-            </div>
-          )}
-          {step.kind === 'rename' && (
-            <RenameView
-              t={t}
-              root={freeHost.replace(/^[^.]+\./, '')}
-              value={renameValue}
-              status={renameStatus}
-              message={renameMessage}
-              saving={renaming}
-              onChange={setRenameValue}
-              onSave={() => void saveRename()}
-              onCancel={() => setStep(null)}
-            />
-          )}
+      {step?.kind === 'rename' && (
+        <Modal modalKey="AppAddressRename" isOpen onClose={() => setStep(null)} size="md" title={t.renameTitle} closeOnBackdropClick>
+          <RenameView
+            t={t}
+            root={freeHost.replace(/^[^.]+\./, '')}
+            value={renameValue}
+            status={renameStatus}
+            message={renameMessage}
+            saving={renaming}
+            onChange={setRenameValue}
+            onSave={() => void saveRename()}
+            onCancel={() => setStep(null)}
+          />
+        </Modal>
+      )}
+      {step && step.kind !== 'rename' && (
+        <CheckoutSurface variant="overlay" label={flowTitle} onClose={closeFlow} closeLabel={t.backToApp}>
           {step.kind === 'intro' && (
             <IntroView
               t={t}
+              assistant={assistant}
+              error={error}
               freeHost={freeHost}
               onFind={
                 purchase?.open && info.domainSalesEnabled
                   ? () => {
+                      setError('');
                       setStep({ kind: 'find' });
-                      setQuery(appTitle);
-                      void loadIdeas();
+                      if (!query) setQuery(appTitle);
+                      if (!ideas.length) void loadIdeas();
                     }
                   : undefined
               }
@@ -618,20 +640,29 @@ export default function AppAddress({
           {step.kind === 'find' && (
             <FindView
               t={t}
+              assistant={assistant}
+              error={error}
+              freeHost={freeHost}
               query={query}
               ideas={ideas}
               loading={loading}
+              forParent={purchase?.buyer !== 'self'}
               onQuery={setQuery}
               onSearch={search}
               onBuy={(idea) => {
+                setError('');
                 setOwnerProblem('');
                 setStep(purchase?.buyer === 'self' ? { kind: 'owner', idea } : { kind: 'parent', idea });
               }}
               onUseOwn={info.customDomainsEnabled ? () => setStep({ kind: 'connect' }) : undefined}
               onMoreIdeas={() => loadIdeas({ more: true })}
-              onClose={closeFlow}
+              onBack={() => {
+                setError('');
+                setStep({ kind: 'intro' });
+              }}
               ask={
-                <AskAgentButton showLabelOnMobile
+                <AskAgentButton
+                  showLabelOnMobile
                   label={t.askIdeas}
                   context={askContext(
                     'ideas for my app’s web address',
@@ -647,6 +678,8 @@ export default function AppAddress({
           {step.kind === 'parent' && (
             <ParentRequestView
               t={t}
+              assistant={assistant}
+              error={error}
               idea={step.idea}
               email={parentEmail}
               sending={sending}
@@ -658,6 +691,8 @@ export default function AppAddress({
           {step.kind === 'owner' && (
             <OwnerDetailsView
               t={t}
+              assistant={assistant}
+              error={error}
               idea={step.idea}
               details={owner}
               agreed={ownerAgreed}
@@ -670,34 +705,51 @@ export default function AppAddress({
               onBack={() => setStep({ kind: 'find' })}
             />
           )}
-          {step.kind === 'order' && order && (
-            <OrderStatusView
-              t={t}
-              order={order}
-              onOpen={() => window.open(`https://${order.domain}`, '_blank', 'noopener,noreferrer')}
-              onTryAgain={() => {
-                closeFlow();
-                openOwnFlow();
-              }}
-              onClose={closeFlow}
-            />
-          )}
+          {step.kind === 'order' &&
+            (order ? (
+              <OrderStatusView
+                t={t}
+                assistant={assistant}
+                order={order}
+                onOpen={() => window.open(`https://${order.domain}`, '_blank', 'noopener,noreferrer')}
+                onShare={() => shareAddress(`https://${order.domain}`)}
+                onTryAgain={() => {
+                  setOrder(null);
+                  clearOrderParam();
+                  openOwnFlow();
+                }}
+                onClose={closeFlow}
+              />
+            ) : (
+              <MessageView t={t} assistant={assistant} stepKey="order-loading" title={t.renameChecking} body="" primaryLabel={t.backToApp} onPrimary={closeFlow} />
+            ))}
           {step.kind === 'live' && (
-            <MessageView
-              body={t.liveBody}
-              primaryLabel={t.openIt}
-              onPrimary={() => window.open(`https://${step.hostname}`, '_blank', 'noopener,noreferrer')}
-              secondaryLabel={t.done}
-              onSecondary={closeFlow}
-              celebrate
+            <LiveView
+              t={t}
+              assistant={assistant}
+              domain={step.hostname}
+              onOpen={() => window.open(`https://${step.hostname}`, '_blank', 'noopener,noreferrer')}
+              onShare={() => shareAddress(`https://${step.hostname}`)}
+              onDone={closeFlow}
             />
           )}
           {step.kind === 'sent' && (
-            <MessageView body={t.sentBody(step.idea.domain)} primaryLabel={t.done} onPrimary={() => setStep(null)} />
+            <MessageView
+              t={t}
+              assistant={assistant}
+              stepKey="sent"
+              title={t.sentTitle}
+              tip={t.tipSent}
+              body={t.sentBody(step.idea.domain)}
+              primaryLabel={t.done}
+              onPrimary={closeFlow}
+            />
           )}
           {step.kind === 'connect' && (
             <ConnectView
               t={t}
+              assistant={assistant}
+              error={error}
               hostname={hostname}
               onHostname={setHostname}
               onConnect={startConnect}
@@ -710,7 +762,8 @@ export default function AppAddress({
               status={connect?.status || 'waiting'}
               onCheck={() => checkConnect(step.domainId)}
               ask={
-                <AskAgentButton showLabelOnMobile
+                <AskAgentButton
+                  showLabelOnMobile
                   label={t.askHelp}
                   context={askContext(
                     'connecting my domain',
@@ -722,8 +775,7 @@ export default function AppAddress({
               }
             />
           )}
-          </div>
-        </Modal>
+        </CheckoutSurface>
       )}
     </>
   );
@@ -743,10 +795,3 @@ function useConnectPolling(
   }, [domainId, status]);
 }
 
-const flowErrorClass = css`
-  width: 100%;
-  margin: 0 0 1.2rem;
-  color: ${Color.rose()};
-  font-size: 1.45rem;
-  font-weight: 700;
-`;
