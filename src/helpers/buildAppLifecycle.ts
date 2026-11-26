@@ -651,7 +651,7 @@ export function forgetRunningApp(buildId: number) {
   if (app) {
     if (app.pendingTimer !== null) window.clearTimeout(app.pendingTimer);
     app.pendingTimer = null;
-    app.pendingSave = null;
+    flushPendingSave(buildId, app);
     const waiters = app.waiters;
     app.waiters = [];
     waiters.forEach((resolve) => resolve(false));

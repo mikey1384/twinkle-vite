@@ -97,6 +97,7 @@ export function installFrameFocusKeeper(
   let disposed = false;
   let scheduled: number | null = null;
   let scheduledFromGesture = false;
+  let scheduledAllowFrameActive = false;
 
   function focusLost() {
     const active = document.activeElement;
@@ -108,20 +109,18 @@ export function installFrameFocusKeeper(
     return false;
   }
 
-  // Re-focusing the iframe when it is already activeElement is harmless and
-  // required to hand focus into a newly loaded (or unfocused) inner document.
-  function focusEligibleForFrame() {
-    return document.activeElement === frame || focusLost();
-  }
-
-  function canTake({ fromGesture = false } = {}) {
+  function canTake({ fromGesture = false, allowFrameActive = false } = {}) {
     if (disposed || !frame.isConnected) return false;
     if (document.visibilityState === 'hidden') return false;
     if (!fromGesture && isTouchOnly()) return false;
     if (hostOverlayOpen()) return false;
     const active = document.activeElement;
     if (isHostTextEntry(active)) return false;
-    if (!fromGesture && !focusEligibleForFrame()) return false;
+    // Re-focusing an already-focused iframe disrupts inner inputs (e.g. blurs
+    // them in WebKit), so only the frame 'load' handler may hand focus into a
+    // newly loaded document when activeElement is already the frame.
+    if (active === frame) return allowFrameActive;
+    if (!fromGesture && !focusLost()) return false;
     return true;
   }
 
@@ -133,25 +132,31 @@ export function installFrameFocusKeeper(
     }
   }
 
-  function focusApp({ fromGesture = false } = {}) {
-    if (canTake({ fromGesture })) focusFrame();
+  function focusApp({ fromGesture = false, allowFrameActive = false } = {}) {
+    if (canTake({ fromGesture, allowFrameActive })) focusFrame();
   }
 
   // After the browser has settled focus (a removed element, a closed sheet,
   // a window that just came back), on the next task.
-  function schedule({ fromGesture = false } = {}) {
+  function schedule({ fromGesture = false, allowFrameActive = false } = {}) {
     const nextFromGesture = fromGesture || (scheduled !== null && scheduledFromGesture);
+    const nextAllowFrameActive =
+      allowFrameActive || (scheduled !== null && scheduledAllowFrameActive);
     if (scheduled !== null) window.clearTimeout(scheduled);
     scheduledFromGesture = nextFromGesture;
+    scheduledAllowFrameActive = nextAllowFrameActive;
     scheduled = window.setTimeout(() => {
       const gesture = scheduledFromGesture;
+      const allowFrame = scheduledAllowFrameActive;
       scheduled = null;
       scheduledFromGesture = false;
-      focusApp({ fromGesture: gesture });
+      scheduledAllowFrameActive = false;
+      focusApp({ fromGesture: gesture, allowFrameActive: allowFrame });
     }, 0);
   }
 
-  const onLoad = () => schedule();
+  const onFrameLoad = () => schedule({ allowFrameActive: true });
+  const onWindowLoad = () => schedule();
   const onVisible = () => {
     if (document.visibilityState === 'visible') schedule();
   };
@@ -187,7 +192,7 @@ export function installFrameFocusKeeper(
           // Right away (a microtask after the removal), so a key pressed
           // just after the click already reaches the app; again after the
           // browser has settled focus.
-          if (focusEligibleForFrame()) focusApp();
+          if (focusLost()) focusApp();
           schedule();
         })
       : null;
@@ -213,18 +218,17 @@ export function installFrameFocusKeeper(
   bodyWatcher?.observe(document.body, { childList: true });
 
   // Last resort: a key pressed on this page while focus is lost on
-  // body/document (not on any host control) or on the iframe element without
-  // inner-document focus sends the next ones to the app. Modifier, shortcut,
-  // and navigation keys are never intercepted.
+  // body/document (not on any host control) sends the next ones to the app.
+  // Modifier, shortcut, and navigation keys are never intercepted.
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.defaultPrevented || event.isTrusted === false || event.isComposing) return;
-    if (!focusEligibleForFrame()) return;
+    if (!focusLost()) return;
     if (isIgnoredKey(event)) return;
     focusApp();
   };
 
-  frame.addEventListener('load', onLoad);
-  window.addEventListener('load', onLoad);
+  frame.addEventListener('load', onFrameLoad);
+  window.addEventListener('load', onWindowLoad);
   document.addEventListener('keydown', onKeyDown);
   document.addEventListener('visibilitychange', onVisible);
   window.addEventListener('focus', onWindowFocus);
@@ -239,11 +243,12 @@ export function installFrameFocusKeeper(
         window.clearTimeout(scheduled);
         scheduled = null;
         scheduledFromGesture = false;
+        scheduledAllowFrameActive = false;
       }
       observer?.disconnect();
       bodyWatcher?.disconnect();
-      frame.removeEventListener('load', onLoad);
-      window.removeEventListener('load', onLoad);
+      frame.removeEventListener('load', onFrameLoad);
+      window.removeEventListener('load', onWindowLoad);
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', onWindowFocus);

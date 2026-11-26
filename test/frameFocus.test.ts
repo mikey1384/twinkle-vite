@@ -304,7 +304,7 @@ test('window focus, tab return, and iframe load never steal focus from a host bu
   }
 });
 
-test('activeElement is already the iframe at load, visibility, window focus, and overlay removal → focus() is still called', async () => {
+test('when activeElement is already the iframe, only frame load calls focus(); tab return, window focus, window load, and overlay removal preserve inner focus', async () => {
   const dom = createMockDom();
   const frame = new dom.MockElement('iframe', { id: 'lumine-app-frame' });
   const badge = new dom.MockElement('button', { className: 'lh-badge' });
@@ -321,35 +321,65 @@ test('activeElement is already the iframe at load, visibility, window focus, and
     assert.equal(frame.focusCalls, 1);
     assert.equal(dom.document.activeElement, frame);
 
-    // Subsequent frame navigation while activeElement is still the iframe refocuses again.
+    // Subsequent frame navigation while activeElement is still the iframe refocuses again,
+    // even if window load fires in the same tick.
     frame.dispatch('load');
+    dom.window.dispatch('load');
     await nextTick();
     assert.equal(frame.focusCalls, 2);
 
-    // Window load also refocuses when activeElement is already the iframe.
+    // Window load alone, tab return, and window focus must not call focus() when activeElement is already the iframe.
     dom.window.dispatch('load');
+    dom.document.dispatch('visibilitychange');
+    dom.window.dispatch('focus');
+    await nextTick();
+    assert.equal(frame.focusCalls, 2);
+
+    // Passive overlay/DOM removals (toast, guest hint, fading closingLayer) must not call focus()
+    // when activeElement is already the iframe, so inner inputs keep their focus.
+    const toast = new dom.MockElement('div', { className: 'lh-toast' });
+    const hint = new dom.MockElement('div', { className: 'lh-hint' });
+    const closingLayer = new dom.MockElement('div', { className: 'lh-pop-layer' });
+    closingLayer.setAttribute('inert', '');
+    dom.document.body.appendChild(toast);
+    dom.document.body.appendChild(hint);
+    dom.document.body.appendChild(closingLayer);
+    toast.remove();
+    hint.remove();
+    closingLayer.remove();
+    await nextTick();
+    assert.equal(frame.focusCalls, 2);
+
+    // Click, keydown, pointerdown, and explicit focusApp() must not refocus an already-focused iframe.
+    dom.document.dispatch('click', { target: dom.document.body, isTrusted: true });
+    dom.document.dispatch('keydown', { key: 'w', isTrusted: true });
+    dom.document.dispatch('pointerdown', { target: frame, isTrusted: true });
+    keeper.focusApp();
+    await nextTick();
+    assert.equal(frame.focusCalls, 2);
+    assert.equal(dom.document.activeElement, frame);
+
+    // When focus IS lost on body/null/documentElement, tab return, window focus, and overlay removal refocus once.
+    dom.document.setActiveElement(null);
+    dom.document.dispatch('visibilitychange');
     await nextTick();
     assert.equal(frame.focusCalls, 3);
+    assert.equal(dom.document.activeElement, frame);
 
-    // Visibility return and window focus refocus when activeElement is already the iframe.
-    dom.document.dispatch('visibilitychange');
+    dom.document.setActiveElement(dom.document.body);
+    dom.window.dispatch('focus');
     await nextTick();
     assert.equal(frame.focusCalls, 4);
 
-    dom.window.dispatch('focus');
+    dom.document.setActiveElement(dom.document.documentElement);
+    const removedOverlay = new dom.MockElement('div', { className: 'lh-toast' });
+    dom.document.body.appendChild(removedOverlay);
+    removedOverlay.remove();
     await nextTick();
     assert.equal(frame.focusCalls, 5);
-
-    // Overlay removal refocuses when activeElement is already the iframe.
-    const toast = new dom.MockElement('div', { className: 'lh-toast' });
-    dom.document.body.appendChild(toast);
-    const beforeRemove = frame.focusCalls;
-    toast.remove();
-    await nextTick();
-    assert.ok(frame.focusCalls > beforeRemove);
     assert.equal(dom.document.activeElement, frame);
 
-    // Host overlay open and host button guards still apply when activeElement is the iframe or badge.
+    // Host overlay open and host button guards still apply on frame load.
     const callsBeforeGuards = frame.focusCalls;
     const backdrop = new dom.MockElement('div', { className: 'lh-backdrop' });
     dom.document.body.appendChild(backdrop);
@@ -361,6 +391,7 @@ test('activeElement is already the iframe at load, visibility, window focus, and
     assert.equal(frame.focusCalls, callsBeforeGuards);
     backdrop.remove();
     await nextTick();
+    assert.equal(frame.focusCalls, callsBeforeGuards);
 
     const callsBeforeBadge = frame.focusCalls;
     badge.focus();

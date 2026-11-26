@@ -257,6 +257,48 @@ test('beforeunload allows at most one unrequested urgent write per app and visib
   }
 });
 
+test('forgetRunningApp flushes queued throttled saves on eviction, but skips closed apps', async () => {
+  const idb = createFakeIndexedDb();
+  idb.install();
+  lifecycle.warmAppLifecycleStore();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const off82 = lifecycle.registerAppLifecycleFrame(82, () => {});
+  const off83 = lifecycle.registerAppLifecycleFrame(83, () => {});
+  try {
+    // App 82 does not register onSuspend: first snapshot writes immediately,
+    // newer snapshots within the 1s throttle window queue behind pendingTimer.
+    lifecycle.acceptAppLifecycleSnapshot(82, 'k82', { state: { step: 1 }, savedAt: 1, reason: 'autosave' });
+    lifecycle.acceptAppLifecycleSnapshot(82, 'k82', { state: { step: 2 }, savedAt: 2, reason: 'autosave' });
+    lifecycle.acceptAppLifecycleSnapshot(82, 'k82', { state: { step: 3 }, savedAt: 3, reason: 'autosave' });
+    assert.equal(idb.snapshotWrites().length, 1);
+
+    // Mobile memory eviction awaits requestAppLifecycleSnapshot (false here) and
+    // calls forgetRunningApp without markAppClosed: the queued snapshot must flush.
+    assert.equal(await lifecycle.requestAppLifecycleSnapshot(82, 'unload'), false);
+    lifecycle.forgetRunningApp(82);
+    assert.equal(idb.snapshotWrites().length, 2);
+    assert.deepEqual((idb.snapshotWrites()[1].value as any).state, { step: 3 });
+
+    // Explicit user close marks the app closed before forgetRunningApp: queued
+    // and late snapshots must not be written.
+    lifecycle.acceptAppLifecycleSnapshot(83, 'k83', { state: { step: 1 }, savedAt: 1, reason: 'autosave' });
+    lifecycle.acceptAppLifecycleSnapshot(83, 'k83', { state: { step: 2 }, savedAt: 2, reason: 'autosave' });
+    assert.equal(idb.snapshotWrites().length, 3);
+    lifecycle.markAppClosed(83);
+    lifecycle.acceptAppLifecycleSnapshot(83, 'k83', { state: { step: 3 }, savedAt: 3, reason: 'autosave' });
+    lifecycle.forgetRunningApp(83);
+    assert.equal(idb.snapshotWrites().length, 3);
+  } finally {
+    off82();
+    off83();
+    lifecycle.forgetRunningApp(82);
+    lifecycle.forgetRunningApp(83);
+    lifecycle.noteAppStarted(83);
+    idb.teardown();
+  }
+});
+
 test('a closed app is remembered until it starts again', () => {
   lifecycle.markAppClosed(88);
   assert.equal(lifecycle.isAppClosed(88), true);
