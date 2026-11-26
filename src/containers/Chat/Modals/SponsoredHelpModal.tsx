@@ -88,6 +88,11 @@ export default function SponsoredHelpModal({
   const sendSponsoredHelp = useAppContext((v) => v.requestHelpers.sendSponsoredHelp);
   const createOpenWandCard = useAppContext((v) => v.requestHelpers.createOpenWandCard);
   const [task, setTask] = useState(OPEN_WAND_PRESETS[0]);
+  // one key per sheet: a retried Insert (double tap, slow network) returns
+  // the same card instead of making a second one
+  const [clientKey] = useState(
+    () => `ow-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+  );
   const [sponsorCap, setSponsorCap] = useState(Math.max(0, Math.min(openDefaultSponsorCap, openMaxSponsorCap)));
   const [objectives, setObjectives] = useState<string[]>(['']);
   const [persona, setPersona] = useState<'zero' | 'ciel'>('zero');
@@ -256,7 +261,7 @@ export default function SponsoredHelpModal({
     setWorking('insert');
     setError('');
     try {
-      const result = await createOpenWandCard({ task: task.trim(), persona, sponsorCap });
+      const result = await createOpenWandCard({ task: task.trim(), persona, sponsorCap, clientKey });
       if (result?.openCardId) {
         onInserted?.(Number(result.openCardId));
         onHide();

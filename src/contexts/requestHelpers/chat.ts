@@ -2951,16 +2951,19 @@ export default function chatRequestHelpers({
     async createOpenWandCard({
       task,
       persona,
-      sponsorCap
+      sponsorCap,
+      clientKey
     }: {
       task: string;
       persona: 'zero' | 'ciel';
       sponsorCap: number;
+      // one Insert: a retried request returns the same card
+      clientKey?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/sponsored-help/open-cards`,
-          { task, persona, sponsorCap },
+          { task, persona, sponsorCap, clientKey },
           auth()
         );
         return data;
