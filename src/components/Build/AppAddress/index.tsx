@@ -1,44 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { css } from '@emotion/css';
 import Modal from '~/components/Modal';
-import AskAgentButton from '~/components/Buttons/AskAgentButton';
-import { useAppContext, useKeyContext } from '~/contexts';
-import { useUserAssistant } from '~/helpers/assistantVoice';
-import { CheckoutSurface } from './checkout/ui';
-import { guessCountry } from './checkout/countries';
-import type { PhoneDraft } from './checkout/phone';
+import { mobileMaxWidth } from '~/constants/css';
+import { useAppContext } from '~/contexts';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
-import {
-  AddressMenuView,
-  addressHost,
-  ConnectView,
-  FindView,
-  IntroView,
-  MessageView,
-  OrderStatusView,
-  OwnerDetailsView,
-  ParentRequestView,
-  LiveView,
-  RenameView,
-  orderStatusTitle,
-  emptyOwnerDetails,
-  ownerDetailsProblem,
-  type DnsRecordView,
-  type DomainIdeaView,
-  type DomainOrderView,
-  type OwnerDetails
-} from './views';
+import { AddressMenuView, addressHost, RenameView } from './views';
 
 // The app's address chip in the Build header's strip, with Open / Copy /
 // Share and, for the owner, Change address and "Get your own .com" (Mikey
-// 11-25 north star), then the owner's Players chip. "Get your own" opens a
-// full-screen, step-by-step checkout over the page (./checkout): the
-// workspace underneath stays as it was, the wand's deep links and Stripe's
-// return (?appAddress=…, ?domainOrder=…) open it straight at their step, and
-// the browser's Back closes it. `children` (other strip
-// chips) sit between the two and still show while the hosting switch is off
-// (the API answers { enabled: false }), so it is safe to mount everywhere.
+// 11-25 north star), then the owner's Players chip. "Get your own" goes to
+// the checkout's own page, /build/<id>/domain (DomainCheckoutPage), after
+// saving any unsaved editor work; the wand's ?appAddress=… and Stripe's
+// ?domainOrder=… on this page go there too. `children` (other strip chips)
+// sit between the two and still show while the hosting switch is off (the
+// API answers { enabled: false }), so it is safe to mount everywhere.
 interface AddressInfo {
   enabled: boolean;
   eligible?: boolean;
@@ -53,24 +30,18 @@ interface AddressInfo {
   accountMode?: 'twinkle' | 'app' | 'both';
 }
 
-type Step =
-  | { kind: 'intro' }
-  | { kind: 'find' }
-  | { kind: 'parent'; idea: DomainIdeaView }
-  | { kind: 'owner'; idea: DomainIdeaView }
-  | { kind: 'order'; orderId: number }
-  | { kind: 'live'; hostname: string }
-  | { kind: 'sent'; idea: DomainIdeaView }
-  | { kind: 'connect'; domainId?: number }
-  | { kind: 'rename' }
-  | null;
-
 function pageLang(): AddressLang {
   try {
     return /^ko\b/i.test(document.documentElement.lang || navigator.language) ? 'ko' : 'en';
   } catch {
     return 'en';
   }
+}
+
+// The checkout's own page for this app, with the query that says where to
+// start (?appAddress=…, ?domainOrder=…) when there is one.
+export function domainCheckoutPath(buildId: number, search = '') {
+  return `/build/${buildId}/domain${search}`;
 }
 
 // Once the API says hosting is off, later editor opens in this page load
@@ -81,347 +52,91 @@ export default function AppAddress({
   buildId,
   isOwner,
   appTitle,
+  hasUnsavedChanges = false,
+  onSaveChanges,
   children
 }: {
   buildId: number;
   isOwner: boolean;
   appTitle: string;
+  // unsaved editor work, saved before leaving for the checkout page
+  hasUnsavedChanges?: boolean;
+  onSaveChanges?: () => Promise<boolean>;
   children?: React.ReactNode;
 }) {
   const loadAppAddress = useAppContext((v) => v.requestHelpers.loadAppAddress);
-  const loadDomainIdeas = useAppContext((v) => v.requestHelpers.loadDomainIdeas);
-  const searchDomains = useAppContext((v) => v.requestHelpers.searchDomains);
-  const startDomainOrder = useAppContext((v) => v.requestHelpers.startDomainOrder);
-  const loadDomainPurchase = useAppContext((v) => v.requestHelpers.loadDomainPurchase);
-  const startSelfDomainOrder = useAppContext((v) => v.requestHelpers.startSelfDomainOrder);
-  const loadDomainOrder = useAppContext((v) => v.requestHelpers.loadDomainOrder);
-  const loadDomainStatus = useAppContext((v) => v.requestHelpers.loadDomainStatus);
   const removeAppDomain = useAppContext((v) => v.requestHelpers.removeAppDomain);
-  const addAppDomain = useAppContext((v) => v.requestHelpers.addAppDomain);
-  const loadAppDomainConnect = useAppContext((v) => v.requestHelpers.loadAppDomainConnect);
-  const checkAppDomain = useAppContext((v) => v.requestHelpers.checkAppDomain);
   const checkAppAddressSlug = useAppContext((v) => v.requestHelpers.checkAppAddressSlug);
   const renameAppAddress = useAppContext((v) => v.requestHelpers.renameAppAddress);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [renameStatus, setRenameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [renameMessage, setRenameMessage] = useState('');
   const [renaming, setRenaming] = useState(false);
   const [info, setInfo] = useState<AddressInfo | null>(null);
   const [copied, setCopied] = useState(false);
-  const [step, setStep] = useState<Step>(null);
-  const [query, setQuery] = useState('');
-  const [ideas, setIdeas] = useState<DomainIdeaView[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [parentEmail, setParentEmail] = useState('');
-  const [sending, setSending] = useState(false);
-  const [hostname, setHostname] = useState('');
-  const [connect, setConnect] = useState<{
-    providerName: string | null;
-    providerSteps: string[];
-    domainConnectUrl: string | null;
-    records: DnsRecordView[];
-    status: 'waiting' | 'checking' | 'securing' | 'connected';
-  } | null>(null);
-  const [error, setError] = useState('');
-  // Buying here: open for this member? who pays? (server decides)
-  const [purchase, setPurchase] = useState<{ open: boolean; buyer?: 'self' | 'parent'; renews?: boolean } | null>(null);
-  const [owner, setOwner] = useState<OwnerDetails>(() => emptyOwnerDetails(guessCountry()));
-  // the phone as typed; owner.phone is the E.164 number made from it
-  const [ownerPhone, setOwnerPhone] = useState<PhoneDraft>(() => ({ country: owner.country, national: '' }));
-  const [ownerAgreed, setOwnerAgreed] = useState(false);
-  const [paying, setPaying] = useState(false);
-  const [ownerProblem, setOwnerProblem] = useState('');
-  const [order, setOrder] = useState<DomainOrderView | null>(null);
-  const location = useLocation();
-  const navigate = useNavigate();
-  // The history entry this checkout pushed (its id is in the entry's
-  // router state), and whether a close is already going back over it.
-  const ownedEntryRef = useRef<string | null>(null);
-  const closingRef = useRef(false);
-  const markedEntry = (location.state as Record<string, unknown> | null)?.appAddressCheckout;
-  const routePath = `${location.pathname}${location.search}${location.hash}`;
-  // Replace the current entry's URL through the router (deep-link and
-  // Stripe parameters are used once), keeping its state.
-  function replaceQuery(remove: string[]) {
-    const params = new URLSearchParams(location.search);
-    if (!remove.some((key) => params.has(key))) return;
-    remove.forEach((key) => params.delete(key));
-    const search = params.toString();
-    navigate(`${location.pathname}${search ? `?${search}` : ''}${location.hash}`, { replace: true, state: location.state });
-  }
-  // Each request the checkout sends belongs to the screen that sent it: a
-  // reply that comes back after the member closed the checkout or moved on
-  // is dropped (no late Stripe redirect, no screen reopening).
-  const stepRef = useRef<Step>(null);
-  stepRef.current = step;
-  const flowGenRef = useRef(0);
-  const inFlightRef = useRef<Record<string, boolean>>({});
-  function claimRequest(name: string) {
-    if (inFlightRef.current[name]) return null;
-    inFlightRef.current[name] = true;
-    const gen = flowGenRef.current;
-    const from = stepRef.current;
-    return {
-      current: () => flowGenRef.current === gen && stepRef.current === from,
-      release: () => {
-        inFlightRef.current[name] = false;
-      }
-    };
-  }
-  const userId = useKeyContext((v) => v.myState.userId);
-  const assistant = useUserAssistant(userId);
+  const [leaving, setLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState('');
   const t = ADDRESS_TEXT[pageLang()];
 
-  // Back from Stripe Checkout: ?domainOrder=<id> opens the order's status
-  // (&cancelled=1: the member left Stripe without paying).
-  const [cancelledReturn] = useState(() => new URLSearchParams(location.search).get('cancelled') === '1');
+  // A wand plan or Stripe's return that reached the Build page goes to the
+  // checkout page with its query.
   useEffect(() => {
     if (!isOwner) return;
-    let orderId = 0;
-    try {
-      orderId = Number(new URLSearchParams(location.search).get('domainOrder') || 0);
-    } catch {
-      orderId = 0;
+    const params = new URLSearchParams(location.search);
+    if (params.has('domainOrder') || params.has('appAddress')) {
+      navigate(domainCheckoutPath(buildId, location.search), { replace: true });
     }
-    if (orderId > 0) setStep({ kind: 'order', orderId });
-    // read once when the page (or owner) arrives; the parameter is cleared on close
+    // when the page (or owner) arrives, and for a new query on this page
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildId, isOwner]);
+  }, [buildId, isOwner, location.search]);
 
-  // A wand plan (Zero/Ciel, twinkle-api sponsoredHelp open_app_address)
-  // opens ?appAddress=find|buy|connect|status[&domain=…] on the owner's app
-  // page. Only the domain choice comes in; the member does every buying step.
-  const [deepLink, setDeepLink] = useState<{ screen: string; domain: string } | null>(null);
+  // Where the owner is now: a save that finishes after they opened another
+  // app (or left this page) must not pull them into this app's checkout or
+  // leak toast/leaving state onto the next build.
+  const hereRef = useRef({ buildId, pathname: location.pathname, mounted: true });
+  const leaveAttemptRef = useRef(0);
+  hereRef.current.buildId = buildId;
+  hereRef.current.pathname = location.pathname;
   useEffect(() => {
-    if (!isOwner) return;
-    try {
-      const params = new URLSearchParams(location.search);
-      const screen = params.get('appAddress') || '';
-      if (!['find', 'buy', 'connect', 'status'].includes(screen)) return;
-      setDeepLink({ screen, domain: String(params.get('domain') || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 253) });
-      replaceQuery(['appAddress', 'domain']);
-    } catch {
-      // no deep link
-    }
-    // read once when the page (or owner) arrives, then removed from the URL
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildId, isOwner]);
-  useEffect(() => {
-    if (!deepLink || !info?.enabled) return;
-    const { screen, domain } = deepLink;
-    setDeepLink(null);
-    void openFromWand(screen, domain);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deepLink, info?.enabled]);
-
-  async function openFromWand(screen: string, domain: string) {
-    // Like claimRequest: a reply that arrives after the checkout was closed
-    // (or the member moved to another screen) changes nothing.
-    const gen = flowGenRef.current;
-    const startStep = stepRef.current;
-    const still = (expected: Step = startStep) => flowGenRef.current === gen && stepRef.current === expected;
-    setError('');
-    if (screen === 'connect') {
-      if (!info?.customDomainsEnabled) {
-        setStep({ kind: 'intro' });
-        return;
-      }
-      setHostname(domain);
-      setConnect(null);
-      setStep({ kind: 'connect' });
-      return;
-    }
-    if (screen === 'status') {
-      // the named address (bought or connected), else the newest one
-      const status = await loadDomainStatus({ buildId, hostname: domain || undefined }).catch(() => null);
-      if (!still()) return;
-      const row = status?.domains?.[0];
-      if (row && row.source === 'own' && row.status !== 'live' && info?.customDomainsEnabled) {
-        setHostname(row.hostname);
-        await showConnectSetup(row.id, () => still());
-        return;
-      }
-      if (row && row.status === 'live') {
-        setStep({ kind: 'live', hostname: row.hostname });
-        return;
-      }
-      if (status?.order?.orderId) {
-        setStep({ kind: 'order', orderId: status.order.orderId });
-        return;
-      }
-      setStep({ kind: 'intro' });
-      return;
-    }
-    const purchaseInfo = purchase || (await loadDomainPurchase({ buildId }).catch(() => ({ open: false })));
-    if (!still()) return;
-    setPurchase(purchaseInfo);
-    if (!purchaseInfo?.open || !info?.domainSalesEnabled) {
-      // buying here is closed: connecting your own still works
-      setStep({ kind: 'intro' });
-      return;
-    }
-    const label = domain.replace(/\.[a-z.]+$/, '') || appTitle;
-    setQuery(label);
-    const findStep: Step = { kind: 'find' };
-    setStep(findStep);
-    if (screen === 'find' && !domain) {
-      void loadIdeas();
-      return;
-    }
-    setLoading(true);
-    try {
-      const data = await searchDomains({ q: label });
-      if (!still(findStep)) return;
-      const found = (data?.results || []).filter((row: any) => row.available && row.price).map((row: any) => row.price);
-      setIdeas(found);
-      const exact = found.find((idea: DomainIdeaView) => idea.domain === domain);
-      if (screen === 'buy' && exact) {
-        setOwnerProblem('');
-        setStep(purchaseInfo.buyer === 'self' ? { kind: 'owner', idea: exact } : { kind: 'parent', idea: exact });
-      } else if (screen === 'buy') {
-        setError(t.notAvailableHere(domain));
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // While an order is being set up, ask again every 5 s (each ask may move
-  // it forward on the server); stop once it is live or refunded.
-  // A failed read keeps the order id: it shows (with Check again) and is
-  // retried by itself, a little later each time.
-  const orderId = step?.kind === 'order' ? step.orderId : 0;
-  const [orderLookupError, setOrderLookupError] = useState('');
-  const [orderAttempt, setOrderAttempt] = useState(0);
-  useEffect(() => {
-    if (!orderId) return;
-    let cancelled = false;
-    let timer = 0;
-    let failures = 0;
-    async function poll() {
-      try {
-        const data = await loadDomainOrder({ buildId, orderId });
-        if (cancelled) return;
-        if (!data?.order) throw new Error(t.orderLookupBody);
-        failures = 0;
-        setOrderLookupError('');
-        setOrder(data.order);
-        if (data.order.stage === 'live') {
-          const fresh = await loadAppAddress({ buildId }).catch(() => null);
-          if (!cancelled && fresh) setInfo(fresh);
-          return;
-        }
-        // keep asking while payment or setup is still going (a webhook can
-        // land after the buyer is back from Stripe)
-        if (['paying', 'setting_up', 'refunding'].includes(data.order.stage)) timer = window.setTimeout(poll, 5000);
-      } catch (e: any) {
-        if (cancelled) return;
-        failures += 1;
-        setOrderLookupError(e?.message || t.orderLookupBody);
-        if (failures < 6) timer = window.setTimeout(poll, 5000 * failures);
-      }
-    }
-    void poll();
+    const here = hereRef.current;
+    here.mounted = true;
     return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
+      here.mounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId, buildId, orderAttempt]);
+  }, []);
+  useEffect(() => {
+    leaveAttemptRef.current += 1;
+    setLeaving(false);
+    setLeaveError('');
+  }, [buildId]);
 
-  function openOwnFlow() {
-    setError('');
-    setStep({ kind: 'intro' });
-    if (purchase) return;
-    loadDomainPurchase({ buildId })
-      .then((data: any) => setPurchase(data || { open: false }))
-      .catch(() => setPurchase({ open: false }));
-  }
-
-  async function payAsOwner(idea: DomainIdeaView) {
-    const problem = ownerDetailsProblem(t, owner);
-    if (problem) {
-      setOwnerProblem(problem);
-      return;
-    }
-    // one hand-off to Stripe at a time, for exactly the details on screen
-    const request = claimRequest('pay');
-    if (!request) return;
-    const registrant = { ...owner, phone: owner.phone.trim() };
-    setOwnerProblem('');
-    setPaying(true);
-    try {
-      const result = await startSelfDomainOrder({
-        buildId,
-        domain: idea.domain,
-        registrant,
-        agreed: ownerAgreed,
-        priceCents: idea.priceCents
-      });
-      // Leaving the check screen (Back, closing) cancels the hand-off; the
-      // same server order opens again from Continue to payment.
-      if (!request.current()) return;
-      if (result?.checkoutUrl) {
-        window.location.assign(result.checkoutUrl);
+  async function openCheckout() {
+    if (leaving) return;
+    setLeaveError('');
+    // the checkout is its own page: unsaved editor work is saved first
+    if (hasUnsavedChanges && onSaveChanges) {
+      const attempt = (leaveAttemptRef.current += 1);
+      const from = { buildId, pathname: location.pathname };
+      const stillHere = () =>
+        hereRef.current.mounted &&
+        hereRef.current.buildId === from.buildId &&
+        hereRef.current.pathname === from.pathname &&
+        window.location.pathname === from.pathname &&
+        leaveAttemptRef.current === attempt;
+      setLeaving(true);
+      const saved = await onSaveChanges().catch(() => false);
+      if (hereRef.current.mounted && leaveAttemptRef.current === attempt) setLeaving(false);
+      if (!stillHere()) return;
+      if (!saved) {
+        setLeaveError(t.saveBeforeLeaving);
         return;
       }
-      setOwnerProblem(t.whyOther(idea.domain));
-    } catch (e: any) {
-      if (request.current()) setOwnerProblem(e?.message || '');
-    } finally {
-      request.release();
-      setPaying(false);
     }
+    navigate(domainCheckoutPath(buildId));
   }
-
-  // Close once, however many times it's asked: on the checkout's own entry
-  // that's one step back (the reconcile effect below then closes it).
-  function closeFlow() {
-    if (closingRef.current) return;
-    if (ownedEntryRef.current && markedEntry === ownedEntryRef.current) {
-      closingRef.current = true;
-      navigate(-1);
-      return;
-    }
-    ownedEntryRef.current = null;
-    finishClose();
-  }
-
-  function finishClose() {
-    flowGenRef.current += 1;
-    setStep(null);
-    setOrder(null);
-    clearOrderParam();
-  }
-
-  // Stripe's ?domainOrder= has done its job once the order screen closes
-  function clearOrderParam() {
-    replaceQuery(['domainOrder', 'cancelled']);
-  }
-
-  // The checkout adds one history entry while it is open, so the browser's
-  // (or a phone's) Back closes it instead of leaving the page.
-  const checkoutOpen = Boolean(step && step.kind !== 'rename');
-  useEffect(() => {
-    if (!checkoutOpen || ownedEntryRef.current) return;
-    const id = `${buildId}:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-    ownedEntryRef.current = id;
-    navigate(routePath, { state: { ...((location.state as Record<string, unknown>) || {}), appAddressCheckout: id } });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkoutOpen]);
-  // Reconcile with the router on every move: the checkout stays open only on
-  // the entry it pushed. Back, a Forward onto an older checkout entry, or
-  // closeFlow's step back closes it; entries from earlier checkouts (after
-  // Forward or a reload) never reopen it.
-  useEffect(() => {
-    const owned = ownedEntryRef.current;
-    if (!owned) return;
-    if (markedEntry === owned) return;
-    ownedEntryRef.current = null;
-    closingRef.current = false;
-    finishClose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.key]);
 
   useEffect(() => {
     let cancelled = false;
@@ -441,117 +156,23 @@ export default function AppAddress({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildId]);
 
-  async function loadIdeas({ more = false, hint = '' } = {}) {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await loadDomainIdeas({
-        buildId,
-        more: more ? '1' : undefined,
-        hint: hint || undefined
-      });
-      setIdeas(data?.ideas || []);
-    } catch (e: any) {
-      setError(e?.message || '');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function search() {
-    setLoading(true);
-    try {
-      const data = await searchDomains({ q: query });
-      setIdeas(
-        (data?.results || [])
-          .filter((row: any) => row.available && row.price)
-          .map((row: any) => row.price)
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function sendToParent(idea: DomainIdeaView) {
-    const request = claimRequest('parent');
-    if (!request) return;
-    setSending(true);
-    try {
-      await startDomainOrder({
-        buildId,
-        domain: idea.domain,
-        parentEmail,
-        lang: pageLang(),
-        // the price on screen, so the API can refuse a quote that has since
-        // changed (that check is coming on the API side; today it keeps its
-        // own quote, which the parent reviews before paying)
-        priceCents: idea.priceCents
-      });
-      if (request.current()) setStep({ kind: 'sent', idea });
-    } catch (e: any) {
-      if (request.current()) setError(e?.message || '');
-    } finally {
-      request.release();
-      setSending(false);
-    }
-  }
-
-  async function showConnectSetup(domainId: number, stillCurrent: () => boolean = () => true) {
-    const how = await loadAppDomainConnect({ buildId, domainId });
-    if (!stillCurrent()) return;
-    setConnect({
-      providerName: how?.provider?.name || how?.domainConnect?.providerName || null,
-      providerSteps: how?.provider?.steps || how?.instructions?.plainSteps || [],
-      domainConnectUrl: how?.domainConnect?.applyUrl || null,
-      records: how?.instructions?.records || [],
-      status: 'waiting'
-    });
-    setStep({ kind: 'connect', domainId });
-  }
-
-  async function startConnect() {
-    const request = claimRequest('connect');
-    if (!request) return;
-    setError('');
-    try {
-      const added = await addAppDomain({ buildId, hostname });
-      if (!request.current()) return;
-      await showConnectSetup(added.domainId, request.current);
-    } catch (e: any) {
-      if (request.current()) setError(e?.message || '');
-    } finally {
-      request.release();
-    }
-  }
-
   async function removeDomain(domainId: number) {
-    setError('');
+    const targetBuildId = buildId;
     try {
-      await removeAppDomain({ buildId, domainId });
-      const fresh = await loadAppAddress({ buildId }).catch(() => null);
-      if (fresh) setInfo(fresh);
+      await removeAppDomain({ buildId: targetBuildId, domainId });
+      if (!hereRef.current.mounted || hereRef.current.buildId !== targetBuildId) return;
+      const fresh = await loadAppAddress({ buildId: targetBuildId }).catch(() => null);
+      if (fresh && hereRef.current.mounted && hereRef.current.buildId === targetBuildId) setInfo(fresh);
     } catch (e: any) {
-      setError(e?.message || '');
+      if (hereRef.current.mounted && hereRef.current.buildId === targetBuildId) {
+        setLeaveError(e?.message || '');
+      }
     }
   }
 
-  async function checkConnect(domainId?: number) {
-    if (!domainId || !connect) return;
-    setConnect({ ...connect, status: 'checking' });
-    try {
-      const result = await checkAppDomain({ buildId, domainId });
-      setConnect({
-        ...connect,
-        status: result?.status === 'live' ? 'connected' : result?.status === 'issuing' ? 'securing' : 'waiting'
-      });
-    } catch {
-      setConnect({ ...connect, status: 'waiting' });
-    }
-  }
-
-  // Live "is this name free?" while the rename screen is open (debounced).
+  // Live "is this name free?" while the rename dialog is open (debounced).
   useEffect(() => {
-    if (step?.kind !== 'rename') return;
+    if (!renameOpen) return;
     const slug = renameValue.trim();
     if (!slug || slug === info?.slug || slug.length < 3) {
       setRenameStatus('idle');
@@ -576,7 +197,7 @@ export default function AppAddress({
       window.clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [renameValue, step?.kind]);
+  }, [renameValue, renameOpen]);
 
   async function saveRename() {
     setRenaming(true);
@@ -594,7 +215,7 @@ export default function AppAddress({
             }
           : prev
       );
-      setStep(null);
+      setRenameOpen(false);
       const fresh = await loadAppAddress({ buildId }).catch(() => null);
       if (fresh) setInfo(fresh);
     } catch (e: any) {
@@ -605,46 +226,12 @@ export default function AppAddress({
     }
   }
 
-  // Re-check every 20 s while the connect screen is open (turns green by
-  // itself once the member's settings reach us).
-  useConnectPolling(step, connect?.status, checkConnect);
-
   if (!info?.enabled || !info.url) return <>{children}</>;
   const freeUrl = info.lumineUrl || info.url;
   const freeHost = addressHost(freeUrl);
   const liveDomains = (info.domains || []).filter((d) => d.status === 'live').map((d) => d.hostname);
   // the chip shows (and Copy / Share hand out) the server's shared address
   const shownUrl = info.url;
-  const askContext = (label: string, excerpt: string) => ({
-    kind: 'page',
-    id: buildId,
-    label,
-    path: `/app/${buildId}`,
-    excerpt: `App web address screen for "${appTitle}". Free address: ${freeHost}. ${excerpt}`.slice(0, 600)
-  });
-
-  // the checkout's name for screen readers (each screen shows its own title)
-  const flowTitle = !step
-    ? ''
-    : step.kind === 'owner'
-      ? t.ownerTitle(step.idea.domain)
-      : step.kind === 'order' && order
-        ? orderStatusTitle(t, order)
-        : step.kind === 'live'
-          ? t.liveTitle(step.hostname)
-          : step.kind === 'connect'
-            ? t.connectTitle
-            : step.kind === 'parent'
-              ? t.parentTitle
-              : t.introTitle;
-  // the share sheet, or the link copied (true) where there's none
-  const shareAddress = async (url: string) => {
-    if (navigator.share) {
-      await navigator.share({ title: appTitle, url }).catch(() => {});
-      return false;
-    }
-    return Boolean(await navigator.clipboard?.writeText(url).then(() => true, () => false));
-  };
 
   return (
     <>
@@ -667,25 +254,34 @@ export default function AppAddress({
           if (navigator.share) void navigator.share({ title: appTitle, url: shownUrl }).catch(() => {});
           else void navigator.clipboard?.writeText(shownUrl).catch(() => {});
         }}
-        onGetOwn={openOwnFlow}
+        onGetOwn={() => void openCheckout()}
         onRename={
           isOwner
             ? () => {
                 setRenameValue(info.slug || '');
                 setRenameStatus('idle');
                 setRenameMessage('');
-                setError('');
-                setStep({ kind: 'rename' });
+                setRenameOpen(true);
               }
             : undefined
         }
       />
       {children}
-      {isOwner && (
-        <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />
+      {isOwner && <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />}
+      {(leaving || leaveError) && (
+        // over the page, not at the end of the scrolling chip strip, so it
+        // shows on a phone too
+        <div className={leaveNoticeClass} role={leaveError ? 'alert' : 'status'} data-tone={leaveError ? 'error' : undefined}>
+          <span>{leaveError || t.savingBeforeLeaving}</span>
+          {leaveError && (
+            <button type="button" onClick={() => setLeaveError('')} aria-label={t.close}>
+              ×
+            </button>
+          )}
+        </div>
       )}
-      {step?.kind === 'rename' && (
-        <Modal modalKey="AppAddressRename" isOpen onClose={() => setStep(null)} size="md" title={t.renameTitle} closeOnBackdropClick>
+      {renameOpen && (
+        <Modal modalKey="AppAddressRename" isOpen onClose={() => setRenameOpen(false)} size="md" title={t.renameTitle} closeOnBackdropClick>
           <RenameView
             t={t}
             root={freeHost.replace(/^[^.]+\./, '')}
@@ -695,209 +291,46 @@ export default function AppAddress({
             saving={renaming}
             onChange={setRenameValue}
             onSave={() => void saveRename()}
-            onCancel={() => setStep(null)}
+            onCancel={() => setRenameOpen(false)}
           />
         </Modal>
-      )}
-      {step && step.kind !== 'rename' && (
-        <CheckoutSurface variant="overlay" label={flowTitle} onClose={closeFlow} closeLabel={t.backToApp}>
-          {step.kind === 'intro' && (
-            <IntroView
-              t={t}
-              assistant={assistant}
-              error={error}
-              freeHost={freeHost}
-              onFind={
-                purchase?.open && info.domainSalesEnabled
-                  ? () => {
-                      setError('');
-                      setStep({ kind: 'find' });
-                      if (!query) setQuery(appTitle);
-                      if (!ideas.length) void loadIdeas();
-                    }
-                  : undefined
-              }
-              onHaveOne={info.customDomainsEnabled ? () => setStep({ kind: 'connect' }) : undefined}
-              onClose={closeFlow}
-              ask={<AskAgentButton showLabelOnMobile context={askContext('getting my own web address', 'Step: what a domain is.')} />}
-            />
-          )}
-          {step.kind === 'find' && (
-            <FindView
-              t={t}
-              assistant={assistant}
-              error={error}
-              freeHost={freeHost}
-              query={query}
-              ideas={ideas}
-              loading={loading}
-              forParent={purchase?.buyer !== 'self'}
-              onQuery={setQuery}
-              onSearch={search}
-              onBuy={(idea) => {
-                setError('');
-                setOwnerProblem('');
-                setStep(purchase?.buyer === 'self' ? { kind: 'owner', idea } : { kind: 'parent', idea });
-              }}
-              onUseOwn={info.customDomainsEnabled ? () => setStep({ kind: 'connect' }) : undefined}
-              onMoreIdeas={() => loadIdeas({ more: true })}
-              onBack={() => {
-                setError('');
-                setStep({ kind: 'intro' });
-              }}
-              ask={
-                <AskAgentButton
-                  showLabelOnMobile
-                  label={t.askIdeas}
-                  context={askContext(
-                    'ideas for my app’s web address',
-                    `Step: choosing a name. Shown: ${ideas
-                      .slice(0, 6)
-                      .map((idea) => `${idea.domain} $${(idea.priceCents / 100).toFixed(2)}`)
-                      .join(', ')}.`
-                  )}
-                />
-              }
-            />
-          )}
-          {step.kind === 'parent' && (
-            <ParentRequestView
-              t={t}
-              assistant={assistant}
-              error={error}
-              idea={step.idea}
-              email={parentEmail}
-              sending={sending}
-              onEmail={setParentEmail}
-              onSend={() => sendToParent(step.idea)}
-              onBack={() => setStep({ kind: 'find' })}
-            />
-          )}
-          {step.kind === 'owner' && (
-            <OwnerDetailsView
-              t={t}
-              assistant={assistant}
-              error={error}
-              idea={step.idea}
-              details={owner}
-              agreed={ownerAgreed}
-              renews={Boolean(purchase?.renews)}
-              busy={paying}
-              problem={ownerProblem}
-              onDetails={setOwner}
-              phoneDraft={ownerPhone}
-              onPhoneDraft={setOwnerPhone}
-              onAgree={setOwnerAgreed}
-              onPay={() => void payAsOwner(step.idea)}
-              onBack={() => setStep({ kind: 'find' })}
-            />
-          )}
-          {step.kind === 'order' &&
-            (order ? (
-              <OrderStatusView
-                t={t}
-                assistant={assistant}
-                order={order}
-                cancelledReturn={cancelledReturn}
-                refreshError={orderLookupError ? t.refreshFailed : ''}
-                onOpen={() => window.open(`https://${order.domain}`, '_blank', 'noopener,noreferrer')}
-                onShare={() => shareAddress(`https://${order.domain}`)}
-                onTryAgain={() => {
-                  setOrder(null);
-                  clearOrderParam();
-                  openOwnFlow();
-                }}
-                onClose={closeFlow}
-              />
-            ) : orderLookupError ? (
-              <MessageView
-                t={t}
-                assistant={assistant}
-                stepKey="order-lookup-failed"
-                title={t.orderLookupTitle}
-                tip={t.tipOops}
-                body={t.orderLookupBody}
-                note={orderLookupError}
-                noteTone="error"
-                primaryLabel={t.checkAgain}
-                onPrimary={() => {
-                  setOrderLookupError('');
-                  setOrderAttempt((value) => value + 1);
-                }}
-                secondaryLabel={t.backToApp}
-                onSecondary={closeFlow}
-              />
-            ) : (
-              <MessageView t={t} assistant={assistant} stepKey="order-loading" title={t.renameChecking} body="" primaryLabel={t.backToApp} onPrimary={closeFlow} />
-            ))}
-          {step.kind === 'live' && (
-            <LiveView
-              t={t}
-              assistant={assistant}
-              domain={step.hostname}
-              onOpen={() => window.open(`https://${step.hostname}`, '_blank', 'noopener,noreferrer')}
-              onShare={() => shareAddress(`https://${step.hostname}`)}
-              onDone={closeFlow}
-            />
-          )}
-          {step.kind === 'sent' && (
-            <MessageView
-              t={t}
-              assistant={assistant}
-              stepKey="sent"
-              title={t.sentTitle}
-              tip={t.tipSent}
-              body={t.sentBody(step.idea.domain)}
-              primaryLabel={t.done}
-              onPrimary={closeFlow}
-            />
-          )}
-          {step.kind === 'connect' && (
-            <ConnectView
-              t={t}
-              assistant={assistant}
-              error={error}
-              hostname={hostname}
-              onHostname={setHostname}
-              onConnect={startConnect}
-              onClose={closeFlow}
-              stage={connect ? 'setup' : 'enter'}
-              providerName={connect?.providerName || null}
-              providerSteps={connect?.providerSteps || []}
-              domainConnectUrl={connect?.domainConnectUrl || null}
-              records={connect?.records || []}
-              status={connect?.status || 'waiting'}
-              onCheck={() => checkConnect(step.domainId)}
-              ask={
-                <AskAgentButton
-                  showLabelOnMobile
-                  label={t.askHelp}
-                  context={askContext(
-                    'connecting my domain',
-                    `Step: connecting ${hostname || 'a domain bought elsewhere'}. Provider: ${
-                      connect?.providerName || 'unknown'
-                    }. Status: ${connect?.status || 'not started'}.`
-                  )}
-                />
-              }
-            />
-          )}
-        </CheckoutSurface>
       )}
     </>
   );
 }
 
-function useConnectPolling(
-  step: Step,
-  status: string | undefined,
-  check: (domainId?: number) => void
-) {
-  const domainId = step?.kind === 'connect' ? step.domainId : undefined;
-  useEffect(() => {
-    if (!domainId || status === 'connected') return;
-    const timer = window.setInterval(() => check(domainId), 20_000);
-    return () => window.clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [domainId, status]);
-}
+const leaveNoticeClass = css`
+  position: fixed;
+  z-index: 100000;
+  left: 50%;
+  top: calc(var(--app-shell-top-offset, 0px) + 12px);
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #1f2433;
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(20, 20, 40, 0.18);
+  &[data-tone='error'] {
+    background: #c4314b;
+  }
+  button {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 1.8rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 6px;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    top: auto;
+    bottom: calc(var(--app-shell-bottom-offset, 0px) + 12px);
+    border-radius: 16px;
+  }
+`;
