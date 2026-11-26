@@ -475,6 +475,7 @@ export default function useProjectFileDrafts({
           retrySaveMessage: 'Draft changed during save. Saving latest edits again...',
           savedMessage: 'Saved pending file edits.',
           saveFailurePrefix: 'Couldn’t save your files: ',
+          pageFeedbackOnMissingRequestId: true,
           returnTrueOnEmptyDraft: true
         });
       }

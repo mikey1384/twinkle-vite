@@ -45,17 +45,46 @@ test('the checkout is its own page: no overlay, scroll lock, focus trap or histo
 
 test('Stripe’s return opens its order before anything can send the member away', () => {
   const page = readFileSync(new URL('../src/components/Build/AppAddress/DomainCheckoutPage.tsx', import.meta.url), 'utf8');
-  // the order step starts from ?domainOrder alone (no app/address needed)
-  assert.match(page, /if \(startedRef\.current \|\| !userId \|\| returnOrderId <= 0\) return;/);
+  // the order step starts from valid positive integer ?domainOrder alone (no app/address needed)
+  assert.match(page, /if \(startedRef\.current \|\| !userId \|\| !Number\.isSafeInteger\(returnOrderId\) \|\| returnOrderId <= 0\) return;/);
   assert.ok(page.indexOf('returnOrderId <= 0') < page.indexOf('navigate(appPath, { replace: true });\n      return;'));
-  // a failed load is an error with Try again, never "hosting off"
+  // a failed transient load is an error with Try again, never "hosting off"
   assert.doesNotMatch(page, /loadAppAddress\(\{ buildId \}\)\.catch\(\(\) => \(\{ enabled: false \}\)\)/);
   assert.match(page, /setLoadFailed\(true\)/);
+  // non-owners / unpublished / missing builds redirect instead of trapping on Try again,
+  // and deterministic 4xx errors do not retry
+  assert.match(page, /access\?\.kind === 'redirect-runtime' && access\.runtimePath/);
+  assert.match(page, /status >= 400 && status < 500 && status !== 408 && status !== 429/);
+  assert.match(page, /if \(status === 403 \|\| status === 404\)/);
 });
 
 test('a save that finishes after the owner moved on doesn’t open the old app’s checkout', () => {
   const chip = readFileSync(new URL('../src/components/Build/AppAddress/index.tsx', import.meta.url), 'utf8');
   assert.match(chip, /await onSaveChanges\(\)[\s\S]{0,140}if \(!stillHere\(\)\) return;[\s\S]{0,200}navigate\(domainCheckoutPath\(buildId\)\)/);
+  // switching builds clears leaving/leaveError and uses fixed bottom offset above keyboard
+  assert.match(chip, /setLeaving\(false\);\s+setLeaveError\(''\);\s+\}, \[buildId\]\);/);
+  assert.match(chip, /bottom: calc\(var\(--app-shell-bottom-offset, 0px\) \+ 12px\);/);
+  // before-leaving save errors surface via pageFeedbackEvents even when no AI run is active
+  const drafts = readFileSync(new URL('../src/containers/Build/Editor/hooks/useProjectFileDrafts.ts', import.meta.url), 'utf8');
+  assert.match(drafts, /ensureProjectFilesPersistedBeforeLeaving\(\) \{[\s\S]*?pageFeedbackOnMissingRequestId: true/);
+});
+
+test('CountryField mobile autofill, touch popover stability, a11y, and mobile button wrapping', () => {
+  const ui = readFileSync(new URL('../src/components/Build/AppAddress/checkout/ui.tsx', import.meta.url), 'utf8');
+  const steps = readFileSync(new URL('../src/components/Build/AppAddress/checkout/steps.tsx', import.meta.url), 'utf8');
+  // phone mode keeps readOnly trigger for iOS sheet but adds hidden writable autofill input
+  assert.match(ui, /autoComplete="country-name"\s+aria-hidden="true"\s+tabIndex=\{-1\}[\s\S]{0,160}matchCountry\(event\.target\.value\)/);
+  assert.match(ui, /readOnly=\{phone\}/);
+  // a11y: aria-expanded reflects open state on phones too; Escape guards IME keyCode 229
+  assert.match(ui, /aria-expanded=\{open\}/);
+  assert.match(ui, /if \(event\.isComposing \|\| event\.keyCode === 229\) return;/);
+  // blur timer is cancellable and defers commitTyped out of synchronous onBlur
+  assert.match(ui, /clearBlurTimer\(\);[\s\S]{0,160}blurTimerRef\.current = window\.setTimeout\(\(\) => \{\s+blurTimerRef\.current = null;\s+commitTypedRef\.current\(\);\s+setOpen\(false\);\s+\}, 120\);/);
+  // phone footer buttons wrap naturally without min-width: 0 clipping
+  assert.match(ui, /flex: 1 0 auto;\s+max-width: 100%;/);
+  // long domains wrap in lead and body text
+  assert.match(ui, /const leadClass = css`[\s\S]*?overflow-wrap: anywhere;/);
+  assert.match(steps, /const bodyTextClass = css`[\s\S]*?overflow-wrap: anywhere;/);
 });
 
 test('checkout pages hide the site header; the page restarts for another member or a new link', async () => {

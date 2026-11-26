@@ -1068,6 +1068,7 @@ const bodyTextClass = css`
   color: ${T.body};
   font-size: 16px;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 `;
 const mutedTextClass = css`
   margin: 0 0 16px;

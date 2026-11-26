@@ -164,49 +164,6 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
     navigate(appPath, { replace: true });
   }
 
-  // The app and its address; only the owner buys for it. A request that
-  // fails is retried, then shown as an error with Try again: a hiccup is
-  // never read as "not the owner" or "hosting off" (that would send the
-  // member back to the editor and lose Stripe's ?domainOrder return).
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [loadAttempt, setLoadAttempt] = useState(0);
-  useEffect(() => {
-    // wait for the signed-in member (the page can load before them)
-    if (!userId) return;
-    let cancelled = false;
-    const withRetry = async <R,>(run: () => Promise<R>) => {
-      for (let attempt = 0; ; attempt += 1) {
-        try {
-          return await run();
-        } catch (error) {
-          if (cancelled || attempt >= 2) throw error;
-          await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
-        }
-      }
-    };
-    setLoadFailed(false);
-    Promise.all([withRetry(() => loadBuild(buildId)), withRetry(() => loadAppAddress({ buildId }))]).then(
-      ([data, address]: any[]) => {
-        if (cancelled) return;
-        const build = data?.build;
-        if (!build) {
-          setLoadFailed(true);
-          return;
-        }
-        setApp({ title: String(build.title || ''), isOwner: Number(build.userId) === Number(userId) });
-        setInfo(address || { enabled: false });
-      },
-      () => {
-        if (!cancelled) setLoadFailed(true);
-      }
-    );
-    return () => {
-      cancelled = true;
-    };
-    // request helpers are stable
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildId, userId, loadAttempt]);
-
   // Where to start: Stripe's return (?domainOrder=<id>, &cancelled=1 when
   // the member left Stripe), a wand plan (?appAddress=find|buy|connect|status
   // [&domain=…]; only the domain choice comes in, the member does every
@@ -217,11 +174,77 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
   // request (the server checks it's this member's), so nothing about the
   // app or its address can send the member away from a paid order.
   const [returnOrderId] = useState(() => Number(new URLSearchParams(location.search).get('domainOrder') || 0));
+  const hasReturnOrder = Number.isSafeInteger(returnOrderId) && returnOrderId > 0;
   useEffect(() => {
-    if (startedRef.current || !userId || returnOrderId <= 0) return;
+    if (startedRef.current || !userId || !Number.isSafeInteger(returnOrderId) || returnOrderId <= 0) return;
     startedRef.current = true;
     setStep({ kind: 'order', orderId: returnOrderId });
   }, [userId, returnOrderId]);
+
+  // The app and its address; only the owner buys for it. Transient failures
+  // are retried, then shown as an error with Try again: a hiccup is never read
+  // as "not the owner" or "hosting off" (that would send the member back to
+  // the editor and lose Stripe's ?domainOrder return). Deterministic access
+  // denials / missing builds redirect instead of trapping on a fake timeout.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  useEffect(() => {
+    // wait for the signed-in member (the page can load before them)
+    if (!userId) return;
+    let cancelled = false;
+    const isDeterministicClientError = (err: unknown) => {
+      const status = Number((err as any)?.status || (err as any)?.response?.status || 0);
+      return status >= 400 && status < 500 && status !== 408 && status !== 429;
+    };
+    const withRetry = async <R,>(run: () => Promise<R>) => {
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          return await run();
+        } catch (err) {
+          if (cancelled || attempt >= 2 || isDeterministicClientError(err)) throw err;
+          await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+        }
+      }
+    };
+    setLoadFailed(false);
+    Promise.all([withRetry(() => loadBuild(buildId)), withRetry(() => loadAppAddress({ buildId }))]).then(
+      ([data, address]: any[]) => {
+        if (cancelled) return;
+        if (!data || typeof data !== 'object') {
+          setLoadFailed(true);
+          return;
+        }
+        const access = data.access as { kind?: string; runtimePath?: string } | undefined;
+        if (access?.kind === 'redirect-runtime' && access.runtimePath) {
+          if (!startedRef.current && !hasReturnOrder) navigate(access.runtimePath, { replace: true });
+          return;
+        }
+        const build = data.build;
+        if (!build) {
+          // unpublished, private branch, or missing build: not an owner checkout
+          if (!startedRef.current && !hasReturnOrder) navigate(appPath, { replace: true });
+          return;
+        }
+        setApp({ title: String(build.title || ''), isOwner: Number(build.userId) === Number(userId) });
+        setInfo(address || { enabled: false });
+      },
+      (err: any) => {
+        if (cancelled) return;
+        const status = Number(err?.status || err?.response?.status || 0);
+        if (status === 403 || status === 404) {
+          if (!startedRef.current && !hasReturnOrder) navigate(appPath, { replace: true });
+          return;
+        }
+        setLoadFailed(true);
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+    // request helpers are stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildId, userId, loadAttempt]);
+
   useEffect(() => {
     if (startedRef.current || !app || !info) return;
     if (!app.isOwner || !info.enabled || !info.url) {

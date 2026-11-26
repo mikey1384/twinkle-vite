@@ -115,7 +115,24 @@ export function searchCountries(query: string) {
 // only a country's own name: what a person types stays, and region names
 // that are also the UK's nations (Scotland, Wales...) or states (Georgia,
 // Jersey, two-letter codes) are never moved.
-const STATE_NAMES_THAT_ARE_COUNTRIES = new Set(['GE', 'JE']);
+const STATE_NAMES_THAT_ARE_COUNTRIES = new Set([
+  'GE', // Georgia (US state)
+  'JE', // Jersey
+  'PR', // Puerto Rico (US territory)
+  'GU', // Guam (US territory)
+  'VI', // U.S. Virgin Islands (US territory)
+  'AS', // American Samoa (US territory)
+  'MP', // Northern Mariana Islands (US territory)
+  'MX', // Mexico (Estado de México)
+  'LU', // Luxembourg (Luxembourg province, Belgium)
+  'PA', // Panama (Panamá province)
+  'GT', // Guatemala (Guatemala department)
+  'GF', // French Guiana (France)
+  'GP', // Guadeloupe (France)
+  'MQ', // Martinique (France)
+  'RE', // Réunion (France)
+  'YT'  // Mayotte (France)
+]);
 const REGION_ALIASES = new Set(['england', 'scotland', 'wales', 'northern ireland']);
 export function countryInStateField(state: string, { autofilled = false }: { autofilled?: boolean } = {}) {
   if (!autofilled) return '';
@@ -127,13 +144,36 @@ export function countryInStateField(state: string, { autofilled = false }: { aut
   return code;
 }
 
-// A change the browser made in one go (autofill, a picked suggestion), not
-// typing, deleting or pasting. Chrome's autofill sends no inputType; Safari
-// sends insertReplacementText.
+function isElementAutofilled(target: EventTarget | null) {
+  const el = target as Element | null;
+  if (!el || typeof el.matches !== 'function') return false;
+  try {
+    return el.matches(':autofill') || el.matches(':-webkit-autofill');
+  } catch {
+    try {
+      return el.matches(':-webkit-autofill');
+    } catch {
+      return false;
+    }
+  }
+}
+
+// A change the browser made via autofill, not typing, deleting, pasting, or
+// mobile keyboard autocorrect. Chrome/Firefox autofill sends no inputType;
+// Safari sends insertReplacementText (which mobile predictive keyboards and
+// spellcheck also send on the focused input, so require :autofill or an
+// unfocused form-wide fill).
 export function isAutofillChange(event?: Event | null) {
   if (!event) return false;
   const inputType = (event as InputEvent).inputType;
-  return !inputType || inputType === 'insertReplacementText';
+  if (!inputType) return true;
+  if (inputType !== 'insertReplacementText') return false;
+  const target = event.target;
+  if (isElementAutofilled(target)) return true;
+  if (typeof document !== 'undefined' && target && document.activeElement !== target) {
+    return true;
+  }
+  return false;
 }
 
 // Countries where the address doesn't need a state or province (the city

@@ -94,8 +94,10 @@ export default function AppAddress({
   }, [buildId, isOwner, location.search]);
 
   // Where the owner is now: a save that finishes after they opened another
-  // app (or left this page) must not pull them into this app's checkout.
+  // app (or left this page) must not pull them into this app's checkout or
+  // leak toast/leaving state onto the next build.
   const hereRef = useRef({ buildId, pathname: location.pathname, mounted: true });
+  const leaveAttemptRef = useRef(0);
   hereRef.current.buildId = buildId;
   hereRef.current.pathname = location.pathname;
   useEffect(() => {
@@ -105,21 +107,28 @@ export default function AppAddress({
       here.mounted = false;
     };
   }, []);
+  useEffect(() => {
+    leaveAttemptRef.current += 1;
+    setLeaving(false);
+    setLeaveError('');
+  }, [buildId]);
 
   async function openCheckout() {
     if (leaving) return;
     setLeaveError('');
     // the checkout is its own page: unsaved editor work is saved first
     if (hasUnsavedChanges && onSaveChanges) {
+      const attempt = (leaveAttemptRef.current += 1);
       const from = { buildId, pathname: location.pathname };
       const stillHere = () =>
         hereRef.current.mounted &&
         hereRef.current.buildId === from.buildId &&
         hereRef.current.pathname === from.pathname &&
-        window.location.pathname === from.pathname;
+        window.location.pathname === from.pathname &&
+        leaveAttemptRef.current === attempt;
       setLeaving(true);
       const saved = await onSaveChanges().catch(() => false);
-      if (hereRef.current.mounted) setLeaving(false);
+      if (hereRef.current.mounted && leaveAttemptRef.current === attempt) setLeaving(false);
       if (!stillHere()) return;
       if (!saved) {
         setLeaveError(t.saveBeforeLeaving);
@@ -148,12 +157,16 @@ export default function AppAddress({
   }, [buildId]);
 
   async function removeDomain(domainId: number) {
+    const targetBuildId = buildId;
     try {
-      await removeAppDomain({ buildId, domainId });
-      const fresh = await loadAppAddress({ buildId }).catch(() => null);
-      if (fresh) setInfo(fresh);
+      await removeAppDomain({ buildId: targetBuildId, domainId });
+      if (!hereRef.current.mounted || hereRef.current.buildId !== targetBuildId) return;
+      const fresh = await loadAppAddress({ buildId: targetBuildId }).catch(() => null);
+      if (fresh && hereRef.current.mounted && hereRef.current.buildId === targetBuildId) setInfo(fresh);
     } catch (e: any) {
-      setLeaveError(e?.message || '');
+      if (hereRef.current.mounted && hereRef.current.buildId === targetBuildId) {
+        setLeaveError(e?.message || '');
+      }
     }
   }
 
@@ -317,7 +330,7 @@ const leaveNoticeClass = css`
   }
   @media (max-width: ${mobileMaxWidth}) {
     top: auto;
-    bottom: calc(var(--mobile-nav-total-height, 0px) + 12px);
+    bottom: calc(var(--app-shell-bottom-offset, 0px) + 12px);
     border-radius: 16px;
   }
 `;

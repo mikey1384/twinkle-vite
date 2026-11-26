@@ -3,7 +3,7 @@ import { createPortal, flushSync } from 'react-dom';
 import { css, cx, keyframes } from '@emotion/css';
 import AssistantFace from '~/components/AssistantFace';
 import TwinkleLogo from '~/containers/App/Header/TwinkleLogo';
-import { COUNTRY_CODES, POPULAR_COUNTRIES, countryName, isKnownCountry, matchCountry, searchCountries } from './countries';
+import { COUNTRY_CODES, POPULAR_COUNTRIES, countryName, isAutofillChange, isKnownCountry, matchCountry, searchCountries } from './countries';
 import { CALLING_CODES, callingCode, splitInternational, type PhoneDraft } from './phone';
 
 // The own-web-address checkout's look (Mikey 11-26: friendlier than a form
@@ -601,9 +601,12 @@ export function CountryField({
   const id = useId();
   const listId = `${id}-list`;
   const errorId = `${id}-error`;
+  const fieldRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const sheetInputRef = useRef<HTMLInputElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const blurTimerRef = useRef<number | null>(null);
+  const pointerInListRef = useRef(false);
   const [open, setOpen] = useState(false);
   // while the desktop field has focus it shows what's typed (the chosen
   // country is its placeholder), so typing never adds to the country's name
@@ -613,6 +616,13 @@ export function CountryField({
   queryRef.current = query;
   // focus put back on the field after choosing or closing doesn't reopen it
   const quietFocusRef = useRef(false);
+  function clearBlurTimer() {
+    if (blurTimerRef.current !== null) {
+      window.clearTimeout(blurTimerRef.current);
+      blurTimerRef.current = null;
+    }
+  }
+  useEffect(() => () => clearBlurTimer(), []);
   function focusField() {
     window.requestAnimationFrame(() => {
       if (!inputRef.current || document.activeElement === inputRef.current) return;
@@ -644,6 +654,8 @@ export function CountryField({
   const activeCode = options[Math.min(active, options.length - 1)]?.code;
 
   function choose(next: string) {
+    clearBlurTimer();
+    pointerInListRef.current = false;
     onChange(next);
     setOpen(false);
     setQuery('');
@@ -660,12 +672,17 @@ export function CountryField({
     if (pick && pick !== code) onChange(pick);
     setQuery('');
   }
+  const commitTypedRef = useRef(commitTyped);
+  commitTypedRef.current = commitTyped;
   function closeSheet() {
+    clearBlurTimer();
+    pointerInListRef.current = false;
     setOpen(false);
     setQuery('');
     focusField();
   }
   function openList() {
+    clearBlurTimer();
     setQuery('');
     setActive(Math.max(0, options.findIndex((item) => item.code === code)));
     if (!phone) {
@@ -700,10 +717,19 @@ export function CountryField({
       if (activeCode) choose(activeCode);
       return;
     }
+    if (event.key === 'Tab' && open && !phone) {
+      clearBlurTimer();
+      pointerInListRef.current = false;
+      commitTyped();
+      setOpen(false);
+      return;
+    }
     if (event.key === 'Escape' && open) {
       // closes the list, not the checkout
       event.preventDefault();
       event.stopPropagation();
+      clearBlurTimer();
+      pointerInListRef.current = false;
       setOpen(false);
       setQuery('');
       focusField();
@@ -711,10 +737,9 @@ export function CountryField({
   }
   function onType(text: string, fromSheet = false, nativeEvent?: Event) {
     // Autofill writes the whole name (or code) at once without typing
-    const inputType = (nativeEvent as InputEvent | undefined)?.inputType;
-    const typed = inputType && inputType !== 'insertReplacementText';
     const exact = matchCountry(text);
-    if (exact && !typed && !fromSheet) {
+    if (exact && isAutofillChange(nativeEvent) && !fromSheet) {
+      clearBlurTimer();
       onChange(exact);
       setQuery('');
       setOpen(false);
@@ -730,6 +755,33 @@ export function CountryField({
     document.getElementById(`${id}-opt-${activeCode}`)?.scrollIntoView({ block: 'nearest' });
   }, [open, activeCode, id]);
 
+  // Desktop / tablet popover: outside pointer closes and commits; pointerup
+  // clears the list-press guard (so scrolling or tapping on touch devices
+  // >= 760px never blurs away the filtered list before click lands).
+  const popoverOpen = open && !phone;
+  useEffect(() => {
+    if (!popoverOpen) return;
+    const onOutsidePointerDown = (event: PointerEvent) => {
+      if (fieldRef.current && !fieldRef.current.contains(event.target as Node)) {
+        clearBlurTimer();
+        pointerInListRef.current = false;
+        commitTypedRef.current();
+        setOpen(false);
+      }
+    };
+    const clearPointerInList = () => {
+      pointerInListRef.current = false;
+    };
+    document.addEventListener('pointerdown', onOutsidePointerDown);
+    window.addEventListener('pointerup', clearPointerInList);
+    window.addEventListener('pointercancel', clearPointerInList);
+    return () => {
+      document.removeEventListener('pointerdown', onOutsidePointerDown);
+      window.removeEventListener('pointerup', clearPointerInList);
+      window.removeEventListener('pointercancel', clearPointerInList);
+    };
+  }, [popoverOpen]);
+
   // The phone sheet is a dialog: Tab stays inside it, Escape closes it
   // wherever focus is, and focus that lands outside comes back in.
   const sheetOpen = open && phone;
@@ -739,7 +791,7 @@ export function CountryField({
       Array.from(sheetRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])') || []);
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (event.isComposing) return;
+        if (event.isComposing || event.keyCode === 229) return;
         event.preventDefault();
         event.stopPropagation();
         closeSheet();
@@ -770,8 +822,18 @@ export function CountryField({
 
   const list = (
     // pressing anywhere in the list (its scrollbar too) keeps focus in the
-    // field, so the list doesn't close under the pointer
-    <ul id={listId} role="listbox" aria-label={label} className={phone ? sheetListClass : popoverClass} onMouseDown={(event) => event.preventDefault()}>
+    // field on desktop, and cancels any touch-blur close before click lands
+    <ul
+      id={listId}
+      role="listbox"
+      aria-label={label}
+      className={phone ? sheetListClass : popoverClass}
+      onMouseDown={(event) => event.preventDefault()}
+      onPointerDown={() => {
+        pointerInListRef.current = true;
+        clearBlurTimer();
+      }}
+    >
       {options.length === 0 && <li className={noMatchClass}>{noMatch}</li>}
       {options.map((item, index) => (
         <li
@@ -793,18 +855,33 @@ export function CountryField({
   );
 
   return (
-    <div className={fieldClass}>
+    <div ref={fieldRef} className={fieldClass}>
       <label htmlFor={id}>{label}</label>
       <div className={comboWrapClass}>
+        {phone && (
+          <input
+            type="text"
+            name="country"
+            autoComplete="country-name"
+            aria-hidden="true"
+            tabIndex={-1}
+            value=""
+            onChange={(event) => {
+              const matched = matchCountry(event.target.value);
+              if (matched && matched !== code) onChange(matched);
+            }}
+            className={autofillCountryClass}
+          />
+        )}
         <input
           ref={inputRef}
           id={id}
-          name="country"
+          name={phone ? undefined : 'country'}
           type="text"
           role="combobox"
-          autoComplete="country-name"
+          autoComplete={phone ? 'off' : 'country-name'}
           aria-autocomplete="list"
-          aria-expanded={open && !phone}
+          aria-expanded={open}
           aria-haspopup={phone ? 'dialog' : 'listbox'}
           aria-controls={open && !phone ? listId : undefined}
           // on phones the field is a button that opens the search sheet
@@ -815,8 +892,10 @@ export function CountryField({
           value={(open || focused) && !phone ? query : selectedName}
           placeholder={selectedName || searchPlaceholder}
           onFocus={() => {
+            clearBlurTimer();
+            pointerInListRef.current = false;
             setFocused(true);
-            if (!phone && !quietFocusRef.current) openList();
+            if (!phone && !quietFocusRef.current && !open) openList();
           }}
           onClick={() => {
             if (!open) openList();
@@ -826,8 +905,16 @@ export function CountryField({
           onBlur={() => {
             setFocused(false);
             if (phone) return;
-            commitTyped();
-            window.setTimeout(() => setOpen(false), 120);
+            if (pointerInListRef.current) {
+              pointerInListRef.current = false;
+              return;
+            }
+            clearBlurTimer();
+            blurTimerRef.current = window.setTimeout(() => {
+              blurTimerRef.current = null;
+              commitTypedRef.current();
+              setOpen(false);
+            }, 120);
           }}
           className={cx(inputClass, comboInputClass)}
         />
@@ -883,6 +970,20 @@ const sheetRise = keyframes`
 `;
 const comboWrapClass = css`
   position: relative;
+`;
+const autofillCountryClass = css`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+  font-size: 16px;
 `;
 const comboInputClass = css`
   padding-right: 44px;
@@ -1054,9 +1155,7 @@ export function StepActions({ back, children }: { back?: { label: string; onClic
           </svg>
           {back.label}
         </button>
-      ) : (
-        <span />
-      )}
+      ) : null}
       <div className={actionsRightClass}>{children}</div>
     </>
   );
@@ -1304,19 +1403,23 @@ const actionsRightClass = css`
   gap: 10px;
   flex-wrap: wrap;
   min-width: 0;
+  margin-left: auto;
   @media ${PHONE} {
     flex: 1;
     > button {
-      flex: 1;
-      min-width: 0;
-      padding: 0 16px;
+      flex: 1 0 auto;
+      max-width: 100%;
+      padding: 10px 16px;
+      white-space: normal;
+      text-align: center;
+      line-height: 1.25;
     }
   }
   /* the longest label ("Continue to payment · $13.99") fits beside Back
      on a 375px phone: the text shrinks, the button keeps its size */
   @media (max-width: 400px) {
     > button {
-      padding: 0 12px;
+      padding: 10px 12px;
       font-size: 15px;
       letter-spacing: -0.01em;
     }
@@ -1394,6 +1497,7 @@ const leadClass = css`
   color: ${T.body};
   font-size: 16px;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 `;
 const summaryClass = css`
   background: ${T.paper};

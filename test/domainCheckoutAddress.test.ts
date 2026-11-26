@@ -34,7 +34,10 @@ test('a country name autofilled into State moves to Country; real states and typ
 
 test('only a whole-value browser change counts as autofill', () => {
   assert.equal(isAutofillChange({ inputType: undefined } as unknown as Event), true);
-  assert.equal(isAutofillChange({ inputType: 'insertReplacementText' } as unknown as Event), true);
+  // a replacement while the field has focus can be mobile autocorrect, so it
+  // only counts when the field isn't focused or is marked :autofill (covered in
+  // domainCheckoutCountries.test.ts)
+  assert.equal(isAutofillChange({ inputType: 'insertReplacementText' } as unknown as Event), false);
   for (const inputType of ['insertText', 'insertFromPaste', 'deleteContentBackward', 'insertCompositionText']) {
     assert.equal(isAutofillChange({ inputType } as unknown as Event), false, inputType);
   }
