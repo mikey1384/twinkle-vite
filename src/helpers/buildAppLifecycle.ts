@@ -381,6 +381,9 @@ const listeners = new Set<() => void>();
 // Apps the viewer closed: a last snapshot still on its way must not bring the
 // old place back. Cleared when the app starts again.
 const closedApps = new Set<number>();
+// The page is unloading (noteAppPageLeaving): snapshots are written at once.
+let pageLeaving = false;
+let pageLeavingTimer: number | null = null;
 
 export function markAppClosed(buildId: number) {
   closedApps.add(buildId);
@@ -470,6 +473,7 @@ export function acceptAppLifecycleSnapshot(
   const wait = Math.max(0, app.lastSnapshotAt + MIN_SNAPSHOT_GAP_MS - Date.now());
   const urgent =
     waiters.length > 0 ||
+    pageLeaving ||
     (typeof document !== 'undefined' && document.visibilityState === 'hidden');
   if (wait === 0 || urgent) {
     if (app.pendingTimer !== null) window.clearTimeout(app.pendingTimer);
@@ -514,6 +518,64 @@ export function requestAppLifecycleSnapshot(
     app.waiters.push(done);
     app.requestSuspend?.(reason);
   });
+}
+
+// ---- the page going away -------------------------------------------------
+//
+// A reload or a closed tab unloads this page and the app's frame together.
+// The SDK's own pagehide snapshot is posted as the frame unloads, after
+// this page has stopped handling messages, so it never arrives; and a
+// snapshot still waiting out the one-per-second gap is lost with the page
+// (11-26, Mikey on redsquareadventure.com: every reload came back to an old
+// place). beforeunload comes first, while this page still runs until the
+// next one arrives: ask each app for its place then, write it at once, and
+// write anything queued. pagehide writes whatever is queued as a last try.
+
+/** Write every queued snapshot now. */
+export function flushAppLifecycleSaves() {
+  running.forEach((app, buildId) => {
+    if (app.pendingTimer !== null) window.clearTimeout(app.pendingTimer);
+    app.pendingTimer = null;
+    flushPendingSave(buildId, app);
+  });
+}
+
+/**
+ * The page is about to unload: snapshots are written as they arrive (no
+ * one-per-second wait), queued ones now, and every app that saves its place
+ * is asked for a fresh one.
+ */
+export function noteAppPageLeaving(reason = 'unload') {
+  pageLeaving = true;
+  // A leave the viewer called off (another beforeunload handler, a
+  // download link) leaves the page running: back to normal after a while.
+  if (pageLeavingTimer !== null) window.clearTimeout(pageLeavingTimer);
+  pageLeavingTimer = window.setTimeout(() => {
+    pageLeavingTimer = null;
+    pageLeaving = false;
+  }, 5000);
+  flushAppLifecycleSaves();
+  running.forEach((_app, buildId) => {
+    void requestAppLifecycleSnapshot(buildId, reason);
+  });
+}
+
+/** Ask for and keep each app's place when this page unloads. */
+export function watchAppPageUnload() {
+  const onBeforeUnload = () => noteAppPageLeaving('unload');
+  const onPageHide = () => flushAppLifecycleSaves();
+  const onPageShow = (event: PageTransitionEvent) => {
+    if (!event.persisted) return;
+    pageLeaving = false;
+  };
+  window.addEventListener('beforeunload', onBeforeUnload);
+  window.addEventListener('pagehide', onPageHide);
+  window.addEventListener('pageshow', onPageShow);
+  return () => {
+    window.removeEventListener('beforeunload', onBeforeUnload);
+    window.removeEventListener('pagehide', onPageHide);
+    window.removeEventListener('pageshow', onPageShow);
+  };
 }
 
 export function forgetRunningApp(buildId: number) {

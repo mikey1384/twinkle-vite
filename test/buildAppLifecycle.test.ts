@@ -33,6 +33,19 @@ test('an unload waits for a fresh snapshot, but not for an app that cannot give 
   lifecycle.forgetRunningApp(77);
 });
 
+test('a page about to unload asks each app for its place and keeps it at once', async () => {
+  // (11-26) a reload: the app's own pagehide snapshot never reaches this
+  // page, and a snapshot inside the one-per-second gap was lost with it
+  const asked: string[] = [];
+  const off = lifecycle.registerAppLifecycleFrame(79, (reason) => asked.push(reason));
+  lifecycle.setAppLifecycleStatus(79, { suspend: true, webgl: 0 });
+  lifecycle.acceptAppLifecycleSnapshot(79, 'k79', { state: { step: 1 }, savedAt: 1, reason: 'autosave' });
+  lifecycle.noteAppPageLeaving();
+  assert.deepEqual(asked, ['unload']);
+  off();
+  lifecycle.forgetRunningApp(79);
+});
+
 test('a closed app is remembered until it starts again', () => {
   lifecycle.markAppClosed(88);
   assert.equal(lifecycle.isAppClosed(88), true);
