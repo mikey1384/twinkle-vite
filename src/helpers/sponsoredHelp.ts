@@ -506,12 +506,19 @@ export const OPEN_WAND_PER_PERSON_PERCENT = 5;
 export const OPEN_WAND_SITE = 'https://www.twin-kle.com';
 
 // What members pick from (or type their own). The first is preselected:
-// Mikey's "you can too" domain announcement.
-export const OPEN_WAND_PRESETS = [
-  'Get your own web address (domain) for your app',
-  'Make your first game with Lumine',
-  'Quiz you on something you’re learning'
+// Mikey's "you can too" domain announcement. Keys and texts match the API's
+// OPEN_CARD_PRESETS (helpers/sponsoredHelp/openCardRules.ts).
+export const OPEN_WAND_PRESETS: { key: string; text: string }[] = [
+  { key: 'domain', text: 'Get your own web address (domain) for your app' },
+  { key: 'first_game', text: 'Make your first game with Lumine' },
+  { key: 'quiz', text: 'Quiz you on something you’re learning' }
 ];
+
+// The pick a task text is (its key goes to the server, which fixes the
+// task and what it needs), or '' for words the member typed.
+export function openWandPresetKey(task: string) {
+  return OPEN_WAND_PRESETS.find((preset) => preset.text === task)?.key || '';
+}
 
 export function openWandPath(openCardId: number) {
   return `/wand/${openCardId}`;

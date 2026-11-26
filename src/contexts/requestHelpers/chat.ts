@@ -2952,18 +2952,21 @@ export default function chatRequestHelpers({
       task,
       persona,
       sponsorCap,
-      clientKey
+      clientKey,
+      presetKey
     }: {
       task: string;
       persona: 'zero' | 'ciel';
       sponsorCap: number;
       // one Insert: a retried request returns the same card
       clientKey?: string;
+      // one of the sheet's picks: the server fixes its task and capability
+      presetKey?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/chat/sponsored-help/open-cards`,
-          { task, persona, sponsorCap, clientKey },
+          { task, persona, sponsorCap, clientKey, presetKey },
           auth()
         );
         return data;
