@@ -49,7 +49,18 @@ export default function OpenWandCard({
   const closeOpenWandCard = useAppContext((v) => v.requestHelpers.closeOpenWandCard);
   const shareOpenWandCard = useAppContext((v) => v.requestHelpers.shareOpenWandCard);
   const onOpenSigninModal = useAppContext((v) => v.user.actions.onOpenSigninModal);
-  const [card, setCard] = useState<OpenWandCardView | null>(initialCard);
+  const [loaded, setLoaded] = useState<OpenWandCardView | null>(
+    initialCard && initialCard.openCardId === openCardId ? initialCard : null
+  );
+  // only the result for THIS card and THIS viewer is ever shown or acted on
+  // (an in-app move to another /wand/<id>, or signing in or out, clears it)
+  const card = loaded && loaded.openCardId === openCardId ? loaded : null;
+  const setCard = (next: OpenWandCardView | null) => {
+    if (!next || next.openCardId === openCardId) setLoaded(next);
+  };
+  const viewKey = `${openCardId}:${myId}`;
+  const viewKeyRef = useRef(viewKey);
+  viewKeyRef.current = viewKey;
   const [loadFailed, setLoadFailed] = useState(false);
   const [working, setWorking] = useState('');
   const [error, setError] = useState('');
@@ -63,13 +74,22 @@ export default function OpenWandCard({
     };
   }, []);
 
-  // signing in or out changes what the card says to this reader
+  // a new card or a new viewer starts clean; late answers for an earlier
+  // one are dropped
   useEffect(() => {
     let cancelled = false;
+    setLoaded(null);
     setLoadFailed(false);
+    setError('');
+    setWorking('');
+    if (!(openCardId > 0)) {
+      setLoadFailed(true);
+      return;
+    }
     Promise.resolve(loadOpenWandCard(openCardId))
       .then((data: any) => {
-        if (!cancelled && data?.card) setCard(data.card);
+        if (!cancelled && data?.card?.openCardId === openCardId) setLoaded(data.card);
+        else if (!cancelled) setLoadFailed(true);
       })
       .catch(() => {
         if (!cancelled) setLoadFailed(true);
@@ -84,7 +104,7 @@ export default function OpenWandCard({
     return (
       <div className={wrapClass} data-open-wand={openCardId}>
         {loadFailed ? (
-          <div className={mutedClass}>This wand card couldn’t be loaded.</div>
+          <div className={mutedClass}>This wand card isn’t available.</div>
         ) : (
           <Loading style={{ height: '6rem' }} />
         )}
@@ -238,24 +258,25 @@ export default function OpenWandCard({
   }
 
   async function handlePress() {
-    if (working) return;
+    if (working || !card) return;
+    const key = viewKey;
     setWorking('press');
     setError('');
     try {
       // the payer the reader is looking at; the server refuses if it changed
       const expectedPayer = state === 'sponsored' ? 'sponsor' : 'self';
-      const data = await pressOpenWandCard(card!.openCardId, expectedPayer);
-      if (!mounted.current) return;
+      const data = await pressOpenWandCard(openCardId, expectedPayer);
+      if (!mounted.current || viewKeyRef.current !== key) return;
       if (data?.card) setCard(data.card);
       const path = data?.request?.assistantPathId || data?.card?.mine?.assistantPathId;
       if (path) navigate(`/chat/${path}`);
     } catch (pressError: any) {
-      if (!mounted.current) return;
+      if (!mounted.current || viewKeyRef.current !== key) return;
       setError(pressError?.message || 'Something went wrong. Please try again.');
       // the refusal may have changed what the card should say
       try {
-        const data = await loadOpenWandCard(card!.openCardId);
-        if (mounted.current && data?.card) setCard(data.card);
+        const data = await loadOpenWandCard(openCardId);
+        if (mounted.current && viewKeyRef.current === key && data?.card) setCard(data.card);
       } catch {
         // keep the last server state
       }

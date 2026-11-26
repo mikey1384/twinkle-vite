@@ -23,7 +23,8 @@ export default function WandCardPage() {
           }
         `}
       >
-        {id > 0 ? <OpenWandCard openCardId={id} /> : null}
+        {/* a malformed id shows the same "isn’t available" card */}
+        <OpenWandCard openCardId={Number.isSafeInteger(id) && id > 0 ? id : 0} />
       </div>
     </ErrorBoundary>
   );
