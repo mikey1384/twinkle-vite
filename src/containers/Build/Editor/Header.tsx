@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import AppAddress, { AppAddressProgressNotice } from '~/components/Build/AppAddress';
+import AppAddress, {
+  AppAddressProgressNotice,
+  DomainOwnerProgressBanner
+} from '~/components/Build/AppAddress';
 import { css } from '@emotion/css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
@@ -1280,6 +1283,7 @@ export default function Header({
         {build.isPublic && contributionStatus === 'none' ? (
           // The address chip, then the strip's other chips, then Players.
           <AppAddress
+            key={Number(build.id)}
             buildId={Number(build.id)}
             isOwner={Boolean(isOwner)}
             appTitle={String(build.title || '')}
@@ -1292,9 +1296,11 @@ export default function Header({
           rewardChip
         )}
       </div>
-      {build.isPublic && contributionStatus === 'none' && isOwner ? (
-        // the owner's purchase under way: Setting up… / 1 step left
-        <AppAddressProgressNotice buildId={Number(build.id)} isOwner />
+      {build.isPublic && contributionStatus === 'none' ? (
+        // the domain buyer's purchase under way: Setting up… / 1 step left
+        <AppAddressProgressNotice buildId={Number(build.id)} isOwner={Boolean(isOwner)} />
+      ) : contributionStatus === 'none' ? (
+        <DomainOwnerProgressBanner buildId={Number(build.id)} isOwner={Boolean(isOwner)} />
       ) : null}
       {isOwner && build.rewardReviewProposal ? (
         <div className={proposalNoticeClass} role="status">

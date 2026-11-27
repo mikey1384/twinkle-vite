@@ -10,6 +10,7 @@ import Loading from '~/components/Loading';
 import BuildEditor from './Editor';
 import { getBuildWorkspacePath } from '~/helpers/buildNavigationHelpers';
 import Unavailable from './Unavailable';
+import { DomainOwnerProgressBanner } from '~/components/Build/AppAddress';
 import { useAppContext, useBuildContext, useKeyContext } from '~/contexts';
 import { normalizeBuildResumeRunState } from '~/contexts/Build/resumeRunState';
 import { hydrateBuildRunFromPersistedSnapshot } from './helpers/persistedRunSnapshot';
@@ -700,28 +701,35 @@ export default function BuildEditorRoute() {
     const showLoginForPrivateBranch =
       error === BUILD_PRIVATE_BRANCH_TEXT && !userId;
     return (
-      <Unavailable
-        title={
-          error === BUILD_UNPUBLISHED_PUBLIC_TEXT
-            ? 'Project Not Published Yet'
-            : error === BUILD_PRIVATE_BRANCH_TEXT
-              ? 'For Team Members Only'
-              : 'Workspace Unavailable'
-        }
-        text={error || 'Build not found'}
-        onBack={() =>
-          showLoginForPrivateBranch ? onOpenSigninModal() : navigate('/build')
-        }
-        buttonLabel={
-          showLoginForPrivateBranch
-            ? 'Log In'
-            : error === BUILD_UNPUBLISHED_PUBLIC_TEXT ||
-                error === BUILD_PRIVATE_BRANCH_TEXT
-              ? 'Build Menu'
-              : undefined
-        }
-        buttonIcon={showLoginForPrivateBranch ? 'sign-in-alt' : undefined}
-      />
+      <>
+        {!numericBranchNumber && numericBuildId > 0 ? (
+          <div style={{ padding: '0 1.2rem' }}>
+            <DomainOwnerProgressBanner buildId={numericBuildId} />
+          </div>
+        ) : null}
+        <Unavailable
+          title={
+            error === BUILD_UNPUBLISHED_PUBLIC_TEXT
+              ? 'Project Not Published Yet'
+              : error === BUILD_PRIVATE_BRANCH_TEXT
+                ? 'For Team Members Only'
+                : 'Workspace Unavailable'
+          }
+          text={error || 'Build not found'}
+          onBack={() =>
+            showLoginForPrivateBranch ? onOpenSigninModal() : navigate('/build')
+          }
+          buttonLabel={
+            showLoginForPrivateBranch
+              ? 'Log In'
+              : error === BUILD_UNPUBLISHED_PUBLIC_TEXT ||
+                  error === BUILD_PRIVATE_BRANCH_TEXT
+                ? 'Build Menu'
+                : undefined
+          }
+          buttonIcon={showLoginForPrivateBranch ? 'sign-in-alt' : undefined}
+        />
+      </>
     );
   }
 

@@ -32,6 +32,31 @@ const fine = css`
   font-size: 1rem;
 `;
 
+const stackedLabel = css`
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  > small {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+`;
+
+const wrapLabel = css`
+  white-space: normal;
+  overflow-wrap: anywhere;
+  overflow: visible;
+  line-height: 1.35;
+`;
+
 // The app's address as a chip in the Build header's strip; its menu holds
 // every address action (open, copy, share, change, remove an own domain,
 // get your own .com). A live own domain is the address the chip shows.
@@ -44,6 +69,37 @@ export function addressHost(url: string) {
   }
 }
 
+export interface OwnerDomainView {
+  id: number;
+  hostname: string;
+  status: string;
+  statusLine?: string;
+  source?: string;
+  ownedByYou?: boolean;
+  ownerUsername?: string | null;
+  canRemove?: boolean;
+}
+
+export interface OtherDomainView {
+  domainId: number;
+  orderId: number;
+  orderBuildId?: number;
+  hostname: string;
+  source: string;
+  status: string;
+  statusLine?: string;
+  buildId: number;
+  appTitle: string;
+  appIsYours: boolean;
+  verificationPending?: boolean;
+  verifyDaysLeft?: number | null;
+}
+
+// "Owned by @x" under an address someone else owns
+function ownerLine(t: AddressText, domain?: OwnerDomainView) {
+  return domain && domain.ownedByYou === false && domain.ownerUsername ? t.ownedBy(domain.ownerUsername) : '';
+}
+
 export function AddressMenuView({
   t,
   primaryUrl,
@@ -51,7 +107,10 @@ export function AddressMenuView({
   domains,
   ownerDomains,
   onRemoveDomain,
-  removableSources = ['own'],
+  otherDomains,
+  onRemoveElsewhere,
+  onUseHere,
+  onOpenOrder,
   canGetOwn,
   copied,
   onCopy,
@@ -69,11 +128,15 @@ export function AddressMenuView({
   freeUrl: string;
   // every live own domain (hostnames)
   domains: string[];
-  // owner only: every own address with its status, and Remove
-  ownerDomains?: Array<{ id: number; hostname: string; status: string; statusLine?: string; source?: string }>;
+  // the app's owner, or a domain's owner: the addresses with their status;
+  // the server says which this viewer may remove (canRemove)
+  ownerDomains?: OwnerDomainView[];
   onRemoveDomain?: (domainId: number) => void;
-  // which kinds can be removed here (a bought address can't, yet)
-  removableSources?: string[];
+  // on the viewer's own app: their domains that aren't on it (ruling 11-26)
+  otherDomains?: OtherDomainView[];
+  onRemoveElsewhere?: (domain: OtherDomainView) => void;
+  onUseHere?: (domain: OtherDomainView) => void;
+  onOpenOrder?: (buildId: number, orderId: number) => void;
   canGetOwn: boolean;
   copied: boolean;
   onCopy: () => void;
@@ -86,7 +149,8 @@ export function AddressMenuView({
   chipLabel?: React.ReactNode;
   leadItems?: HeaderMenuItem[];
 }) {
-  const [confirming, setConfirming] = useState(0);
+  const [confirming, setConfirming] = useState<number | string>(0);
+  const byHost = new Map((ownerDomains || []).map((domain) => [domain.hostname, domain]));
   // every address once (by hostname), the shared one first
   const links: Array<{ host: string; href: string }> = [];
   for (const href of [primaryUrl, ...domains.map((host) => `https://${host}/`), freeUrl]) {
@@ -95,24 +159,37 @@ export function AddressMenuView({
   }
   const shownHost = links[0]?.host || addressHost(primaryUrl);
   const items: HeaderMenuItem[] = [...leadItems, ...(leadItems.length ? [{ separator: true }] : [])];
-  items.push(...links.map(({ host, href }) => ({
-    label: (
-      <>
-        <Icon icon="external-link-alt" />
-        <span>{host}</span>
-      </>
-    ),
-    href
-  })));
+  items.push(
+    ...links.map(({ host, href }) => {
+      const owner = ownerLine(t, byHost.get(host));
+      return {
+        label: (
+          <>
+            <Icon icon="external-link-alt" />
+            {owner ? (
+              <span className={stackedLabel}>
+                <span>{host}</span>
+                <small className={fine}>{owner}</small>
+              </span>
+            ) : (
+              <span>{host}</span>
+            )}
+          </>
+        ),
+        href
+      };
+    })
+  );
   for (const domain of ownerDomains || []) {
     if (domain.status === 'live') continue;
     items.push({
       label: (
         <>
           <Icon icon="clock" />
-          <span style={{ display: 'grid', gap: '0.2rem' }}>
+          <span className={stackedLabel}>
             <span>{domain.hostname}</span>
             {domain.statusLine ? <small className={fine}>{domain.statusLine}</small> : null}
+            {ownerLine(t, domain) ? <small className={fine}>{ownerLine(t, domain)}</small> : null}
           </span>
         </>
       )
@@ -153,13 +230,15 @@ export function AddressMenuView({
   }
   if (onRemoveDomain) {
     for (const domain of ownerDomains || []) {
-      if (!removableSources.includes(String(domain.source || 'own'))) continue;
+      if (!domain.canRemove) continue;
       const armed = confirming === domain.id;
       items.push({
         label: (
           <>
             <Icon icon="trash-alt" />
-            <span>{armed ? `${domain.hostname}: ${t.removeConfirm}` : `${t.remove} ${domain.hostname}`}</span>
+            <span className={armed ? wrapLabel : undefined}>
+              {armed ? `${domain.hostname}: ${t.removeConfirm}` : `${t.remove} ${domain.hostname}`}
+            </span>
           </>
         ),
         style: { color: armed ? '#b42318' : muted },
@@ -173,6 +252,113 @@ export function AddressMenuView({
           }
         }
       });
+    }
+  }
+  if (otherDomains?.length) {
+    items.push({ separator: true }, { label: <small className={fine}>{t.yourOtherAddresses}</small> });
+    const pushVerificationItem = (domain: OtherDomainView) => {
+      const targetBuildId = Number(domain.orderBuildId || domain.buildId || 0);
+      if (!domain.verificationPending || !domain.orderId || !targetBuildId || !onOpenOrder) return;
+      items.push({
+        label: (
+          <>
+            <Icon icon="clock" />
+            <span className={stackedLabel}>
+              <span>{t.oneStepTitle}</span>
+              <small className={fine}>
+                {typeof domain.verifyDaysLeft === 'number'
+                  ? domain.verifyDaysLeft > 0
+                    ? t.verifyNudge(domain.verifyDaysLeft)
+                    : t.verifyNudgeToday
+                  : domain.hostname}
+              </small>
+            </span>
+          </>
+        ),
+        style: { color: '#b45309', fontWeight: 700 },
+        onClick: () => onOpenOrder(targetBuildId, domain.orderId)
+      });
+    };
+    for (const domain of otherDomains) {
+      // a bought one on no app: one row that puts it on this app (plus its
+      // pending email-verification action when Name.com confirmation is open)
+      if (!domain.domainId) {
+        const detachedNote = domain.verificationPending ? `${t.notInUse} · ${t.chipOneStep}` : t.notInUse;
+        if (onUseHere) {
+          items.push({
+            label: (
+              <>
+                <Icon icon="plus" />
+                <span className={stackedLabel}>
+                  <span>{t.useHere(domain.hostname)}</span>
+                  <small className={fine}>{detachedNote}</small>
+                </span>
+              </>
+            ),
+            style: { color: accent, fontWeight: 700 },
+            onClick: () => onUseHere(domain)
+          });
+        } else if (domain.verificationPending) {
+          items.push({
+            label: (
+              <>
+                <Icon icon="globe" />
+                <span className={stackedLabel}>
+                  <span>{domain.hostname}</span>
+                  <small className={fine}>{detachedNote}</small>
+                </span>
+              </>
+            )
+          });
+        }
+        pushVerificationItem(domain);
+        continue;
+      }
+      const key = `d${domain.domainId}`;
+      const armed = confirming === key;
+      items.push({
+        label: (
+          <>
+            <Icon icon="globe" />
+            <span className={stackedLabel}>
+              <span>{domain.hostname}</span>
+              <small className={fine}>
+                {domain.verificationPending
+                  ? `${t.onApp(domain.appTitle)} · ${t.chipOneStep}`
+                  : domain.status === 'live' || !domain.statusLine
+                    ? t.onApp(domain.appTitle)
+                    : `${t.onApp(domain.appTitle)} · ${domain.statusLine}`}
+              </small>
+            </span>
+          </>
+        ),
+        ...(domain.status === 'live' ? { href: `https://${domain.hostname}/` } : {})
+      });
+      pushVerificationItem(domain);
+      if (onRemoveElsewhere) {
+        items.push({
+          label: (
+            <>
+              <Icon icon="trash-alt" />
+              <span className={armed ? wrapLabel : undefined}>
+                {armed
+                  ? `${domain.hostname}: ${t.removeFromConfirm}`
+                  : t.removeFrom(domain.appTitle, domain.hostname)}
+              </span>
+            </>
+          ),
+          style: { color: armed ? '#b42318' : muted },
+          keepOpen: !armed,
+          onClick: () => {
+            if (armed) {
+              setConfirming(0);
+              onRemoveElsewhere(domain);
+            } else {
+              setConfirming(key);
+            }
+          }
+        });
+      }
     }
   }
   if (canGetOwn) {
@@ -194,6 +380,7 @@ export function AddressMenuView({
     <HeaderMenu
       items={items}
       label={shownHost}
+      onOpenChange={() => setConfirming(0)}
       renderTrigger={({ onToggle, triggerProps }) => (
         <HeaderChip
           chip="address"
@@ -203,10 +390,7 @@ export function AddressMenuView({
           title={shownHost}
           caret
           menuTrigger={triggerProps}
-          onClick={() => {
-            setConfirming(0);
-            onToggle();
-          }}
+          onClick={onToggle}
         />
       )}
     />

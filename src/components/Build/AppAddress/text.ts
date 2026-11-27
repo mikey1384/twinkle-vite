@@ -231,6 +231,18 @@ export const ADDRESS_TEXT = {
     supportTitle: (domain: string) => `We’re looking into ${domain}`,
     supportBody: 'Your payment went through and something needs a person’s look before your address is ready. We’re on it; your free address keeps working meanwhile.',
     removeConfirm: 'Tap again to remove (the app stops opening there)',
+    // domains are their buyer's, whoever owns the app (ruling 11-26)
+    ownedBy: (username: string) => `Owned by @${username}`,
+    yourOtherAddresses: 'Your other addresses',
+    onApp: (title: string) => (title ? `on ${title}` : 'on another app'),
+    notInUse: 'not on any app',
+    removeFrom: (title: string, domain?: string) =>
+      title
+        ? `Remove ${domain || 'it'} from ${title}`
+        : `Remove ${domain || 'it'} from that app`,
+    removeFromConfirm: 'Tap again to remove (that app goes back to its free address)',
+    useHere: (domain: string) => `Use ${domain} on this app`,
+    actionFailed: 'That didn’t go through just now. Please try again.',
     // the purchase progress (chip, header notice, order screen)
     stepEmail: 'Email confirmed',
     stepSecuring: 'Securing the connection…',
@@ -469,6 +481,21 @@ export const ADDRESS_TEXT = {
     supportTitle: (domain: string) => `${domain}을(를) 확인하고 있어요`,
     supportBody: '결제는 끝났고, 주소가 준비되기 전에 사람이 한 번 확인해야 할 일이 생겼어요. 처리하고 있으니 그동안 무료 주소는 계속 쓸 수 있어요.',
     removeConfirm: '한 번 더 누르면 삭제돼요 (이 주소로 앱이 열리지 않아요)',
+    ownedBy: (username: string) => `@${username} 님의 주소`,
+    yourOtherAddresses: '내 다른 주소',
+    onApp: (title: string) => (title ? `${title}에 연결됨` : '다른 앱에 연결됨'),
+    notInUse: '연결된 앱 없음',
+    removeFrom: (title: string, domain?: string) =>
+      domain
+        ? title
+          ? `${title}에서 ${domain} 빼기`
+          : `그 앱에서 ${domain} 빼기`
+        : title
+          ? `${title}에서 빼기`
+          : '그 앱에서 빼기',
+    removeFromConfirm: '한 번 더 누르면 빠져요 (그 앱은 무료 주소로 돌아가요)',
+    useHere: (domain: string) => `${domain}을(를) 이 앱에 쓰기`,
+    actionFailed: '지금은 처리하지 못했어요. 잠시 뒤 다시 해 주세요.',
     stepEmail: '이메일 확인',
     stepSecuring: '안전하게 연결하는 중…',
     progressLabel: '주소 준비 상황',
