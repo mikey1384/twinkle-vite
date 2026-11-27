@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ImageModal from '~/components/Modals/ImageModal';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { Color } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { dailyPictureJobs } from '~/helpers/dailyPictureJobs';
 
 // Picture Day pictures open in the site's standard image viewer (Mikey
 // 11-15), like every other picture: Download and Edit Image in its footer.
@@ -27,22 +29,30 @@ export function useDailyPicture({
   pictureStyle = '',
   responseId,
   ownerId,
-  surface
+  surface,
+  onPictureChange
 }: {
   picturePath: string;
   pictureStyle?: string | null;
   responseId?: number | null;
   ownerId?: number | null;
   surface: DailyPictureSurface;
+  onPictureChange?: (change: { picturePath: string; pictureStyle: string }) => void;
 }) {
   const myId = useKeyContext((v) => v.myState.userId);
   const applyDailyPicture = useAppContext(
     (v) => v.requestHelpers.applyDailyPicture
   );
+  const deleteDailyPicture = useAppContext(
+    (v) => v.requestHelpers.deleteDailyPicture
+  );
   const trackDailyPictureEdit = useAppContext(
     (v) => v.requestHelpers.trackDailyPictureEdit
   );
   const onEditContent = useContentContext((v) => v.actions.onEditContent);
+  const storedContent = useContentContext((v) =>
+    responseId ? v.state[`dailyReflection${responseId}`] : undefined
+  );
   const isOwner =
     !!myId && !!responseId && !!ownerId && Number(myId) === Number(ownerId);
   // the canonical answer of this screen's last change, until the shown
@@ -54,14 +64,23 @@ export function useDailyPicture({
   const [restoring, setRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState('');
 
+  const syncedPath =
+    typeof storedContent?.picturePath === 'string'
+      ? storedContent.picturePath
+      : picturePath;
+  const syncedStyle =
+    typeof storedContent?.pictureStyle === 'string'
+      ? storedContent.pictureStyle
+      : pictureStyle || '';
+
   useEffect(() => {
     setChanged((prev) =>
-      prev && prev.picturePath !== picturePath ? null : prev
+      prev && prev.picturePath !== syncedPath ? null : prev
     );
-  }, [picturePath]);
+  }, [syncedPath]);
 
-  const shownPath = changed?.picturePath || picturePath;
-  const shownStyle = changed ? changed.pictureStyle : pictureStyle || '';
+  const shownPath = changed ? changed.picturePath : syncedPath;
+  const shownStyle = changed ? changed.pictureStyle : syncedStyle;
 
   async function apply(args: {
     editRequestId?: string;
@@ -75,7 +94,9 @@ export function useDailyPicture({
         ...args
       });
       if (!result?.picturePath) {
-        return result?.error || "Couldn't change your picture. Please try again.";
+        return (
+          result?.error || "Couldn't change your picture. Please try again."
+        );
       }
       const next: DailyPictureChange = {
         picturePath: result.picturePath,
@@ -91,6 +112,10 @@ export function useDailyPicture({
           pictureStyle: next.pictureStyle
         }
       });
+      onPictureChange?.({
+        picturePath: next.picturePath,
+        pictureStyle: next.pictureStyle
+      });
       setChanged(next);
       if (args.path && args.path === originalPath) {
         setOriginalPath(null);
@@ -99,7 +124,9 @@ export function useDailyPicture({
       }
       return null;
     } catch (error: any) {
-      return error?.message || "Couldn't change your picture. Please try again.";
+      return (
+        error?.message || "Couldn't change your picture. Please try again."
+      );
     }
   }
 
@@ -112,12 +139,56 @@ export function useDailyPicture({
     setRestoring(false);
   }
 
+  // The owner deletes the reflection's picture (Mikey 11-26): the post keeps
+  // its words and shows no picture, as the server answers.
+  async function remove(): Promise<string | null> {
+    if (!isOwner || !responseId) return 'This picture is not yours to delete.';
+    try {
+      const result = await deleteDailyPicture({ responseId, path: shownPath });
+      if (!result?.success) {
+        return (
+          result?.error || "Couldn't delete your picture. Please try again."
+        );
+      }
+      const nextPath: string = result.picturePath || '';
+      const nextStyle: string = result.pictureStyle || '';
+      setChanged({
+        picturePath: nextPath,
+        pictureStyle: nextStyle,
+        previousPath: null
+      });
+      setOriginalPath(null);
+      setViewerOpen(false);
+      if (result.questionId) {
+        dailyPictureJobs.removePicture({
+          questionId: Number(result.questionId),
+          path: shownPath
+        });
+      }
+      onPictureChange?.({ picturePath: nextPath, pictureStyle: nextStyle });
+      onEditContent({
+        contentType: 'dailyReflection',
+        contentId: responseId,
+        data: {
+          picturePath: nextPath,
+          pictureStyle: nextStyle
+        }
+      });
+      return null;
+    } catch (error: any) {
+      return (
+        error?.message || "Couldn't delete your picture. Please try again."
+      );
+    }
+  }
+
   const viewer = viewerOpen ? (
     <DailyPictureModal
       picturePath={shownPath}
       responseId={responseId}
       isOwner={isOwner}
       onApply={apply}
+      onDelete={remove}
       onTrack={(event) => void trackDailyPictureEdit({ surface, event })}
       onHide={() => setViewerOpen(false)}
     />
@@ -146,6 +217,7 @@ export function DailyPictureModal({
   isOwner,
   isCurrent = true,
   onApply,
+  onDelete,
   onTrack,
   onHide
 }: {
@@ -155,15 +227,23 @@ export function DailyPictureModal({
   caption?: string;
   isOwner: boolean;
   isCurrent?: boolean;
-  onApply: (args: { editRequestId?: string; path?: string }) => Promise<string | null>;
+  onApply: (args: {
+    editRequestId?: string;
+    path?: string;
+  }) => Promise<string | null>;
+  // the owner's delete; resolves to an error message, or null when deleted
+  onDelete?: () => Promise<string | null>;
   onTrack?: (event: 'opened' | 'started' | 'completed' | 'failed') => void;
   onHide: () => void;
 }) {
   const [using, setUsing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [useError, setUseError] = useState('');
   return (
     <ImageModal
-      onHide={onHide}
+      onHide={() => {
+        if (!deleting) onHide();
+      }}
       src={`${cloudFrontURL}/${picturePath}`}
       caption={caption}
       hasCaption={!!caption}
@@ -181,18 +261,39 @@ export function DailyPictureModal({
           : undefined
       }
       extraActions={
-        isOwner && !isCurrent ? (
+        isOwner ? (
           <>
-            <Button
-              color="green"
-              loading={using}
-              onClick={handleUseThisPicture}
-            >
-              <Icon icon="check" />
-              <span style={{ marginLeft: '0.5rem' }}>{USE_LABEL}</span>
-            </Button>
+            {onDelete && (
+              <DeleteDailyPictureButton
+                disabled={using}
+                onDelete={async () => {
+                  if (using || deleting) return null;
+                  setDeleting(true);
+                  try {
+                    return await onDelete();
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                onReflection={isCurrent && !!responseId}
+              />
+            )}
+            {!isCurrent && (
+              <Button
+                color="green"
+                loading={using}
+                disabled={deleting}
+                onClick={handleUseThisPicture}
+              >
+                <Icon icon="check" />
+                <span style={{ marginLeft: '0.5rem' }}>{USE_LABEL}</span>
+              </Button>
+            )}
             {useError && (
-              <span role="alert" style={{ color: Color.rose(), fontWeight: 600 }}>
+              <span
+                role="alert"
+                style={{ color: Color.rose(), fontWeight: 600 }}
+              >
                 {useError}
               </span>
             )}
@@ -203,7 +304,7 @@ export function DailyPictureModal({
   );
 
   async function handleUseThisPicture() {
-    if (using) return;
+    if (using || deleting) return;
     setUsing(true);
     setUseError('');
     const error = await onApply({ path: picturePath });
@@ -213,5 +314,74 @@ export function DailyPictureModal({
       return;
     }
     onHide();
+  }
+}
+
+// Delete in the picture viewer's footer, with a confirm step (Mikey 11-26).
+// The viewer closes once the server has deleted it.
+export function DeleteDailyPictureButton({
+  onDelete,
+  onReflection = false,
+  disabled = false
+}: {
+  onDelete: () => Promise<string | null>;
+  // it is the reflection's picture, so the post loses it too
+  onReflection?: boolean;
+  disabled?: boolean;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const deletingRef = useRef(false);
+  const [error, setError] = useState('');
+  return (
+    <>
+      <Button
+        color="red"
+        variant="ghost"
+        disabled={disabled || deleting}
+        onClick={() => setConfirming(true)}
+      >
+        <Icon icon="trash-alt" />
+        <span style={{ marginLeft: '0.5rem' }}>Delete</span>
+      </Button>
+      {error && (
+        <span role="alert" style={{ color: Color.rose(), fontWeight: 600 }}>
+          {error}
+        </span>
+      )}
+      {confirming && (
+        <ConfirmModal
+          modalOverModal
+          title="Delete this picture?"
+          descriptionFontSize="1.6rem"
+          description={
+            onReflection
+              ? 'It will be gone from your pictures and your reflection. Your words stay.'
+              : 'It will be gone from your pictures.'
+          }
+          confirmButtonColor="red"
+          confirmButtonLabel="Delete"
+          onHide={() => {
+            if (!deletingRef.current) setConfirming(false);
+          }}
+          onConfirm={handleConfirm}
+        />
+      )}
+    </>
+  );
+
+  async function handleConfirm() {
+    if (deletingRef.current) return;
+    deletingRef.current = true;
+    setDeleting(true);
+    setError('');
+    try {
+      const failure = await onDelete();
+      setConfirming(false);
+      if (failure) setError(failure);
+    } finally {
+      deletingRef.current = false;
+      setDeleting(false);
+    }
   }
 }

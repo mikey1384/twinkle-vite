@@ -46,6 +46,7 @@ export default function DailyReflectionPicture({
     ownerId,
     surface: 'post'
   });
+  if (!shownPath) return null;
   return (
     <div style={style}>
       <button
