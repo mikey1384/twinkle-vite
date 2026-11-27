@@ -46,7 +46,9 @@ export const APP_RETURN_WINDOW_MS = 30 * 60 * 1000;
 // and reloading the tab, but not a new tab or a new browser session.
 const VISIT_KEY = 'twinkle:app-visit';
 const CLOSED_RUNS_KEY = 'twinkle:app-closed-runs';
+const CLOSED_AT_KEY = 'twinkle:app-closed-at';
 const MAX_CLOSED_RUNS = 32;
+const MAX_CLOSED_APPS = 64;
 const MAX_WORK_KEYS = 100;
 
 export interface AppLifecycleSnapshot {
@@ -220,6 +222,8 @@ export function normalizeAppLifecycleBackup(
   const savedAt = Number(input.savedAt);
   const ageMs = now - savedAt;
   if (!(Number.isFinite(savedAt) && ageMs >= 0 && ageMs < MAX_AGE_MS)) return null;
+  const closedAt = getAppLifecycleClosedAt(expectedKey);
+  if (closedAt > 0 && savedAt <= closedAt) return null;
   const state = normalizeAppLifecycleState(input.state);
   if (!state) return null;
   const work = normalizeAppLifecycleWork(input.work);
@@ -404,8 +408,18 @@ export function describeAppLifecycleStart(
 export async function loadAppLifecycleSnapshot(
   key: string,
   onStart?: (info: AppLifecycleStartInfo) => void,
-  options?: { backup?: unknown }
+  options?: { backup?: unknown; buildId?: number; runId?: string }
 ): Promise<AppLifecycleResume | null> {
+  const parsedScope = parseLifecycleScopeFromKey(key);
+  const effectiveBuildId =
+    typeof options?.buildId === 'number' && options.buildId > 0
+      ? options.buildId
+      : parsedScope?.buildId ?? null;
+  const isClosedNow = () =>
+    Boolean(
+      (effectiveBuildId !== null && isAppClosed(effectiveBuildId)) ||
+        (options?.runId && isAppLifecycleRunClosed(options.runId))
+    );
   let timedOut = false;
   const stored = await Promise.race([
     run<AppLifecycleSnapshot>('readonly', ({ snapshots }) => snapshots.get(key)),
@@ -422,13 +436,21 @@ export async function loadAppLifecycleSnapshot(
     cachedDb = null;
     dbPromise = Promise.resolve(null);
   }
+  if (isClosedNow()) {
+    return null;
+  }
   const now = Date.now();
   const visit = getAppVisitId();
+  const closedAt = getAppLifecycleClosedAt(key);
+  const usableStored =
+    stored && !(closedAt > 0 && Number(stored.savedAt) <= closedAt)
+      ? stored
+      : null;
   const backup = normalizeAppLifecycleBackup(options?.backup, {
     expectedKey: key,
     now
   });
-  const picked = pickNewerAppLifecycleSnapshot(stored, backup, { now });
+  const picked = pickNewerAppLifecycleSnapshot(usableStored, backup, { now });
   const chosen = picked.snapshot;
   const resume = chosen ? resolveAppLifecycleResume(chosen, { now, visit }) : null;
   try {
@@ -446,7 +468,7 @@ export async function loadAppLifecycleSnapshot(
     if (stored) void forgetAppLifecycleSnapshot(key);
     return null;
   }
-  if (picked.source === 'backup') {
+  if (picked.source === 'backup' && !isClosedNow()) {
     void saveAppLifecycleSnapshot(key, chosen);
   }
   return resume;
@@ -514,9 +536,96 @@ const closedApps = new Set<number>();
 // Run ids of explicitly closed apps: even if the unmounting frame wrote a
 // pagehide backup before hearing lifecycle:clear, the next init ignores it.
 const closedRunIds = new Set<string>();
+// Scope -> timestamp (ms) of explicit "Close app": rejects any older backup
+// even if the user clicked Close before the frame finished init (no runId yet).
+const closedAtByScope = new Map<string, number>();
 // The page is unloading (noteAppPageLeaving): snapshots are written at once.
 let pageLeaving = false;
 let pageLeavingTimer: number | null = null;
+
+function parseLifecycleScopeFromKey(key: string): {
+  buildId: number;
+  userBuildScope: string;
+  anyUserBuildScope: string;
+} | null {
+  const parts = String(key || '').split(':');
+  if (parts.length < 2) return null;
+  const userPart = parts[0];
+  const buildPart = parts[1];
+  if (!/^\d+$/.test(userPart) || !/^\d+$/.test(buildPart)) return null;
+  const buildId = Number(buildPart);
+  if (!Number.isSafeInteger(buildId) || buildId <= 0) return null;
+  return {
+    buildId,
+    userBuildScope: `${userPart}:${buildPart}`,
+    anyUserBuildScope: `*:${buildPart}`
+  };
+}
+
+function readStoredClosedAt(): Record<string, number> {
+  try {
+    if (typeof localStorage === 'undefined') return {};
+    const raw = localStorage.getItem(CLOSED_AT_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+    const result: Record<string, number> = {};
+    for (const [scope, value] of Object.entries(parsed)) {
+      const ts = Number(value);
+      if (scope && Number.isFinite(ts) && ts > 0) {
+        result[scope] = ts;
+      }
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+function rememberAppClosedAt(scope: string, closedAt: number) {
+  if (!scope || !Number.isFinite(closedAt) || closedAt <= 0) return;
+  const nextTs = Math.max(closedAtByScope.get(scope) || 0, closedAt);
+  closedAtByScope.delete(scope);
+  closedAtByScope.set(scope, nextTs);
+  while (closedAtByScope.size > MAX_CLOSED_APPS) {
+    const oldest = closedAtByScope.keys().next().value;
+    if (typeof oldest !== 'string') break;
+    closedAtByScope.delete(oldest);
+  }
+  try {
+    if (typeof localStorage === 'undefined') return;
+    const stored = readStoredClosedAt();
+    stored[scope] = Math.max(Number(stored[scope]) || 0, nextTs);
+    const trimmed = Object.entries(stored)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, MAX_CLOSED_APPS);
+    localStorage.setItem(CLOSED_AT_KEY, JSON.stringify(Object.fromEntries(trimmed)));
+  } catch {
+    // best effort when storage is unavailable
+  }
+}
+
+export function getAppLifecycleClosedAt(key: string): number {
+  const scope = parseLifecycleScopeFromKey(key);
+  if (!scope) return 0;
+  let closedAt = Math.max(
+    closedAtByScope.get(scope.userBuildScope) || 0,
+    closedAtByScope.get(scope.anyUserBuildScope) || 0
+  );
+  const stored = readStoredClosedAt();
+  const storedUser = Number(stored[scope.userBuildScope]) || 0;
+  const storedAny = Number(stored[scope.anyUserBuildScope]) || 0;
+  if (storedUser > (closedAtByScope.get(scope.userBuildScope) || 0)) {
+    closedAtByScope.set(scope.userBuildScope, storedUser);
+  }
+  if (storedAny > (closedAtByScope.get(scope.anyUserBuildScope) || 0)) {
+    closedAtByScope.set(scope.anyUserBuildScope, storedAny);
+  }
+  closedAt = Math.max(closedAt, storedUser, storedAny);
+  return closedAt;
+}
 
 function readStoredClosedRunIds(): string[] {
   try {
@@ -570,14 +679,31 @@ export function beginAppLifecycleRun(buildId: number) {
   return runId;
 }
 
-export function markAppClosed(buildId: number) {
+export function markAppClosed(
+  buildId: number,
+  options?: { userId?: number | null; now?: number }
+) {
   closedApps.add(buildId);
+  const closedAt =
+    typeof options?.now === 'number' && Number.isFinite(options.now)
+      ? options.now
+      : Date.now();
+  const scope =
+    options && 'userId' in options
+      ? `${Number(options.userId) || 0}:${buildId}`
+      : `*:${buildId}`;
+  rememberAppClosedAt(scope, closedAt);
   const app = running.get(buildId);
   if (app) {
     app.pendingSave = null;
     if (app.runId) rememberClosedRunId(app.runId);
     app.clearBackup?.();
   }
+}
+
+/** Tell a running app frame to clear its local pagehide backup without marking the app closed. */
+export function clearAppLifecycleFrameBackup(buildId: number) {
+  running.get(buildId)?.clearBackup?.();
 }
 
 export function noteAppStarted(buildId: number) {

@@ -535,7 +535,7 @@ export default function BuildRuntimeKeepAliveHost() {
       current.filter((s) => Number(s.buildId) !== killBuildId)
     );
     // A deliberate close starts the app fresh next time.
-    markAppClosed(killBuildId);
+    markAppClosed(killBuildId, { userId: currentUserId });
     forgetRunningApp(killBuildId);
     void forgetAppLifecycleSnapshots({ userId: currentUserId, buildId: killBuildId });
     if (killingActiveRoute) {

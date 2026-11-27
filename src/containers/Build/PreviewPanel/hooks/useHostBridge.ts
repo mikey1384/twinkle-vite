@@ -135,6 +135,7 @@ import {
   beginAppLifecycleRun,
   getAppVisitId,
   isAppClosed,
+  isAppLifecycleRunClosed,
   loadAppLifecycleSnapshot,
   normalizeAppLifecycleState,
   normalizeAppLifecycleWork,
@@ -312,6 +313,10 @@ export function useHostBridge({
   const onSetUserStateRef = useRef(onSetUserState);
   onSetUserStateRef.current = onSetUserState;
   const mountContextRef = useRef<PreviewMountContext | null>(mountContext);
+  const userIdForLifecycleRef = useRef(userId);
+  userIdForLifecycleRef.current = userId;
+  const buildIdForLifecycleRef = useRef(buildId);
+  buildIdForLifecycleRef.current = buildId;
   const launchTargetRef = useRef<Record<string, any> | null>(launchTarget);
   const audioMutedRef = useRef(audioMuted);
   const runtimeOnlyRef = useRef(runtimeOnly);
@@ -422,8 +427,12 @@ export function useHostBridge({
     ) {
       resetWorldSessionsRef.current?.('viewer-changed');
     }
+    const reloadingForIdentity = Boolean(
+      authHostRef?.current?.isReloadingForIdentity?.()
+    );
     const activeLifecycleBuildId = Number(buildId) || 0;
     const lifecycleKey =
+      !reloadingForIdentity &&
       !captureScratchRef.current &&
       appLifecycleSourceRef.current &&
       activeLifecycleBuildId
@@ -446,6 +455,7 @@ export function useHostBridge({
       }
     );
   }, [
+    authHostRef,
     buildId,
     buildIsPublic,
     isOwner,
@@ -478,6 +488,22 @@ export function useHostBridge({
   ]);
 
   useEffect(() => {
+    const reloadingForIdentity = Boolean(
+      authHostRef?.current?.isReloadingForIdentity?.()
+    );
+    const activeLifecycleBuildId = Number(buildIdForLifecycleRef.current) || 0;
+    const lifecycleKey =
+      !reloadingForIdentity &&
+      !captureScratchRef.current &&
+      appLifecycleSourceRef.current &&
+      activeLifecycleBuildId
+        ? appLifecycleKey({
+            userId: userIdForLifecycleRef.current,
+            buildId: activeLifecycleBuildId,
+            source: appLifecycleSourceRef.current,
+            mount: mountContext
+          })
+        : null;
     postToPreviewFrames(
       primaryIframeRef,
       secondaryIframeRef,
@@ -485,10 +511,17 @@ export function useHostBridge({
       {
         source: 'twinkle-parent',
         type: 'mount:update',
-        mount: mountContext
+        mount: mountContext,
+        ...(lifecycleKey ? { lifecycleKey } : {})
       }
     );
-  }, [mountContext, previewFrameMetaRef, primaryIframeRef, secondaryIframeRef]);
+  }, [
+    authHostRef,
+    mountContext,
+    previewFrameMetaRef,
+    primaryIframeRef,
+    secondaryIframeRef
+  ]);
 
   // KeepAliveHost asks this app for a fresh snapshot before unloading it,
   // and tells it to clear its local pagehide backup on explicit close.
@@ -2720,7 +2753,10 @@ export function useHostBridge({
             } | null = null;
             if (captureScratchStore) {
               lifecycleResume = captureScratchStore.lifecycleResume();
-            } else if (appLifecycleSourceRef.current) {
+            } else if (
+              appLifecycleSourceRef.current &&
+              !authHostRef?.current?.isReloadingForIdentity?.()
+            ) {
               const lifecycleKey = appLifecycleKey({
                 userId,
                 buildId: activeBuild.id,
@@ -2740,8 +2776,20 @@ export function useHostBridge({
                     buildId: activeBuild.id,
                     ...info
                   }),
-                { backup: payload?.lifecycleBackup }
+                {
+                  backup: payload?.lifecycleBackup,
+                  buildId: activeBuild.id,
+                  runId
+                }
               );
+              if (
+                isAppClosed(activeBuild.id) ||
+                isAppLifecycleRunClosed(runId) ||
+                authHostRef?.current?.isReloadingForIdentity?.()
+              ) {
+                lifecycleResume = null;
+                lifecycleContext = null;
+              }
             }
             response = {
               id: activeBuild.id,
@@ -2786,7 +2834,12 @@ export function useHostBridge({
             const state = appLifecycleSourceRef.current
               ? normalizeAppLifecycleState(payload?.state)
               : null;
-            if (!appLifecycleSourceRef.current || !state || isAppClosed(activeBuild.id)) {
+            if (
+              !appLifecycleSourceRef.current ||
+              !state ||
+              isAppClosed(activeBuild.id) ||
+              authHostRef?.current?.isReloadingForIdentity?.()
+            ) {
               response = { success: false };
               break;
             }
