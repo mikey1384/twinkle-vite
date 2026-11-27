@@ -518,7 +518,9 @@ function UploadFileModal({
                   attachments={imageAttachments}
                   onRemove={handleRemoveImageAttachment}
                   removeDisabled={isModalInteractionLocked}
-                  onEmbedAttachment={handleEmbedImageAttachment}
+                  onEmbedAttachment={
+                    isCustomUploadMode ? undefined : handleEmbedImageAttachment
+                  }
                   embedDisabled={isModalInteractionLocked}
                   // In custom upload mode (Build editor) the submit order comes
                   // from the selected-files list, not the preview bar, so
@@ -538,7 +540,9 @@ function UploadFileModal({
                   onChange={(event: any) => setCaption(event.target.value)}
                   onKeyUp={handleCaptionKeyUp}
                   minRows={3}
-                  onAttachmentDrop={handleEmbedImageAttachment}
+                  onAttachmentDrop={
+                    isCustomUploadMode ? undefined : handleEmbedImageAttachment
+                  }
                   onFileDrop={handleAddMorePhotosDrop}
                 />
                 {captionExceedsCharLimit && (

@@ -55,6 +55,7 @@ export function buildBuildChatUploadRouteProgressPercent(
 const REFERENCE_DOCUMENT_EXTENSIONS = [
   '.pdf',
   '.docx',
+  '.zip',
   '.txt',
   '.md',
   '.markdown',
@@ -77,7 +78,14 @@ const REFERENCE_DOCUMENT_EXTENSIONS = [
   '.tsx',
   '.css',
   '.vue',
-  '.svelte'
+  '.svelte',
+  '.py',
+  '.sql',
+  '.sh',
+  '.toml',
+  '.ini',
+  '.glsl',
+  '.wgsl'
 ];
 
 const CODE_FILE_EXTENSIONS = [
@@ -89,14 +97,25 @@ const CODE_FILE_EXTENSIONS = [
   '.tsx',
   '.css',
   '.vue',
-  '.svelte'
+  '.svelte',
+  '.py',
+  '.sql',
+  '.sh',
+  '.toml',
+  '.ini',
+  '.glsl',
+  '.wgsl'
 ];
 
 // Code files often arrive with a non-text type (or none); reference documents
-// read them as plain text.
+// read them as plain text. Zip archives carry code/text files extracted safely
+// on the server.
 export function getReferenceDocumentUploadMimeType(file?: File | null) {
   const mimeType = String(file?.type || '').trim();
   const normalizedName = String(file?.name || '').toLowerCase();
+  if (normalizedName.endsWith('.zip')) {
+    return mimeType || 'application/zip';
+  }
   if (
     CODE_FILE_EXTENSIONS.some((extension) => normalizedName.endsWith(extension))
   ) {
@@ -132,6 +151,11 @@ export function isReferenceDocumentChatFile(file: File) {
     mimeType === 'application/pdf' ||
     mimeType ===
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    mimeType === 'application/zip' ||
+    mimeType === 'application/x-zip-compressed' ||
+    mimeType === 'application/json' ||
+    mimeType === 'application/javascript' ||
+    mimeType === 'application/typescript' ||
     mimeType.startsWith('text/')
   ) {
     return true;
