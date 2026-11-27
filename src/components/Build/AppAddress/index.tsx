@@ -24,6 +24,7 @@ import {
   orderStatusTitle,
   emptyOwnerDetails,
   hasTypedOwnerDetails,
+  normalizeOwnerDetails,
   ownerDetailsProblem,
   type DnsRecordView,
   type DomainIdeaView,
@@ -360,7 +361,7 @@ export default function AppAddress({
     loadSavedRegistrant()
       .then((data: any) => {
         const saved = data?.saved?.registrant;
-        if (!saved) return;
+        if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return;
         const currentOwner = ownerRef.current;
         if (
           ownerEditedRef.current ||
@@ -370,7 +371,7 @@ export default function AppAddress({
         ) {
           return;
         }
-        const filled: OwnerDetails = { ...emptyOwnerDetails(saved.country || currentOwner.country), ...saved };
+        const filled = normalizeOwnerDetails(saved, currentOwner.country);
         const phoneDraft = draftFromPhone(filled.phone, filled.country);
         ownerRef.current = filled;
         ownerPhoneRef.current = phoneDraft;

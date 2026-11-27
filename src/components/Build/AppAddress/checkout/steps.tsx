@@ -580,8 +580,8 @@ export function OwnerDetailsView({
                 </div>
               ))}
             </dl>
-            <p ref={savedNoteRef} tabIndex={-1} className={savedNoteClass} data-saved={saved} role="status" aria-live="polite">
-              <span>{saved === 'saved' ? t.savedNote : saved === 'none' ? t.saveNextNote : t.notSavedNote}</span>
+            <p ref={savedNoteRef} tabIndex={-1} className={savedNoteClass} data-saved={saved}>
+              <span role="status">{saved === 'saved' ? t.savedNote : saved === 'none' ? t.saveNextNote : t.notSavedNote}</span>
               {saved !== 'forgotten' && onSavedChoice && (
                 <>
                   <span aria-hidden="true">·</span>
