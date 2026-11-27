@@ -763,7 +763,10 @@ export async function attemptUpload({
       });
       const queryParams = new URLSearchParams();
       queryParams.append('fileSize', selectedFile.size.toString());
-      queryParams.append('fileName', encodeURIComponent(fileName));
+      // URLSearchParams already percent-encodes values; double-encoding caused
+      // /content/sign-s3 and /content/file to disagree on keys containing '+',
+      // spaces, or other reserved characters.
+      queryParams.append('fileName', fileName);
       queryParams.append('path', path);
       queryParams.append('context', context);
       if (typeof isProfilePic === 'boolean') {

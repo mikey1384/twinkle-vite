@@ -519,7 +519,7 @@ export default function useChatUploads({
         if (documentFiles.length === 0) {
           clearLocalProgressMessage();
           await persistBuildChatAssistantNote(
-            'I can read PDF, Word (.docx), text, Markdown, CSV, JSON, HTML and code files as reference documents. Attach one of those and I will read it.',
+            'I can read PDF, Word (.docx), .zip archives, text, Markdown, CSV, JSON, HTML and code files as reference documents. Attach one of those and I will read it.',
             { buildId: uploadBuildId }
           );
           return { handled: true };
