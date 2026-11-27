@@ -1,18 +1,22 @@
 import { useCallback, useRef, useState } from 'react';
 import { observe } from 'react-intersection-observer';
 import {
+  createCardWindowMeasurementController,
   getClearedCardMeasurementState,
   getNextCardMeasurementState,
   resolveCardWindowMeasuredWidth,
+  resolveCardWindowOuterResize,
   shouldInvalidateCardWindowMeasurement,
   type CardWindowMeasurement,
   type CardWindowSize
 } from './cardWindowState';
 
 export {
+  createCardWindowMeasurementController,
   getClearedCardMeasurementState,
   getNextCardMeasurementState,
   resolveCardWindowMeasuredWidth,
+  resolveCardWindowOuterResize,
   shouldInvalidateCardWindowMeasurement
 };
 
@@ -44,11 +48,25 @@ export function useCardWindow({
   );
   const size =
     measurement.key === cacheKey ? measurement.size : sizes.get(cacheKey);
-  const latestSizeRef = useRef(size);
-  latestSizeRef.current = size;
-  const outerWidthRef = useRef(0);
   const nearViewportRef = useRef(false);
   const panelElementRef = useRef<HTMLDivElement | null>(null);
+  const controllerRef = useRef<ReturnType<
+    typeof createCardWindowMeasurementController
+  > | null>(null);
+  if (!controllerRef.current) {
+    controllerRef.current = createCardWindowMeasurementController({
+      cacheLimit: CACHE_LIMIT,
+      sizes,
+      onUpdate: (key, next) => {
+        setMeasurement((prev) => getNextCardMeasurementState(prev, key, next));
+      },
+      onClear: (key) => {
+        setMeasurement((prev) => getClearedCardMeasurementState(prev, key));
+      }
+    });
+  }
+  const controller = controllerRef.current;
+  controller.syncLatestSize(size);
   const contentShown =
     alwaysShow ||
     mounted ||
@@ -110,74 +128,57 @@ export function useCardWindow({
     );
     const stopWidth = observeSize(element, (entry) => {
       if (disposed) return;
-      const previous = latestSizeRef.current;
       const width = entry.contentRect.width;
-      if (width > 0) {
-        outerWidthRef.current = width;
-        if (width !== observedWidth) {
-          observedWidth = width;
-          // iOS switches between document and #App scrolling at the mobile
-          // breakpoint. Keep the pre-render margin on the actual scrollport.
-          const nextRoot = getVisibilityRoot(element);
-          if (nextRoot !== visibilityRoot) {
-            stopVisibility();
-            visibilityRoot = nextRoot;
-            stopVisibility = observe(
-              element,
-              handleVisibility,
-              { root: visibilityRoot, rootMargin: RENDER_MARGIN },
-              true
-            );
-          }
+      if (width > 0 && width !== observedWidth) {
+        observedWidth = width;
+        // iOS switches between document and #App scrolling at the mobile
+        // breakpoint. Keep the pre-render margin on the actual scrollport.
+        const nextRoot = getVisibilityRoot(element);
+        if (nextRoot !== visibilityRoot) {
+          stopVisibility();
+          visibilityRoot = nextRoot;
+          stopVisibility = observe(
+            element,
+            handleVisibility,
+            { root: visibilityRoot, rootMargin: RENDER_MARGIN },
+            true
+          );
         }
       }
-      // A hidden page reports zero; retain its last usable measurement.
-      if (!shouldInvalidateCardWindowMeasurement(previous, width)) return;
-      sizes.delete(cacheKey);
-      latestSizeRef.current = undefined;
-      setMeasurement((prev) => getClearedCardMeasurementState(prev, cacheKey));
+      controller.observeOuterResize(
+        cacheKey,
+        width,
+        Boolean(panelElementRef.current)
+      );
     });
     element.addEventListener('focusout', hideAfterGrace);
 
     return () => {
       disposed = true;
-      outerWidthRef.current = 0;
+      controller.resetOuterWidth();
       nearViewportRef.current = false;
       clearLeaveTimer();
       stopVisibility();
       stopWidth();
       element.removeEventListener('focusout', hideAfterGrace);
     };
-  }, [alwaysShow, cacheKey]);
+  }, [alwaysShow, cacheKey, controller]);
 
   const panelRef = useCallback((node: HTMLDivElement | null) => {
     panelElementRef.current = node;
     if (!node) return;
     const stop = observeSize(node, (entry) => {
-      // Record height from the inner panel alongside the outer wrapper's width
-      // so width comparisons stay in one coordinate space and never ping-pong
-      // if inner/outer widths differ by padding, border, or subpixel rounding.
-      const next = {
-        height: Math.ceil(entry.contentRect.height),
-        width: resolveCardWindowMeasuredWidth(
-          outerWidthRef.current,
-          entry.contentRect.width
-        )
-      };
-      if (next.height <= 0 || next.width <= 0) return;
-      const previous = latestSizeRef.current;
-      if (previous?.height === next.height && previous.width === next.width) return;
-      latestSizeRef.current = next;
-      sizes.delete(cacheKey);
-      sizes.set(cacheKey, next);
-      if (sizes.size > CACHE_LIMIT) sizes.delete(sizes.keys().next().value!);
-      setMeasurement((prev) => getNextCardMeasurementState(prev, cacheKey, next));
+      controller.observePanelResize(
+        cacheKey,
+        entry.contentRect.height,
+        entry.contentRect.width
+      );
     });
     return () => {
       stop();
       if (panelElementRef.current === node) panelElementRef.current = null;
     };
-  }, [cacheKey]);
+  }, [cacheKey, controller]);
 
   return {
     contentShown,
