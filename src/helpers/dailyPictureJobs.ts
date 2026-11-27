@@ -58,6 +58,7 @@ export interface DailyPictureResult {
   requestId?: string;
   isToday: boolean;
   path?: string;
+  deleted?: boolean;
   picture: PictureDayState;
   generationFailure?: { requestId: string; message: string };
 }
@@ -69,6 +70,8 @@ export interface DailyPictureJob {
   style: string;
   quality: string;
   startedAt: number;
+  completedAt?: number;
+  pictureUpdatedAt?: number;
   status: 'painting' | 'checking' | 'unconfirmed' | 'ready' | 'failed';
   picture?: PictureDayState;
   path?: string;
@@ -189,13 +192,14 @@ export const dailyPictureJobs = {
       // A lost reply is not a failed generation. Only read here: never replay
       // the billable POST, and match the exact request rather than any new art.
       let fresh: DailyPictureResult | undefined;
+      const loadStartedAt = Date.now();
       try {
         fresh = await load(questionId);
       } catch {
         /* retry on reconnect */
       }
       if (session !== epoch || current(job).status === 'ready') return;
-      if (fresh && complete(job.requestId, fresh)) return;
+      if (fresh && complete(job.requestId, fresh, loadStartedAt)) return;
       if (
         fresh?.picture &&
         !error?.isTransportError &&
@@ -204,6 +208,8 @@ export const dailyPictureJobs = {
         update({
           ...current(job),
           picture: fresh.picture,
+          pictureUpdatedAt: loadStartedAt,
+          completedAt: Date.now(),
           isToday: fresh.isToday,
           status: 'failed',
           error:
@@ -228,15 +234,17 @@ export const dailyPictureJobs = {
       recoveryRequests.add(job.requestId);
       if (job.status === 'unconfirmed') update({ ...job, status: 'checking' });
       try {
+        const loadStartedAt = Date.now();
         const result = await load(job.questionId);
         if (session !== epoch) return;
         if (
-          !complete(job.requestId, result) &&
+          !complete(job.requestId, result, loadStartedAt) &&
           current(job).status !== 'ready'
         ) {
           update({
             ...current(job),
             picture: result.picture,
+            pictureUpdatedAt: loadStartedAt,
             status:
               Date.now() - job.startedAt >= RECOVERY_WINDOW_MS
                 ? 'unconfirmed'
@@ -301,6 +309,119 @@ export const dailyPictureJobs = {
         job.path
       ].slice(-24);
     update({ ...job, notified: true });
+  },
+  // Called after deleting a Picture Day picture (from My pictures, My Images,
+  // or the viewer) so returning to today's Picture Day never resurrects it
+  // from an in-memory 'ready' job.
+  removePicture({ questionId, path }: { questionId: number; path?: string }) {
+    const targetQuestionId = Number(questionId);
+    if (!targetQuestionId) return;
+    const normalizedPath = typeof path === 'string' && isPicturePath(path) ? path : '';
+    let changed = false;
+    if (normalizedPath && !seenPaths.includes(normalizedPath)) {
+      seenPaths = [...seenPaths, normalizedPath].slice(-24);
+      changed = true;
+    }
+    const nextJobs: DailyPictureJob[] = [];
+    for (const job of snapshot.jobs) {
+      if (job.questionId !== targetQuestionId) {
+        nextJobs.push(job);
+        continue;
+      }
+      if (normalizedPath) {
+        if (job.status === 'ready' && job.path === normalizedPath) {
+          changed = true;
+          continue;
+        }
+        if (job.picture) {
+          const filteredCandidates = job.picture.candidates.filter(
+            (candidate) => candidate.path !== normalizedPath
+          );
+          const nextChosenPath =
+            job.picture.chosenPath === normalizedPath ? '' : job.picture.chosenPath;
+          if (
+            filteredCandidates.length !== job.picture.candidates.length ||
+            nextChosenPath !== job.picture.chosenPath
+          ) {
+            changed = true;
+            nextJobs.push({
+              ...job,
+              picture: {
+                ...job.picture,
+                chosenPath: nextChosenPath,
+                candidates: filteredCandidates
+              }
+            });
+            continue;
+          }
+        }
+        nextJobs.push(job);
+      } else {
+        if (job.status === 'ready') {
+          changed = true;
+          continue;
+        }
+        if (job.picture) {
+          changed = true;
+          nextJobs.push({ ...job, picture: undefined });
+          continue;
+        }
+        nextJobs.push(job);
+      }
+    }
+    if (!changed) return;
+    snapshot = { ...snapshot, jobs: nextJobs };
+    persist();
+    emit();
+  },
+  // Reconciles cached jobs (ready as well as failed/checking/unconfirmed with
+  // cached picture state) against a fresher server snapshot (e.g. after a
+  // delete in another tab before opening Picture Day).
+  reconcileServerState({
+    questionId,
+    picture,
+    fetchedAt
+  }: {
+    questionId: number;
+    picture: PictureDayState;
+    fetchedAt: number;
+  }) {
+    const targetQuestionId = Number(questionId);
+    if (!targetQuestionId) return;
+    const livePaths = new Set(picture.candidates.map((candidate) => candidate.path));
+    let changed = false;
+    const nextJobs: DailyPictureJob[] = [];
+    for (const job of snapshot.jobs) {
+      if (job.questionId !== targetQuestionId) {
+        nextJobs.push(job);
+        continue;
+      }
+      const settledAt = job.completedAt ?? job.startedAt;
+      if (job.status === 'ready') {
+        if (settledAt <= fetchedAt) {
+          if (!job.path || !livePaths.has(job.path)) {
+            changed = true;
+            continue;
+          }
+          changed = true;
+          nextJobs.push({ ...job, picture, pictureUpdatedAt: fetchedAt });
+          continue;
+        }
+        nextJobs.push(job);
+        continue;
+      }
+      const pictureAt = job.pictureUpdatedAt ?? settledAt;
+      if (job.picture && pictureAt <= fetchedAt) {
+        changed = true;
+        nextJobs.push({ ...job, picture, pictureUpdatedAt: fetchedAt });
+        continue;
+      }
+      nextJobs.push(job);
+    }
+    if (!changed) return;
+    snapshot = { ...snapshot, jobs: nextJobs };
+    persist();
+    emit();
   }
 };
 
@@ -316,7 +437,11 @@ function current(job: DailyPictureJob) {
   return snapshot.jobs.find((item) => item.requestId === job.requestId) || job;
 }
 
-function complete(requestId: string, result: DailyPictureResult) {
+function complete(
+  requestId: string,
+  result: DailyPictureResult,
+  pictureUpdatedAt = Date.now()
+) {
   const job = snapshot.jobs.find((item) => item.requestId === requestId);
   if (!job || Number(result?.questionId) !== job.questionId || !result?.picture)
     return false;
@@ -324,10 +449,26 @@ function complete(requestId: string, result: DailyPictureResult) {
     (item) => item.requestId === requestId
   );
   if (!candidate || !isPicturePath(candidate.path)) {
+    if (result.deleted) {
+      update({
+        ...job,
+        picture: result.picture,
+        pictureUpdatedAt,
+        path: undefined,
+        isToday: result.isToday,
+        status: 'ready',
+        completedAt: Date.now(),
+        error: undefined,
+        notified: true
+      });
+      return true;
+    }
     if (result.generationFailure?.requestId !== requestId) return false;
     update({
       ...job,
       picture: result.picture,
+      pictureUpdatedAt,
+      completedAt: Date.now(),
       isToday: result.isToday,
       status: 'failed',
       error: result.generationFailure.message
@@ -337,9 +478,11 @@ function complete(requestId: string, result: DailyPictureResult) {
   update({
     ...job,
     picture: result.picture,
+    pictureUpdatedAt,
     path: candidate.path,
     isToday: result.isToday,
     status: 'ready',
+    completedAt: Date.now(),
     error: undefined,
     notified: job.notified || seenPaths.includes(candidate.path)
   });
@@ -403,14 +546,7 @@ function readSaved(userId: number): {
   return { jobs, seenPaths };
 }
 
-function update(job: DailyPictureJob) {
-  snapshot = {
-    ...snapshot,
-    jobs: [
-      job,
-      ...snapshot.jobs.filter((item) => item.requestId !== job.requestId)
-    ].slice(0, 24)
-  };
+function persist() {
   try {
     getLocalStorage()?.setItem(
       storageKey(snapshot.userId),
@@ -432,6 +568,17 @@ function update(job: DailyPictureJob) {
   } catch {
     /* blocked/full storage does not interrupt a running request */
   }
+}
+
+function update(job: DailyPictureJob) {
+  snapshot = {
+    ...snapshot,
+    jobs: [
+      job,
+      ...snapshot.jobs.filter((item) => item.requestId !== job.requestId)
+    ].slice(0, 24)
+  };
+  persist();
   emit();
 }
 

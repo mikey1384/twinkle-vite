@@ -36,7 +36,7 @@ export default function MasteryProgress({ progress }: { progress: ArenaMasteryPr
           <p>Two separate <b>20× XP and Coins rewards</b>: one for passing, one for full marks. Each pays once. Full marks claims that reward first; a later pass can claim the pass reward, even with full marks again.</p>
           <p>After every mastery attempt, clear 10 more different Full Hard papers before trying again. If only the full-marks reward remains, passing alone earns ordinary rewards.</p>
         </>}
-        <p>Only successful clears on different papers count. Failed ordinary papers remain retryable within the one-new-exam-per-day limit.</p>
+        <p>Only successful clears on different papers count. If you don’t pass an ordinary paper, you can try again—up to 5 exams a day can earn rewards.</p>
       </div>
     </details>
   );
