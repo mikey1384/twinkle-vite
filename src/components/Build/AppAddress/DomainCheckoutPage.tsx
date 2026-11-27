@@ -58,7 +58,10 @@ type Step =
   | { kind: 'connect'; domainId?: number }
   | null;
 
-function pageLang(): AddressLang {
+// Language preference for the parent approval email only (Korean parents
+// receive Korean-friendly approval emails). Maker UI on twin-kle.com stays in
+// English (audit D7).
+function parentEmailLang(): AddressLang {
   try {
     return /^ko\b/i.test(document.documentElement.lang || navigator.language) ? 'ko' : 'en';
   } catch {
@@ -90,7 +93,8 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
   const assistant = useUserAssistant(userId);
   const location = useLocation();
   const navigate = useNavigate();
-  const t = ADDRESS_TEXT[pageLang()];
+  // Maker settings on twin-kle.com stay in English (audit D7).
+  const t = ADDRESS_TEXT.en;
   const appPath = `/build/${buildId}`;
 
   const [app, setApp] = useState<{ title: string; isOwner: boolean } | null>(null);
@@ -578,7 +582,7 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
         buildId,
         domain: idea.domain,
         parentEmail,
-        lang: pageLang(),
+        lang: parentEmailLang(),
         // the price on screen, so the API can refuse a quote that has since
         // changed (that check is coming on the API side; today it keeps its
         // own quote, which the parent reviews before paying)

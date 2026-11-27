@@ -178,9 +178,14 @@ async function start() {
       if (Number(data?.carried) > 0) showToast(t.carriedOver);
     }
   });
-  // A sign-in that came back by redirect, and an expired pass, are settled
-  // before the bridge answers anything (the app's early messages wait in
-  // window.__lumineEarly meanwhile).
+  // A renamed-slug handoff (G10), a sign-in that came back by redirect, and
+  // an expired pass are settled before the bridge answers anything (the app's
+  // early messages wait in window.__lumineEarly meanwhile).
+  await session.completeOriginHandoff({
+    onGuestRecord: (record) => {
+      guestStore.mergeHandoff(record);
+    }
+  });
   await session.completeRedirect();
   if (session.get()) await session.accessToken();
   storeSessionCredentials(session.get());
@@ -202,13 +207,19 @@ async function start() {
 
   // Which accounts the app's players use (the owner's setting; twinkle-api
   // appAccounts.ts): Twinkle accounts (default), the app's own, or both.
+  // Existing players keep the sign-in path they joined with when the maker
+  // changes mode (audit D2/G8).
   let accountMode: 'twinkle' | 'app' | 'both' = 'twinkle';
+  let hasAppAccounts = false;
+  let hasTwinklePlayers = false;
   const accountModeReady = fetch(
     `${config.apiOrigin}/build/${config.buildId}/app-session/info?origin=${encodeURIComponent(window.location.origin)}`
   )
     .then((response) => (response.ok ? response.json() : null))
     .then((data) => {
       if (data?.accountMode === 'app' || data?.accountMode === 'both') accountMode = data.accountMode;
+      hasAppAccounts = Boolean(data?.hasAppAccounts);
+      hasTwinklePlayers = Boolean(data?.hasTwinklePlayers);
     })
     .catch(() => {});
   type SheetView = 'signin' | 'birth' | 'reset' | 'email';
@@ -232,18 +243,31 @@ async function start() {
     sheetClosed = [];
     waiting.forEach((resolve) => resolve());
   };
+  const openAccountSheet = (view: SheetView = 'signin') =>
+    new Promise<void>((resolve) => {
+      sheetClosed.push(resolve);
+      accountSheetListeners.forEach((listener) => listener(view));
+    });
   // The app's sign-in: Twinkle's sheet (popup to twin-kle.com) or the app's
   // own accounts. Resolves when it closes.
   const openSignIn = (view: SheetView = 'signin') =>
     accountModeReady.then(async () => {
       if (accountMode === 'twinkle') {
-        await askSignIn({ config, t, session });
+        let handedOffToAppAccount = false;
+        await askSignIn({
+          config,
+          t,
+          session,
+          onAppAccountSignIn: hasAppAccounts
+            ? () => {
+                handedOffToAppAccount = true;
+              }
+            : undefined
+        });
+        if (handedOffToAppAccount) await openAccountSheet('signin');
         return;
       }
-      await new Promise<void>((resolve) => {
-        sheetClosed.push(resolve);
-        accountSheetListeners.forEach((listener) => listener(view));
-      });
+      await openAccountSheet(view);
     });
   // An app that subscribed to Twinkle.auth.onChange follows sign-in and
   // sign-out itself; any other (older apps) is reloaded when the player
@@ -276,10 +300,12 @@ async function start() {
     },
     async aiCoverage() {
       await accountModeReady;
-      // an app on its own accounts only: no Twinkle account can help (G4)
-      if (accountMode === 'app') return { payer: 'none', reason: 'app_accounts_only', message: 'AI isn’t available in this app.' };
       const token = await session.accessToken();
-      if (!token) return { payer: 'none', reason: 'twinkle_account_required', message: 'This app’s AI needs a Twinkle account.' };
+      if (!token) {
+        // an app on its own accounts only: no Twinkle account can help guests (G4)
+        if (accountMode === 'app') return { payer: 'none', reason: 'app_accounts_only', message: 'AI isn’t available in this app.' };
+        return { payer: 'none', reason: 'twinkle_account_required', message: 'This app’s AI needs a Twinkle account.' };
+      }
       const response = await fetch(`${config.apiOrigin}/build/${config.buildId}/app-session/ai-coverage`, {
         headers: { authorization: token }
       });
@@ -480,6 +506,20 @@ async function start() {
     const [accountSheetView, setAccountSheetView] = useState<SheetView | null>(
       resetToken ? 'reset' : null
     );
+    const [modeState, setModeState] = useState(() => ({
+      accountMode,
+      hasAppAccounts,
+      hasTwinklePlayers
+    }));
+    useEffect(() => {
+      let active = true;
+      void accountModeReady.then(() => {
+        if (active) setModeState({ accountMode, hasAppAccounts, hasTwinklePlayers });
+      });
+      return () => {
+        active = false;
+      };
+    }, []);
     useEffect(() => {
       accountSheetListeners.add(setAccountSheetView);
       return () => {
@@ -524,7 +564,9 @@ async function start() {
             t={t}
             lang={liteHostLang()}
             session={session}
-            twinkleToo={accountMode === 'both'}
+            twinkleToo={modeState.accountMode === 'both'}
+            allowSignup={modeState.accountMode !== 'twinkle'}
+            existingTwinkle={modeState.accountMode === 'app' && modeState.hasTwinklePlayers}
             onClose={() => {
               setAccountSheetView(null);
               onAccountSheetClosed();
@@ -580,7 +622,7 @@ async function start() {
           }
         ];
       }
-      return accountMode === 'both'
+      return accountMode !== 'app'
         ? [emailItem, { iconName: 'link', label: t.linkTwinkle, sub: t.linkTwinkleSub, onClick: () => void linkTwinkle() }]
         : [emailItem];
     },

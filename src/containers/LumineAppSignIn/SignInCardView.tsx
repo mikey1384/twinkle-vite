@@ -107,10 +107,16 @@ export default function SignInCardView({
             <>
               <p className={introClass}>{link ? t.linkIntro(app.title) : t.newHere(app.title)}</p>
               <div className={actionsClass}>
-                <button type="button" onClick={onCreateAccount} className={primaryClass}>
-                  {t.createAccount}
-                </button>
-                <button type="button" onClick={() => onOpenSigninModal()} className={secondaryClass}>
+                {onCreateAccount && (
+                  <button type="button" onClick={onCreateAccount} className={primaryClass}>
+                    {t.createAccount}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onOpenSigninModal()}
+                  className={onCreateAccount ? secondaryClass : primaryClass}
+                >
                   {t.haveAccount}
                 </button>
               </div>

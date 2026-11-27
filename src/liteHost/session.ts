@@ -237,6 +237,48 @@ export function createSessionStore(
       await adopt(data);
       return session;
     },
+    // Called on load: a renamed slug hands off its session and/or guest
+    // progress via #lumine_handoff=<code> (audit G10).
+    async completeOriginHandoff({
+      onGuestRecord
+    }: {
+      onGuestRecord?: (record: unknown) => void;
+    } = {}): Promise<AppSession | null> {
+      const hash = new URLSearchParams(window.location.hash.slice(1));
+      const code = hash.get('lumine_handoff');
+      if (!code) return null;
+      hash.delete('lumine_handoff');
+      const rest = hash.toString();
+      try {
+        history.replaceState(
+          null,
+          '',
+          `${window.location.href.split('#')[0]}${rest ? `#${rest}` : ''}`
+        );
+      } catch {
+        /* the page still works with the old address */
+      }
+      try {
+        const data = await post('/build/app-session/handoff/claim', {
+          buildId: config.buildId,
+          code
+        });
+        if (data?.guestRecord && onGuestRecord) onGuestRecord(data.guestRecord);
+        if (data?.session?.accessToken) {
+          set({
+            accessToken: data.session.accessToken,
+            expiresAt: data.session.expiresAt,
+            refreshToken: data.session.refreshToken,
+            user: data.session.user,
+            scopes: data.session.scopes,
+            appPlayer: data.session.appPlayer || null
+          });
+        }
+        return session;
+      } catch {
+        return session;
+      }
+    },
     // Called on load: a redirect sign-in returns with #lumine_code=…&state=…
     async completeRedirect(): Promise<AppSession | null> {
       const hash = new URLSearchParams(window.location.hash.slice(1));

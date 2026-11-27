@@ -4,6 +4,7 @@
 // sheet and a toast. Plain DOM, no framework, so the host stays tiny.
 import type { LiteHostConfig, SessionStore } from './session';
 import type { LiteHostText } from './text';
+import { resolveStandaloneShareUrl } from './shareUrl';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -207,17 +208,24 @@ export function twinkleButton(config: Pick<LiteHostConfig, 'siteOrigin'>, label:
 export function askSignIn({
   config,
   t,
-  session
+  session,
+  onAppAccountSignIn
 }: {
   config: LiteHostConfig;
   t: LiteHostText;
   session: SessionStore;
+  // existing app-account players keep signing in after the maker switches to
+  // Twinkle-only mode (audit D2/G8)
+  onAppAccountSignIn?: () => void;
 }): Promise<boolean> {
   // already open: the same answer, not a second sheet (F2)
   if (askSignInOpen && openSheetOfKind('signin')) return askSignInOpen;
   askSignInOpen = new Promise<boolean>((resolve) => {
     const cta = twinkleButton(config, t.signInCta);
     const later = el('button', { class: 'lh-secondary', type: 'button' }, [t.notNow]);
+    const existingAppBtn = onAppAccountSignIn
+      ? el('button', { class: 'lh-text-button', type: 'button' }, [t.existingAppAccount])
+      : null;
     const panel = sheet(
       [
         el('div', { class: 'lh-signin-head' }, [
@@ -229,6 +237,7 @@ export function askSignIn({
         el('h2', {}, [t.signInTitle]),
         el('p', {}, [t.signInBody(config.title)]),
         el('div', { class: 'lh-actions' }, [cta, later]),
+        ...(existingAppBtn ? [existingAppBtn] : []),
         el('p', { class: 'lh-fine' }, [t.neverPassword])
       ],
       { onDismiss: () => resolve(false), kind: 'signin' }
@@ -243,6 +252,11 @@ export function askSignIn({
     later.addEventListener('click', () => {
       closeSheet();
       resolve(false);
+    });
+    existingAppBtn?.addEventListener('click', () => {
+      closeSheet();
+      resolve(false);
+      onAppAccountSignIn?.();
     });
   });
   const pending = askSignInOpen;
@@ -338,13 +352,14 @@ export function showReport({
 // Small line icons for the menu (24px grid, drawn with currentColor).
 // A row an app account's menu adds (main.tsx): reset email, Link/Unlink.
 export interface MenuExtra {
-  iconName?: 'open' | 'make' | 'mail' | 'link' | 'unlink';
+  iconName?: 'open' | 'make' | 'mail' | 'link' | 'unlink' | 'share';
   label: string;
   sub: string;
   onClick: () => void;
 }
 
 const ICONS: Record<string, string[]> = {
+  share: ['M12 3v12', 'M7.5 7.5L12 3l4.5 4.5', 'M5 13.5V19a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-5.5'],
   mail: ['M4 6.5h16v11H4z', 'M4.5 7l7.5 6 7.5-6'],
   link: ['M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1', 'M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1'],
   unlink: ['M15 9l3-3', 'M6 18l3-3', 'M10 6l1-1a4 4 0 0 1 5.7 0', 'M14 18l-1 1a4 4 0 0 1-5.7 0', 'M4 4l16 16'],
@@ -592,7 +607,32 @@ export function mountBadge({
         el('span', { class: 'lh-pop-owner' }, [t.by(config.owner.username)])
       ])
     ]);
+    const shareCurrentApp = async () => {
+      const shareUrl = resolveStandaloneShareUrl(window.location.href);
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ title: config.title, url: shareUrl });
+          return;
+        } catch (error: any) {
+          if (error?.name === 'AbortError') return;
+        }
+      }
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast(t.linkCopied);
+        } catch {
+          // clipboard unavailable
+        }
+      }
+    };
     const rows = el('div', { class: 'lh-pop-rows' }, [
+      row({
+        iconName: 'share',
+        label: t.shareApp,
+        sub: t.shareAppSub,
+        onClick: () => void shareCurrentApp()
+      }),
       row({
         iconName: 'open',
         label: t.openOnTwinkle,

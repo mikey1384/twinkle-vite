@@ -4,7 +4,7 @@ import { css } from '@emotion/css';
 import Modal from '~/components/Modal';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { ADDRESS_TEXT, type AddressLang } from './text';
+import { ADDRESS_TEXT } from './text';
 import AppPlayers from './AppPlayers';
 import {
   setDomainProgressAllowed,
@@ -40,14 +40,6 @@ interface AddressInfo {
   domainSalesEnabled?: boolean;
   domains?: Array<{ id: number; hostname: string; status: string; source: string; statusLine?: string }>;
   accountMode?: 'twinkle' | 'app' | 'both';
-}
-
-function pageLang(): AddressLang {
-  try {
-    return /^ko\b/i.test(document.documentElement.lang || navigator.language) ? 'ko' : 'en';
-  } catch {
-    return 'en';
-  }
 }
 
 // The checkout's own page for this app, with the query that says where to
@@ -93,7 +85,8 @@ export default function AppAddress({
   const [leaving, setLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState('');
   const info = readScopedBuildData(infoState, buildId, userId);
-  const t = ADDRESS_TEXT[pageLang()];
+  // Maker settings on twin-kle.com stay in English (audit D7).
+  const t = ADDRESS_TEXT.en;
   // the purchase tracker (shared with the Build header's notice)
   const domainProgressAllowed = Boolean(info?.enabled && info?.url && info?.domainSalesEnabled);
   useEffect(() => {
@@ -329,7 +322,7 @@ export default function AppAddress({
         }
       />
       {children}
-      {isOwner && <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />}
+      {isOwner && <AppPlayers buildId={buildId} lang="en" initialMode={info.accountMode || 'twinkle'} />}
       {(leaving || leaveError) && (
         // over the page, not at the end of the scrolling chip strip, so it
         // shows on a phone too
@@ -369,7 +362,7 @@ const OPEN_PROGRESS_EVENT = 'app-address:open-progress';
 export function AppAddressProgressNotice({ buildId, isOwner }: { buildId: number; isOwner: boolean }) {
   const allowed = useDomainProgressAllowed(buildId);
   const progress = useDomainProgress(buildId, isOwner && allowed);
-  const t = ADDRESS_TEXT[pageLang()];
+  const t = ADDRESS_TEXT.en;
   if (!isOwner || !allowed || !progressShowing(progress)) return null;
   return (
     <ProgressNotice

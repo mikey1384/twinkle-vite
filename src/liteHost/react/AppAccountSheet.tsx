@@ -30,6 +30,8 @@ export default function AppAccountSheet({
   lang,
   session,
   twinkleToo,
+  allowSignup = true,
+  existingTwinkle = false,
   initialView = 'signin',
   resetToken = '',
   onClose
@@ -40,6 +42,12 @@ export default function AppAccountSheet({
   session: SessionStore;
   // an app on both kinds of accounts: Twinkle members may continue with Twinkle
   twinkleToo: boolean;
+  // false when the maker switched back to Twinkle-only: existing app accounts
+  // keep signing in / resetting passwords, but new app accounts are closed (D2/G8)
+  allowSignup?: boolean;
+  // true when the maker switched to app-only while existing Twinkle players
+  // exist: they keep their sign-in path without advertising Twinkle to new players
+  existingTwinkle?: boolean;
   // Twinkle.auth.signUp opens straight on "create an account"
   // 'reset': opened from a password-reset email (#lumine_reset=…);
   // 'email': a signed-in app account sets its reset email
@@ -47,9 +55,15 @@ export default function AppAccountSheet({
   resetToken?: string;
   onClose: () => void;
 }) {
-  const resumedPass = readPass(config.buildId);
+  const resumedPass = allowSignup ? readPass(config.buildId) : null;
   const resumedConsent = resumedPass ? getGuardianConsent(resumedPass) : null;
-  const [view, setView] = useState<View>(resumedConsent ? 'guardian' : initialView);
+  const startingView: View =
+    resumedConsent
+      ? 'guardian'
+      : initialView === 'birth' && !allowSignup
+        ? 'signin'
+        : initialView;
+  const [view, setView] = useState<View>(startingView);
   const [pass, setPass] = useState<string | null>(resumedPass);
   const [birth, setBirth] = useState<{ birthYear: number; birthMonth: number } | null>(
     resumedConsent ? { birthYear: resumedConsent.birthYear, birthMonth: resumedConsent.birthMonth } : null
@@ -159,9 +173,11 @@ export default function AppAccountSheet({
               <button className="lh-primary" type="submit" disabled={busy || !username || !password}>
                 {busy ? t.accountSigningIn : t.accountSignIn}
               </button>
-              <button className="lh-secondary" type="button" onClick={() => { setError(''); setView('birth'); }}>
-                {t.accountNew}
-              </button>
+              {allowSignup && (
+                <button className="lh-secondary" type="button" onClick={() => { setError(''); setView('birth'); }}>
+                  {t.accountNew}
+                </button>
+              )}
             </div>
             {twinkleToo && (
               <>
@@ -178,6 +194,18 @@ export default function AppAccountSheet({
                   <span>{t.accountTwinkle}</span>
                 </button>
               </>
+            )}
+            {!twinkleToo && existingTwinkle && (
+              <button
+                className="lh-text-button"
+                type="button"
+                onClick={() => {
+                  onClose();
+                  void session.signIn();
+                }}
+              >
+                {t.existingTwinkleAccount}
+              </button>
             )}
           </form>
         )}

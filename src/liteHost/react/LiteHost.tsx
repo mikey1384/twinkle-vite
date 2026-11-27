@@ -50,6 +50,7 @@ import type {
 } from '~/containers/Build/PreviewPanel/types/previewHostBridgeTypes';
 import { createLiteCoinGate } from './liteCoins';
 import { watchAppPageUnload } from '~/helpers/buildAppLifecycle';
+import { resolveStandaloneDeepLinkTarget } from '../shareUrl';
 
 export const LITE_HOST_BRIDGE_LOAD_ID = 'lumine-host';
 // useFrameManager's PREVIEW_BRIDGE_NONCE_REQUEST_TTL_MS
@@ -464,6 +465,13 @@ export function LiteHostBridge({
   const guestPrivateDbRef = useRef<GuestPrivateDb | null>(guestStore);
   guestPrivateDbRef.current = guestStore;
 
+  // The app's own address carries deep links directly in the pathname
+  // (e.g. https://<slug>.lumine.app/level-3 -> target.path 'level-3'; audit G9).
+  const launchTarget = useMemo(
+    () => resolveStandaloneDeepLinkTarget(window.location.pathname),
+    []
+  );
+
   // The frame's viewer key follows the signed-in member (useFrameManager).
   metaRef.current.primary.viewerKey = viewer ? `user:${viewer.id}` : 'guest';
 
@@ -487,7 +495,7 @@ export function LiteHostBridge({
     resolvedRuntimeExplorationPlan: null,
     audioMuted: false,
     mountContext: null,
-    launchTarget: null,
+    launchTarget,
     capabilitySnapshotRef,
     runtimeExplorationPlanRef,
     messageTargetFrameRef,
