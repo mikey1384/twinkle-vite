@@ -402,6 +402,9 @@ export function OwnerDetailsView({
   phoneDraft,
   onPhoneDraft,
   startPage = 0,
+  saved = 'none',
+  forgetting = false,
+  onSavedChoice,
   emailCheck
 }: StepBase & {
   idea: DomainIdeaView;
@@ -409,6 +412,12 @@ export function OwnerDetailsView({
   // Twinkle email, or a one-time code (left out: nothing to confirm)
   emailCheck?: EmailCheck;
   details: OwnerDetails;
+  // the member's saved details: 'saved' (prefilled from their last
+  // purchase), 'none' (these will be saved after paying), 'forgotten'
+  // (not kept); onSavedChoice: Forget / Don't save
+  saved?: 'saved' | 'none' | 'forgotten';
+  forgetting?: boolean;
+  onSavedChoice?: () => void;
   // the phone as typed (calling code + number); details.phone is its E.164
   phoneDraft: PhoneDraft;
   onPhoneDraft: (draft: PhoneDraft) => void;
@@ -425,6 +434,35 @@ export function OwnerDetailsView({
 }) {
   const [page, setPage] = useState<OwnerPage>(startPage);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const autoJumpedRef = useRef(startPage === 3);
+  const userInteractedRef = useRef(false);
+  const savedNoteRef = useRef<HTMLParagraphElement>(null);
+  const savedChoiceButtonRef = useRef<HTMLButtonElement>(null);
+  const savedChoicePendingFocusRef = useRef(false);
+  const prevForgettingRef = useRef(forgetting);
+
+  useEffect(() => {
+    if (!autoJumpedRef.current && !userInteractedRef.current && page === 0 && startPage === 3) {
+      autoJumpedRef.current = true;
+      setPage(3);
+    }
+  }, [page, startPage]);
+
+  useEffect(() => {
+    const wasForgetting = prevForgettingRef.current;
+    prevForgettingRef.current = forgetting;
+    if (!savedChoicePendingFocusRef.current) return;
+    const active = typeof document !== 'undefined' ? document.activeElement : null;
+    const focusDropped = !active || active === document.body || Boolean(savedNoteRef.current?.contains(active));
+    if (saved === 'forgotten') {
+      savedChoicePendingFocusRef.current = false;
+      if (focusDropped) savedNoteRef.current?.focus({ preventScroll: true });
+    } else if (wasForgetting && !forgetting) {
+      savedChoicePendingFocusRef.current = false;
+      if (focusDropped) savedChoiceButtonRef.current?.focus({ preventScroll: true });
+    }
+  }, [saved, forgetting]);
+
   const [code, setCode] = useState('');
   const lastSubmittedCodeRef = useRef('');
   const normalizedEmail = details.email.trim().toLowerCase();
@@ -445,8 +483,13 @@ export function OwnerDetailsView({
     }
   }, [codeSent]);
   const set = (key: keyof OwnerDetails) => (value: string) => onDetails((prev) => ({ ...prev, [key]: value }));
+  const edit = (key: keyof OwnerDetails) => (value: string) => {
+    userInteractedRef.current = true;
+    set(key)(value);
+  };
   // a country's name autofilled into State moves to Country (typing stays)
   const setState = (value: string, event?: Event) => {
+    userInteractedRef.current = true;
     const country = countryInStateField(value, { autofilled: isAutofillChange(event) });
     if (country) onDetails((prev) => ({ ...prev, country, state: '' }));
     else set('state')(value);
@@ -472,9 +515,10 @@ export function OwnerDetailsView({
   const errors = errorsFor(page);
   const pageValid = (target: OwnerPage) => Object.values(pageErrors[target]).every((value) => !value);
   const missing = ownerDetailsProblem(t, details);
-  const canPay = !missing && agreed && !busy && emailVerified;
+  const canPay = !missing && agreed && !busy && !forgetting && emailVerified;
 
   function next() {
+    userInteractedRef.current = true;
     // Enter in the code box confirms a new 6-digit code, but never re-submits one that already failed
     if (
       page === 1 &&
@@ -498,12 +542,13 @@ export function OwnerDetailsView({
     setPage((page + 1) as OwnerPage);
   }
   function back() {
+    userInteractedRef.current = true;
     if (page === 0) onBack();
     else setPage((page - 1) as OwnerPage);
   }
   const tips = [t.tipOwner, t.tipContact, t.tipAddress, t.tipReview];
   const titles = [t.ownerNameTitle, t.contactTitle, t.addressTitle, t.reviewTitle];
-  const leads = [t.nameGroupNote, t.contactGroupNote, t.ownerPrivate, t.ownerIntro];
+  const leads = [t.nameGroupNote, t.contactGroupNote, t.ownerPrivate, saved === 'saved' ? t.savedLead : t.ownerIntro];
   return (
     <CheckoutLayout
       stepKey={`owner-${page}`}
@@ -538,14 +583,14 @@ export function OwnerDetailsView({
       >
         {page === 0 && (
           <FieldGrid>
-            <TextField label={t.firstName} name="given-name" value={details.firstName} onChange={set('firstName')} autoComplete="given-name" error={errors.firstName} autoFocus />
-            <TextField label={t.lastName} name="family-name" value={details.lastName} onChange={set('lastName')} autoComplete="family-name" error={errors.lastName} />
+            <TextField label={t.firstName} name="given-name" value={details.firstName} onChange={edit('firstName')} autoComplete="given-name" error={errors.firstName} autoFocus />
+            <TextField label={t.lastName} name="family-name" value={details.lastName} onChange={edit('lastName')} autoComplete="family-name" error={errors.lastName} />
           </FieldGrid>
         )}
         {page === 1 && (
           <div className={stackClass}>
             <div className={emailStackClass}>
-              <TextField label={t.email} name="email" type="email" inputMode="email" value={details.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="you@example.com" autoFocus />
+              <TextField label={t.email} name="email" type="email" inputMode="email" value={details.email} onChange={edit('email')} autoComplete="email" error={errors.email} placeholder="you@example.com" autoFocus />
               {emailCheck && emailFormatOk ? (
                 emailCheck.verified ? (
                   <p className={emailConfirmedClass}>
@@ -620,6 +665,7 @@ export function OwnerDetailsView({
               dialLabel={t.dialCode}
               draft={phoneDraft}
               onChange={(draft) => {
+                userInteractedRef.current = true;
                 onPhoneDraft(draft);
                 onDetails((prev) => ({ ...prev, phone: toE164(draft) }));
               }}
@@ -634,7 +680,7 @@ export function OwnerDetailsView({
               <CountryField
                 label={t.country}
                 value={details.country}
-                onChange={set('country')}
+                onChange={edit('country')}
                 error={errors.country}
                 detected={guessCountry()}
                 searchPlaceholder={t.countrySearch}
@@ -643,9 +689,9 @@ export function OwnerDetailsView({
               />
             </div>
             <div data-span="2">
-              <TextField label={t.address1} name="address-line1" value={details.address1} onChange={set('address1')} autoComplete="address-line1" error={errors.address1} />
+              <TextField label={t.address1} name="address-line1" value={details.address1} onChange={edit('address1')} autoComplete="address-line1" error={errors.address1} />
             </div>
-            <TextField label={t.city} name="address-level2" value={details.city} onChange={set('city')} autoComplete="address-level2" error={errors.city} />
+            <TextField label={t.city} name="address-level2" value={details.city} onChange={edit('city')} autoComplete="address-level2" error={errors.city} />
             <TextField
               label={stateOptional ? t.stateOptional : t.state}
               name="address-level1"
@@ -654,7 +700,7 @@ export function OwnerDetailsView({
               autoComplete="address-level1"
               error={errors.state}
             />
-            <TextField label={t.zip} name="postal-code" value={details.zip} onChange={set('zip')} autoComplete="postal-code" error={errors.zip} />
+            <TextField label={t.zip} name="postal-code" value={details.zip} onChange={edit('zip')} autoComplete="postal-code" error={errors.zip} />
           </FieldGrid>
         )}
         {page === 3 && (
@@ -672,12 +718,40 @@ export function OwnerDetailsView({
                 <div key={row.label}>
                   <dt>{row.label}</dt>
                   <dd>{row.value}</dd>
-                  <button type="button" className={textButtonClass} onClick={() => setPage(row.page)}>
+                  <button
+                    type="button"
+                    className={textButtonClass}
+                    onClick={() => {
+                      userInteractedRef.current = true;
+                      setPage(row.page);
+                    }}
+                  >
                     {t.edit}
                   </button>
                 </div>
               ))}
             </dl>
+            <p ref={savedNoteRef} tabIndex={-1} className={savedNoteClass} data-saved={saved}>
+              <span role="status">{saved === 'saved' ? t.savedNote : saved === 'none' ? t.saveNextNote : t.notSavedNote}</span>
+              {saved !== 'forgotten' && onSavedChoice && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <button
+                    ref={savedChoiceButtonRef}
+                    type="button"
+                    className={textButtonClass}
+                    disabled={busy || forgetting}
+                    aria-busy={forgetting || undefined}
+                    onClick={() => {
+                      savedChoicePendingFocusRef.current = true;
+                      onSavedChoice();
+                    }}
+                  >
+                    {forgetting ? t.forgetting : saved === 'saved' ? t.savedForget : t.dontSave}
+                  </button>
+                </>
+              )}
+            </p>
             <Notice>{t.cheaperElsewhere}</Notice>
             <label className={consentClass}>
               <input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} />
@@ -1666,6 +1740,30 @@ const consentBoxClass = css`
     svg {
       transform: none;
       transition: opacity 0.15s ease;
+    }
+  }
+`;
+const savedNoteClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 2px 0 14px;
+  color: ${T.muted};
+  font-size: 14px;
+  line-height: 1.5;
+  &:focus {
+    outline: none;
+  }
+  button {
+    min-height: 32px;
+    font-size: 14px;
+  }
+  @media (pointer: coarse) {
+    button {
+      min-height: 44px;
+      padding: 0 6px;
+      margin: -6px -6px;
     }
   }
 `;

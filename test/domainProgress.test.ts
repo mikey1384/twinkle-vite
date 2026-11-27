@@ -631,3 +631,42 @@ test('DomainCheckoutPage, AppAddress, and checkout steps wire both the progress 
   assert.match(steps, /<TextField label=\{t\.email\} name="email"/);
   assert.match(steps, /shouldAutoVerifyCode\(/);
 });
+
+test('saved registrant details coexist with profile prefill, email verification, and the checkout page', () => {
+  const page = readFileSync(new URL('../src/components/Build/AppAddress/DomainCheckoutPage.tsx', import.meta.url), 'utf8');
+  const steps = readFileSync(new URL('../src/components/Build/AppAddress/checkout/steps.tsx', import.meta.url), 'utf8');
+  const buildHelpers = readFileSync(new URL('../src/contexts/requestHelpers/build.ts', import.meta.url), 'utf8');
+  const harness = readFileSync(new URL('../src/liteHost/preview/harness.tsx', import.meta.url), 'utf8');
+
+  for (const [name, source] of [
+    ['DomainCheckoutPage.tsx', page],
+    ['steps.tsx', steps],
+    ['build.ts', buildHelpers],
+    ['harness.tsx', harness]
+  ]) {
+    assert.doesNotMatch(source, /^(<{7}|={7}|>{7})/m, `${name} must not have merge conflict markers`);
+  }
+
+  // DomainCheckoutPage loads/forgets saved details, lets them win over profile prefill, and wires fast path + review note
+  assert.match(page, /loadSavedRegistrant/);
+  assert.match(page, /forgetSavedRegistrant/);
+  assert.match(page, /savedDetailsRef\.current === 'saved'/);
+  assert.match(page, /saveDetails:\s*savedDetailsRef\.current !== 'forgotten'/);
+  assert.match(
+    page,
+    /<OwnerDetailsView[\s\S]*?forgetting=\{forgettingSaved\}[\s\S]*?startPage=\{savedDetails === 'saved' && !ownerDetailsProblem\(t, owner\) && emailCheck\.verified \? 3 : 0\}[\s\S]*?saved=\{savedDetails\}[\s\S]*?onSavedChoice=\{\(\) => void forgetOrSkipSaved\(\)\}/
+  );
+
+  // OwnerDetailsView gates payment on both forgetting and email verification, and renders the saved-details note
+  assert.match(steps, /const canPay = !missing && agreed && !busy && !forgetting && emailVerified;/);
+  assert.match(steps, /saved === 'saved' \? t\.savedNote : saved === 'none' \? t\.saveNextNote : t\.notSavedNote/);
+  assert.match(steps, /forgetting \? t\.forgetting : saved === 'saved' \? t\.savedForget : t\.dontSave/);
+
+  // Request helper forwards both saveDetails and emailToken
+  assert.match(buildHelpers, /startSelfDomainOrder\(\{ buildId, domain, registrant, agreed, priceCents, saveDetails, emailToken \}/);
+  assert.match(buildHelpers, /\{ domain, registrant, agreed, priceCents, saveDetails, emailToken \}/);
+
+  // Preview harness keeps both email-code and saved-registrant previews
+  assert.match(harness, /function OwnerEmailHarness\(\)/);
+  assert.match(harness, /function OwnerHarness\(\{ filled, saved: savedStart = 'none' \}/);
+});

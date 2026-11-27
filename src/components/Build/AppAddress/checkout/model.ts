@@ -39,6 +39,39 @@ export function emptyOwnerDetails(country = 'KR'): OwnerDetails {
   return { firstName: '', lastName: '', email: '', phone: '', address1: '', city: '', state: '', zip: '', country };
 }
 
+export function normalizeOwnerDetails(raw: unknown, fallbackCountry = 'KR'): OwnerDetails {
+  const source = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  return {
+    firstName: String(source.firstName ?? ''),
+    lastName: String(source.lastName ?? ''),
+    email: String(source.email ?? ''),
+    phone: String(source.phone ?? ''),
+    address1: String(source.address1 ?? ''),
+    city: String(source.city ?? ''),
+    state: String(source.state ?? ''),
+    zip: String(source.zip ?? ''),
+    country: String(source.country || '').trim() || fallbackCountry
+  };
+}
+
+const OWNER_TEXT_KEYS: Array<keyof OwnerDetails> = [
+  'firstName',
+  'lastName',
+  'email',
+  'phone',
+  'address1',
+  'city',
+  'state',
+  'zip'
+];
+
+export function hasTypedOwnerDetails(details: OwnerDetails, phoneNational = '') {
+  return (
+    OWNER_TEXT_KEYS.some((key) => String(details[key] || '').trim().length > 0) ||
+    String(phoneNational || '').trim().length > 0
+  );
+}
+
 export function ownerDetailsProblem(t: AddressText, details: OwnerDetails) {
   const required: Array<keyof OwnerDetails> = ['firstName', 'lastName', 'email', 'phone', 'address1', 'city', 'state', 'zip', 'country'];
   const needed = STATE_OPTIONAL.has(details.country.toUpperCase()) ? required.filter((key) => key !== 'state') : required;
