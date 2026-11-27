@@ -136,17 +136,18 @@ export async function ensureBuildApiToken(
   if (!result?.token) {
     throw new Error('Failed to obtain API token');
   }
+  const completedAt = Math.floor(Date.now() / 1000);
   const nextToken: BuildApiTokenState = {
     buildId: Number(activeBuild.id || 0) || undefined,
     userId: activeUserId || undefined,
     token: result.token,
     scopes: Array.isArray(result.scopes) ? result.scopes : requestedScopes,
-    expiresAt: result.expiresAt || now + 600
+    expiresAt: result.expiresAt || completedAt + 600
   };
   previewAuth.buildApiTokenRef.current = selectCachedBuildApiToken(
     previewAuth.buildApiTokenRef.current,
     nextToken,
-    now
+    completedAt
   );
   return result.token;
 }

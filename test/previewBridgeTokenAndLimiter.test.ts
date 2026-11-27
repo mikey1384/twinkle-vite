@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   selectCachedBuildApiToken,
   type BuildApiTokenState
@@ -45,6 +46,47 @@ test('selectCachedBuildApiToken keeps a broader valid cached token over a narrow
     narrower
   );
   assert.equal(selectCachedBuildApiToken(null, narrower, now), narrower);
+});
+
+test('ensureBuildApiToken evaluates post-await completion timestamp against cached token expiry', () => {
+  const startedAt = 1_800_000_000;
+  const completedAt = startedAt + 15;
+  const expiringBroader: BuildApiTokenState = {
+    buildId: 2,
+    userId: 5,
+    token: 'tok-broad-expiring',
+    scopes: ['privateDb:read', 'sharedDb:read', 'sharedDb:write'],
+    expiresAt: startedAt + 40
+  };
+  const freshNarrower: BuildApiTokenState = {
+    buildId: 2,
+    userId: 5,
+    token: 'tok-narrow-fresh',
+    scopes: ['sharedDb:write'],
+    expiresAt: completedAt + 600
+  };
+
+  // Valid at startedAt, but past the 30s expiry margin by completedAt.
+  assert.equal(
+    selectCachedBuildApiToken(expiringBroader, freshNarrower, startedAt),
+    expiringBroader
+  );
+  assert.equal(
+    selectCachedBuildApiToken(expiringBroader, freshNarrower, completedAt),
+    freshNarrower
+  );
+
+  const authSource = readFileSync(
+    new URL(
+      '../src/containers/Build/PreviewPanel/helpers/previewBridgeAuth.ts',
+      import.meta.url
+    ),
+    'utf8'
+  );
+  assert.match(
+    authSource,
+    /await\s+previewAuth\.getBuildApiTokenRef\.current\([\s\S]*?const\s+completedAt\s*=\s*Math\.floor\(Date\.now\(\)\s*\/\s*1000\);[\s\S]*?expiresAt:\s*result\.expiresAt\s*\|\|\s*completedAt\s*\+\s*600[\s\S]*?selectCachedBuildApiToken\([\s\S]*?nextToken,\s*completedAt\s*\)/
+  );
 });
 
 test('RequestPriorityLimiters releases slots after resolved and rejected bursts so later reads proceed', async () => {
