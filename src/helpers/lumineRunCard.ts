@@ -13,18 +13,30 @@ export interface LumineRunPreviewData {
   modeLabel?: string;
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+export function hasFiniteRemainingEnergyPercent(
+  value: unknown
+): value is number {
+  return isFiniteNumber(value);
+}
+
 export function isLumineRunPreview(
   value: unknown
 ): value is LumineRunPreviewData {
   const preview = value as LumineRunPreviewData;
   return (
     !!preview &&
+    typeof preview === 'object' &&
     preview.kind === 'lumine_run' &&
-    Number.isFinite(Number(preview.buildId)) &&
+    isFiniteNumber(preview.buildId) &&
+    preview.buildId > 0 &&
     typeof preview.appTitle === 'string' &&
     typeof preview.buildPath === 'string' &&
     typeof preview.instruction === 'string' &&
-    Number.isFinite(Number(preview.estimatedEnergyPercent))
+    isFiniteNumber(preview.estimatedEnergyPercent)
   );
 }
 

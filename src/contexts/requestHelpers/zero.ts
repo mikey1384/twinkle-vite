@@ -38,6 +38,7 @@ export default function zeroRequestHelpers({
       choice,
       previewedAssetProposalId,
       previewedProfileActionId,
+      previewedLumineRunCardId,
       previewedPayloadHash
     }: {
       messageId: number;
@@ -46,12 +47,22 @@ export default function zeroRequestHelpers({
       choice?: string;
       previewedAssetProposalId?: string;
       previewedProfileActionId?: string;
+      previewedLumineRunCardId?: string;
       previewedPayloadHash?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/zero/website-agent/cards/decide`,
-          { messageId, cardId, approved, choice, previewedAssetProposalId, previewedProfileActionId, previewedPayloadHash },
+          {
+            messageId,
+            cardId,
+            approved,
+            choice,
+            previewedAssetProposalId,
+            previewedProfileActionId,
+            previewedLumineRunCardId,
+            previewedPayloadHash
+          },
           auth()
         );
         return data;

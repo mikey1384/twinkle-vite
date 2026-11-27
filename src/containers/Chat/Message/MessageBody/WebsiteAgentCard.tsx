@@ -400,6 +400,7 @@ export default function WebsiteAgentCard({
           ? { previewedAssetProposalId: loadedProposalId }
           : {}),
         ...(profilePreview ? { previewedProfileActionId: card.id } : {}),
+        ...(lumineRunPreview ? { previewedLumineRunCardId: card.id } : {}),
         ...(card.asyncTask?.payloadHash
           ? { previewedPayloadHash: card.asyncTask.payloadHash }
           : {}),
@@ -501,6 +502,10 @@ export default function WebsiteAgentCard({
       // A saved task advances from its persisted card. Sending a chat reply
       // for each tap would start an unrelated assistant turn and use Energy.
       if (nextCard.asyncTask) return;
+      // A Lumine run card settles in place with its status line and Build link.
+      // Sending a chat reply would wipe it in AssistantDock and spend an extra
+      // unquoted chat turn's Energy on both Start and Not now.
+      if (nextCard.preview?.kind === 'lumine_run') return;
       // A failed or still-running operation is not the user's completed
       // answer. Keep its canonical state visible and let them retry here.
       if (
