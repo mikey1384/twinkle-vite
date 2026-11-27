@@ -284,7 +284,9 @@ export function AddressMenuView({
             <>
               <Icon icon="trash-alt" />
               <span className={armed ? wrapLabel : undefined}>
-                {armed ? t.removeFromConfirm : t.removeFrom(domain.appTitle)}
+                {armed
+                  ? `${domain.hostname}: ${t.removeFromConfirm}`
+                  : t.removeFrom(domain.appTitle, domain.hostname)}
               </span>
             </>
           ),
@@ -321,6 +323,7 @@ export function AddressMenuView({
     <HeaderMenu
       items={items}
       label={shownHost}
+      onOpenChange={() => setConfirming(0)}
       renderTrigger={({ onToggle, triggerProps }) => (
         <HeaderChip
           chip="address"
@@ -330,10 +333,7 @@ export function AddressMenuView({
           title={shownHost}
           caret
           menuTrigger={triggerProps}
-          onClick={() => {
-            setConfirming(0);
-            onToggle();
-          }}
+          onClick={onToggle}
         />
       )}
     />

@@ -158,25 +158,65 @@ export default function AppAddress({
     const search = params.toString();
     navigate(`${location.pathname}${search ? `?${search}` : ''}${location.hash}`, { replace: true, state: location.state });
   }
-  // Each request the checkout sends belongs to the screen that sent it: a
-  // reply that comes back after the member closed the checkout or moved on
-  // is dropped (no late Stripe redirect, no screen reopening).
+  // Each request the checkout sends belongs to the screen and build that sent
+  // it: a reply that comes back after the member closed the checkout, moved on,
+  // or switched to another app is dropped (no late Stripe redirect, no wrong
+  // build overwrite or overlay).
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  const buildIdRef = useRef(buildId);
+  buildIdRef.current = buildId;
+  const prevBuildIdRef = useRef(buildId);
   const stepRef = useRef<Step>(null);
   stepRef.current = step;
   const flowGenRef = useRef(0);
-  const inFlightRef = useRef<Record<string, boolean>>({});
+  const inFlightRef = useRef<Record<string, number>>({});
+  const requestSeqRef = useRef(0);
   function claimRequest(name: string) {
     if (inFlightRef.current[name]) return null;
-    inFlightRef.current[name] = true;
+    const seq = ++requestSeqRef.current;
+    inFlightRef.current[name] = seq;
     const gen = flowGenRef.current;
     const from = stepRef.current;
+    const reqBuildId = buildIdRef.current;
     return {
-      current: () => flowGenRef.current === gen && stepRef.current === from,
+      sameBuild: () => mountedRef.current && buildIdRef.current === reqBuildId,
+      current: () =>
+        mountedRef.current &&
+        buildIdRef.current === reqBuildId &&
+        flowGenRef.current === gen &&
+        stepRef.current === from,
       release: () => {
-        inFlightRef.current[name] = false;
+        if (inFlightRef.current[name] === seq) delete inFlightRef.current[name];
       }
     };
   }
+  useEffect(() => {
+    if (prevBuildIdRef.current === buildId) return;
+    prevBuildIdRef.current = buildId;
+    flowGenRef.current += 1;
+    inFlightRef.current = {};
+    ownedEntryRef.current = null;
+    closingRef.current = false;
+    setInfo(null);
+    setStep(null);
+    setOrder(null);
+    setPurchase(null);
+    setError('');
+    setActionError('');
+    setOrderLookupError('');
+    setIdeas([]);
+    setQuery('');
+    setConnect(null);
+    setHostname('');
+    setDeepLink(null);
+    setRenaming(false);
+  }, [buildId]);
   const userId = useKeyContext((v) => v.myState.userId);
   const assistant = useUserAssistant(userId);
   const t = ADDRESS_TEXT[pageLang()];
@@ -225,10 +265,15 @@ export default function AppAddress({
 
   async function openFromWand(screen: string, domain: string) {
     // Like claimRequest: a reply that arrives after the checkout was closed
-    // (or the member moved to another screen) changes nothing.
+    // (or the member moved to another screen or app) changes nothing.
     const gen = flowGenRef.current;
     const startStep = stepRef.current;
-    const still = (expected: Step = startStep) => flowGenRef.current === gen && stepRef.current === expected;
+    const reqBuildId = buildIdRef.current;
+    const still = (expected: Step = startStep) =>
+      mountedRef.current &&
+      buildIdRef.current === reqBuildId &&
+      flowGenRef.current === gen &&
+      stepRef.current === expected;
     setError('');
     if (screen === 'connect') {
       if (!info?.customDomainsEnabled) {
@@ -291,7 +336,7 @@ export default function AppAddress({
         setError(t.notAvailableHere(domain));
       }
     } finally {
-      setLoading(false);
+      if (mountedRef.current && buildIdRef.current === reqBuildId) setLoading(false);
     }
   }
 
@@ -352,16 +397,12 @@ export default function AppAddress({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step?.kind, buildId, isOwner, info?.domainSalesEnabled]);
+  }, [step?.kind, buildId, isOwner, info?.domainSalesEnabled, purchase]);
 
   function openOwnFlow() {
     setError('');
     setActionError('');
     setStep({ kind: 'intro' });
-    if (purchase) return;
-    loadDomainPurchase({ buildId })
-      .then((data: any) => setPurchase(data || { open: false }))
-      .catch(() => setPurchase({ open: false }));
   }
 
   async function payAsOwner(idea: DomainIdeaView) {
@@ -468,33 +509,38 @@ export default function AppAddress({
   }, [buildId]);
 
   async function loadIdeas({ more = false, hint = '' } = {}) {
+    const reqBuildId = buildId;
     setLoading(true);
     setError('');
     try {
       const data = await loadDomainIdeas({
-        buildId,
+        buildId: reqBuildId,
         more: more ? '1' : undefined,
         hint: hint || undefined
       });
+      if (!mountedRef.current || buildIdRef.current !== reqBuildId) return;
       setIdeas(data?.ideas || []);
     } catch (e: any) {
+      if (!mountedRef.current || buildIdRef.current !== reqBuildId) return;
       setError(e?.message || '');
     } finally {
-      setLoading(false);
+      if (mountedRef.current && buildIdRef.current === reqBuildId) setLoading(false);
     }
   }
 
   async function search() {
+    const reqBuildId = buildId;
     setLoading(true);
     try {
       const data = await searchDomains({ q: query });
+      if (!mountedRef.current || buildIdRef.current !== reqBuildId) return;
       setIdeas(
         (data?.results || [])
           .filter((row: any) => row.available && row.price)
           .map((row: any) => row.price)
       );
     } finally {
-      setLoading(false);
+      if (mountedRef.current && buildIdRef.current === reqBuildId) setLoading(false);
     }
   }
 
@@ -553,16 +599,16 @@ export default function AppAddress({
   async function removeDomain(domainId: number) {
     const request = claimRequest('removeDomain');
     if (!request) return;
-    setError('');
+    const reqBuildId = buildId;
     setActionError('');
     try {
-      await removeAppDomain({ buildId, domainId });
-      const fresh = await loadAppAddress({ buildId }).catch(() => null);
-      if (fresh) setInfo(fresh);
+      await removeAppDomain({ buildId: reqBuildId, domainId });
+      if (!request.sameBuild()) return;
+      const fresh = await loadAppAddress({ buildId: reqBuildId }).catch(() => null);
+      if (fresh && request.sameBuild()) setInfo(fresh);
     } catch (e: any) {
-      const message = e?.message || t.actionFailed;
-      setError(message);
-      if (!stepRef.current) setActionError(message);
+      if (!request.current() && !(request.sameBuild() && stepRef.current?.kind === 'rename')) return;
+      setActionError(e?.message || t.actionFailed);
     } finally {
       request.release();
     }
@@ -572,16 +618,16 @@ export default function AppAddress({
   async function removeElsewhere(domain: OtherDomainView) {
     const request = claimRequest('removeElsewhere');
     if (!request) return;
-    setError('');
+    const reqBuildId = buildId;
     setActionError('');
     try {
       await removeAppDomain({ buildId: domain.buildId, domainId: domain.domainId });
-      const fresh = await loadAppAddress({ buildId }).catch(() => null);
-      if (fresh) setInfo(fresh);
+      if (!request.sameBuild()) return;
+      const fresh = await loadAppAddress({ buildId: reqBuildId }).catch(() => null);
+      if (fresh && request.sameBuild()) setInfo(fresh);
     } catch (e: any) {
-      const message = e?.message || t.actionFailed;
-      setError(message);
-      if (!stepRef.current) setActionError(message);
+      if (!request.current() && !(request.sameBuild() && stepRef.current?.kind === 'rename')) return;
+      setActionError(e?.message || t.actionFailed);
     } finally {
       request.release();
     }
@@ -592,19 +638,18 @@ export default function AppAddress({
   async function useHere(domain: OtherDomainView) {
     const request = claimRequest('useHere');
     if (!request) return;
-    setError('');
+    const reqBuildId = buildId;
     setActionError('');
     try {
-      const result = await attachAppDomainOrder({ buildId, orderId: domain.orderId });
-      const fresh = await loadAppAddress({ buildId }).catch(() => null);
-      if (fresh) setInfo(fresh);
+      const result = await attachAppDomainOrder({ buildId: reqBuildId, orderId: domain.orderId });
+      if (!request.sameBuild()) return;
+      const fresh = await loadAppAddress({ buildId: reqBuildId }).catch(() => null);
+      if (fresh && request.sameBuild()) setInfo(fresh);
       if (!request.current()) return;
       if (result?.orderId) setStep({ kind: 'order', orderId: Number(result.orderId) });
     } catch (e: any) {
-      if (!request.current()) return;
-      const message = e?.message || t.actionFailed;
-      setError(message);
-      setActionError(message);
+      if (!request.current() && !(request.sameBuild() && stepRef.current?.kind === 'rename')) return;
+      setActionError(e?.message || t.actionFailed);
     } finally {
       request.release();
     }
@@ -651,12 +696,15 @@ export default function AppAddress({
       window.clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [renameValue, step?.kind]);
+  }, [renameValue, step?.kind, buildId]);
 
   async function saveRename() {
+    const reqBuildId = buildId;
+    const gen = flowGenRef.current;
     setRenaming(true);
     try {
-      const result = await renameAppAddress({ buildId, slug: renameValue.trim() });
+      const result = await renameAppAddress({ buildId: reqBuildId, slug: renameValue.trim() });
+      if (!mountedRef.current || buildIdRef.current !== reqBuildId) return;
       // the answer is the new free address; a live bought domain stays the
       // shared address, so ask the server for the whole record again
       setInfo((prev) =>
@@ -669,14 +717,15 @@ export default function AppAddress({
             }
           : prev
       );
-      setStep(null);
-      const fresh = await loadAppAddress({ buildId }).catch(() => null);
-      if (fresh) setInfo(fresh);
+      if (flowGenRef.current === gen) setStep(null);
+      const fresh = await loadAppAddress({ buildId: reqBuildId }).catch(() => null);
+      if (fresh && mountedRef.current && buildIdRef.current === reqBuildId) setInfo(fresh);
     } catch (e: any) {
+      if (!mountedRef.current || buildIdRef.current !== reqBuildId) return;
       setRenameStatus('taken');
       setRenameMessage(e?.message || '');
     } finally {
-      setRenaming(false);
+      if (mountedRef.current && buildIdRef.current === reqBuildId) setRenaming(false);
     }
   }
 
@@ -761,7 +810,7 @@ export default function AppAddress({
       {isOwner && (
         <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />
       )}
-      {actionError && !step && (
+      {actionError && !checkoutOpen && (
         <Modal
           modalKey="AppAddressError"
           isOpen
@@ -769,6 +818,7 @@ export default function AppAddress({
           size="sm"
           title={t.introTitle}
           closeOnBackdropClick
+          modalLevel={step?.kind === 'rename' ? 2 : 1}
           footer={
             <Button color="logoBlue" onClick={() => setActionError('')}>
               {t.close}

@@ -217,7 +217,10 @@ export const ADDRESS_TEXT = {
     yourOtherAddresses: 'Your other addresses',
     onApp: (title: string) => (title ? `on ${title}` : 'on another app'),
     notInUse: 'not on any app',
-    removeFrom: (title: string) => (title ? `Remove it from ${title}` : 'Remove it from that app'),
+    removeFrom: (title: string, domain?: string) =>
+      title
+        ? `Remove ${domain || 'it'} from ${title}`
+        : `Remove ${domain || 'it'} from that app`,
     removeFromConfirm: 'Tap again to remove (that app goes back to its free address)',
     useHere: (domain: string) => `Use ${domain} on this app`,
     actionFailed: 'That didn’t go through just now. Please try again.'
@@ -415,7 +418,14 @@ export const ADDRESS_TEXT = {
     yourOtherAddresses: '내 다른 주소',
     onApp: (title: string) => (title ? `${title}에 연결됨` : '다른 앱에 연결됨'),
     notInUse: '연결된 앱 없음',
-    removeFrom: (title: string) => (title ? `${title}에서 빼기` : '그 앱에서 빼기'),
+    removeFrom: (title: string, domain?: string) =>
+      domain
+        ? title
+          ? `${title}에서 ${domain} 빼기`
+          : `그 앱에서 ${domain} 빼기`
+        : title
+          ? `${title}에서 빼기`
+          : '그 앱에서 빼기',
     removeFromConfirm: '한 번 더 누르면 빠져요 (그 앱은 무료 주소로 돌아가요)',
     useHere: (domain: string) => `${domain}을(를) 이 앱에 쓰기`,
     actionFailed: '지금은 처리하지 못했어요. 잠시 뒤 다시 해 주세요.'

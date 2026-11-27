@@ -129,30 +129,34 @@ export default function TransactionModal({
   // AppTransferModal loads initialBuild.domains asynchronously; merge them into
   // the already-mounted composer/review state so the domain-ownership warning
   // renders for non-owners and fast clicks.
+  function mergeInitialBuildDomains(list: TradeBuild[]) {
+    if (!initialBuild?.domains) return list;
+    let changed = false;
+    const next = list.map((item) => {
+      if (Number(item.id) === Number(initialBuild.id) && !item.domains) {
+        changed = true;
+        return { ...item, domains: initialBuild.domains };
+      }
+      return item;
+    });
+    return changed ? next : list;
+  }
+
   useEffect(() => {
     if (!initialBuild?.domains) return;
-    const patch = (list: TradeBuild[]) => {
-      let changed = false;
-      const next = list.map((item) => {
-        if (Number(item.id) === Number(initialBuild.id) && !item.domains) {
-          changed = true;
-          return { ...item, domains: initialBuild.domains };
-        }
-        return item;
-      });
-      return changed ? next : list;
-    };
     setSelectedBuilds((current) => {
-      const offer = patch(current.offer);
-      const want = patch(current.want);
+      const offer = mergeInitialBuildDomains(current.offer);
+      const want = mergeInitialBuildDomains(current.want);
       return offer === current.offer && want === current.want
         ? current
         : { offer, want };
     });
     setReview((current) => {
       if (!current) return current;
-      const giveBuilds = patch(current.terms.give.builds);
-      const receiveBuilds = patch(current.terms.receive.builds);
+      const giveBuilds = mergeInitialBuildDomains(current.terms.give.builds);
+      const receiveBuilds = mergeInitialBuildDomains(
+        current.terms.receive.builds
+      );
       if (
         giveBuilds === current.terms.give.builds &&
         receiveBuilds === current.terms.receive.builds
@@ -168,6 +172,7 @@ export default function TransactionModal({
         }
       };
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialBuild?.id, initialBuild?.domains]);
 
   useEffect(() => {
@@ -551,9 +556,10 @@ export default function TransactionModal({
               selected={selectedBuilds[buildModalType]}
               onHide={() => setBuildModalType(null)}
               onDone={(builds) => {
+                const merged = mergeInitialBuildDomains(builds);
                 setSelectedBuilds((current) => ({
                   ...current,
-                  [buildModalType]: builds
+                  [buildModalType]: merged
                 }));
                 setBuildModalType(null);
               }}

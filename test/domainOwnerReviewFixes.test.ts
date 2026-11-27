@@ -22,20 +22,20 @@ test('AppAddress guards useHere/removeDomain/removeElsewhere, shows actionError 
   const useHereBlock = src.match(/async function useHere\([\s\S]*?\n  \}/);
   assert.ok(useHereBlock, 'useHere handler must exist');
   assert.match(useHereBlock[0], /claimRequest\('useHere'\)/);
-  assert.match(useHereBlock[0], /setActionError\(message\)/);
+  assert.match(useHereBlock[0], /setActionError\(e\?\.message\s*\|\|\s*t\.actionFailed\)/);
   assert.doesNotMatch(useHereBlock[0], /setStep\(\{\s*kind:\s*'intro'\s*\}\)/);
 
   const removeDomainBlock = src.match(/async function removeDomain\([\s\S]*?\n  \}/);
   assert.ok(removeDomainBlock, 'removeDomain handler must exist');
   assert.match(removeDomainBlock[0], /claimRequest\('removeDomain'\)/);
-  assert.match(removeDomainBlock[0], /setActionError\(message\)/);
+  assert.match(removeDomainBlock[0], /setActionError\(e\?\.message\s*\|\|\s*t\.actionFailed\)/);
 
   const removeElsewhereBlock = src.match(/async function removeElsewhere\([\s\S]*?\n  \}/);
   assert.ok(removeElsewhereBlock, 'removeElsewhere handler must exist');
   assert.match(removeElsewhereBlock[0], /claimRequest\('removeElsewhere'\)/);
-  assert.match(removeElsewhereBlock[0], /setActionError\(message\)/);
+  assert.match(removeElsewhereBlock[0], /setActionError\(e\?\.message\s*\|\|\s*t\.actionFailed\)/);
 
-  assert.match(src, /\{actionError\s*&&\s*!step\s*&&\s*\(\s*<Modal[\s\S]*?modalKey="AppAddressError"[\s\S]*?role="alert"/);
+  assert.match(src, /\{actionError\s*&&\s*!checkoutOpen\s*&&\s*\(\s*<Modal[\s\S]*?modalKey="AppAddressError"[\s\S]*?role="alert"/);
   assert.match(src, /if\s*\(step\?\.kind\s*!==\s*'intro'\s*\|\|\s*purchase/);
 });
 
@@ -68,7 +68,10 @@ test('AppAddress views omit disabled:true on otherDomains heading and non-live r
   assert.doesNotMatch(viewsSrc, /style=\{\{\s*display:\s*'grid'/);
   assert.match(viewsSrc, /const\s+stackedLabel\s*=\s*css`[\s\S]*?text-overflow:\s*ellipsis[\s\S]*?white-space:\s*normal/);
   assert.match(viewsSrc, /const\s+wrapLabel\s*=\s*css`[\s\S]*?white-space:\s*normal/);
-  assert.match(viewsSrc, /<span\s+className=\{armed\s*\?\s*wrapLabel\s*:\s*undefined\}>\s*\{armed\s*\?\s*t\.removeFromConfirm/);
+  assert.match(
+    viewsSrc,
+    /<span\s+className=\{armed\s*\?\s*wrapLabel\s*:\s*undefined\}>\s*\{armed\s*\?\s*`\$\{domain\.hostname\}:\s*\$\{t\.removeFromConfirm\}`/
+  );
   assert.match(chipSrc, /&&\s*li\s*>\s*span\s*>\s*span,\s*&&\s*li\s*>\s*span\s*>\s*small/);
 });
 

@@ -1277,6 +1277,7 @@ export default function Header({
         {build.isPublic && contributionStatus === 'none' ? (
           // The address chip, then the strip's other chips, then Players.
           <AppAddress
+            key={Number(build.id)}
             buildId={Number(build.id)}
             isOwner={Boolean(isOwner)}
             appTitle={String(build.title || '')}
