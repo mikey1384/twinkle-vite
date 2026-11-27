@@ -213,7 +213,7 @@ test('looksConsequential exempts only plain same-site navigation links and actua
 
   // Plain same-site links are view-only even with consequential words.
   assert.equal(
-    looksConsequential(new FakeElement('a', { href: '/rewards' }, ['Rewards']) as any),
+    looksConsequential(new FakeElement('a', { href: '/rewards' }, ['Reward']) as any),
     false
   );
   assert.equal(
@@ -239,14 +239,23 @@ test('looksConsequential exempts only plain same-site navigation links and actua
   }
 
   // FilterBar <nav> tabs (including accessible <nav><button type="button"> tabs)
-  // and [role="tab"] elements are view-only, but non-tab buttons placed inside
-  // FilterBar / tablist / tab or submit buttons are NOT exempt.
-  const filterNav = new FakeElement('nav', {}, ['Rewards']);
+  // and [role="tab"] elements are view-only even when their label matches
+  // CONSEQUENTIAL_LABEL, while non-tab buttons placed inside FilterBar /
+  // tablist / tab or submit buttons are NOT exempt.
+  assert.equal(
+    looksConsequential(new FakeElement('button', { type: 'button' }, ['Reward']) as any),
+    true
+  );
+  assert.equal(
+    looksConsequential(new FakeElement('button', { type: 'button' }, ['Challenge']) as any),
+    true
+  );
+  const filterNav = new FakeElement('nav', {}, ['Reward']);
   filterNav.cursor = 'pointer';
   const filterTabButton = new FakeElement(
     'button',
     { type: 'button', 'aria-pressed': 'false' },
-    ['Rewards']
+    ['Challenge']
   );
   const filterButtonNav = new FakeElement('nav', {}, [filterTabButton]);
   filterButtonNav.cursor = 'pointer';
@@ -282,7 +291,7 @@ test('looksConsequential exempts only plain same-site navigation links and actua
   );
 
   const tabCloseButton = new FakeElement('button', {}, ['Remove']);
-  const roleTab = new FakeElement('div', { role: 'tab' }, ['Rewards', tabCloseButton]);
+  const roleTab = new FakeElement('div', { role: 'tab' }, ['Reward', tabCloseButton]);
   const tablistDelete = new FakeElement('button', {}, ['Delete']);
   const tablist = new FakeElement('div', { role: 'tablist' }, [roleTab, tablistDelete]);
   root.append(tablist);
@@ -319,6 +328,19 @@ test('contenteditable nearby fingerprints ignore typed text and handle empty dup
     findWebsiteAgentElement(refA),
     composerA as any,
     'typing into contenteditable must not invalidate its ref via nearby text'
+  );
+  composerA.append(new FakeElement('img', { alt: 'Pasted photo' }));
+  assert.equal(
+    findWebsiteAgentElement(refA),
+    composerA as any,
+    'pasting an <img> with alt into an unlabeled contenteditable must not change its name'
+  );
+  composerA.setText('');
+  composerA.append(new FakeElement('svg', { 'data-icon': 'paper-plane' }));
+  assert.equal(
+    findWebsiteAgentElement(refA),
+    composerA as any,
+    'inserting an <svg data-icon> into an unlabeled contenteditable must not change its name'
   );
 });
 

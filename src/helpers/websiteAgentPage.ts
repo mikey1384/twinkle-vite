@@ -256,10 +256,18 @@ function isContentEditableElement(element: Element) {
 
 function describeName(element: Element) {
   const input = element as HTMLInputElement;
-  const isContentEditable = isContentEditableElement(element);
+  if (isContentEditableElement(element)) {
+    return collapse(
+      element.getAttribute('aria-label') ||
+        element.getAttribute('title') ||
+        input.placeholder ||
+        element.getAttribute('data-placeholder') ||
+        ''
+    );
+  }
   return collapse(
     element.getAttribute('aria-label') ||
-      (isContentEditable ? '' : (element as HTMLElement).innerText) ||
+      (element as HTMLElement).innerText ||
       element.getAttribute('title') ||
       input.placeholder ||
       element.getAttribute('data-placeholder') ||
