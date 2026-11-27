@@ -167,6 +167,8 @@ export default function BuildEditor({
   initialPrompt = '',
   initialPromptContext = '',
   forceInitialPrompt = false,
+  initialDraft = '',
+  initialNotice = '',
   seedGreeting = false,
   onUpdateBuild,
   onUpdateChatMessages,
@@ -871,6 +873,7 @@ export default function BuildEditor({
     });
   const {
     ensureProjectFilesPersistedBeforePublish,
+    ensureProjectFilesPersistedBeforeLeaving,
     ensureProjectFilesPersistedBeforeRun,
     draftActionPrompt,
     handleApplyRestoredProjectFiles,
@@ -1523,6 +1526,17 @@ export default function BuildEditor({
     forceInitialPrompt
   ]);
 
+  // An idea handed over unsent: the owner sees it in the box and sends it
+  // when they choose; it never overwrites something they typed.
+  const [entryNotice, setEntryNotice] = useState(initialNotice);
+  const didInitialDraftRef = useRef(false);
+  useEffect(() => {
+    if (didInitialDraftRef.current || !isOwner) return;
+    didInitialDraftRef.current = true;
+    if (initialDraft.trim() && !buildChatDraftMessage.trim()) setBuildChatDraftMessage(initialDraft.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build.id, isOwner]);
+
   useEffect(() => {
     if (didAutoGreetingRef.current) return;
     if (AI_FEATURES_DISABLED) return;
@@ -2066,6 +2080,8 @@ export default function BuildEditor({
     draftCommentFeedback: buildChatDraftFeedback,
     onDraftCommentFeedbackChange: setBuildChatDraftFeedback,
     onDraftMessageChange: setBuildChatDraftMessage,
+    entryNotice: isOwner ? entryNotice : '',
+    onDismissEntryNotice: () => setEntryNotice(''),
     onSendMessage: handleSendMessage,
     onContinueScopedPlan: handleContinueScopedPlan,
     onCancelScopedPlan: handleCancelScopedPlan,
@@ -2194,6 +2210,7 @@ export default function BuildEditor({
         onOpenDescriptionModal={handleOpenDescriptionModal}
         onOpenThumbnailModal={handleOpenThumbnailModal}
         onSaveRewardCode={ensureProjectFilesPersistedBeforePublish}
+        onSaveBeforeLeaving={ensureProjectFilesPersistedBeforeLeaving}
         onRewardProposalAccepted={handleBuildReloadFromServer}
         release={release}
         rewardApprovalPrompt={rewardApprovalPrompt}

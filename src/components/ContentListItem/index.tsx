@@ -171,13 +171,18 @@ function ContentListItem({
       snapshotRewardLevel: rewardLevel,
       canonicalRewardLevel: contentState.rewardLevel
     }) ?? rewardLevel;
+  const resolvedPicturePath =
+    contentType === 'dailyReflection' &&
+    typeof contentState?.picturePath === 'string'
+      ? contentState.picturePath
+      : picturePath;
   const displayThumbUrl =
     thumbUrl ||
     thumbnailUrl ||
     (contentType === 'mission' && missionType
       ? returnMissionThumb(missionType)
-      : contentType === 'dailyReflection' && picturePath
-        ? `${cloudFrontURL}/${picturePath}`
+      : contentType === 'dailyReflection' && resolvedPicturePath
+        ? `${cloudFrontURL}/${resolvedPicturePath}`
         : undefined);
   const isBuildItem = contentType === 'build';
   const placeholderHeightKey = `list-item-${contentType}-${contentId}`;

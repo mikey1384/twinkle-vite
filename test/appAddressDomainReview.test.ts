@@ -15,30 +15,43 @@ test('AppAddress keys on build.id in Header and guards async mutations against b
   );
 
   const appAddress = readSrc('components/Build/AppAddress/index.tsx');
-  assert.match(appAddress, /const\s+buildIdRef\s*=\s*useRef\(buildId\)/);
-  assert.match(appAddress, /sameBuild:\s*\(\)\s*=>\s*mountedRef\.current\s*&&\s*buildIdRef\.current\s*===\s*reqBuildId/);
   assert.match(
     appAddress,
-    /current:\s*\(\)\s*=>\s*mountedRef\.current\s*&&\s*buildIdRef\.current\s*===\s*reqBuildId\s*&&\s*flowGenRef\.current\s*===\s*gen\s*&&\s*stepRef\.current\s*===\s*from/
+    /const\s+hereRef\s*=\s*useRef\(\{\s*buildId,\s*userId,\s*pathname:\s*location\.pathname,\s*mounted:\s*true\s*\}\)/
   );
-  assert.match(appAddress, /if\s*\(fresh\s*&&\s*request\.sameBuild\(\)\)\s*setInfo\(fresh\)/);
+  assert.match(
+    appAddress,
+    /sameScope:\s*\(\)\s*=>\s*hereRef\.current\.mounted\s*&&\s*hereRef\.current\.buildId\s*===\s*targetBuildId\s*&&\s*hereRef\.current\.userId\s*===\s*targetUserId/
+  );
+  assert.match(appAddress, /const\s+info\s*=\s*readScopedBuildData\(infoState,\s*buildId,\s*userId\)/);
+  assert.match(appAddress, /if\s*\(fresh\s*&&\s*action\.sameScope\(\)\)\s*\{\s*setInfoState\(/);
+
+  const checkout = readSrc('components/Build/AppAddress/DomainCheckoutPage.tsx');
+  assert.match(
+    checkout,
+    /current:\s*\(\)\s*=>\s*flowGenRef\.current\s*===\s*gen\s*&&\s*stepRef\.current\s*===\s*from/
+  );
 });
 
 test('removeDomain, removeElsewhere, and useHere isolate errors from checkout and surface failures during Rename', () => {
   const appAddress = readSrc('components/Build/AppAddress/index.tsx');
   const menuActions = appAddress.slice(
     appAddress.indexOf('async function removeDomain('),
-    appAddress.indexOf('async function checkConnect(')
+    appAddress.indexOf('async function saveRename(')
   );
   assert.ok(menuActions.length > 0);
   assert.doesNotMatch(menuActions, /\bsetError\(/);
   assert.equal(
-    (menuActions.match(/if\s*\(!request\.current\(\)\s*&&\s*!\(request\.sameBuild\(\)\s*&&\s*stepRef\.current\?\.kind\s*===\s*'rename'\)\)\s*return;/g) || []).length,
+    (menuActions.match(/if\s*\(action\.sameScope\(\)\)\s*setLeaveError\(e\?\.message\s*\|\|\s*t\.actionFailed\);/g) || []).length,
     3
   );
   assert.match(
     appAddress,
-    /\{actionError\s*&&\s*!checkoutOpen\s*&&\s*\(\s*<Modal\s+modalKey="AppAddressError"[\s\S]*?modalLevel=\{step\?\.kind\s*===\s*'rename'\s*\?\s*2\s*:\s*1\}/
+    /\{\(leaving\s*\|\|\s*leaveError\)\s*&&\s*\([\s\S]*?<div\s+className=\{leaveNoticeClass\}\s+role=\{leaveError\s*\?\s*'alert'\s*:\s*'status'\}\s+data-tone=\{leaveError\s*\?\s*'error'\s*:\s*undefined\}>/
+  );
+  assert.match(
+    appAddress,
+    /const\s+leaveNoticeClass\s*=\s*css`[\s\S]*?z-index:\s*10002000;/
   );
 });
 
@@ -57,10 +70,14 @@ test('HeaderMenu notifies onOpenChange on every close/open path and AddressMenuV
 });
 
 test('openOwnFlow relies on the guarded useEffect instead of issuing a duplicate loadDomainPurchase call', () => {
-  const appAddress = readSrc('components/Build/AppAddress/index.tsx');
-  const openOwnFlowMatch = appAddress.match(/function\s+openOwnFlow\(\)\s*\{([\s\S]*?)\n  \}/);
+  const checkout = readSrc('components/Build/AppAddress/DomainCheckoutPage.tsx');
+  const openOwnFlowMatch = checkout.match(/function\s+openOwnFlow\(\)\s*\{([\s\S]*?)\n  \}/);
   assert.ok(openOwnFlowMatch, 'openOwnFlow must exist');
   assert.doesNotMatch(openOwnFlowMatch[1], /loadDomainPurchase/);
+  assert.match(
+    checkout,
+    /useEffect\(\(\)\s*=>\s*\{\s*if\s*\(step\?\.kind\s*!==\s*'intro'\s*\|\|\s*purchase\)\s*return;\s*let\s+cancelled\s*=\s*false;\s*loadDomainPurchase\(\{\s*buildId\s*\}\)/
+  );
 });
 
 test('SelectBuildsModal and TransactionModal preserve async initialBuild.domains across selection', () => {

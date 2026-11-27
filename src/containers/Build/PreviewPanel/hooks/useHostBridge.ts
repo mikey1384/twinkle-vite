@@ -33,6 +33,10 @@ import {
   triggerGuestRestriction
 } from '../helpers/previewBridgeAuth';
 import {
+  buildPreviewBridgeErrorDetails,
+  isAiAccountBridgeRequestType
+} from '../helpers/previewBridgeErrors';
+import {
   getBuildRuntimeChatSubscriptionKey,
   normalizeBuildRuntimeWorldKey,
   normalizeBuildRuntimeChatRoomKey,
@@ -2975,7 +2979,19 @@ export function useHostBridge({
 
           case 'ai:decide':
           case 'ai:decide-images': {
-            if (!previewAuth.userIdRef.current) {
+            // A JEV decision is game logic, not an AI feature (Mikey
+            // 2026-11-26): a guest on a published public app decides too,
+            // through the public route (no account, no AI banner). Decisions
+            // that look at pictures stay a member feature.
+            const guestDecision =
+              type === 'ai:decide' && isGuestViewerActive(previewAuth);
+            if (!previewAuth.userIdRef.current && !guestDecision) {
+              if (type === 'ai:decide-images') {
+                triggerGuestRestriction(previewAuth, {
+                  code: 'twinkle_account_required',
+                  message: 'Image decisions require a Twinkle account.'
+                });
+              }
               triggerGuestRestriction(previewAuth);
             }
             // Preview: pictures arrive as upload URLs or Blob snapshots and
@@ -2989,6 +3005,12 @@ export function useHostBridge({
               buildId: activeBuild.id,
               state: payload.state,
               questions: payload.questions,
+              ...(guestDecision
+                ? {
+                    guest: true,
+                    guestSessionId: ensureGuestSessionId(previewAuth)
+                  }
+                : {}),
               ...(decisionImages ? { images: decisionImages } : {}),
               runtimeRelease: getAppInfoRelease({
                 runtimeOnly: runtimeOnlyRef.current,
@@ -6565,13 +6587,7 @@ export function useHostBridge({
         // Any twinkle_account_required refusal, whatever the request (AI,
         // character chat, newspaper, Word Master generation: audit G5); and
         // a guest's try at one of those AI requests.
-        const aiRequest =
-          typeof type === 'string' &&
-          (type.startsWith('ai:') ||
-            type === 'characters:chat' ||
-            type === 'news:generate' ||
-            type === 'content:word-master:korean-definition' ||
-            type === 'content:word-master:generate-entry');
+        const aiRequest = isAiAccountBridgeRequestType(type);
         if (
           error?.code === 'twinkle_account_required' ||
           (aiRequest && error?.code === 'guest_restricted')
@@ -6609,45 +6625,7 @@ export function useHostBridge({
             message: error?.message
           });
         }
-        const rawErrorDetails =
-          error && typeof error === 'object'
-            ? {
-                ...(typeof error.status === 'number'
-                  ? { status: error.status }
-                  : {}),
-                // handleError reports a request that got no HTTP response as
-                // status 500 with isTransportError. Pass the flag on so apps
-                // can tell "never reached the server" from a real 500.
-                ...(error.isTransportError === true
-                  ? { isTransportError: true }
-                  : {}),
-                ...(typeof error.code === 'string' ? { code: error.code } : {}),
-                ...(error.retryAfterSeconds != null
-                  ? { retryAfterSeconds: error.retryAfterSeconds }
-                  : {}),
-                ...(error.writeStatus
-                  ? { writeStatus: error.writeStatus }
-                  : {}),
-                ...(error.aiUsagePolicy
-                  ? { aiUsagePolicy: error.aiUsagePolicy }
-                  : {}),
-                ...(error.mediaEnergy
-                  ? { mediaEnergy: error.mediaEnergy }
-                  : {}),
-                ...(error.details && typeof error.details === 'object'
-                  ? error.details
-                  : {}),
-                ...((type === 'ai:decide' || type === 'ai:decide-images') &&
-                  typeof error.requestId === 'string' &&
-                  /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(error.requestId)
-                  ? { requestId: error.requestId }
-                  : {}),
-                ...(type === 'ai:decide-images' && typeof error.reason === 'string' &&
-                  /^[a-z_]{2,40}$/.test(error.reason)
-                  ? { reason: error.reason }
-                  : {})
-              }
-            : null;
+        const rawErrorDetails = buildPreviewBridgeErrorDetails(type, error);
         const errorDetails =
           sanitizeBuildAppAiUsagePolicyPayload(rawErrorDetails);
         sourceWindow.postMessage(

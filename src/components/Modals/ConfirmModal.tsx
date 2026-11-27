@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { Color } from '~/constants/css';
@@ -40,21 +40,27 @@ export default function ConfirmModal({
     fallback: 'blue'
   });
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const appliedConfirmColor =
     confirmButtonColor ||
     (doneColorKey && doneColorKey in Color ? doneColorKey : 'blue');
+  const handleClose = () => {
+    if (!submittingRef.current) onHide();
+  };
   return (
     <Modal
       modalKey="ConfirmModal"
       isOpen
       portalTarget={portalTarget}
-      onClose={onHide}
+      onClose={handleClose}
       hasHeader
       title={title}
       size="md"
       modalLevel={modalLevel ?? (modalOverModal ? 2 : undefined)}
       priority={modalOverModal}
-      closeOnBackdropClick
+      closeOnBackdropClick={!submitting}
+      closeOnEscape={!submitting}
+      showCloseButton={!submitting}
       footer={
         isReverseButtonOrder ? (
           <>
@@ -67,7 +73,7 @@ export default function ConfirmModal({
             >
               {confirmButtonLabel}
             </Button>
-            <Button variant="ghost" onClick={onHide}>
+            <Button variant="ghost" disabled={submitting} onClick={handleClose}>
               {cancelLabel}
             </Button>
           </>
@@ -75,8 +81,9 @@ export default function ConfirmModal({
           <>
             <Button
               variant="ghost"
+              disabled={submitting}
               style={{ marginRight: '0.7rem' }}
-              onClick={onHide}
+              onClick={handleClose}
             >
               {cancelLabel}
             </Button>
@@ -108,12 +115,15 @@ export default function ConfirmModal({
   );
 
   async function handleConfirm() {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     try {
       setSubmitting(true);
       await onConfirm();
     } catch (error) {
       console.error(error);
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }

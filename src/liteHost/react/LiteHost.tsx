@@ -49,6 +49,7 @@ import type {
   LiteAuthHost
 } from '~/containers/Build/PreviewPanel/types/previewHostBridgeTypes';
 import { createLiteCoinGate } from './liteCoins';
+import { watchAppPageUnload } from '~/helpers/buildAppLifecycle';
 
 export const LITE_HOST_BRIDGE_LOAD_ID = 'lumine-host';
 // useFrameManager's PREVIEW_BRIDGE_NONCE_REQUEST_TTL_MS
@@ -519,6 +520,10 @@ export function LiteHostBridge({
     guestLeaderboardsReadOnly: true,
     authHostRef
   });
+
+  // A reload or a closed tab: the app's latest place is asked for and kept
+  // before this page goes (buildAppLifecycle.ts watchAppPageUnload).
+  useEffect(() => watchAppPageUnload(), []);
 
   const onReadyRef = useRef(onReady);
   useEffect(() => {

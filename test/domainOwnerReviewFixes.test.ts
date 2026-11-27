@@ -14,29 +14,36 @@ test('TransactionModal syncs async initialBuild.domains into selectedBuilds and 
   );
 });
 
-test('AppAddress guards useHere/removeDomain/removeElsewhere, shows actionError modal on failure, and loads purchase for intro', () => {
+test('AppAddress guards useHere/removeDomain/removeElsewhere, shows alert banner on failure, and DomainCheckoutPage loads purchase for intro', () => {
   const src = readFileSync(
     new URL('../src/components/Build/AppAddress/index.tsx', import.meta.url),
     'utf8'
   );
+  const checkoutSrc = readFileSync(
+    new URL('../src/components/Build/AppAddress/DomainCheckoutPage.tsx', import.meta.url),
+    'utf8'
+  );
   const useHereBlock = src.match(/async function useHere\([\s\S]*?\n  \}/);
   assert.ok(useHereBlock, 'useHere handler must exist');
-  assert.match(useHereBlock[0], /claimRequest\('useHere'\)/);
-  assert.match(useHereBlock[0], /setActionError\(e\?\.message\s*\|\|\s*t\.actionFailed\)/);
+  assert.match(useHereBlock[0], /claimAction\('useHere'\)/);
+  assert.match(useHereBlock[0], /if\s*\(action\.sameScope\(\)\)\s*setLeaveError\(e\?\.message\s*\|\|\s*t\.actionFailed\)/);
   assert.doesNotMatch(useHereBlock[0], /setStep\(\{\s*kind:\s*'intro'\s*\}\)/);
 
   const removeDomainBlock = src.match(/async function removeDomain\([\s\S]*?\n  \}/);
   assert.ok(removeDomainBlock, 'removeDomain handler must exist');
-  assert.match(removeDomainBlock[0], /claimRequest\('removeDomain'\)/);
-  assert.match(removeDomainBlock[0], /setActionError\(e\?\.message\s*\|\|\s*t\.actionFailed\)/);
+  assert.match(removeDomainBlock[0], /claimAction\('removeDomain'\)/);
+  assert.match(removeDomainBlock[0], /if\s*\(action\.sameScope\(\)\)\s*setLeaveError\(e\?\.message\s*\|\|\s*t\.actionFailed\)/);
 
   const removeElsewhereBlock = src.match(/async function removeElsewhere\([\s\S]*?\n  \}/);
   assert.ok(removeElsewhereBlock, 'removeElsewhere handler must exist');
-  assert.match(removeElsewhereBlock[0], /claimRequest\('removeElsewhere'\)/);
-  assert.match(removeElsewhereBlock[0], /setActionError\(e\?\.message\s*\|\|\s*t\.actionFailed\)/);
+  assert.match(removeElsewhereBlock[0], /claimAction\('removeElsewhere'\)/);
+  assert.match(removeElsewhereBlock[0], /if\s*\(action\.sameScope\(\)\)\s*setLeaveError\(e\?\.message\s*\|\|\s*t\.actionFailed\)/);
 
-  assert.match(src, /\{actionError\s*&&\s*!checkoutOpen\s*&&\s*\(\s*<Modal[\s\S]*?modalKey="AppAddressError"[\s\S]*?role="alert"/);
-  assert.match(src, /if\s*\(step\?\.kind\s*!==\s*'intro'\s*\|\|\s*purchase/);
+  assert.match(
+    src,
+    /\{\(leaving\s*\|\|\s*leaveError\)\s*&&\s*\([\s\S]*?<div\s+className=\{leaveNoticeClass\}\s+role=\{leaveError\s*\?\s*'alert'\s*:\s*'status'\}/
+  );
+  assert.match(checkoutSrc, /if\s*\(step\?\.kind\s*!==\s*'intro'\s*\|\|\s*purchase\)/);
 });
 
 test('ADDRESS_TEXT handles blanked private app titles in onApp and removeFrom', () => {

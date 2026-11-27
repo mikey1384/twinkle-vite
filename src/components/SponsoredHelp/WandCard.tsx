@@ -19,7 +19,9 @@ import {
   confirmAllPlanHashes,
   followUpNotice,
   objectiveActions,
+  confirmOpenState,
   objectiveStateLabel,
+  projectOpenNavState,
   sponsoredHelpPersonaName,
   sponsoredHelpResultLabel,
   sponsoredHelpStepLabel,
@@ -30,6 +32,8 @@ import {
   type SponsoredHelpObjectiveView
 } from '~/helpers/sponsoredHelp';
 import WandChoice from './WandChoice';
+import WandActionBar, { WandQuietButton } from './WandActionBar';
+import { resolveWandActions } from './wandActions';
 
 type Place = 'dm' | 'comment' | 'assistant';
 
@@ -396,13 +400,17 @@ export default function WandCard({
             variant={buttonVariant}
             size="sm"
             icon="arrow-right"
-            onClick={() =>
-              objective.result?.buildId
-                ? navigate(`/build/${objective.result.buildId}`, {
-                    state: { initialPrompt: objective.result.idea || project?.idea || '' }
-                  })
-                : navigate(String(objective.result?.path || '/'))
-            }
+            onClick={() => {
+              if (!objective.result?.buildId) return navigate(String(objective.result?.path || '/'));
+              // opening never starts a run the member didn't choose: the idea
+              // is sent only on Twinkle's free first run, otherwise it waits
+              // unsent in the message box
+              const state = projectOpenNavState({
+                ...objective.result,
+                idea: objective.result.idea || project?.idea || ''
+              });
+              navigate(`/build/${objective.result.buildId}`, state ? { state } : undefined);
+            }}
           >
             {objective.result?.buildId ? `Open “${objective.result.buildTitle}”` : sponsoredHelpResultLabel(objective.result)}
           </GameCTAButton>
@@ -479,63 +487,45 @@ export default function WandCard({
     );
   }
 
+  // The card's actions in the shared wand model (wandActions.ts): the main
+  // button runs every objective (Do all of these, or Confirm all in the
+  // member's own chat), the backup is No thanks. The objectives are the
+  // chapters: each row above has its own start button, so the bar draws no
+  // chips of its own here.
   function renderCardActions() {
-    const buttons: React.ReactNode[] = [];
-    if (actions.confirmAll) {
-      buttons.push(
-        <GameCTAButton
-          key="confirm-all"
-          variant={buttonVariant}
-          size="md"
-          icon="check"
-          loading={working === 'confirm-all'}
-          onClick={handleConfirmAll}
-        >
-          Confirm all
-        </GameCTAButton>
-      );
-    }
-    if (actions.doAll) {
-      buttons.push(
-        <GameCTAButton
-          key="do-all"
-          variant={buttonVariant}
-          size="md"
-          icon="wand-magic-sparkles"
-          loading={working === 'do-all'}
-          onClick={handleDoAll}
-        >
-          Do all of these
-        </GameCTAButton>
-      );
-    }
-    if (actions.noThanks) {
-      buttons.push(
-        <GameCTAButton
-          key="no-thanks"
-          variant="neutral"
-          size="md"
-          loading={working === 'no-thanks'}
-          onClick={() => run('no-thanks', () => declineSponsoredHelpCard(card.cardId))}
-        >
-          No thanks
-        </GameCTAButton>
-      );
-    }
-    if (actions.takeBack) {
-      buttons.push(
-        <GameCTAButton
-          key="take-back"
-          variant="neutral"
-          size="md"
-          loading={working === 'take-back'}
-          onClick={() => run('take-back', () => cancelSponsoredHelpCard(card.cardId))}
-        >
-          Take back
-        </GameCTAButton>
-      );
-    }
-    return buttons.length ? <>{buttons}</> : null;
+    const model = resolveWandActions(card.actions, {
+      mainAction: { label: 'Do all of these', runs: 'all' },
+      backup: { label: 'No thanks', action: 'decline' }
+    });
+    const main = actions.confirmAll
+      ? { label: 'Confirm all', icon: 'check', loading: working === 'confirm-all', onClick: handleConfirmAll }
+      : actions.doAll
+        ? { label: undefined, icon: 'wand-magic-sparkles', loading: working === 'do-all', onClick: handleDoAll }
+        : null;
+    return (
+      <WandActionBar
+        model={model}
+        variant={buttonVariant}
+        mainLabel={main?.label}
+        mainIcon={main?.icon}
+        mainLoading={!!main?.loading}
+        onMain={main?.onClick}
+        onBackup={
+          actions.noThanks ? () => run('no-thanks', () => declineSponsoredHelpCard(card.cardId)) : undefined
+        }
+        backupLoading={working === 'no-thanks'}
+        extras={
+          actions.takeBack ? (
+            <WandQuietButton
+              loading={working === 'take-back'}
+              onClick={() => run('take-back', () => cancelSponsoredHelpCard(card.cardId))}
+            >
+              Take back
+            </WandQuietButton>
+          ) : null
+        }
+      />
+    );
   }
 
   async function run(label: string, action: () => Promise<any>) {
@@ -613,7 +603,7 @@ export default function WandCard({
 
   function followClientAction(action: any) {
     if (action?.type === 'open_build' && action.buildId) {
-      navigate(`/build/${action.buildId}`, { state: { initialPrompt: action.initialPrompt } });
+      navigate(`/build/${action.buildId}`, { state: confirmOpenState(action) });
     } else if (action?.type === 'navigate' && action.path) {
       navigate(action.path);
     }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import AppAddress from '~/components/Build/AppAddress';
+import AppAddress, { AppAddressProgressNotice } from '~/components/Build/AppAddress';
 import { css } from '@emotion/css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
@@ -421,6 +421,8 @@ interface HeaderProps {
   onOpenDescriptionModal: () => void;
   onOpenThumbnailModal: () => void;
   onSaveRewardCode: () => Promise<boolean>;
+  // saves unsaved files before leaving for the web-address checkout page
+  onSaveBeforeLeaving?: () => Promise<boolean>;
   // Accepting an admin proposal rewrote the saved app on the server.
   onRewardProposalAccepted?: () => void | Promise<void>;
   rewardApprovalPrompt: number;
@@ -657,6 +659,7 @@ export default function Header({
   onOpenDescriptionModal,
   onOpenThumbnailModal,
   onSaveRewardCode,
+  onSaveBeforeLeaving,
   rewardApprovalPrompt,
   reviewRequestLimits,
   release,
@@ -1281,6 +1284,8 @@ export default function Header({
             buildId={Number(build.id)}
             isOwner={Boolean(isOwner)}
             appTitle={String(build.title || '')}
+            hasUnsavedChanges={hasUnsavedRewardChanges}
+            onSaveChanges={onSaveBeforeLeaving || onSaveRewardCode}
           >
             {rewardChip}
           </AppAddress>
@@ -1288,6 +1293,10 @@ export default function Header({
           rewardChip
         )}
       </div>
+      {build.isPublic && contributionStatus === 'none' ? (
+        // the domain buyer's purchase under way: Setting up… / 1 step left
+        <AppAddressProgressNotice buildId={Number(build.id)} isOwner={Boolean(isOwner)} />
+      ) : null}
       {isOwner && build.rewardReviewProposal ? (
         <div className={proposalNoticeClass} role="status">
           <span>

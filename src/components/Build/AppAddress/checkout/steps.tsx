@@ -1,27 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css, keyframes } from '@emotion/css';
 import LumineAtWork from '~/containers/Build/PreviewPanel/LumineAtWork';
 import Confetti from '~/containers/Build/Editor/ChatPanel/Roadmap/Confetti';
 import type { AddressText } from '../text';
 import { toE164, type PhoneDraft } from './phone';
-import { isKnownCountry } from './countries';
+import { STATE_OPTIONAL, countryInStateField, isAutofillChange, guessCountry, isKnownCountry } from './countries';
 import {
   usd,
   krw,
   ownerDetailsProblem,
+  shouldAutoVerifyCode,
   type DnsRecordView,
   type DomainIdeaView,
   type DomainOrderView,
+  type DomainProgressView,
   type OwnerDetails
 } from './model';
+import { stepLabel, VerifyNudge } from './progress';
 import {
   T,
   CheckIcon,
   CHECKOUT_TITLE_ID,
   CheckoutLayout,
+  DomainText,
   Companion,
   focusFirstInvalid,
-  CountrySelect,
+  CountryField,
   FieldGrid,
   MobileSummary,
   Notice,
@@ -37,7 +41,6 @@ import {
   SummaryCard,
   TextButton,
   TextField,
-  selectClass,
   textButtonClass,
   type CheckoutProgress
 } from './ui';
@@ -317,7 +320,9 @@ export function FindView({
                         {t.bestMatch}
                       </span>
                     )}
-                    <span className={resultDomainClass}>{idea.domain}</span>
+                    <span className={resultDomainClass}>
+                      <DomainText domain={idea.domain} />
+                    </span>
                   </span>
                   <span className={resultPriceClass}>
                     <b>{usd(idea.priceCents)}</b>
@@ -368,6 +373,18 @@ type OwnerPage = 0 | 1 | 2 | 3;
 // Adults buying for their own app: they are the legal owner, so they type
 // their own details (name, contact, address: one small screen each), check
 // it all once, then pay on Stripe. One price, nothing pre-ticked.
+export interface EmailCheck {
+  // the email on screen is confirmed (the account's verified email, or a code)
+  verified: boolean;
+  // the (lowercased) email the last code went to
+  sentTo: string;
+  sending: boolean;
+  verifying: boolean;
+  problem: string;
+  onSend: () => void;
+  onVerify: (code: string) => void;
+}
+
 export function OwnerDetailsView({
   t,
   assistant,
@@ -384,9 +401,13 @@ export function OwnerDetailsView({
   onBack,
   phoneDraft,
   onPhoneDraft,
-  startPage = 0
+  startPage = 0,
+  emailCheck
 }: StepBase & {
   idea: DomainIdeaView;
+  // the owner's email must be confirmed before payment: their verified
+  // Twinkle email, or a one-time code (left out: nothing to confirm)
+  emailCheck?: EmailCheck;
   details: OwnerDetails;
   // the phone as typed (calling code + number); details.phone is its E.164
   phoneDraft: PhoneDraft;
@@ -395,7 +416,8 @@ export function OwnerDetailsView({
   renews: boolean;
   busy: boolean;
   problem: string;
-  onDetails: (details: OwnerDetails) => void;
+  // takes an updater, so autofill's several changes in a row all land
+  onDetails: React.Dispatch<React.SetStateAction<OwnerDetails>>;
   onAgree: (agreed: boolean) => void;
   onPay: () => void;
   onBack: () => void;
@@ -403,19 +425,45 @@ export function OwnerDetailsView({
 }) {
   const [page, setPage] = useState<OwnerPage>(startPage);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
-  const set = (key: keyof OwnerDetails) => (value: string) => onDetails({ ...details, [key]: value });
+  const [code, setCode] = useState('');
+  const lastSubmittedCodeRef = useRef('');
+  const normalizedEmail = details.email.trim().toLowerCase();
+  const prevEmailRef = useRef(normalizedEmail);
+  const emailVerified = !emailCheck || emailCheck.verified;
+  const emailFormatOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim());
+  const codeSent = Boolean(emailCheck?.sentTo) && emailCheck?.sentTo === normalizedEmail;
+  useEffect(() => {
+    if (prevEmailRef.current === normalizedEmail) return;
+    prevEmailRef.current = normalizedEmail;
+    setCode('');
+    lastSubmittedCodeRef.current = '';
+  }, [normalizedEmail]);
+  useEffect(() => {
+    if (!codeSent) {
+      setCode('');
+      lastSubmittedCodeRef.current = '';
+    }
+  }, [codeSent]);
+  const set = (key: keyof OwnerDetails) => (value: string) => onDetails((prev) => ({ ...prev, [key]: value }));
+  // a country's name autofilled into State moves to Country (typing stays)
+  const setState = (value: string, event?: Event) => {
+    const country = countryInStateField(value, { autofilled: isAutofillChange(event) });
+    if (country) onDetails((prev) => ({ ...prev, country, state: '' }));
+    else set('state')(value);
+  };
+  const stateOptional = STATE_OPTIONAL.has(details.country.toUpperCase());
   const required = (key: keyof OwnerDetails) => (details[key].trim() ? '' : t.fieldRequired);
   const pageErrors: Record<OwnerPage, Partial<Record<keyof OwnerDetails, string>>> = {
     0: { firstName: required('firstName'), lastName: required('lastName') },
     1: {
-      email: !details.email.trim() ? t.fieldRequired : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim()) ? '' : t.emailInvalid,
+      email: !details.email.trim() ? t.fieldRequired : !emailFormatOk ? t.emailInvalid : emailVerified ? '' : t.emailNeedsConfirm,
       phone: toE164(phoneDraft) ? '' : t.phoneInvalid
     },
     2: {
       country: isKnownCountry(details.country) ? '' : t.fieldRequired,
       address1: required('address1'),
       city: required('city'),
-      state: required('state'),
+      state: stateOptional ? '' : required('state'),
       zip: required('zip')
     },
     3: {}
@@ -424,9 +472,24 @@ export function OwnerDetailsView({
   const errors = errorsFor(page);
   const pageValid = (target: OwnerPage) => Object.values(pageErrors[target]).every((value) => !value);
   const missing = ownerDetailsProblem(t, details);
-  const canPay = !missing && agreed && !busy;
+  const canPay = !missing && agreed && !busy && emailVerified;
 
   function next() {
+    // Enter in the code box confirms a new 6-digit code, but never re-submits one that already failed
+    if (
+      page === 1 &&
+      emailCheck &&
+      !emailCheck.verified &&
+      codeSent &&
+      code.length === 6 &&
+      !emailCheck.verifying &&
+      !emailCheck.sending &&
+      code !== lastSubmittedCodeRef.current
+    ) {
+      lastSubmittedCodeRef.current = code;
+      emailCheck.onVerify(code);
+      return;
+    }
     if (!pageValid(page)) {
       setChecked((prev) => ({ ...prev, [page]: true }));
       focusFirstInvalid();
@@ -475,37 +538,123 @@ export function OwnerDetailsView({
       >
         {page === 0 && (
           <FieldGrid>
-            <TextField label={t.firstName} value={details.firstName} onChange={set('firstName')} autoComplete="given-name" error={errors.firstName} autoFocus />
-            <TextField label={t.lastName} value={details.lastName} onChange={set('lastName')} autoComplete="family-name" error={errors.lastName} />
+            <TextField label={t.firstName} name="given-name" value={details.firstName} onChange={set('firstName')} autoComplete="given-name" error={errors.firstName} autoFocus />
+            <TextField label={t.lastName} name="family-name" value={details.lastName} onChange={set('lastName')} autoComplete="family-name" error={errors.lastName} />
           </FieldGrid>
         )}
         {page === 1 && (
           <div className={stackClass}>
-            <TextField label={t.email} type="email" inputMode="email" value={details.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="you@example.com" autoFocus />
+            <div className={emailStackClass}>
+              <TextField label={t.email} name="email" type="email" inputMode="email" value={details.email} onChange={set('email')} autoComplete="email" error={errors.email} placeholder="you@example.com" autoFocus />
+              {emailCheck && emailFormatOk ? (
+                emailCheck.verified ? (
+                  <p className={emailConfirmedClass}>
+                    <CheckIcon size={14} color={T.green} />
+                    {t.emailConfirmed}
+                  </p>
+                ) : codeSent ? (
+                  <div className={codeBoxClass}>
+                    <p>{t.codeSentTo(details.email.trim())}</p>
+                    <div className={codeRowClass}>
+                      <TextField
+                        label={t.codeLabel}
+                        value={code}
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        placeholder="123456"
+                        onChange={(value) => {
+                          const digits = value.replace(/\D/g, '').slice(0, 6);
+                          if (digits === code) return;
+                          setCode(digits);
+                          if (
+                            shouldAutoVerifyCode(
+                              digits,
+                              code,
+                              lastSubmittedCodeRef.current,
+                              emailCheck.verifying || emailCheck.sending
+                            )
+                          ) {
+                            lastSubmittedCodeRef.current = digits;
+                            emailCheck.onVerify(digits);
+                          }
+                        }}
+                      />
+                      <PrimaryButton
+                        busy={emailCheck.verifying}
+                        disabled={code.length !== 6 || emailCheck.sending}
+                        onClick={() => {
+                          if (emailCheck.verifying || emailCheck.sending || code.length !== 6) return;
+                          lastSubmittedCodeRef.current = code;
+                          emailCheck.onVerify(code);
+                        }}
+                      >
+                        {t.confirmCode}
+                      </PrimaryButton>
+                    </div>
+                    <TextButton
+                      onClick={() => {
+                        if (emailCheck.sending) return;
+                        setCode('');
+                        lastSubmittedCodeRef.current = '';
+                        emailCheck.onSend();
+                      }}
+                    >
+                      {emailCheck.sending ? t.sendingCode : t.sendAgain}
+                    </TextButton>
+                  </div>
+                ) : (
+                  <div className={codeBoxClass}>
+                    <p>{t.emailCodeLead}</p>
+                    <div>
+                      <SecondaryButton disabled={emailCheck.sending} onClick={emailCheck.onSend}>
+                        {emailCheck.sending ? t.sendingCode : t.sendCode}
+                      </SecondaryButton>
+                    </div>
+                  </div>
+                )
+              ) : null}
+              {emailCheck?.problem && !emailCheck.verified ? <Notice tone="error">{emailCheck.problem}</Notice> : null}
+            </div>
             <PhoneField
               label={t.phone}
               dialLabel={t.dialCode}
               draft={phoneDraft}
               onChange={(draft) => {
                 onPhoneDraft(draft);
-                onDetails({ ...details, phone: toE164(draft) });
+                onDetails((prev) => ({ ...prev, phone: toE164(draft) }));
               }}
               error={errors.phone}
+              hint={t.phoneWhy}
             />
           </div>
         )}
         {page === 2 && (
           <FieldGrid>
-            <div data-span="2" className={countryFieldClass}>
-              <span>{t.country}</span>
-              <CountrySelect value={details.country} onChange={set('country')} label={t.country} className={selectClass} error={errors.country} />
+            <div data-span="2">
+              <CountryField
+                label={t.country}
+                value={details.country}
+                onChange={set('country')}
+                error={errors.country}
+                detected={guessCountry()}
+                searchPlaceholder={t.countrySearch}
+                noMatch={t.countryNoMatch}
+                closeLabel={t.close}
+              />
             </div>
             <div data-span="2">
-              <TextField label={t.address1} value={details.address1} onChange={set('address1')} autoComplete="street-address" error={errors.address1} />
+              <TextField label={t.address1} name="address-line1" value={details.address1} onChange={set('address1')} autoComplete="address-line1" error={errors.address1} />
             </div>
-            <TextField label={t.city} value={details.city} onChange={set('city')} autoComplete="address-level2" error={errors.city} />
-            <TextField label={t.state} value={details.state} onChange={set('state')} autoComplete="address-level1" error={errors.state} />
-            <TextField label={t.zip} value={details.zip} onChange={set('zip')} autoComplete="postal-code" error={errors.zip} />
+            <TextField label={t.city} name="address-level2" value={details.city} onChange={set('city')} autoComplete="address-level2" error={errors.city} />
+            <TextField
+              label={stateOptional ? t.stateOptional : t.state}
+              name="address-level1"
+              value={details.state}
+              onChange={setState}
+              autoComplete="address-level1"
+              error={errors.state}
+            />
+            <TextField label={t.zip} name="postal-code" value={details.zip} onChange={set('zip')} autoComplete="postal-code" error={errors.zip} />
           </FieldGrid>
         )}
         {page === 3 && (
@@ -552,6 +701,7 @@ export function OwnerDetailsView({
 }
 
 // ---------------------------------------------------------------- under 18
+
 
 export function ParentRequestView({
   t,
@@ -660,6 +810,7 @@ export function GoingLiveView({
   title,
   body,
   priceCents,
+  progress,
   onClose
 }: StepBase & {
   domain: string;
@@ -667,11 +818,20 @@ export function GoingLiveView({
   priceCents?: number;
   // how many of Paid, Registered, Secure, Live are done (from the order)
   reached: number;
+  // the tracker's five steps (with Email confirmed) once the server has them
+  progress?: DomainProgressView | null;
   title?: string;
   body?: string;
   onClose: () => void;
 }) {
-  const steps = [t.stepPaid, t.stepRegistered, t.stepSecure, t.stepLive];
+  const fallback = [t.stepPaid, t.stepRegistered, t.stepSecure, t.stepLive].map((label, index) => ({
+    label,
+    state: index < reached ? 'done' : index === reached ? 'current' : 'todo'
+  }));
+  const steps = progress?.steps.length
+    ? progress.steps.map((step) => ({ label: stepLabel(t, step.key, step.state), state: step.state as string }))
+    : fallback;
+  const currentStep = steps.find((step) => step.state === 'current' || step.state === 'problem') || steps[steps.length - 1];
   return (
     <CheckoutLayout
       stepKey={`going-live-${reached}`}
@@ -691,20 +851,17 @@ export function GoingLiveView({
           <LumineAtWork variant="toast" mode="working" />
         </div>
         <p className={srOnlyClass} role="status">
-          {steps[Math.min(reached, steps.length - 1)]}
+          {currentStep?.label}
         </p>
         <ol className={liveStepsClass} aria-label={title || t.settingUpTitle(domain)}>
-          {steps.map((label, index) => {
-            const state = index < reached ? 'done' : index === reached ? 'current' : 'todo';
-            return (
-              <li key={label} data-state={state} aria-current={state === 'current' ? 'step' : undefined}>
-                <span className={liveDotClass} aria-hidden="true">
-                  {state === 'done' ? <CheckIcon size={14} color="#fff" /> : state === 'current' ? <StarMark size={12} /> : index + 1}
-                </span>
-                <span>{label}</span>
-              </li>
-            );
-          })}
+          {steps.map(({ label, state }, index) => (
+            <li key={label} data-state={state} aria-current={state === 'current' ? 'step' : undefined}>
+              <span className={liveDotClass} aria-hidden="true">
+                {state === 'done' ? <CheckIcon size={14} color="#fff" /> : state === 'current' ? <StarMark size={12} /> : state === 'problem' ? '!' : index + 1}
+              </span>
+              <span>{label}</span>
+            </li>
+          ))}
         </ol>
       </div>
       <p className={bodyTextClass}>{body || t.settingUpBody}</p>
@@ -718,6 +875,7 @@ export function LiveView({
   assistant,
   domain,
   note,
+  extra,
   priceCents,
   onOpen,
   onShare,
@@ -725,6 +883,8 @@ export function LiveView({
 }: StepBase & {
   domain: string;
   note?: string;
+  // below the note: the Name.com confirmation nudge with Resend
+  extra?: React.ReactNode;
   priceCents?: number;
   onOpen: () => void;
   // resolves true when the link was copied (no share sheet on this device)
@@ -770,6 +930,7 @@ export function LiveView({
         </p>
       </div>
       {note && <Notice tone="warm">{note}</Notice>}
+      {extra}
     </CheckoutLayout>
   );
 }
@@ -791,12 +952,17 @@ export function OrderStatusView({
   order,
   cancelledReturn = false,
   refreshError = '',
+  progress = null,
+  buildId = 0,
   onOpen,
   onShare,
   onTryAgain,
   onClose
 }: StepBase & {
   order: DomainOrderView;
+  // the tracker for this order (five steps, the Name.com confirmation)
+  progress?: DomainProgressView | null;
+  buildId?: number;
   // back from Stripe's cancel link: the member left without paying
   cancelledReturn?: boolean;
   // the last refresh failed (the screen keeps the order's last known stage)
@@ -807,7 +973,30 @@ export function OrderStatusView({
   onClose: () => void;
 }) {
   if (order.stage === 'live') {
-    return <LiveView t={t} assistant={assistant} domain={order.domain} priceCents={order.priceCents} note={t.confirmEmailNote} onOpen={onOpen} onShare={onShare} onDone={onClose} />;
+    // "1 step left: confirm your email" with days left and Resend; nothing
+    // once Name.com has it confirmed; the general note until we know
+    const pending = progress?.verification?.state === 'pending';
+    const verified = progress?.verification?.state === 'verified';
+    return (
+      <LiveView
+        t={t}
+        assistant={assistant}
+        domain={order.domain}
+        priceCents={order.priceCents}
+        note={pending || verified ? undefined : t.confirmEmailNote}
+        extra={
+          pending && progress ? (
+            <>
+              <h2 className={subheadClass}>{t.oneStepTitle}</h2>
+              <VerifyNudge t={t} buildId={buildId} progress={progress} />
+            </>
+          ) : null
+        }
+        onOpen={onOpen}
+        onShare={onShare}
+        onDone={onClose}
+      />
+    );
   }
   if (order.stage === 'refunded') {
     const why =
@@ -878,6 +1067,7 @@ export function OrderStatusView({
       domain={order.domain}
       priceCents={order.priceCents}
       reached={order.status === 'registered' ? 2 : 1}
+      progress={progress}
       onClose={onClose}
     />
   );
@@ -1042,6 +1232,7 @@ const bodyTextClass = css`
   color: ${T.body};
   font-size: 16px;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 `;
 const mutedTextClass = css`
   margin: 0 0 16px;
@@ -1060,6 +1251,59 @@ const askRowClass = css`
   align-items: center;
   gap: 10px;
   margin: 18px 0 0;
+`;
+const emailStackClass = css`
+  display: grid;
+  gap: 10px;
+`;
+const emailConfirmedClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -4px 0 0;
+  color: ${T.green};
+  font-size: 14px;
+  font-weight: 700;
+`;
+const codeBoxClass = css`
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: ${T.blueTint};
+  p {
+    margin: 0;
+    color: ${T.body};
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  > button {
+    justify-self: start;
+  }
+`;
+const codeRowClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  > :first-child {
+    flex: 1 1 180px;
+    min-width: 0;
+  }
+  > button {
+    flex: none;
+  }
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+    > :first-child {
+      flex: none;
+    }
+    > button {
+      width: 100%;
+    }
+  }
 `;
 const stackClass = css`
   display: grid;
@@ -1293,7 +1537,12 @@ const resultDomainClass = css`
   font-size: 18px;
   font-weight: 760;
   letter-spacing: -0.01em;
+  /* breaks after a dot or hyphen (DomainText's <wbr>); a long label
+     with neither breaks where it must, never overflowing the column */
+  min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
+  word-break: normal;
 `;
 const resultPriceClass = css`
   flex: none;
@@ -1313,15 +1562,6 @@ const resultPriceClass = css`
 const resultRevealClass = css`
   padding: 0 16px 12px 54px;
   margin-top: -10px;
-`;
-const countryFieldClass = css`
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  > span:first-child {
-    font-size: 14.5px;
-    font-weight: 700;
-  }
 `;
 const reviewListClass = css`
   margin: 0;
@@ -1520,6 +1760,9 @@ const liveStepsClass = css`
   li[data-state='current'] {
     color: #fff3c4;
   }
+  li[data-state='problem'] {
+    color: #fcd34d;
+  }
 `;
 const liveDotClass = css`
   flex: none;
@@ -1540,6 +1783,10 @@ const liveDotClass = css`
     background: ${T.violet};
     color: #fff3c4;
     animation: ${pulse} 1.6s ease-in-out infinite;
+  }
+  [data-state='problem'] > & {
+    background: #f59e0b;
+    color: #fff;
   }
   @media (prefers-reduced-motion: reduce) {
     [data-state='current'] > & {
