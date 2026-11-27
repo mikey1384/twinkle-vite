@@ -829,4 +829,22 @@ test('host bridge and lite host isolate lifecycle keys across identity reload, m
     useHostBridgeSource,
     /loadAppLifecycleSnapshot\([\s\S]*?backup: payload\?\.lifecycleBackup,[\s\S]*?buildId: activeBuild\.id,[\s\S]*?runId[\s\S]*?isAppLifecycleRunClosed\(runId\)/m
   );
+
+  // Round-2 Finding 1: KeepAliveHost reconciles background auth teardown in useLayoutEffect
+  // (before child viewer:update passive effects run) and clears frame backups on auth changes.
+  assert.match(
+    keepAliveSource,
+    /useLayoutEffect\(\(\) => \{\s*if \(!isRuntimeRoute \|\| !activeBuildId\) return;[\s\S]*?existingForAuth\.userId !== currentUserId[\s\S]*?clearAppLifecycleFrameBackup\(existingForAuth\.buildId\);/m
+  );
+  assert.match(
+    keepAliveSource,
+    /useLayoutEffect\(\(\) => \{\s*for \(const s of sessionsRef\.current\) \{[\s\S]*?s\.userId && \(!currentUserId \|\| s\.userId !== currentUserId\)[\s\S]*?clearAppLifecycleFrameBackup\(s\.buildId\);[\s\S]*?setSessions\(\(current\) => \{[\s\S]*?\[activeBuildId, currentUserId, isRuntimeRoute\]\);/m
+  );
+
+  // Round-2 Finding 2: init recomputes lifecycleKey from live refs after awaiting IndexedDB
+  // and discards stale resume state if viewer, source, or mount changed mid-init.
+  assert.match(
+    useHostBridgeSource,
+    /isAppLifecycleRunClosed\(runId\)[\s\S]*?!appLifecycleSourceRef\.current \|\|\s*captureScratchRef\.current[\s\S]*?const currentLifecycleKey = appLifecycleKey\(\{\s*userId: userIdForLifecycleRef\.current,\s*buildId: activeBuild\.id,\s*source: appLifecycleSourceRef\.current,\s*mount: mountContextRef\.current\s*\}\);[\s\S]*?if \(currentLifecycleKey !== lifecycleKey\) \{\s*lifecycleResume = null;\s*lifecycleContext = \{\s*\.\.\.lifecycleContext,\s*key: currentLifecycleKey\s*\};/m
+  );
 });

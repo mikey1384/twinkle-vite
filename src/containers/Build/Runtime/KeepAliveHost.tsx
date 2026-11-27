@@ -44,6 +44,7 @@ import { isMobile } from '~/helpers';
 import { useToast } from '~/contexts/Toast';
 import { notePageDeathApps } from '~/helpers/pageDeathTracker';
 import {
+  clearAppLifecycleFrameBackup,
   forgetAppLifecycleSnapshots,
   forgetRunningApp,
   markAppClosed,
@@ -257,6 +258,16 @@ export default function BuildRuntimeKeepAliveHost() {
 
   useLayoutEffect(() => {
     if (!isRuntimeRoute || !activeBuildId) return;
+    const existingForAuth = sessionsRef.current.find(
+      (s) => s.buildId === activeBuildId
+    );
+    if (
+      existingForAuth &&
+      !!existingForAuth.userId &&
+      existingForAuth.userId !== currentUserId
+    ) {
+      clearAppLifecycleFrameBackup(existingForAuth.buildId);
+    }
     setSessions((current) => {
       const existing = current.find((s) => s.buildId === activeBuildId);
       if (!existing) {
@@ -452,10 +463,18 @@ export default function BuildRuntimeKeepAliveHost() {
 
   // Auth reconciliation (mirrors the single-session version, applied per
   // session): adopt the current user for anon sessions; drop any background
-  // session that belongs to a now-signed-out or different user. The active
-  // runtime session is reconciled by the layout effect above so it can be
-  // replaced in-place without blanking the visible route.
-  useEffect(() => {
+  // session that belongs to a now-signed-out or different user. Runs in a
+  // layout effect so departing sessions unmount before child passive effects
+  // (viewer:update / handleMessage) can re-tag their frames with the new user.
+  useLayoutEffect(() => {
+    for (const s of sessionsRef.current) {
+      if (isRuntimeRoute && Number(s.buildId) === Number(activeBuildId)) {
+        continue;
+      }
+      if (s.userId && (!currentUserId || s.userId !== currentUserId)) {
+        clearAppLifecycleFrameBackup(s.buildId);
+      }
+    }
     setSessions((current) => {
       let changed = false;
       const next: RuntimeSession[] = [];

@@ -2785,10 +2785,26 @@ export function useHostBridge({
               if (
                 isAppClosed(activeBuild.id) ||
                 isAppLifecycleRunClosed(runId) ||
-                authHostRef?.current?.isReloadingForIdentity?.()
+                authHostRef?.current?.isReloadingForIdentity?.() ||
+                !appLifecycleSourceRef.current ||
+                captureScratchRef.current
               ) {
                 lifecycleResume = null;
                 lifecycleContext = null;
+              } else {
+                const currentLifecycleKey = appLifecycleKey({
+                  userId: userIdForLifecycleRef.current,
+                  buildId: activeBuild.id,
+                  source: appLifecycleSourceRef.current,
+                  mount: mountContextRef.current
+                });
+                if (currentLifecycleKey !== lifecycleKey) {
+                  lifecycleResume = null;
+                  lifecycleContext = {
+                    ...lifecycleContext,
+                    key: currentLifecycleKey
+                  };
+                }
               }
             }
             response = {
