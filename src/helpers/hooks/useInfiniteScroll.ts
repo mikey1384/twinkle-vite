@@ -17,6 +17,8 @@ export default function useInfiniteScroll({
   const scrollHeightRef = useRef(0);
   const scrollPositionRef = useRef({ desktop: 0, mobile: 0 });
   const timerRef: React.RefObject<any> = useRef(0);
+  const onScrollToBottomRef = useRef(onScrollToBottom);
+  onScrollToBottomRef.current = onScrollToBottom;
 
   useEffect(() => {
     addEvent(window, 'scroll', onScroll);
@@ -49,7 +51,7 @@ export default function useInfiniteScroll({
             if (!loadingRef.current) {
               loadingRef.current = true;
               try {
-                await onScrollToBottom();
+                await onScrollToBottomRef.current();
               } finally {
                 // A rejected page request must not permanently latch every
                 // later bottom-scroll attempt until the component remounts.
@@ -66,7 +68,7 @@ export default function useInfiniteScroll({
       removeEvent(window, 'scroll', onScroll);
       removeEvent(document.getElementById('App'), 'scroll', onScroll);
     };
-  }, [onScrollToBottom, scrollable]);
+  }, [scrollable]);
 
   useEffect(() => {
     if (feedsLength < prevFeedsLength.current) {

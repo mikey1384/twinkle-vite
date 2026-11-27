@@ -191,6 +191,14 @@ export const ADDRESS_TEXT = {
     zip: 'Postal code',
     country: 'Country',
     confirmOwner: 'These are my own details, and I’m buying this address for my own app.',
+    savedLead: 'We filled these in from your last address. Check them, or tap Edit to change anything.',
+    savedNote: 'Saved for next time',
+    saveNextNote: 'We’ll save these for your next address',
+    notSavedNote: 'Not saved for next time',
+    savedForget: 'Forget',
+    dontSave: 'Don’t save',
+    forgetting: 'Forgetting…',
+    forgetFailed: 'Couldn’t forget them just now. Please try again.',
     payButton: (price: string) => `Continue to payment · ${price}`,
     payNote: 'You pay on Stripe. If we can’t register the address, you get a full refund automatically.',
     opening: 'Opening payment…',
@@ -223,6 +231,18 @@ export const ADDRESS_TEXT = {
     supportTitle: (domain: string) => `We’re looking into ${domain}`,
     supportBody: 'Your payment went through and something needs a person’s look before your address is ready. We’re on it; your free address keeps working meanwhile.',
     removeConfirm: 'Tap again to remove (the app stops opening there)',
+    // domains are their buyer's, whoever owns the app (ruling 11-26)
+    ownedBy: (username: string) => `Owned by @${username}`,
+    yourOtherAddresses: 'Your other addresses',
+    onApp: (title: string) => (title ? `on ${title}` : 'on another app'),
+    notInUse: 'not on any app',
+    removeFrom: (title: string, domain?: string) =>
+      title
+        ? `Remove ${domain || 'it'} from ${title}`
+        : `Remove ${domain || 'it'} from that app`,
+    removeFromConfirm: 'Tap again to remove (that app goes back to its free address)',
+    useHere: (domain: string) => `Use ${domain} on this app`,
+    actionFailed: 'That didn’t go through just now. Please try again.',
     // the purchase progress (chip, header notice, order screen)
     stepEmail: 'Email confirmed',
     stepSecuring: 'Securing the connection…',
@@ -422,6 +442,14 @@ export const ADDRESS_TEXT = {
     zip: '우편번호',
     country: '국가',
     confirmOwner: '제 정보가 맞고, 제 앱에 쓸 주소를 직접 삽니다.',
+    savedLead: '지난번 주소를 살 때 입력한 정보로 채웠어요. 확인하고, 바꿀 게 있으면 수정을 눌러 주세요.',
+    savedNote: '다음에도 쓸 수 있게 저장돼 있어요',
+    saveNextNote: '다음 주소를 살 때 쓸 수 있게 저장해 둘게요',
+    notSavedNote: '저장하지 않아요',
+    savedForget: '지우기',
+    dontSave: '저장 안 함',
+    forgetting: '지우는 중…',
+    forgetFailed: '지금은 지우지 못했어요. 다시 시도해 주세요.',
     payButton: (price: string) => `결제하러 가기 · ${price}`,
     payNote: '결제는 Stripe에서 해요. 주소를 등록하지 못하면 자동으로 전액 환불돼요.',
     opening: '결제 화면을 여는 중…',
@@ -453,6 +481,21 @@ export const ADDRESS_TEXT = {
     supportTitle: (domain: string) => `${domain}을(를) 확인하고 있어요`,
     supportBody: '결제는 끝났고, 주소가 준비되기 전에 사람이 한 번 확인해야 할 일이 생겼어요. 처리하고 있으니 그동안 무료 주소는 계속 쓸 수 있어요.',
     removeConfirm: '한 번 더 누르면 삭제돼요 (이 주소로 앱이 열리지 않아요)',
+    ownedBy: (username: string) => `@${username} 님의 주소`,
+    yourOtherAddresses: '내 다른 주소',
+    onApp: (title: string) => (title ? `${title}에 연결됨` : '다른 앱에 연결됨'),
+    notInUse: '연결된 앱 없음',
+    removeFrom: (title: string, domain?: string) =>
+      domain
+        ? title
+          ? `${title}에서 ${domain} 빼기`
+          : `그 앱에서 ${domain} 빼기`
+        : title
+          ? `${title}에서 빼기`
+          : '그 앱에서 빼기',
+    removeFromConfirm: '한 번 더 누르면 빠져요 (그 앱은 무료 주소로 돌아가요)',
+    useHere: (domain: string) => `${domain}을(를) 이 앱에 쓰기`,
+    actionFailed: '지금은 처리하지 못했어요. 잠시 뒤 다시 해 주세요.',
     stepEmail: '이메일 확인',
     stepSecuring: '안전하게 연결하는 중…',
     progressLabel: '주소 준비 상황',

@@ -171,13 +171,18 @@ function ContentListItem({
       snapshotRewardLevel: rewardLevel,
       canonicalRewardLevel: contentState.rewardLevel
     }) ?? rewardLevel;
+  const resolvedPicturePath =
+    contentType === 'dailyReflection' &&
+    typeof contentState?.picturePath === 'string'
+      ? contentState.picturePath
+      : picturePath;
   const displayThumbUrl =
     thumbUrl ||
     thumbnailUrl ||
     (contentType === 'mission' && missionType
       ? returnMissionThumb(missionType)
-      : contentType === 'dailyReflection' && picturePath
-        ? `${cloudFrontURL}/${picturePath}`
+      : contentType === 'dailyReflection' && resolvedPicturePath
+        ? `${cloudFrontURL}/${resolvedPicturePath}`
         : undefined);
   const isBuildItem = contentType === 'build';
   const placeholderHeightKey = `list-item-${contentType}-${contentId}`;
@@ -203,10 +208,14 @@ function ContentListItem({
       if (!isBuildItem) return;
       const nextHeight = Math.ceil(Number(height) || 0);
       if (nextHeight <= 0) return;
-      setPlaceholderHeightState({
-        height: nextHeight,
-        key: placeholderHeightKey
-      });
+      setPlaceholderHeightState((prev) =>
+        prev.height === nextHeight && prev.key === placeholderHeightKey
+          ? prev
+          : {
+              height: nextHeight,
+              key: placeholderHeightKey
+            }
+      );
       placeholderHeightRef.current = nextHeight;
     }
   });
@@ -226,10 +235,15 @@ function ContentListItem({
 
   useEffect(() => {
     placeholderHeightRef.current = previousPlaceholderHeight;
-    setPlaceholderHeightState({
-      height: previousPlaceholderHeight,
-      key: placeholderHeightKey
-    });
+    setPlaceholderHeightState((prev) =>
+      prev.height === previousPlaceholderHeight &&
+      prev.key === placeholderHeightKey
+        ? prev
+        : {
+            height: previousPlaceholderHeight,
+            key: placeholderHeightKey
+          }
+    );
   }, [placeholderHeightKey, previousPlaceholderHeight]);
 
   useEffect(() => {

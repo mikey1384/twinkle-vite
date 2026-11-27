@@ -76,12 +76,15 @@ export default function useUserPopupTrigger<T extends HTMLElement>({
   );
   const mouseEntered = useRef(false);
   const [popupContext, setPopupContext] = useState<PopupContext | null>(null);
+  const shown = !!popupContext;
   const shownRef = useRef(false);
+  const onShownChangeRef = useRef(onShownChange);
+  onShownChangeRef.current = onShownChange;
 
   useEffect(() => {
-    shownRef.current = !!popupContext;
-    onShownChange?.(!!popupContext);
-  }, [popupContext, onShownChange]);
+    shownRef.current = shown;
+    onShownChangeRef.current?.(shown);
+  }, [shown]);
 
   useEffect(
     () => () => {

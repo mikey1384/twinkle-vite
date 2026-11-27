@@ -179,7 +179,7 @@ function Embedly({
       setImageUrl('');
       fetchUrlData();
     }
-    if (!extractedVideoId || contentType !== 'chat') {
+    if ((!extractedVideoId || contentType !== 'chat') && prevUrl !== url) {
       onSetPrevUrl({ contentId, contentType, prevUrl: url, thumbUrl });
     }
     async function fetchUrlData() {

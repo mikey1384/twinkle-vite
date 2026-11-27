@@ -710,7 +710,12 @@ function NotiMessage({
     case 'domainVerify': {
       const verified = targetObj.reviewStatus === 'verified';
       const daysLeft = Number(targetObj.reviewStatus || 0);
-      const appPath = targetObj.buildId ? getBuildWorkspacePath({ id: targetObj.buildId }) : '';
+      const orderId = Number(targetObj.id || 0);
+      const appPath = targetObj.buildId
+        ? orderId > 0
+          ? `/build/${targetObj.buildId}/domain?domainOrder=${orderId}`
+          : getBuildWorkspacePath({ id: targetObj.buildId })
+        : '';
       return (
         <>
           <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>

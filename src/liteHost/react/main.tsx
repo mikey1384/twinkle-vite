@@ -25,6 +25,8 @@ import {
 } from '../session';
 import {
   askSignIn,
+  confirmOriginHandoffGuest,
+  confirmOriginHandoffSignIn,
   hideAiBanner,
   mountBadge,
   setHostFocusReturn,
@@ -47,6 +49,7 @@ import {
   type LiteHostViewer
 } from './LiteHost';
 import { createLiteSocketBinder } from './liteSocket';
+import { clearAppLifecycleFrameBackup } from '~/helpers/buildAppLifecycle';
 import type { PreviewFrameRetiredHandler } from '~/containers/Build/PreviewPanel/types';
 
 declare global {
@@ -178,9 +181,27 @@ async function start() {
       if (Number(data?.carried) > 0) showToast(t.carriedOver);
     }
   });
-  // A sign-in that came back by redirect, and an expired pass, are settled
-  // before the bridge answers anything (the app's early messages wait in
-  // window.__lumineEarly meanwhile).
+  // A renamed-slug handoff (G10), a sign-in that came back by redirect, and
+  // an expired pass are settled before the bridge answers anything (the app's
+  // early messages wait in window.__lumineEarly meanwhile).
+  if (session.get()) await session.accessToken();
+  await session.completeOriginHandoff({
+    onGuestRecord: (record) => {
+      guestStore.mergeHandoff(record);
+    },
+    confirmSession: ({ user }) =>
+      confirmOriginHandoffSignIn({
+        t,
+        title: config.title,
+        username: user.username
+      }),
+    confirmGuestCarryover: (options) =>
+      confirmOriginHandoffGuest({
+        t,
+        title: config.title,
+        signedIn: options?.signedIn ?? true
+      })
+  });
   await session.completeRedirect();
   if (session.get()) await session.accessToken();
   storeSessionCredentials(session.get());
@@ -193,22 +214,42 @@ async function start() {
   const retiredRef: { current: PreviewFrameRetiredHandler | null } = {
     current: null
   };
+  let identityReloadTimer: number | null = null;
+  let reloadingForIdentity = false;
+  let identityReloadDispatched = false;
   installLiteFrameReloadWatch({
     frame,
     buildId: config.buildId,
     metaRef,
-    retiredRef
+    retiredRef,
+    onNonceRequest: () => {
+      if (identityReloadDispatched) {
+        identityReloadDispatched = false;
+        reloadingForIdentity = false;
+      }
+    }
   });
 
   // Which accounts the app's players use (the owner's setting; twinkle-api
   // appAccounts.ts): Twinkle accounts (default), the app's own, or both.
+  // Existing players keep the sign-in path they joined with when the maker
+  // changes mode (audit D2/G8).
   let accountMode: 'twinkle' | 'app' | 'both' = 'twinkle';
+  let accountModeLoaded = false;
+  let hasAppAccounts = false;
+  let hasTwinklePlayers = false;
   const accountModeReady = fetch(
     `${config.apiOrigin}/build/${config.buildId}/app-session/info?origin=${encodeURIComponent(window.location.origin)}`
   )
     .then((response) => (response.ok ? response.json() : null))
     .then((data) => {
-      if (data?.accountMode === 'app' || data?.accountMode === 'both') accountMode = data.accountMode;
+      if (!data) return;
+      if (data.accountMode === 'app' || data.accountMode === 'both' || data.accountMode === 'twinkle') {
+        accountMode = data.accountMode;
+        accountModeLoaded = true;
+      }
+      hasAppAccounts = Boolean(data.hasAppAccounts);
+      hasTwinklePlayers = Boolean(data.hasTwinklePlayers);
     })
     .catch(() => {});
   type SheetView = 'signin' | 'birth' | 'reset' | 'email';
@@ -226,24 +267,57 @@ async function start() {
     }
     return token;
   })();
+  let accountSheetOpen = Boolean(resetToken && !session.get());
   let sheetClosed: Array<() => void> = [];
+  const waitForAccountSheetClose = () =>
+    new Promise<void>((resolve) => {
+      if (!accountSheetOpen) {
+        resolve();
+        return;
+      }
+      sheetClosed.push(resolve);
+    });
   const onAccountSheetClosed = () => {
+    accountSheetOpen = false;
     const waiting = sheetClosed;
     sheetClosed = [];
     waiting.forEach((resolve) => resolve());
   };
+  const openAccountSheet = (view: SheetView = 'signin') =>
+    new Promise<void>((resolve) => {
+      if (view !== 'email' && session.get()) {
+        resolve();
+        return;
+      }
+      accountSheetOpen = true;
+      sheetClosed.push(resolve);
+      accountSheetListeners.forEach((listener) => listener(view));
+    });
   // The app's sign-in: Twinkle's sheet (popup to twin-kle.com) or the app's
   // own accounts. Resolves when it closes.
   const openSignIn = (view: SheetView = 'signin') =>
     accountModeReady.then(async () => {
-      if (accountMode === 'twinkle') {
-        await askSignIn({ config, t, session });
+      if (accountSheetOpen) {
+        await waitForAccountSheetClose();
         return;
       }
-      await new Promise<void>((resolve) => {
-        sheetClosed.push(resolve);
-        accountSheetListeners.forEach((listener) => listener(view));
-      });
+      if (accountMode === 'twinkle') {
+        let handedOffToAppAccount = false;
+        await askSignIn({
+          config,
+          t,
+          session,
+          onAppAccountSignIn: hasAppAccounts
+            ? () => {
+                handedOffToAppAccount = true;
+                accountSheetOpen = true;
+              }
+            : undefined
+        });
+        if (handedOffToAppAccount) await openAccountSheet('signin');
+        return;
+      }
+      await openAccountSheet(view);
     });
   // An app that subscribed to Twinkle.auth.onChange follows sign-in and
   // sign-out itself; any other (older apps) is reloaded when the player
@@ -258,8 +332,18 @@ async function start() {
     if (next === frameIdentity) return;
     frameIdentity = next;
     if (appWatchesAuth) return;
+    reloadingForIdentity = true;
+    identityReloadDispatched = false;
+    // Prevent the departing viewer's frame from writing a pagehide backup
+    // tagged with the incoming viewer's lifecycleKey during the reload window.
+    clearAppLifecycleFrameBackup(config.buildId);
+    if (identityReloadTimer !== null) {
+      window.clearTimeout(identityReloadTimer);
+    }
     // after the bridge has the new viewer (this render and app-session/me)
-    window.setTimeout(() => {
+    identityReloadTimer = window.setTimeout(() => {
+      identityReloadTimer = null;
+      identityReloadDispatched = true;
       frame.setAttribute('src', frame.getAttribute('src') || config.frameSrc);
     }, 400);
   };
@@ -274,12 +358,15 @@ async function start() {
     markWatched: () => {
       appWatchesAuth = true;
     },
+    isReloadingForIdentity: () => reloadingForIdentity,
     async aiCoverage() {
       await accountModeReady;
-      // an app on its own accounts only: no Twinkle account can help (G4)
-      if (accountMode === 'app') return { payer: 'none', reason: 'app_accounts_only', message: 'AI isn’t available in this app.' };
       const token = await session.accessToken();
-      if (!token) return { payer: 'none', reason: 'twinkle_account_required', message: 'This app’s AI needs a Twinkle account.' };
+      if (!token) {
+        // an app on its own accounts only: no Twinkle account can help guests (G4)
+        if (accountMode === 'app') return { payer: 'none', reason: 'app_accounts_only', message: 'AI isn’t available in this app.' };
+        return { payer: 'none', reason: 'twinkle_account_required', message: 'This app’s AI needs a Twinkle account.' };
+      }
       const response = await fetch(`${config.apiOrigin}/build/${config.buildId}/app-session/ai-coverage`, {
         headers: { authorization: token }
       });
@@ -312,8 +399,17 @@ async function start() {
   const refreshAiBanner = ({ force = false }: { force?: boolean } = {}) =>
     accountModeReady.then(() => {
       const signedIn = session.get();
+      const player = signedIn?.appPlayer;
       if (accountMode === 'app') {
-        if (force) {
+        if (force && player?.kind === 'app' && player.linked) {
+          showAiBanner({
+            t,
+            buildId: config.buildId,
+            cta: t.signInCta,
+            force,
+            onAction: () => void session.signIn()
+          });
+        } else if (force) {
           showAiBanner({ t, buildId: config.buildId, cta: null, text: t.aiUnavailableHere, force, onAction: () => {} });
         } else {
           hideAiBanner();
@@ -324,7 +420,6 @@ async function start() {
         hideAiBanner();
         return;
       }
-      const player = signedIn?.appPlayer;
       const kind = !signedIn ? 'guest' : player?.kind === 'app' ? (player.linked ? 'linked' : 'app') : 'member';
       showAiBanner({
         t,
@@ -369,10 +464,10 @@ async function start() {
     useEffect(() => {
       const unsubscribe = session.subscribe((next) => {
         storeSessionCredentials(next);
+        reloadFrameForIdentity(next);
         setCurrent(next);
         setViewer((previous) => nextViewerForSession(previous, next));
         void refreshAiBanner();
-        reloadFrameForIdentity(next);
       });
       void refreshAiBanner();
       return () => {
@@ -480,12 +575,36 @@ async function start() {
     const [accountSheetView, setAccountSheetView] = useState<SheetView | null>(
       resetToken ? 'reset' : null
     );
+    const [modeState, setModeState] = useState(() => ({
+      accountMode,
+      hasAppAccounts,
+      hasTwinklePlayers
+    }));
+    useEffect(() => {
+      let active = true;
+      void accountModeReady.then(() => {
+        if (active) setModeState({ accountMode, hasAppAccounts, hasTwinklePlayers });
+      });
+      return () => {
+        active = false;
+      };
+    }, []);
     useEffect(() => {
       accountSheetListeners.add(setAccountSheetView);
       return () => {
         accountSheetListeners.delete(setAccountSheetView);
       };
     }, []);
+    const isAccountSheetMounted = Boolean(
+      accountSheetView && (!current || accountSheetView === 'email')
+    );
+    useEffect(() => {
+      if (isAccountSheetMounted) {
+        accountSheetOpen = true;
+      } else if (accountSheetOpen) {
+        onAccountSheetClosed();
+      }
+    }, [isAccountSheetMounted, accountSheetView]);
     const accountKind = !current
       ? null
       : current.appPlayer?.kind === 'app'
@@ -516,7 +635,7 @@ async function start() {
             onReady={replayEarlyMessages}
           />
         ) : null}
-        {accountSheetView && (!current || accountSheetView === 'email') ? (
+        {isAccountSheetMounted && accountSheetView ? (
           <AppAccountSheet
             initialView={accountSheetView}
             resetToken={resetToken}
@@ -524,7 +643,9 @@ async function start() {
             t={t}
             lang={liteHostLang()}
             session={session}
-            twinkleToo={accountMode === 'both'}
+            twinkleToo={modeState.accountMode === 'both'}
+            allowSignup={modeState.accountMode !== 'twinkle'}
+            existingTwinkle={modeState.accountMode === 'app' && modeState.hasTwinklePlayers}
             onClose={() => {
               setAccountSheetView(null);
               onAccountSheetClosed();
@@ -560,7 +681,7 @@ async function start() {
         iconName: 'mail',
         label: t.menuResetEmail,
         sub: t.menuResetEmailSub,
-        onClick: () => accountSheetListeners.forEach((listener) => listener('email'))
+        onClick: () => void openAccountSheet('email')
       };
       if (player.linked) {
         return [
@@ -580,7 +701,7 @@ async function start() {
           }
         ];
       }
-      return accountMode === 'both'
+      return accountModeLoaded && accountMode !== 'app'
         ? [emailItem, { iconName: 'link', label: t.linkTwinkle, sub: t.linkTwinkleSub, onClick: () => void linkTwinkle() }]
         : [emailItem];
     },

@@ -1,4 +1,5 @@
 import AppTransferModal from '~/components/Build/AppTransferModal';
+import { DomainOwnerProgressBanner } from '~/components/Build/AppAddress';
 import BuildAttribution from '~/components/Build/BuildAttribution';
 import { BUILD_OWNERSHIP_CHANGED } from '~/helpers/buildOwnershipEvents';
 import useUserActivity from '~/helpers/hooks/useUserActivity';
@@ -844,6 +845,8 @@ const contributionErrorClass = css`
 `;
 
 const panelWrapClass = css`
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   overflow: hidden;
   padding: 0;
@@ -896,7 +899,7 @@ const runtimeBodyClass = css`
 
 const previewShellClass = css`
   position: relative;
-  height: 100%;
+  flex: 1;
   min-height: 0;
   display: grid;
   overflow: hidden;
@@ -2087,6 +2090,11 @@ export default function BuildRuntime({
             </div>
           )}
           <div className={panelWrapClass}>
+            {!isEmbedded && numericBuildId !== null && numericBuildId > 0 ? (
+              <div style={{ flex: 'none', padding: '0 1.2rem' }}>
+                <DomainOwnerProgressBanner buildId={numericBuildId} />
+              </div>
+            ) : null}
             <InvalidPage
               title={title}
               text={text}
@@ -2922,6 +2930,18 @@ export default function BuildRuntime({
           }
         >
           <div className={panelWrapClass}>
+            {!isEmbedded &&
+            !landscapeFullScreen &&
+            !toolbarHidden &&
+            (!build.contributionStatus ||
+              build.contributionStatus === 'none') ? (
+              <div style={{ flex: 'none', padding: '0 1.2rem' }}>
+                <DomainOwnerProgressBanner
+                  buildId={Number(build.id)}
+                  isOwner={Boolean(isBuildOwner)}
+                />
+              </div>
+            ) : null}
             <div className={previewShellClass}>
               {shouldRenderPreviewPanel ? (
                 <>

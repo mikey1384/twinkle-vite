@@ -29,10 +29,10 @@ export default function useHomeCallAssistant(
 ) {
   const [selection, setSelection] = useState(() => readSelection(userId));
   // Reset account-owned preferences before rendering a different account.
-  if (selection.userId !== userId) setSelection(readSelection(userId));
+  if (!Object.is(selection.userId, userId)) setSelection(readSelection(userId));
 
   useEffect(() => {
-    if (selection.userId !== userId || selection.preferred) return;
+    if (!Object.is(selection.userId, userId) || selection.preferred) return;
     try {
       sessionStorage.setItem(
         `homeCallLastShown:${userId || 'guest'}`,
@@ -58,7 +58,9 @@ export default function useHomeCallAssistant(
   }, [userId]);
 
   useEffect(() => {
-    if (paused || selection.preferred || selection.userId !== userId) return;
+    if (paused || selection.preferred || !Object.is(selection.userId, userId)) {
+      return;
+    }
     const timer = window.setInterval(() => {
       if (document.visibilityState !== 'visible') return;
       setSelection((current) => ({

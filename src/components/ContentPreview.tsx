@@ -8,7 +8,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Icon from '~/components/Icon';
 import RichText from '~/components/Texts/RichText';
 import { useNavigate } from 'react-router-dom';
-import { useKeyContext } from '~/contexts';
+import { useContentContext, useKeyContext } from '~/contexts';
 import { truncateTopic } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import {
@@ -73,6 +73,19 @@ export default function ContentPreview({
     pictureStyle
   } = contentObj;
   const userId = useKeyContext((v) => v.myState.userId);
+  const storedReflection = useContentContext((v) =>
+    contentType === 'dailyReflection'
+      ? v.state[`dailyReflection${contentId}`]
+      : undefined
+  );
+  const resolvedPicturePath =
+    typeof storedReflection?.picturePath === 'string'
+      ? storedReflection.picturePath
+      : picturePath;
+  const resolvedPictureStyle =
+    typeof storedReflection?.pictureStyle === 'string'
+      ? storedReflection.pictureStyle
+      : pictureStyle;
   const navigate = useNavigate();
   const { cardVars } = useThemedCardVars({ role: 'sectionPanel' });
   const filterRole = useRoleColor('filter', { fallback: 'logoBlue' });
@@ -335,13 +348,13 @@ export default function ContentPreview({
     if (contentType === 'dailyReflection') {
       return (
         <div className={previewContentClass}>
-          {picturePath ? (
+          {resolvedPicturePath ? (
             // Picture Day: the picture stands in for the stock question
             <DailyReflectionPicture
               alt={description}
               maxWidth="48rem"
-              picturePath={picturePath}
-              pictureStyle={pictureStyle}
+              picturePath={resolvedPicturePath}
+              pictureStyle={resolvedPictureStyle}
               responseId={contentType === 'dailyReflection' ? contentId : null}
               ownerId={uploader?.id}
               viewable={!disableImageModal}

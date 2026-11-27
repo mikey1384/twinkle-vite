@@ -177,6 +177,59 @@ export function createGuestStore(buildId: number, guestId: () => string) {
         matchesSubmittedValue: true
       };
     },
+    /**
+     * Merges guest progress handed off from a renamed slug's origin (audit G10).
+     * Never overwrites keys that already exist on this origin, and respects the
+     * same key/byte limits as normal writes.
+     */
+    mergeHandoff(incoming: unknown) {
+      if (!incoming || typeof incoming !== 'object') return 0;
+      const source = incoming as any;
+      if (source.v !== 1 || !source.items || typeof source.items !== 'object' || Array.isArray(source.items)) {
+        return 0;
+      }
+      const record = read();
+      const hadItems = Object.keys(record.items).length > 0;
+      if (
+        !hadItems &&
+        typeof source.guestId === 'string' &&
+        /^guest_[A-Za-z0-9_-]{8,80}$/.test(source.guestId)
+      ) {
+        record.guestId = source.guestId;
+      }
+      const entries = Object.entries(source.items as Record<string, any>).sort(
+        (a, b) => (Number(a[1]?.id) || 0) - (Number(b[1]?.id) || 0)
+      );
+      let merged = 0;
+      for (const [key, entry] of entries) {
+        if (!KEY_PATTERN.test(key) || record.items[key]) continue;
+        if (Object.keys(record.items).length >= MAX_KEYS) break;
+        if (!entry || typeof entry !== 'object' || entry.value === undefined) continue;
+        let clonedValue: unknown;
+        try {
+          clonedValue = JSON.parse(JSON.stringify(entry.value));
+        } catch {
+          continue;
+        }
+        const prevNextId = record.nextId;
+        record.items[key] = {
+          id: record.nextId++,
+          value: clonedValue,
+          updatedAt:
+            Number.isFinite(Number(entry.updatedAt)) && Number(entry.updatedAt) > 0
+              ? Math.floor(Number(entry.updatedAt))
+              : nowSeconds()
+        };
+        if (JSON.stringify(record).length > MAX_BYTES) {
+          delete record.items[key];
+          record.nextId = prevNextId;
+          continue;
+        }
+        merged += 1;
+      }
+      if (merged > 0) write(record);
+      return merged;
+    },
     /** What to carry into the account, or null when there's nothing. */
     takeForCarryover() {
       const record = read();

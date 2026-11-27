@@ -40,6 +40,7 @@ export default function LumineAppSignIn() {
   const authorizeAppSignin = useAppContext((v) => v.requestHelpers.authorizeAppSignin);
   const [app, setApp] = useState<{ title: string; ownerUsername: string; thumbnailUrl: string | null } | null>(null);
   const [originAllowed, setOriginAllowed] = useState(false);
+  const [accountMode, setAccountMode] = useState<'twinkle' | 'app' | 'both'>('twinkle');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -49,6 +50,9 @@ export default function LumineAppSignIn() {
       .then((data: any) => {
         setApp(data?.app || null);
         setOriginAllowed(Boolean(data?.originAllowed));
+        if (data?.accountMode === 'app' || data?.accountMode === 'both' || data?.accountMode === 'twinkle') {
+          setAccountMode(data.accountMode);
+        }
       })
       .catch(() => setError('This app isn’t available.'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -135,7 +139,7 @@ export default function LumineAppSignIn() {
       allow={allow}
       handBack={() => cancel()}
       onOpenSigninModal={() => onOpenSigninModal()}
-      onCreateAccount={() => setSigningUp(true)}
+      onCreateAccount={accountMode !== 'app' ? () => setSigningUp(true) : undefined}
       link={link}
       signUp={
         signingUp && !userId && app ? (

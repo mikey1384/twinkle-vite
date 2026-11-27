@@ -34,6 +34,30 @@ export default function SelectBuildsModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const sequence = useRef(0);
+  // Keep domain-ownership metadata in sync if the parent resolves it while
+  // this modal is already open.
+  useEffect(() => {
+    const domainsById = new Map(
+      selected
+        .filter((item) => item.domains)
+        .map((item) => [Number(item.id), item.domains])
+    );
+    if (!domainsById.size) return;
+    setSelection((current) => {
+      let changed = false;
+      const next = current.map((item) => {
+        if (!item.domains) {
+          const domains = domainsById.get(Number(item.id));
+          if (domains) {
+            changed = true;
+            return { ...item, domains };
+          }
+        }
+        return item;
+      });
+      return changed ? next : current;
+    });
+  }, [selected]);
   useEffect(() => {
     const current = ++sequence.current;
     setLoading(true);

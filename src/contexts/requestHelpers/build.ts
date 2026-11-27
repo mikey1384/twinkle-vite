@@ -742,6 +742,15 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    // a bought domain not on any app, onto one of the buyer's own apps
+    async attachAppDomainOrder({ buildId, orderId }: { buildId: number; orderId: number; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-domain-orders/${orderId}/attach`, {}, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     async loadDomainIdeas({ buildId, hint, more }: { buildId: number; hint?: string; more?: string; }) {
       try {
         const { data } = await request.get(`${URL}/build/${buildId}/domain-ideas`, { ...auth(), params: { hint, more } });
@@ -766,6 +775,24 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    // The member's own saved owner details from their last purchase (prefill),
+    // and "Forget my saved details".
+    async loadSavedRegistrant() {
+      try {
+        const { data } = await request.get(`${URL}/build/domain-orders/saved-registrant`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async forgetSavedRegistrant() {
+      try {
+        const { data } = await request.delete(`${URL}/build/domain-orders/saved-registrant`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     // Adults buy a domain for their own app (twinkle-api routes/appDomainPurchases.ts).
     async loadDomainPurchase({ buildId }: { buildId: number; }) {
       try {
@@ -775,9 +802,9 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
-    async startSelfDomainOrder({ buildId, domain, registrant, agreed, priceCents, emailToken }: { buildId: number; domain?: string; registrant?: Record<string, string>; agreed?: boolean; priceCents?: number; emailToken?: string; }) {
+    async startSelfDomainOrder({ buildId, domain, registrant, agreed, priceCents, saveDetails, emailToken }: { buildId: number; domain?: string; registrant?: Record<string, string>; agreed?: boolean; priceCents?: number; saveDetails?: boolean; emailToken?: string; }) {
       try {
-        const { data } = await request.post(`${URL}/build/${buildId}/domain-orders/self`, { domain, registrant, agreed, priceCents, emailToken }, auth());
+        const { data } = await request.post(`${URL}/build/${buildId}/domain-orders/self`, { domain, registrant, agreed, priceCents, saveDetails, emailToken }, auth());
         return data;
       } catch (error: any) {
         return throwLumineAppHostingError(error, handleError);

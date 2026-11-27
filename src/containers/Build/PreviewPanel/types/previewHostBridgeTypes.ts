@@ -188,6 +188,8 @@ export interface LiteAuthHost {
   aiCoverage(): Promise<unknown>;
   // the app subscribed to Twinkle.auth.onChange (no reload on sign-in/out)
   markWatched?(): void;
+  // true while the lite host is reloading the frame for an identity change
+  isReloadingForIdentity?(): boolean;
 }
 
 export interface GuestPrivateDb {

@@ -195,6 +195,27 @@ export function setAssistantReply(
   listeners.forEach((listener) => listener());
 }
 
+export function updateAssistantReplyCard(
+  channelId: number,
+  messageId: number,
+  nextCard: WebsiteAgentCardData
+) {
+  const topicId = messageTopics.get(Number(messageId)) || 0;
+  setAssistantReply(
+    Number(channelId),
+    (current) =>
+      current &&
+      current.messageId != null &&
+      Number(messageId) === current.messageId
+        ? {
+            ...current,
+            card: newestAsyncTaskCard(current.card, nextCard)
+          }
+        : current,
+    topicId
+  );
+}
+
 function isThisReply(
   reply: AssistantReply | null,
   messageId?: unknown
