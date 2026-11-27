@@ -725,6 +725,12 @@ function isTab(element: Element) {
   ) {
     return true;
   }
+  if (
+    element.matches('[data-agent-tabs] > nav > button') &&
+    (element as HTMLButtonElement).type === 'button'
+  ) {
+    return true;
+  }
   return false;
 }
 

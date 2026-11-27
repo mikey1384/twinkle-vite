@@ -107,6 +107,13 @@ class FakeElement {
         Boolean(this.parentElement.parentElement?.hasAttribute('data-agent-tabs'))
       );
     }
+    if (s === '[data-agent-tabs] > nav > button') {
+      return (
+        tag === 'button' &&
+        this.parentElement?.tagName.toLowerCase() === 'nav' &&
+        Boolean(this.parentElement.parentElement?.hasAttribute('data-agent-tabs'))
+      );
+    }
     if (s === 'input:not([type="hidden"])') {
       return tag === 'input' && this.getAttribute('type') !== 'hidden';
     }
@@ -231,19 +238,48 @@ test('looksConsequential exempts only plain same-site navigation links and actua
     assert.equal(looksConsequential(link as any), true, link.getAttribute('href') || '');
   }
 
-  // FilterBar <nav> tabs and [role="tab"] elements are view-only, but buttons
-  // placed inside FilterBar / tablist / tab or form submit buttons are NOT exempt.
+  // FilterBar <nav> tabs (including accessible <nav><button type="button"> tabs)
+  // and [role="tab"] elements are view-only, but non-tab buttons placed inside
+  // FilterBar / tablist / tab or submit buttons are NOT exempt.
   const filterNav = new FakeElement('nav', {}, ['Rewards']);
   filterNav.cursor = 'pointer';
-  const filterActionButton = new FakeElement('button', {}, ['Delete']);
+  const filterTabButton = new FakeElement(
+    'button',
+    { type: 'button', 'aria-pressed': 'false' },
+    ['Rewards']
+  );
+  const filterButtonNav = new FakeElement('nav', {}, [filterTabButton]);
+  filterButtonNav.cursor = 'pointer';
+  const filterSubmitButton = new FakeElement('button', { type: 'submit' }, ['Delete']);
+  const filterSubmitNav = new FakeElement('nav', {}, [filterSubmitButton]);
+  const filterActionButton = new FakeElement('button', { type: 'button' }, ['Delete']);
   const filterBar = new FakeElement('div', { 'data-agent-tabs': '' }, [
     filterNav,
+    filterButtonNav,
+    filterSubmitNav,
     filterActionButton
   ]);
-  root.append(filterBar);
+  const xpActivity = new FakeElement('div', { 'data-agent-no-play': '' }, [filterBar]);
+  root.append(xpActivity);
 
   assert.equal(looksConsequential(filterNav as any), false);
+  assert.equal(looksConsequential(filterTabButton as any), false);
+  assert.equal(looksConsequential(filterSubmitButton as any), true);
   assert.equal(looksConsequential(filterActionButton as any), true);
+
+  const { readWebsiteAgentPage } = await import('../src/helpers/websiteAgentPage');
+  const xpPage = readWebsiteAgentPage();
+  const tabButtonRef = filterTabButton.getAttribute('data-agent-ref')!;
+  const submitButtonRef = filterSubmitButton.getAttribute('data-agent-ref')!;
+  assert.ok(tabButtonRef, 'inner <button type="button"> receives the tab ref');
+  assert.match(
+    xpPage.elements,
+    new RegExp(`\\[${tabButtonRef}\\][^\\n]*tab inside an XP activity: you may switch to it`)
+  );
+  assert.match(
+    xpPage.elements,
+    new RegExp(`\\[${submitButtonRef}\\][^\\n]*inside an XP activity: the user plays it`)
+  );
 
   const tabCloseButton = new FakeElement('button', {}, ['Remove']);
   const roleTab = new FakeElement('div', { role: 'tab' }, ['Rewards', tabCloseButton]);
