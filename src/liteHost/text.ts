@@ -23,6 +23,15 @@ export const LITE_HOST_TEXT = {
     shareApp: 'Share this app',
     shareAppSub: 'Share this app’s own link',
     linkCopied: 'Link copied.',
+    linkCopyFailed: 'Couldn’t copy the link.',
+    handoffSignInTitle: (name: string) => `Continue as ${name}?`,
+    handoffSignInBody: (title: string, name: string) =>
+      `You opened ${title} from its old address. Sign in as ${name} here?`,
+    handoffSignInConfirm: (name: string) => `Continue as ${name}`,
+    handoffGuestTitle: 'Carry over guest progress?',
+    handoffGuestBody: (title: string) =>
+      `Save guest progress from ${title}’s old address to your signed-in account? Existing saves won’t be overwritten.`,
+    handoffGuestConfirm: 'Save to my account',
     openOnTwinkleSub: 'Play with your Twinkle account',
     makeYourOwnSub: 'Build one free with Lumine',
     signInSub: 'Save progress and play with friends',
@@ -138,6 +147,15 @@ export const LITE_HOST_TEXT = {
     shareApp: '이 앱 공유하기',
     shareAppSub: '이 앱의 주소를 공유해요',
     linkCopied: '주소를 복사했어요.',
+    linkCopyFailed: '주소를 복사하지 못했어요.',
+    handoffSignInTitle: (name: string) => `${name} 계정으로 계속할까요?`,
+    handoffSignInBody: (title: string, name: string) =>
+      `${title}의 예전 주소에서 넘어왔어요. 여기서 ${name} 계정으로 로그인할까요?`,
+    handoffSignInConfirm: (name: string) => `${name} 계정으로 계속하기`,
+    handoffGuestTitle: '게스트 기록을 옮길까요?',
+    handoffGuestBody: (title: string) =>
+      `${title}의 예전 주소에 있던 게스트 기록을 지금 로그인한 계정으로 옮길까요? 이미 저장된 기록은 덮어쓰지 않아요.`,
+    handoffGuestConfirm: '내 계정으로 옮기기',
     openOnTwinkleSub: '내 트윈클 계정으로 플레이해요',
     makeYourOwnSub: 'Lumine과 함께 무료로 만들어 보세요',
     signInSub: '기록을 저장하고 친구와 함께 즐겨요',

@@ -25,6 +25,8 @@ import {
 } from '../session';
 import {
   askSignIn,
+  confirmOriginHandoffGuest,
+  confirmOriginHandoffSignIn,
   hideAiBanner,
   mountBadge,
   setHostFocusReturn,
@@ -181,10 +183,19 @@ async function start() {
   // A renamed-slug handoff (G10), a sign-in that came back by redirect, and
   // an expired pass are settled before the bridge answers anything (the app's
   // early messages wait in window.__lumineEarly meanwhile).
+  if (session.get()) await session.accessToken();
   await session.completeOriginHandoff({
     onGuestRecord: (record) => {
       guestStore.mergeHandoff(record);
-    }
+    },
+    confirmSession: ({ user }) =>
+      confirmOriginHandoffSignIn({
+        t,
+        title: config.title,
+        username: user.username
+      }),
+    confirmGuestCarryover: () =>
+      confirmOriginHandoffGuest({ t, title: config.title })
   });
   await session.completeRedirect();
   if (session.get()) await session.accessToken();
@@ -338,8 +349,17 @@ async function start() {
   const refreshAiBanner = ({ force = false }: { force?: boolean } = {}) =>
     accountModeReady.then(() => {
       const signedIn = session.get();
+      const player = signedIn?.appPlayer;
       if (accountMode === 'app') {
-        if (force) {
+        if (force && player?.kind === 'app' && player.linked) {
+          showAiBanner({
+            t,
+            buildId: config.buildId,
+            cta: t.signInCta,
+            force,
+            onAction: () => void session.signIn()
+          });
+        } else if (force) {
           showAiBanner({ t, buildId: config.buildId, cta: null, text: t.aiUnavailableHere, force, onAction: () => {} });
         } else {
           hideAiBanner();
@@ -350,7 +370,6 @@ async function start() {
         hideAiBanner();
         return;
       }
-      const player = signedIn?.appPlayer;
       const kind = !signedIn ? 'guest' : player?.kind === 'app' ? (player.linked ? 'linked' : 'app') : 'member';
       showAiBanner({
         t,

@@ -176,6 +176,13 @@ export function createSessionStore(
     return refreshing;
   }
 
+  async function getAccessToken(): Promise<string | null> {
+    if (!session) return null;
+    if (session.expiresAt - 60 > Date.now() / 1000) return session.accessToken;
+    const next = await refresh();
+    return next?.accessToken || null;
+  }
+
   return {
     get: () => session,
     // app accounts (phase B) start their session on this page
@@ -188,12 +195,7 @@ export function createSessionStore(
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    async accessToken(): Promise<string | null> {
-      if (!session) return null;
-      if (session.expiresAt - 60 > Date.now() / 1000) return session.accessToken;
-      const next = await refresh();
-      return next?.accessToken || null;
-    },
+    accessToken: getAccessToken,
     // Starts sign-in: a popup to twin-kle.com (or a full redirect when the
     // popup is blocked). Resolves with the session, or null if cancelled.
     async signIn(): Promise<AppSession | null> {
@@ -239,10 +241,21 @@ export function createSessionStore(
     },
     // Called on load: a renamed slug hands off its session and/or guest
     // progress via #lumine_handoff=<code> (audit G10).
+    // Never silently overwrites an existing session, and requires explicit
+    // confirmation before adopting a handed-off session (or importing guest
+    // data into an already signed-in account) to prevent session fixation /
+    // storage poisoning via untrusted #lumine_handoff links.
     async completeOriginHandoff({
-      onGuestRecord
+      onGuestRecord,
+      confirmSession,
+      confirmGuestCarryover
     }: {
       onGuestRecord?: (record: unknown) => void;
+      confirmSession?: (incoming: {
+        user: { id: number; username: string };
+        hasGuestRecord: boolean;
+      }) => Promise<boolean>;
+      confirmGuestCarryover?: () => Promise<boolean>;
     } = {}): Promise<AppSession | null> {
       const hash = new URLSearchParams(window.location.hash.slice(1));
       const code = hash.get('lumine_handoff');
@@ -259,21 +272,48 @@ export function createSessionStore(
         /* the page still works with the old address */
       }
       try {
+        if (session) {
+          const data = await post('/build/app-session/handoff/claim', {
+            buildId: config.buildId,
+            code,
+            skipSession: true
+          });
+          if (data?.guestRecord && onGuestRecord) {
+            const allowGuest = confirmGuestCarryover
+              ? await confirmGuestCarryover()
+              : false;
+            if (allowGuest) {
+              onGuestRecord(data.guestRecord);
+              if (beforeSignedIn) {
+                const token = await getAccessToken();
+                if (token) {
+                  await Promise.race([
+                    beforeSignedIn(token).catch(() => {}),
+                    new Promise((resolve) => window.setTimeout(resolve, 4000))
+                  ]);
+                }
+              }
+            }
+          }
+          return session;
+        }
         const data = await post('/build/app-session/handoff/claim', {
           buildId: config.buildId,
           code
         });
-        if (data?.guestRecord && onGuestRecord) onGuestRecord(data.guestRecord);
         if (data?.session?.accessToken) {
-          set({
-            accessToken: data.session.accessToken,
-            expiresAt: data.session.expiresAt,
-            refreshToken: data.session.refreshToken,
-            user: data.session.user,
-            scopes: data.session.scopes,
-            appPlayer: data.session.appPlayer || null
-          });
+          const allowSession = confirmSession
+            ? await confirmSession({
+                user: data.session.user,
+                hasGuestRecord: Boolean(data.guestRecord)
+              })
+            : false;
+          if (!allowSession || session) return session;
+          if (data?.guestRecord && onGuestRecord) onGuestRecord(data.guestRecord);
+          await adopt(data.session);
+          return session;
         }
+        if (data?.guestRecord && onGuestRecord) onGuestRecord(data.guestRecord);
         return session;
       } catch {
         return session;

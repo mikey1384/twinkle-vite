@@ -299,6 +299,80 @@ export function confirmOutsideLink({
   });
 }
 
+// Explicit confirmation before adopting a handed-off session on a signed-out
+// origin so an untrusted #lumine_handoff=<code> link can never silently sign
+// a visitor into an attacker's account.
+export function confirmOriginHandoffSignIn({
+  t,
+  title,
+  username
+}: {
+  t: LiteHostText;
+  title: string;
+  username: string;
+}): Promise<boolean> {
+  return new Promise((resolve) => {
+    const confirm = el('button', { class: 'lh-primary', type: 'button' }, [
+      t.handoffSignInConfirm(username)
+    ]);
+    const cancel = el('button', { class: 'lh-secondary', type: 'button' }, [
+      t.linkCancel
+    ]);
+    sheet(
+      [
+        el('h2', {}, [t.handoffSignInTitle(username)]),
+        el('p', {}, [t.handoffSignInBody(title, username)]),
+        el('div', { class: 'lh-actions' }, [confirm, cancel])
+      ],
+      { onDismiss: () => resolve(false), kind: 'handoff-signin' }
+    );
+    confirm.addEventListener('click', () => {
+      closeSheet();
+      resolve(true);
+    });
+    cancel.addEventListener('click', () => {
+      closeSheet();
+      resolve(false);
+    });
+  });
+}
+
+// Explicit confirmation before importing old-origin guest progress into an
+// already signed-in account, so a third-party #lumine_handoff=<code> link
+// cannot poison a signed-in player's private storage.
+export function confirmOriginHandoffGuest({
+  t,
+  title
+}: {
+  t: LiteHostText;
+  title: string;
+}): Promise<boolean> {
+  return new Promise((resolve) => {
+    const confirm = el('button', { class: 'lh-primary', type: 'button' }, [
+      t.handoffGuestConfirm
+    ]);
+    const cancel = el('button', { class: 'lh-secondary', type: 'button' }, [
+      t.linkCancel
+    ]);
+    sheet(
+      [
+        el('h2', {}, [t.handoffGuestTitle]),
+        el('p', {}, [t.handoffGuestBody(title)]),
+        el('div', { class: 'lh-actions' }, [confirm, cancel])
+      ],
+      { onDismiss: () => resolve(false), kind: 'handoff-guest' }
+    );
+    confirm.addEventListener('click', () => {
+      closeSheet();
+      resolve(true);
+    });
+    cancel.addEventListener('click', () => {
+      closeSheet();
+      resolve(false);
+    });
+  });
+}
+
 export function showReport({
   config,
   t,
@@ -457,6 +531,16 @@ export function mountBadge({
     else badge.classList.add('lh-badge-compact');
   }, 4000);
 
+  function restoreHostFocus() {
+    if (menu || openSheet) return;
+    if (focusReturn) {
+      if (document.activeElement === badge) badge.blur();
+      focusReturn();
+    } else {
+      badge.focus({ preventScroll: true });
+    }
+  }
+
   function closeMenu({ restoreFocus = true } = {}) {
     const current = menu;
     if (!current) return;
@@ -497,12 +581,7 @@ export function mountBadge({
         .finished.then(remove, remove);
     }
     if (restoreFocus) {
-      if (focusReturn) {
-        if (document.activeElement === badge) badge.blur();
-        focusReturn();
-      } else {
-        badge.focus({ preventScroll: true });
-      }
+      restoreHostFocus();
     }
   }
   // A sheet taking over: the menu goes; the sheet owns focus from here.
@@ -564,13 +643,15 @@ export function mountBadge({
     label,
     sub,
     href,
-    onClick
+    onClick,
+    restoreFocus = false
   }: {
     iconName: keyof typeof ICONS;
     label: string;
     sub: string;
     href?: string;
     onClick?: () => void;
+    restoreFocus?: boolean;
   }) {
     const content = [
       el('span', { class: 'lh-row-icon' }, [icon(iconName)]),
@@ -585,7 +666,7 @@ export function mountBadge({
       : el('button', { class: 'lh-row', role: 'menuitem', type: 'button' }, content);
     if (onClick) {
       node.addEventListener('click', () => {
-        closeMenu({ restoreFocus: false });
+        closeMenu({ restoreFocus });
         onClick();
       });
     }
@@ -609,21 +690,29 @@ export function mountBadge({
     ]);
     const shareCurrentApp = async () => {
       const shareUrl = resolveStandaloneShareUrl(window.location.href);
-      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        try {
-          await navigator.share({ title: config.title, url: shareUrl });
-          return;
-        } catch (error: any) {
-          if (error?.name === 'AbortError') return;
+      let usedNativeShare = false;
+      try {
+        if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+          usedNativeShare = true;
+          try {
+            await navigator.share({ title: config.title, url: shareUrl });
+            return;
+          } catch (error: any) {
+            if (error?.name === 'AbortError') return;
+          }
         }
-      }
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          showToast(t.linkCopied);
-        } catch {
-          // clipboard unavailable
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            showToast(t.linkCopied);
+            return;
+          } catch {
+            // fall through to feedback toast
+          }
         }
+        showToast(t.linkCopyFailed);
+      } finally {
+        if (usedNativeShare) restoreHostFocus();
       }
     };
     const rows = el('div', { class: 'lh-pop-rows' }, [
@@ -631,6 +720,7 @@ export function mountBadge({
         iconName: 'share',
         label: t.shareApp,
         sub: t.shareAppSub,
+        restoreFocus: true,
         onClick: () => void shareCurrentApp()
       }),
       row({

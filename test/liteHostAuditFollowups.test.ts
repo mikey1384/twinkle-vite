@@ -245,9 +245,14 @@ test('G10: session.completeOriginHandoff claims #lumine_handoff, strips hash, ad
         };
         const guestStore = createGuestStore(42, () => 'guest_local_123456');
         const store = createSessionStore(config);
+        const confirmed: Array<{ user: { id: number; username: string }; hasGuestRecord: boolean }> = [];
         const adopted = await store.completeOriginHandoff({
           onGuestRecord: (record) => {
             guestStore.mergeHandoff(record);
+          },
+          confirmSession: async (incoming) => {
+            confirmed.push(incoming);
+            return true;
           }
         });
 
@@ -255,6 +260,7 @@ test('G10: session.completeOriginHandoff claims #lumine_handoff, strips hash, ad
         assert.equal(calls[0].url, 'https://api.twinkle.network/build/app-session/handoff/claim');
         assert.deepEqual(calls[0].body, { buildId: 42, code: 'handoff-code-xyz' });
         assert.equal(replacedUrls[0], 'https://new-game.lumine.app/stage-2?a=1#view=map');
+        assert.deepEqual(confirmed, [{ user: { id: 9, username: 'alice' }, hasGuestRecord: true }]);
         assert.equal(adopted?.accessToken, 'new-access-jwt');
         assert.equal(adopted?.refreshToken, 'new-refresh-token');
         assert.equal(adopted?.user.username, 'alice');
