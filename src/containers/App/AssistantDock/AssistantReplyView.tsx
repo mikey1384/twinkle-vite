@@ -7,7 +7,11 @@ import ThinkingIndicator, {
   latestThoughtLine
 } from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
 import WebsiteAgentCard from '~/containers/Chat/Message/MessageBody/WebsiteAgentCard';
-import type { AssistantNotice, AssistantReply } from './conversationStore';
+import {
+  updateAssistantReplyCard,
+  type AssistantNotice,
+  type AssistantReply
+} from './conversationStore';
 import ChatReactionEmoji from '~/components/ChatReactionEmoji';
 import { assistantVoice } from '~/helpers/assistantVoice';
 
@@ -100,6 +104,11 @@ export default function AssistantReplyView({
             messageId={reply.messageId}
             messageText={reply.text}
             onAnswered={onAnswer}
+            onCardUpdated={(nextCard) => {
+              if (reply.messageId) {
+                updateAssistantReplyCard(channelId, reply.messageId, nextCard);
+              }
+            }}
           />
         </div>
       ) : null}

@@ -30,6 +30,13 @@ import MessageCleanupPreview, {
   isMessageCleanupPreview,
   type MessageCleanupPreviewData
 } from './MessageCleanupPreview';
+import LumineRunPreview from './LumineRunPreview';
+import {
+  describeLumineRunApprovalStatus,
+  getLumineRunCardButtonLabels,
+  isLumineRunPreview,
+  type LumineRunPreviewData
+} from '~/helpers/lumineRunCard';
 import WebsiteAgentDownloadCard, {
   type WebsiteAgentDownloadItem
 } from './WebsiteAgentDownloadCard';
@@ -90,6 +97,7 @@ export interface WebsiteAgentCardData {
         destination?: AssetHandoffDestination;
       }
     | MessageCleanupPreviewData
+    | LumineRunPreviewData
     | { kind?: string };
 }
 
@@ -181,6 +189,10 @@ export default function WebsiteAgentCard({
     card.type === 'approval' && isMessageCleanupPreview(card.preview)
       ? card.preview
       : null;
+  const lumineRunPreview =
+    card.type === 'approval' && isLumineRunPreview(card.preview)
+      ? card.preview
+      : null;
 
   const decided =
     card.type === 'choice'
@@ -226,7 +238,9 @@ export default function WebsiteAgentCard({
       : [
           {
             key: 'approve',
-            label: 'Yes, go ahead!',
+            label: lumineRunPreview
+              ? getLumineRunCardButtonLabels().approve
+              : 'Yes, go ahead!',
             tone: 'positive' as const,
             disabled:
               decided ||
@@ -238,7 +252,9 @@ export default function WebsiteAgentCard({
           },
           {
             key: 'decline',
-            label: 'No thanks',
+            label: lumineRunPreview
+              ? getLumineRunCardButtonLabels().decline
+              : 'No thanks',
             tone: 'neutral' as const,
             disabled: decided || isSomeoneElses
           }
@@ -269,7 +285,8 @@ export default function WebsiteAgentCard({
         brainPreview ||
         imageProposalId ||
         profilePreview ||
-        cleanupPreview
+        cleanupPreview ||
+        lumineRunPreview
           ? `${bubbleVariables} ${stackedCard}`
           : bubbleVariables
       }
@@ -310,6 +327,13 @@ export default function WebsiteAgentCard({
       )}
       {cleanupPreview && !isSomeoneElses && (
         <MessageCleanupPreview preview={cleanupPreview} />
+      )}
+      {lumineRunPreview && !isSomeoneElses && (
+        <LumineRunPreview
+          preview={lumineRunPreview}
+          status={card.status}
+          resultData={card.result?.data}
+        />
       )}
       <ChoicePromptBubble
         question={
@@ -362,7 +386,11 @@ export default function WebsiteAgentCard({
         ? { choice: key }
         : { approved: key === 'approve' };
     setBusyLabel(
-      card.type === 'approval' && key === 'approve' ? 'Working on it…' : '…'
+      card.type === 'approval' && key === 'approve'
+        ? lumineRunPreview
+          ? 'Starting Lumine…'
+          : 'Working on it…'
+        : '…'
     );
     try {
       const data = await decideWebsiteAgentCard({
@@ -537,6 +565,13 @@ function describeApprovalStatus(
   if (taskStatus) return taskStatus;
   if (card.status === 'processing')
     return 'Still working. You can tap again to check.';
+  if (card.preview?.kind === 'lumine_run') {
+    const lumineStatus = describeLumineRunApprovalStatus(
+      card.status,
+      card.result
+    );
+    if (lumineStatus) return lumineStatus;
+  }
   if (card.status === 'approved')
     return isTopicBrain
       ? 'Saved. It’s in Topic Settings.'
@@ -613,6 +648,9 @@ function describePermissionStatus(card: WebsiteAgentCardData) {
 function describeReply(card: WebsiteAgentCardData) {
   if (card.type === 'choice' || card.type === 'lumine') {
     return card.answer || '';
+  }
+  if (card.type === 'approval' && card.preview?.kind === 'lumine_run') {
+    return card.status === 'declined' ? 'Not now' : 'Start';
   }
   return card.status === 'declined' ? 'No thanks' : 'Yes, go ahead!';
 }
