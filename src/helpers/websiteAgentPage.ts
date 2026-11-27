@@ -251,11 +251,13 @@ function describeKind(element: Element) {
 
 function describeName(element: Element) {
   const input = element as HTMLInputElement;
+  const isContentEditable = element.getAttribute('contenteditable') === 'true';
   return collapse(
     element.getAttribute('aria-label') ||
-      (element as HTMLElement).innerText ||
+      (isContentEditable ? '' : (element as HTMLElement).innerText) ||
       element.getAttribute('title') ||
       input.placeholder ||
+      element.getAttribute('data-placeholder') ||
       element.querySelector('img')?.getAttribute('alt') ||
       iconName(element) ||
       ''
@@ -303,12 +305,15 @@ function describeNearbyText(element: Element, name: string) {
 
 // Identity at the last read. Replaced nodes receive new refs; stale actions
 // return a fresh page instead of guessing by label or screen position.
+// `nearby` is recorded only when multiple elements on the page share the same
+// short label, so live text updates (timers, chat messages, badge counts) in
+// ancestor containers do not falsely invalidate unique controls.
 interface RefFingerprint {
   element: Element;
   tag: string;
   name: string;
   path: string;
-  nearby: string;
+  nearby: string | null;
   href: string | null;
 }
 const refFingerprints = new Map<string, RefFingerprint>();
@@ -351,7 +356,7 @@ export function readWebsiteAgentPage() {
         (root): root is Element => !!root
       );
   const lines: string[] = [];
-  const listed: { line: number; element: Element; name: string }[] = [];
+  const listed: { line: number; ref: string; element: Element; name: string }[] = [];
   let refCount = 0;
   let omitted = 0;
   for (const root of roots) {
@@ -393,7 +398,7 @@ export function readWebsiteAgentPage() {
         old.tag === tag &&
         old.name === name &&
         old.path === window.location.pathname + window.location.search &&
-        old.nearby === describeNearbyText(element, name) &&
+        (old.nearby === null || old.nearby === describeNearbyText(element, name)) &&
         old.href === element.getAttribute('href');
       const ref =
         (same ? previousRef : null) ||
@@ -408,7 +413,7 @@ export function readWebsiteAgentPage() {
         tag,
         name,
         path: window.location.pathname + window.location.search,
-        nearby: describeNearbyText(element, name),
+        nearby: null,
         href: element.getAttribute('href')
       });
       const href =
@@ -448,7 +453,7 @@ export function readWebsiteAgentPage() {
               TYPED_VALUE_MAX_CHARS
             )
           : '';
-      listed.push({ line: lines.length, element, name });
+      listed.push({ line: lines.length, ref, element, name });
       lines.push(
         `[${ref}] ${describeKind(element)} "${name}"${NEAR_SLOT}${
           href ? ` -> ${href}` : ''
@@ -462,11 +467,13 @@ export function readWebsiteAgentPage() {
     const key = name.toLowerCase();
     nameCounts.set(key, (nameCounts.get(key) || 0) + 1);
   }
-  for (const { line, element, name } of listed) {
-    const near =
-      (nameCounts.get(name.toLowerCase()) || 0) > 1
-        ? describeNearbyText(element, name)
-        : '';
+  for (const { line, ref, element, name } of listed) {
+    const duplicate = (nameCounts.get(name.toLowerCase()) || 0) > 1;
+    const near = duplicate ? describeNearbyText(element, name) : '';
+    if (duplicate) {
+      const fingerprint = refFingerprints.get(ref);
+      if (fingerprint) fingerprint.nearby = near;
+    }
     lines[line] = lines[line].replace(NEAR_SLOT, near ? ` near "${near}"` : '');
   }
   // With a window open, its text is the page's text (only the window on
@@ -546,7 +553,8 @@ export function findWebsiteAgentElement(ref: string) {
     fingerprint.path !== window.location.pathname + window.location.search ||
     fingerprint.tag !== tagged.tagName.toLowerCase() ||
     fingerprint.name !== describeName(tagged) ||
-    fingerprint.nearby !== describeNearbyText(tagged, fingerprint.name) ||
+    (fingerprint.nearby !== null &&
+      fingerprint.nearby !== describeNearbyText(tagged, fingerprint.name)) ||
     fingerprint.href !== tagged.getAttribute('href')
   )
     return null;
@@ -557,6 +565,15 @@ const CONSEQUENTIAL_LABEL =
   /\b(send|post|submit|publish|delete|remove|save|confirm|buy|purchase|pay|claim|reward|upload|apply|approve|reject|decline|accept|join|leave|follow|unfollow|like|unlike|block|report|sell|bid|share|merge|create|update|transfer|invite|kick|ban|donate|gift|give|offer|spend|spin|roll|summon|burn|generate|upgrade|unlock|collect|reveal|redeem|challenge|vote|rate|subscribe|mint|trade|yes|ok|okay|done|continue|agree|check icon|paper plane icon|trash alt icon|trash icon)\b/i;
 
 function looksConsequential(element: Element) {
+  // Switching tabs or following a plain navigation link only changes the view.
+  if (isTab(element)) return false;
+  if (
+    element.tagName.toLowerCase() === 'a' &&
+    element.getAttribute('role') !== 'button'
+  ) {
+    const href = (element.getAttribute('href') || '').trim();
+    if (href && !/^javascript:/i.test(href)) return false;
+  }
   const label = [
     describeName(element),
     element.getAttribute('aria-label'),

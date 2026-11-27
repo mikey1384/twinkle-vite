@@ -14,7 +14,8 @@ import {
   WEBSITE_AGENT_UI_ATTRIBUTE,
   countControlsUnder,
   findWebsiteAgentElement,
-  isCoveredOnScreen
+  isCoveredOnScreen,
+  readWebsiteAgentPage
 } from '~/helpers/websiteAgentPage';
 import AssistantFace from '~/components/AssistantFace';
 import { openAssistantDock } from './AssistantDock/dockState';
@@ -66,13 +67,17 @@ export function showWebsiteAgentSpotlight({
 }): Promise<{
   shown: boolean;
   userAction?: WebsiteAgentSpotlightAction;
+  code?: string;
   error?: string;
+  pageNow?: ReturnType<typeof readWebsiteAgentPage>;
 }> {
   const element = findWebsiteAgentElement(ref);
   if (!element || !element.isConnected) {
     return Promise.resolve({
       shown: false,
-      error: 'That element is no longer on the page. Read the page again.'
+      code: 'stale_page',
+      error: 'That element is no longer on the page. Select a current ref from pageNow.',
+      pageNow: readWebsiteAgentPage()
     });
   }
   // Centred first, so a bar fixed to the screen's edge doesn't count as
