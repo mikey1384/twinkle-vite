@@ -260,11 +260,17 @@ class RequestChannel {
           priority: config.meta?.priority,
           task: async () => {
             throwIfRequestAborted(baseConfig.signal);
+            let attemptTimer: ReturnType<typeof setTimeout> | null = null;
             if (timeoutMs > 0) {
-              const timer = setTimeout(() => {
+              attemptTimer = setTimeout(() => {
                 controller.abort(new CanceledError('timeout'));
               }, timeoutMs);
-              clearTimeoutFn = () => clearTimeout(timer);
+              clearTimeoutFn = () => {
+                if (attemptTimer) {
+                  clearTimeout(attemptTimer);
+                  attemptTimer = null;
+                }
+              };
             }
             const httpStartTime = Date.now();
             const preQueueDelayMs = queuedAt - attemptStartedAt;
@@ -302,6 +308,11 @@ class RequestChannel {
                 this.onLatencyMeasured(Date.now() - httpStartTime);
               }
               throw err;
+            } finally {
+              if (attemptTimer) {
+                clearTimeout(attemptTimer);
+                attemptTimer = null;
+              }
             }
           }
         }),

@@ -11,6 +11,10 @@ import {
 import { toBuildProfilePicUrl } from '~/helpers/buildProfilePicUrl';
 import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import type { Build } from '../types';
+import {
+  selectCachedBuildApiToken,
+  type BuildApiTokenState
+} from './previewBridgeTokenCache';
 
 const GUEST_SESSION_STORAGE_KEY = 'twinkle_build_guest_session_id';
 const GUEST_RESTRICTION_ERROR_MESSAGE =
@@ -19,14 +23,6 @@ const GUEST_RESTRICTION_ERROR_MESSAGE =
 export type BuildViewerAgeTier = 'kid' | 'teen' | 'adult';
 
 export type AsyncRequestRef = RefObject<(...args: any[]) => Promise<any>>;
-
-interface BuildApiTokenState {
-  buildId?: number;
-  userId?: number;
-  token: string;
-  scopes: string[];
-  expiresAt: number;
-}
 
 export interface PreviewHostBridgeAuth {
   buildRef: RefObject<Build>;
@@ -140,13 +136,18 @@ export async function ensureBuildApiToken(
   if (!result?.token) {
     throw new Error('Failed to obtain API token');
   }
-  previewAuth.buildApiTokenRef.current = {
+  const nextToken: BuildApiTokenState = {
     buildId: Number(activeBuild.id || 0) || undefined,
     userId: activeUserId || undefined,
     token: result.token,
-    scopes: result.scopes || requestedScopes,
+    scopes: Array.isArray(result.scopes) ? result.scopes : requestedScopes,
     expiresAt: result.expiresAt || now + 600
   };
+  previewAuth.buildApiTokenRef.current = selectCachedBuildApiToken(
+    previewAuth.buildApiTokenRef.current,
+    nextToken,
+    now
+  );
   return result.token;
 }
 
