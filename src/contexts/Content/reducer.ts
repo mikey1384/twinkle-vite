@@ -1690,6 +1690,9 @@ export default function ContentReducer(
         }
       };
     case 'SET_PREV_URL':
+      if (state[contentKey] && prevContentState.prevUrl === action.prevUrl) {
+        return state;
+      }
       return {
         ...state,
         [contentKey]: {

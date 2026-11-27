@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, Fragment } from 'react';
+import React, { useEffect, useMemo, useRef, useState, Fragment } from 'react';
 import { unified } from 'unified';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -102,7 +102,10 @@ function Markdown({
   );
 
   const [isProcessed, setIsProcessed] = useState(false);
-  const [hasLongWord, setHasLongWord] = useState(false);
+  const onSetIsParsedRef = useRef(onSetIsParsed);
+  onSetIsParsedRef.current = onSetIsParsed;
+  const onSetHasTopEmbeddedContentRef = useRef(onSetHasTopEmbeddedContent);
+  onSetHasTopEmbeddedContentRef.current = onSetHasTopEmbeddedContent;
 
   const processedContent = useMemo(() => {
     const hasExcessivelyLongWord = (text: string) => {
@@ -114,9 +117,9 @@ function Markdown({
     };
 
     if (hasExcessivelyLongWord(children)) {
-      setHasLongWord(true);
       return {
         content: <Fragment key={key}>{children}</Fragment>,
+        hasLongWord: true,
         processed: true
       };
     }
@@ -166,12 +169,14 @@ function Markdown({
 
       return {
         content: <Fragment key={key}>{result}</Fragment>,
+        hasLongWord: false,
         processed: true
       };
     } catch (error) {
       console.error('Error processing markdown:', error);
       return {
         content: <Fragment key={key}>{children}</Fragment>,
+        hasLongWord: false,
         processed: true
       };
     }
@@ -194,17 +199,20 @@ function Markdown({
   ]);
 
   useEffect(() => {
-    if ((processedContent.processed && !isProcessed) || hasLongWord) {
+    if (
+      (processedContent.processed || processedContent.hasLongWord) &&
+      !isProcessed
+    ) {
       setIsProcessed(true);
-      onSetIsParsed(true);
+      onSetIsParsedRef.current(true);
     }
-  }, [processedContent, isProcessed, hasLongWord, onSetIsParsed]);
+  }, [processedContent.hasLongWord, processedContent.processed, isProcessed]);
 
   useEffect(() => {
     const firstContent = children.trim().split('\n')[0];
     const isFirstContentEmbedded = /^!\[.*?\]\(.*?\)/.test(firstContent);
-    onSetHasTopEmbeddedContent?.(isFirstContentEmbedded);
-  }, [children, onSetHasTopEmbeddedContent]);
+    onSetHasTopEmbeddedContentRef.current?.(isFirstContentEmbedded);
+  }, [children]);
 
   return (
     <ErrorBoundary componentPath={componentPath}>

@@ -533,10 +533,12 @@ export default function LiveNow({
   // The card holds still while the picker is open, as it does for a
   // profile card, so nothing moves under the pointer.
   const popupOpen = openPopupKeys.length > 0 || !!picker;
+  const onPopupOpenChangeRef = useRef(onPopupOpenChange);
+  onPopupOpenChangeRef.current = onPopupOpenChange;
   useEffect(() => {
-    onPopupOpenChange?.(popupOpen);
-  }, [onPopupOpenChange, popupOpen]);
-  useEffect(() => () => onPopupOpenChange?.(false), [onPopupOpenChange]);
+    onPopupOpenChangeRef.current?.(popupOpen);
+  }, [popupOpen]);
+  useEffect(() => () => onPopupOpenChangeRef.current?.(false), []);
 
   if (!apps.length) return null;
 

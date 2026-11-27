@@ -46,7 +46,10 @@ export default function DropdownButton({
   uppercase?: boolean;
 }) {
   const [dropdownContext, setDropdownContext] = useState(null);
+  const isDropdownShown = !!dropdownContext;
   const ButtonRef: React.RefObject<any> = useRef(null);
+  const onDropdownShownRef = useRef(onDropdownShown);
+  onDropdownShownRef.current = onDropdownShown;
 
   useEffect(() => {
     if (isMenuShownWhenMounted) {
@@ -56,8 +59,8 @@ export default function DropdownButton({
   }, []);
 
   useEffect(() => {
-    onDropdownShown?.(!!dropdownContext);
-  }, [dropdownContext, onDropdownShown]);
+    onDropdownShownRef.current?.(isDropdownShown);
+  }, [isDropdownShown]);
 
   return (
     <ErrorBoundary

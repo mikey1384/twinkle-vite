@@ -1,8 +1,22 @@
 import { useCallback, useRef, useState } from 'react';
 import { observe } from 'react-intersection-observer';
+import {
+  getClearedCardMeasurementState,
+  getNextCardMeasurementState,
+  resolveCardWindowMeasuredWidth,
+  shouldInvalidateCardWindowMeasurement,
+  type CardWindowMeasurement,
+  type CardWindowSize
+} from './cardWindowState';
 
-type Size = { height: number; width: number };
-const sizes = new Map<string, Size>();
+export {
+  getClearedCardMeasurementState,
+  getNextCardMeasurementState,
+  resolveCardWindowMeasuredWidth,
+  shouldInvalidateCardWindowMeasurement
+};
+
+const sizes = new Map<string, CardWindowSize>();
 const CACHE_LIMIT = 600;
 const LEAVE_DELAY_MS = 1000;
 const RENDER_MARGIN = '400px 0px';
@@ -25,13 +39,14 @@ export function useCardWindow({
 }) {
   const [mounted, setMounted] = useState(measureBeforeHide);
   const mountedRef = useRef(measureBeforeHide);
-  const [measurement, setMeasurement] = useState<{ key: string; size?: Size }>(
+  const [measurement, setMeasurement] = useState<CardWindowMeasurement>(
     () => ({ key: cacheKey, size: sizes.get(cacheKey) })
   );
   const size =
     measurement.key === cacheKey ? measurement.size : sizes.get(cacheKey);
   const latestSizeRef = useRef(size);
   latestSizeRef.current = size;
+  const outerWidthRef = useRef(0);
   const nearViewportRef = useRef(false);
   const panelElementRef = useRef<HTMLDivElement | null>(null);
   const contentShown =
@@ -65,8 +80,10 @@ export function useCardWindow({
           !nearViewportRef.current &&
           !element.contains(document.activeElement)
         ) {
-          mountedRef.current = false;
-          setMounted(false);
+          if (mountedRef.current) {
+            mountedRef.current = false;
+            setMounted(false);
+          }
         }
       }, LEAVE_DELAY_MS);
     }
@@ -76,8 +93,10 @@ export function useCardWindow({
       nearViewportRef.current = near;
       if (near) {
         clearLeaveTimer();
-        mountedRef.current = true;
-        setMounted(true);
+        if (!mountedRef.current) {
+          mountedRef.current = true;
+          setMounted(true);
+        }
       } else {
         hideAfterGrace();
       }
@@ -93,32 +112,36 @@ export function useCardWindow({
       if (disposed) return;
       const previous = latestSizeRef.current;
       const width = entry.contentRect.width;
-      if (width > 0 && width !== observedWidth) {
-        observedWidth = width;
-        // iOS switches between document and #App scrolling at the mobile
-        // breakpoint. Keep the pre-render margin on the actual scrollport.
-        const nextRoot = getVisibilityRoot(element);
-        if (nextRoot !== visibilityRoot) {
-          stopVisibility();
-          visibilityRoot = nextRoot;
-          stopVisibility = observe(
-            element,
-            handleVisibility,
-            { root: visibilityRoot, rootMargin: RENDER_MARGIN },
-            true
-          );
+      if (width > 0) {
+        outerWidthRef.current = width;
+        if (width !== observedWidth) {
+          observedWidth = width;
+          // iOS switches between document and #App scrolling at the mobile
+          // breakpoint. Keep the pre-render margin on the actual scrollport.
+          const nextRoot = getVisibilityRoot(element);
+          if (nextRoot !== visibilityRoot) {
+            stopVisibility();
+            visibilityRoot = nextRoot;
+            stopVisibility = observe(
+              element,
+              handleVisibility,
+              { root: visibilityRoot, rootMargin: RENDER_MARGIN },
+              true
+            );
+          }
         }
       }
       // A hidden page reports zero; retain its last usable measurement.
-      if (width <= 0 || !previous || Math.abs(previous.width - width) <= 1) return;
+      if (!shouldInvalidateCardWindowMeasurement(previous, width)) return;
       sizes.delete(cacheKey);
       latestSizeRef.current = undefined;
-      setMeasurement({ key: cacheKey });
+      setMeasurement((prev) => getClearedCardMeasurementState(prev, cacheKey));
     });
     element.addEventListener('focusout', hideAfterGrace);
 
     return () => {
       disposed = true;
+      outerWidthRef.current = 0;
       nearViewportRef.current = false;
       clearLeaveTimer();
       stopVisibility();
@@ -131,11 +154,15 @@ export function useCardWindow({
     panelElementRef.current = node;
     if (!node) return;
     const stop = observeSize(node, (entry) => {
-      // This wrapper has no border or padding. ResizeObserver supplies its
-      // laid-out size, so no clientHeight read or extra forced layout is needed.
+      // Record height from the inner panel alongside the outer wrapper's width
+      // so width comparisons stay in one coordinate space and never ping-pong
+      // if inner/outer widths differ by padding, border, or subpixel rounding.
       const next = {
         height: Math.ceil(entry.contentRect.height),
-        width: entry.contentRect.width
+        width: resolveCardWindowMeasuredWidth(
+          outerWidthRef.current,
+          entry.contentRect.width
+        )
       };
       if (next.height <= 0 || next.width <= 0) return;
       const previous = latestSizeRef.current;
@@ -144,7 +171,7 @@ export function useCardWindow({
       sizes.delete(cacheKey);
       sizes.set(cacheKey, next);
       if (sizes.size > CACHE_LIMIT) sizes.delete(sizes.keys().next().value!);
-      setMeasurement({ key: cacheKey, size: next });
+      setMeasurement((prev) => getNextCardMeasurementState(prev, cacheKey, next));
     });
     return () => {
       stop();

@@ -110,7 +110,7 @@ export default function ActivityBadge({
       const popupWidth = Math.min(270, width - 24);
       const popupHeight =
         popupRef.current?.getBoundingClientRect().height || 126;
-      setPosition({
+      const nextPosition: React.CSSProperties = {
         width: popupWidth,
         left: Math.max(
           left + 12,
@@ -125,7 +125,14 @@ export default function ActivityBadge({
             top + height - popupHeight - 12
           )
         )
-      });
+      };
+      setPosition((prev) =>
+        prev.width === nextPosition.width &&
+        prev.left === nextPosition.left &&
+        prev.top === nextPosition.top
+          ? prev
+          : nextPosition
+      );
     }
     function outside(event: Event) {
       const target = event.target as Node;

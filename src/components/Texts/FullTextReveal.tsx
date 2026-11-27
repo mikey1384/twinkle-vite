@@ -13,6 +13,12 @@ import { css } from '@emotion/css';
 import { useLocation } from 'react-router-dom';
 import { useOutsideClick } from '~/helpers/hooks';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
+import {
+  getFullTextRevealComputedWidth,
+  getNextFullTextRevealPosition,
+  type FullTextRevealPlacement,
+  type FullTextRevealPosition
+} from './fullTextRevealState';
 
 const VIEWPORT_PADDING_PX = 12;
 const BUBBLE_GAP_PX = 8;
@@ -21,14 +27,6 @@ const DEFAULT_TOUCH_MOVE_DISMISS_THRESHOLD_PX = 10;
 
 type FullTextRevealDirection = 'left' | 'right';
 type FullTextRevealAlignment = 'center' | 'edge';
-type FullTextRevealPlacement = 'top' | 'bottom';
-
-interface FullTextRevealPosition {
-  arrowLeft: number;
-  left: number;
-  placement: FullTextRevealPlacement;
-  top: number;
-}
 
 export default function FullTextReveal({
   alignment = 'edge',
@@ -136,7 +134,12 @@ export default function FullTextReveal({
     []
   );
 
-  const computeCoords = useCallback(() => {
+  const styleWidth = style?.width;
+  const hasOnDismiss = Boolean(onDismiss);
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
+  const computeLayout = useCallback(() => {
     const el = anchorRef?.current || containerRef.current;
     if (!el) return null;
     const rect = el.getBoundingClientRect();
@@ -178,50 +181,56 @@ export default function FullTextReveal({
       ARROW_EDGE_PADDING_PX,
       Math.max(ARROW_EDGE_PADDING_PX, bubbleWidth - ARROW_EDGE_PADDING_PX)
     );
-    // If consumer provided width in %, compute relative to container to
-    // preserve prior contract from in-flow absolute positioning.
-    if (style && typeof style.width === 'string' && /%$/.test(style.width)) {
-      const pct = parseFloat(style.width);
-      if (!Number.isNaN(pct)) {
-        setComputedWidth(`${(rect.width * pct) / 100}px`);
-      }
-    } else {
-      setComputedWidth(undefined);
+    return {
+      computedWidth: getFullTextRevealComputedWidth(styleWidth, rect.width),
+      position: { arrowLeft, left, placement, top }
+    };
+  }, [alignment, anchorRef, direction, styleWidth]);
+
+  const applyLayout = useCallback(() => {
+    const layout = computeLayout();
+    if (!layout) {
+      setPosition((prev) => getNextFullTextRevealPosition(prev, null));
+      return;
     }
-    return { arrowLeft, left, placement, top };
-  }, [alignment, anchorRef, direction, style]);
+    setComputedWidth((prev) =>
+      prev === layout.computedWidth ? prev : layout.computedWidth
+    );
+    setPosition((prev) => getNextFullTextRevealPosition(prev, layout.position));
+  }, [computeLayout]);
 
   useOutsideClick(outsideClickRefs, onDismiss, {
-    enabled: Boolean(show && onDismiss && dismissOnOutsidePress),
+    enabled: Boolean(show && hasOnDismiss && dismissOnOutsidePress),
     closeOnScroll: false
   });
 
   useLayoutEffect(() => {
     if (!show) {
-      setPosition(null);
+      setPosition((prev) => getNextFullTextRevealPosition(prev, null));
+      setComputedWidth((prev) => (prev === undefined ? prev : undefined));
       return;
     }
     let frameId = 0;
-    setPosition(computeCoords());
+    applyLayout();
     frameId = window.requestAnimationFrame(() => {
-      setPosition(computeCoords());
+      applyLayout();
     });
     return () => {
       if (frameId) {
         window.cancelAnimationFrame(frameId);
       }
     };
-  }, [show, computeCoords, text]);
+  }, [show, applyLayout, text]);
 
   useEffect(() => {
     if (!show) return;
-    const onResize = () => setPosition(computeCoords());
+    const onResize = () => applyLayout();
     const onScroll = () => {
-      if (onDismiss && dismissOnScroll) {
-        onDismiss();
+      if (onDismissRef.current && dismissOnScroll) {
+        onDismissRef.current();
         return;
       }
-      setPosition(computeCoords());
+      applyLayout();
     };
     addEvent(window, 'resize', onResize);
     addEvent(window, 'orientationchange', onResize);
@@ -233,22 +242,21 @@ export default function FullTextReveal({
       removeEvent(window, 'scroll', onScroll, { capture: true });
       removeEvent(document, 'scroll', onScroll, { capture: true });
     };
-  }, [dismissOnScroll, onDismiss, show, computeCoords]);
+  }, [dismissOnScroll, show, applyLayout]);
 
   useEffect(() => {
-    if (!show || !onDismiss) {
+    if (!show || !hasOnDismiss) {
       routeKeyRef.current = routeKey;
       return;
     }
     if (routeKeyRef.current && routeKeyRef.current !== routeKey) {
-      onDismiss();
+      onDismissRef.current?.();
     }
     routeKeyRef.current = routeKey;
-  }, [onDismiss, routeKey, show]);
+  }, [hasOnDismiss, routeKey, show]);
 
   useEffect(() => {
-    if (!show || !onDismiss || dismissTouchMoveThreshold <= 0) return;
-    const dismiss = onDismiss;
+    if (!show || !hasOnDismiss || dismissTouchMoveThreshold <= 0) return;
 
     function handleTouchStart(event: Event) {
       const touch = (event as TouchEvent).touches[0];
@@ -268,7 +276,7 @@ export default function FullTextReveal({
       const movement = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
       if (movement < dismissTouchMoveThreshold) return;
       touchStartRef.current = null;
-      dismiss();
+      onDismissRef.current?.();
     }
 
     addEvent(window, 'touchstart', handleTouchStart, { capture: true });
@@ -277,7 +285,7 @@ export default function FullTextReveal({
       removeEvent(window, 'touchstart', handleTouchStart, { capture: true });
       removeEvent(window, 'touchmove', handleTouchMove, { capture: true });
     };
-  }, [dismissTouchMoveThreshold, onDismiss, show]);
+  }, [dismissTouchMoveThreshold, hasOnDismiss, show]);
 
   const portalTarget =
     typeof document !== 'undefined'

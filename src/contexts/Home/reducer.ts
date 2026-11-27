@@ -23,11 +23,13 @@ export default function HomeReducer(
         grammarGenerationProgress: action.progress
       };
     case 'CHANGE_CATEGORY':
+      if (state.category === action.category) return state;
       return {
         ...state,
         category: action.category
       };
     case 'CHANGE_SUB_FILTER':
+      if (state.subFilter === action.subFilter) return state;
       return {
         ...state,
         subFilter: action.subFilter
@@ -57,11 +59,13 @@ export default function HomeReducer(
       };
     }
     case 'SET_CURRENT_FEATURED_INDEX':
+      if (state.currentFeaturedIndex === action.index) return state;
       return {
         ...state,
         currentFeaturedIndex: action.index
       };
     case 'SET_FEATURED_SUBJECTS_LOADED':
+      if (state.featuredSubjectsLoaded === action.loaded) return state;
       return {
         ...state,
         featuredSubjectsLoaded: action.loaded
@@ -121,6 +125,7 @@ export default function HomeReducer(
         feeds: action.data.concat(state.feeds)
       };
     case 'SET_DISPLAY_ORDER':
+      if (state.displayOrder === action.order) return state;
       return {
         ...state,
         displayOrder: action.order
@@ -137,6 +142,7 @@ export default function HomeReducer(
         topMenuSection: action.section
       };
     case 'SET_FEEDS_OUTDATED':
+      if (state.feedsOutdated === action.outdated) return state;
       return {
         ...state,
         feedsOutdated: action.outdated

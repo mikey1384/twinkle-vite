@@ -208,10 +208,14 @@ function ContentListItem({
       if (!isBuildItem) return;
       const nextHeight = Math.ceil(Number(height) || 0);
       if (nextHeight <= 0) return;
-      setPlaceholderHeightState({
-        height: nextHeight,
-        key: placeholderHeightKey
-      });
+      setPlaceholderHeightState((prev) =>
+        prev.height === nextHeight && prev.key === placeholderHeightKey
+          ? prev
+          : {
+              height: nextHeight,
+              key: placeholderHeightKey
+            }
+      );
       placeholderHeightRef.current = nextHeight;
     }
   });
@@ -231,10 +235,15 @@ function ContentListItem({
 
   useEffect(() => {
     placeholderHeightRef.current = previousPlaceholderHeight;
-    setPlaceholderHeightState({
-      height: previousPlaceholderHeight,
-      key: placeholderHeightKey
-    });
+    setPlaceholderHeightState((prev) =>
+      prev.height === previousPlaceholderHeight &&
+      prev.key === placeholderHeightKey
+        ? prev
+        : {
+            height: previousPlaceholderHeight,
+            key: placeholderHeightKey
+          }
+    );
   }, [placeholderHeightKey, previousPlaceholderHeight]);
 
   useEffect(() => {

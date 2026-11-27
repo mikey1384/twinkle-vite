@@ -100,7 +100,7 @@ export default function FeaturedSubject({
   }, [featureds.length]);
 
   useEffect(() => {
-    if (currentFeaturedIndex >= featureds.length) {
+    if (currentFeaturedIndex > 0 && currentFeaturedIndex >= featureds.length) {
       onSetCurrentFeaturedIndex(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

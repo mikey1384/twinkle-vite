@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import ViewCount from '~/components/ViewCount';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -7,6 +7,12 @@ import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = typeof navigator !== 'undefined' && isMobile(navigator);
+const REWARD_REASON_TOOLTIP_STYLE: React.CSSProperties = {
+  minWidth: '14rem',
+  width: 'max-content',
+  maxWidth: '32rem',
+  fontSize: '1.2rem'
+};
 
 export default function Actions({
   commentsCount,
@@ -61,6 +67,9 @@ export default function Actions({
 }) {
   const [rewardReasonShown, setRewardReasonShown] = useState(false);
   const rewardActionRef = useRef<HTMLDivElement | null>(null);
+  const handleRewardReasonDismiss = useCallback(() => {
+    setRewardReasonShown(false);
+  }, []);
   const rewardBlockedReason =
     rewardDisableReason ||
     (rewardDisabled ? 'You cannot reward this right now.' : '');
@@ -134,12 +143,7 @@ export default function Actions({
               onDismiss={handleRewardReasonDismiss}
               show={rewardReasonShown && rewardIsBlocked}
               text={rewardBlockedReason}
-              style={{
-                minWidth: '14rem',
-                width: 'max-content',
-                maxWidth: '32rem',
-                fontSize: '1.2rem'
-              }}
+              style={REWARD_REASON_TOOLTIP_STYLE}
             />
           </div>
         )}
@@ -203,10 +207,6 @@ export default function Actions({
     event.preventDefault();
     event.stopPropagation();
     setRewardReasonShown((shown) => !shown);
-  }
-
-  function handleRewardReasonDismiss() {
-    setRewardReasonShown(false);
   }
 }
 
