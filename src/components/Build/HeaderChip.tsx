@@ -261,7 +261,8 @@ export function HeaderMenu({
   items,
   renderTrigger,
   menuStyle,
-  label
+  label,
+  onOpenChange
 }: {
   items: HeaderMenuItem[];
   renderTrigger: (props: {
@@ -272,12 +273,26 @@ export function HeaderMenu({
   menuStyle?: React.CSSProperties;
   // the menu's accessible name
   label: string;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const triggerRef = useRef<HTMLDivElement>(null);
   const keyboardOpenRef = useRef(false);
   const menuId = useId();
   const [dropdownContext, setDropdownContext] = useState<DOMRect | null>(null);
   const open = !!dropdownContext;
+  const openRef = useRef(open);
+  openRef.current = open;
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
+
+  function setMenuContext(next: DOMRect | null) {
+    const nextOpen = !!next;
+    setDropdownContext(next);
+    if (openRef.current !== nextOpen) {
+      openRef.current = nextOpen;
+      onOpenChangeRef.current?.(nextOpen);
+    }
+  }
 
   useEffect(() => {
     if (!open || !keyboardOpenRef.current) return;
@@ -292,7 +307,7 @@ export function HeaderMenu({
   useEffect(() => {
     if (!open) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setDropdownContext(null);
+      if (event.key === 'Escape') setMenuContext(null);
     }
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
@@ -407,7 +422,7 @@ export function HeaderMenu({
   }
 
   function closeAndFocusTrigger() {
-    setDropdownContext(null);
+    setMenuContext(null);
     triggerButton()?.focus({ preventScroll: true });
   }
 
@@ -464,7 +479,7 @@ export function HeaderMenu({
   }
 
   function handleToggle() {
-    setDropdownContext(
+    setMenuContext(
       dropdownContext
         ? null
         : (triggerRef.current?.getBoundingClientRect() ?? null)
@@ -473,7 +488,7 @@ export function HeaderMenu({
 
   function handleHide() {
     keyboardOpenRef.current = false;
-    setDropdownContext(null);
+    setMenuContext(null);
   }
 }
 
@@ -501,6 +516,12 @@ const linkRowClass = css`
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  && > a > span > span,
+  && > a > span > small {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 
 // Menu rows read left to right, one line each, with their icons in one
@@ -513,6 +534,12 @@ const menuListClass = css`
     white-space: nowrap;
   }
   && li > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  && li > span > span,
+  && li > span > small {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;

@@ -376,7 +376,7 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
   // read keeps the order id: it shows (with Check again) and is retried by
   // itself, a little later each time.
   const orderId = step?.kind === 'order' ? step.orderId : 0;
-  const progress = useDomainProgress(buildId, Boolean(orderId));
+  const progress = useDomainProgress(buildId, Boolean(orderId), orderId);
   const [orderLookupError, setOrderLookupError] = useState('');
   const [orderAttempt, setOrderAttempt] = useState(0);
   useEffect(() => {
@@ -402,7 +402,7 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
         lastStatus = data.order.status;
         lastStage = data.order.stage;
         setOrder(data.order);
-        if (changed) refreshDomainProgress(buildId);
+        if (changed) refreshDomainProgress(buildId, orderId);
         if (data.order.stage === 'live') return;
         // keep asking while payment or setup is still going (a webhook can
         // land after the buyer is back from Stripe)
@@ -422,13 +422,25 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, buildId, orderAttempt]);
 
+  useEffect(() => {
+    if (step?.kind !== 'intro' || purchase) return;
+    let cancelled = false;
+    loadDomainPurchase({ buildId })
+      .then((data: any) => {
+        if (!cancelled) setPurchase(data || { open: false });
+      })
+      .catch(() => {
+        if (!cancelled) setPurchase({ open: false });
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step?.kind, purchase, buildId]);
+
   function openOwnFlow() {
     setError('');
     setStep({ kind: 'intro' });
-    if (purchase) return;
-    loadDomainPurchase({ buildId })
-      .then((data: any) => setPurchase(data || { open: false }))
-      .catch(() => setPurchase({ open: false }));
   }
 
   // An adult buyer's saved details prefill every step once, taking precedence

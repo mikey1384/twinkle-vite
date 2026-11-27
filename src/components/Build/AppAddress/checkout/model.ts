@@ -175,6 +175,29 @@ export function readScopedBuildData<T>(
   return scoped.data;
 }
 
+// Picks the first other owned domain awaiting Name.com email verification so
+// both AppAddress and DomainOwnerProgressBanner can surface cross-app reminders.
+export function selectPendingOtherDomainFallback(
+  otherDomains?: Array<{
+    verificationPending?: boolean;
+    orderId?: number;
+    orderBuildId?: number;
+    buildId?: number;
+  }> | null
+): { buildId: number; orderId: number } | null {
+  const pending = (otherDomains || []).find(
+    (d) =>
+      Boolean(d.verificationPending) &&
+      Number(d.orderId || 0) > 0 &&
+      Number(d.orderBuildId || d.buildId || 0) > 0
+  );
+  if (!pending) return null;
+  return {
+    buildId: Number(pending.orderBuildId || pending.buildId || 0),
+    orderId: Number(pending.orderId || 0)
+  };
+}
+
 // Generation & in-flight lock for the owner email verification code flow.
 // Starting a new code send bumps the generation so any in-flight verify
 // attempt is invalidated and cannot overwrite state or collapse the code box.
