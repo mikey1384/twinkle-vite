@@ -176,6 +176,13 @@ export function createSessionStore(
     return refreshing;
   }
 
+  async function getAccessToken(): Promise<string | null> {
+    if (!session) return null;
+    if (session.expiresAt - 60 > Date.now() / 1000) return session.accessToken;
+    const next = await refresh();
+    return next?.accessToken || null;
+  }
+
   return {
     get: () => session,
     // app accounts (phase B) start their session on this page
@@ -188,12 +195,7 @@ export function createSessionStore(
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    async accessToken(): Promise<string | null> {
-      if (!session) return null;
-      if (session.expiresAt - 60 > Date.now() / 1000) return session.accessToken;
-      const next = await refresh();
-      return next?.accessToken || null;
-    },
+    accessToken: getAccessToken,
     // Starts sign-in: a popup to twin-kle.com (or a full redirect when the
     // popup is blocked). Resolves with the session, or null if cancelled.
     async signIn(): Promise<AppSession | null> {
@@ -236,6 +238,155 @@ export function createSessionStore(
       const data = await post('/build/app-account/signup', { buildId: config.buildId, ...input });
       await adopt(data);
       return session;
+    },
+    // Called on load: a renamed slug hands off its session and/or guest
+    // progress via #lumine_handoff=<code> (audit G10).
+    // Never silently overwrites an existing session, and requires explicit
+    // confirmation before adopting a handed-off session or merging guest
+    // data (both signed-in and signed-out) to prevent session fixation /
+    // storage poisoning via untrusted #lumine_handoff links.
+    async completeOriginHandoff({
+      onGuestRecord,
+      confirmSession,
+      confirmGuestCarryover
+    }: {
+      onGuestRecord?: (record: unknown) => void;
+      confirmSession?: (incoming: {
+        user: { id: number; username: string };
+        hasGuestRecord: boolean;
+      }) => Promise<boolean>;
+      confirmGuestCarryover?: (options?: { signedIn: boolean }) => Promise<boolean>;
+    } = {}): Promise<AppSession | null> {
+      const hash = new URLSearchParams(window.location.hash.slice(1));
+      const code = hash.get('lumine_handoff');
+      if (!code) return null;
+      hash.delete('lumine_handoff');
+      const rest = hash.toString();
+      try {
+        history.replaceState(
+          null,
+          '',
+          `${window.location.href.split('#')[0]}${rest ? `#${rest}` : ''}`
+        );
+      } catch {
+        /* the page still works with the old address */
+      }
+      try {
+        // Preview first so declining a third-party #lumine_handoff link never
+        // consumes the code or mutates/rotates the session on the server.
+        const preview = await post('/build/app-session/handoff/claim', {
+          buildId: config.buildId,
+          code,
+          preview: true,
+          ...(session ? { skipSession: true } : {})
+        });
+        if (preview?.preview === true) {
+          if (session) {
+            if (!preview.hasGuestRecord || !onGuestRecord) return session;
+            const allowGuest = confirmGuestCarryover
+              ? await confirmGuestCarryover({ signedIn: true })
+              : false;
+            if (!allowGuest) return session;
+            const claimed = await post('/build/app-session/handoff/claim', {
+              buildId: config.buildId,
+              code,
+              skipSession: true
+            });
+            if (claimed?.guestRecord) {
+              onGuestRecord(claimed.guestRecord);
+              if (beforeSignedIn) {
+                const token = await getAccessToken();
+                if (token) {
+                  await Promise.race([
+                    beforeSignedIn(token).catch(() => {}),
+                    new Promise((resolve) => window.setTimeout(resolve, 4000))
+                  ]);
+                }
+              }
+            }
+            return session;
+          }
+          if (preview.hasSession && preview.username) {
+            const allowSession = confirmSession
+              ? await confirmSession({
+                  user: {
+                    id: Number(preview.userId || 0),
+                    username: String(preview.username)
+                  },
+                  hasGuestRecord: Boolean(preview.hasGuestRecord)
+                })
+              : false;
+            if (!allowSession || session) return session;
+            const claimed = await post('/build/app-session/handoff/claim', {
+              buildId: config.buildId,
+              code
+            });
+            if (claimed?.session?.accessToken && !session) {
+              if (claimed?.guestRecord && onGuestRecord) onGuestRecord(claimed.guestRecord);
+              await adopt(claimed.session);
+            }
+            return session;
+          }
+          if (preview.hasGuestRecord && onGuestRecord) {
+            const allowGuest = confirmGuestCarryover
+              ? await confirmGuestCarryover({ signedIn: false })
+              : false;
+            if (!allowGuest || session) return session;
+            const claimed = await post('/build/app-session/handoff/claim', {
+              buildId: config.buildId,
+              code,
+              skipSession: true
+            });
+            if (claimed?.guestRecord && !session) onGuestRecord(claimed.guestRecord);
+          }
+          return session;
+        }
+        // Fallback when talking to an API version without preview support:
+        // still require explicit confirmation before adopting any session or
+        // merging any guest record (signed-in or signed-out).
+        const data = preview;
+        if (session) {
+          if (data?.guestRecord && onGuestRecord) {
+            const allowGuest = confirmGuestCarryover
+              ? await confirmGuestCarryover({ signedIn: true })
+              : false;
+            if (allowGuest) {
+              onGuestRecord(data.guestRecord);
+              if (beforeSignedIn) {
+                const token = await getAccessToken();
+                if (token) {
+                  await Promise.race([
+                    beforeSignedIn(token).catch(() => {}),
+                    new Promise((resolve) => window.setTimeout(resolve, 4000))
+                  ]);
+                }
+              }
+            }
+          }
+          return session;
+        }
+        if (data?.session?.accessToken) {
+          const allowSession = confirmSession
+            ? await confirmSession({
+                user: data.session.user,
+                hasGuestRecord: Boolean(data.guestRecord)
+              })
+            : false;
+          if (!allowSession || session) return session;
+          if (data?.guestRecord && onGuestRecord) onGuestRecord(data.guestRecord);
+          await adopt(data.session);
+          return session;
+        }
+        if (data?.guestRecord && onGuestRecord) {
+          const allowGuest = confirmGuestCarryover
+            ? await confirmGuestCarryover({ signedIn: false })
+            : false;
+          if (allowGuest && !session) onGuestRecord(data.guestRecord);
+        }
+        return session;
+      } catch {
+        return session;
+      }
     },
     // Called on load: a redirect sign-in returns with #lumine_code=…&state=…
     async completeRedirect(): Promise<AppSession | null> {

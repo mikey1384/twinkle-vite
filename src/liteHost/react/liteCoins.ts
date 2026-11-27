@@ -18,6 +18,23 @@ export const LITE_COIN_WRITE_OPERATIONS: ReadonlySet<string> = new Set([
   'withdraw-offer'
 ]);
 
+export const CUSTOM_DOMAIN_COINS_UNAVAILABLE_CODE =
+  'coins_unavailable_on_custom_domain';
+export const CUSTOM_DOMAIN_COINS_UNAVAILABLE_MESSAGE =
+  'Spending Coins isn’t available on a custom domain. Open this app on Twinkle to spend Coins.';
+
+// Custom-domain sessions intentionally omit `coins:charge` (appSession.ts).
+// Refuse spend bridge requests before opening Twinkle's Coins confirmation box
+// so players never confirm a spend that the server will reject (audit G13).
+export function isCustomDomainCoinSpendBlocked(
+  messageType: string,
+  surface: 'address' | 'domain' | null | undefined
+) {
+  if (surface !== 'domain') return false;
+  if (!String(messageType || '').startsWith('coins:')) return false;
+  return LITE_COIN_WRITE_OPERATIONS.has(String(messageType).slice('coins:'.length));
+}
+
 // The spend follows the box at once (buildRuntimeCoins.ts); a confirmation
 // older than this is never used.
 export const LITE_COIN_CONFIRM_WINDOW_MS = 60_000;

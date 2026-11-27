@@ -1,5 +1,13 @@
 import { getAppInfoRelease } from '~/helpers/buildAppInfo';
 import {
+  resolveAppBridgeUrl
+} from '~/liteHost/shareUrl';
+import {
+  CUSTOM_DOMAIN_COINS_UNAVAILABLE_CODE,
+  CUSTOM_DOMAIN_COINS_UNAVAILABLE_MESSAGE,
+  isCustomDomainCoinSpendBlocked
+} from '~/liteHost/react/liteCoins';
+import {
   armUpdateIfDeployedBundleNewer,
   isClientUpdatePending,
   performHostUpdateReload
@@ -3625,7 +3633,11 @@ export function useHostBridge({
                 buildId: activeBuild.id,
                 ownerId: Number(activeBuild.userId) || null,
                 ownerUsername: activeBuild.username || null,
-                appUrl: `${window.location.origin}/app/${activeBuild.id}`,
+                appUrl: resolveAppBridgeUrl({
+                  origin: window.location.origin,
+                  buildId: activeBuild.id,
+                  standalone: Boolean(authHostRef?.current)
+                }),
                 ...getAppInfoRelease({
                   runtimeOnly: runtimeOnlyRef.current,
                   previewSrcOverride: previewSrcOverrideRef.current,
@@ -6430,6 +6442,18 @@ export function useHostBridge({
               const signInError: any = new Error(message);
               signInError.code = 'sign_in_required';
               throw signInError;
+            }
+            // Custom-domain sessions never hold `coins:charge` (appSession.ts).
+            // Refuse spend calls cleanly before opening the Coins box (audit G13).
+            if (
+              runtimeOnly &&
+              isCustomDomainCoinSpendBlocked(type, authHostRef?.current?.surface)
+            ) {
+              const customDomainError: any = new Error(
+                CUSTOM_DOMAIN_COINS_UNAVAILABLE_MESSAGE
+              );
+              customDomainError.code = CUSTOM_DOMAIN_COINS_UNAVAILABLE_CODE;
+              throw customDomainError;
             }
             // Never forward app-supplied grants, prices, recipients or
             // destinations: helpers/buildRuntimeCoins.ts quotes the server,

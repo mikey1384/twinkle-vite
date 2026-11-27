@@ -5,7 +5,7 @@ import Modal from '~/components/Modal';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { BUILD_OWNERSHIP_CHANGED } from '~/helpers/buildOwnershipEvents';
-import { ADDRESS_TEXT, type AddressLang } from './text';
+import { ADDRESS_TEXT } from './text';
 import AppPlayers from './AppPlayers';
 import {
   refreshDomainProgress,
@@ -54,14 +54,6 @@ interface AddressInfo {
   accountMode?: 'twinkle' | 'app' | 'both';
 }
 
-function pageLang(): AddressLang {
-  try {
-    return /^ko\b/i.test(document.documentElement.lang || navigator.language) ? 'ko' : 'en';
-  } catch {
-    return 'en';
-  }
-}
-
 // The checkout's own page for this app, with the query that says where to
 // start (?appAddress=…, ?domainOrder=…) when there is one.
 export function domainCheckoutPath(buildId: number, search = '') {
@@ -106,7 +98,8 @@ export default function AppAddress({
   const [leaving, setLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState('');
   const info = readScopedBuildData(infoState, buildId, userId);
-  const t = ADDRESS_TEXT[pageLang()];
+  // Maker settings on twin-kle.com stay in English (audit D7).
+  const t = ADDRESS_TEXT.en;
   // the purchase tracker (shared with the Build header's notice): shown to
   // the app owner while buying is open, and to the buyer of a bought domain
   // or order on this app even before app_domains exists or after an app
@@ -481,7 +474,7 @@ export default function AppAddress({
         }
       />
       {children}
-      {isOwner && <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />}
+      {isOwner && <AppPlayers buildId={buildId} lang="en" initialMode={info.accountMode || 'twinkle'} />}
       {(leaving || leaveError) && (
         // over the page, not at the end of the scrolling chip strip, so it
         // shows on a phone too
@@ -535,7 +528,8 @@ export function AppAddressProgressNotice({ buildId }: { buildId: number; isOwner
       ? fallbackProgress
       : null;
   const targetBuildId = hasOwn ? buildId : fallback?.buildId || buildId;
-  const t = ADDRESS_TEXT[pageLang()];
+  // Maker settings on twin-kle.com stay in English (audit D7).
+  const t = ADDRESS_TEXT.en;
   if (!progress) return null;
   return (
     <ProgressNotice
@@ -569,7 +563,8 @@ export function DomainOwnerProgressBanner({
   const navigate = useNavigate();
   const [infoState, setInfoState] = useState<ScopedBuildData<AddressInfo> | null>(null);
   const info = readScopedBuildData(infoState, buildId, userId);
-  const t = ADDRESS_TEXT[pageLang()];
+  // Maker settings on twin-kle.com stay in English (audit D7).
+  const t = ADDRESS_TEXT.en;
 
   useEffect(() => {
     let cancelled = false;

@@ -632,7 +632,8 @@ test('DomainCheckoutPage, AppAddress, and checkout steps wire both the progress 
     bannerSource,
     /<ProgressNotice\s+t=\{t\}\s+buildId=\{targetBuildId\}\s+progress=\{progress\}\s+onOpen=\{\(\) => navigate\(domainCheckoutPath\(targetBuildId, `\?domainOrder=\$\{progress\.orderId\}`\)\)\}\s*\/>/
   );
-  assert.doesNotMatch(chip, /CheckoutSurface|appAddressCheckout/);
+  assert.doesNotMatch(chip, /CheckoutSurface|appAddressCheckout|pageLang/);
+  assert.equal((chip.match(/const t = ADDRESS_TEXT\.en;/g) || []).length, 3);
 
   // Header renders AppAddressProgressNotice for public non-branch apps and DomainOwnerProgressBanner for unpublished non-branch apps
   assert.match(header, /build\.isPublic && contributionStatus === 'none' \?[\s\S]{0,120}<AppAddressProgressNotice\s+buildId=\{Number\(build\.id\)\}/);

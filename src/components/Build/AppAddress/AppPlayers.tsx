@@ -84,17 +84,17 @@ const TEXT = {
 
 export default function AppPlayers({
   buildId,
-  lang,
   initialMode
 }: {
   buildId: number;
-  lang: 'en' | 'ko';
+  lang?: 'en' | 'ko';
   initialMode: Mode;
 }) {
   const loadAppPlayers = useAppContext((v) => v.requestHelpers.loadAppPlayers);
   const setAppAccountMode = useAppContext((v) => v.requestHelpers.setAppAccountMode);
   const setAppPlayerDisabled = useAppContext((v) => v.requestHelpers.setAppPlayerDisabled);
-  const t = TEXT[lang];
+  // Maker settings on twin-kle.com stay in English (audit D7).
+  const t = TEXT.en;
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>(initialMode);
   const [players, setPlayers] = useState<PlayerRow[] | null>(null);
@@ -151,7 +151,7 @@ export default function AppPlayers({
   }
 
   const dateText = (seconds: number) =>
-    new Date(seconds * 1000).toLocaleDateString(lang === 'ko' ? 'ko-KR' : undefined, {
+    new Date(seconds * 1000).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric'
     });
