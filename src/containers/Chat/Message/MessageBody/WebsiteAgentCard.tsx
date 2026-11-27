@@ -654,9 +654,6 @@ function describeReply(card: WebsiteAgentCardData) {
   if (card.type === 'choice' || card.type === 'lumine') {
     return card.answer || '';
   }
-  if (card.type === 'approval' && card.preview?.kind === 'lumine_run') {
-    return card.status === 'declined' ? 'Not now' : 'Start';
-  }
   return card.status === 'declined' ? 'No thanks' : 'Yes, go ahead!';
 }
 

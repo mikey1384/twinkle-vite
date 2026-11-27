@@ -40,6 +40,8 @@ export function isLumineRunPreview(
   );
 }
 
+const CANONICAL_BUILD_PATH_PATTERN = /^\/build(?:\/\d+(?:\/\d+)?)?$/;
+
 export function resolveLumineRunBuildPath(
   preview: LumineRunPreviewData,
   resultData?: any
@@ -48,7 +50,7 @@ export function resolveLumineRunBuildPath(
     typeof resultData?.buildPath === 'string' && resultData.buildPath.trim()
       ? resultData.buildPath.trim()
       : preview.buildPath.trim();
-  if (candidate.startsWith('/build') && !candidate.startsWith('//')) {
+  if (CANONICAL_BUILD_PATH_PATTERN.test(candidate)) {
     return candidate;
   }
   return '/build';

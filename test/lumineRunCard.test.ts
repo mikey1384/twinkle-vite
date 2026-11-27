@@ -52,6 +52,10 @@ test('hasFiniteRemainingEnergyPercent rejects null and empty strings while accep
 test('resolveLumineRunBuildPath prefers canonical result buildPath and blocks unsafe paths', () => {
   assert.equal(resolveLumineRunBuildPath(samplePreview), '/build/42');
   assert.equal(
+    resolveLumineRunBuildPath(samplePreview, { buildPath: '/build' }),
+    '/build'
+  );
+  assert.equal(
     resolveLumineRunBuildPath(samplePreview, { buildPath: '/build/42/3' }),
     '/build/42/3'
   );
@@ -61,6 +65,22 @@ test('resolveLumineRunBuildPath prefers canonical result buildPath and blocks un
   );
   assert.equal(
     resolveLumineRunBuildPath({ ...samplePreview, buildPath: 'https://evil.example' }),
+    '/build'
+  );
+  assert.equal(
+    resolveLumineRunBuildPath(samplePreview, { buildPath: '/build/../settings' }),
+    '/build'
+  );
+  assert.equal(
+    resolveLumineRunBuildPath(samplePreview, { buildPath: '/build-other' }),
+    '/build'
+  );
+  assert.equal(
+    resolveLumineRunBuildPath(samplePreview, { buildPath: '/build/42/3/extra' }),
+    '/build'
+  );
+  assert.equal(
+    resolveLumineRunBuildPath(samplePreview, { buildPath: '/build/abc' }),
     '/build'
   );
 });
@@ -142,4 +162,33 @@ test('LumineRunPreview avoids padded line-clamp bleed, provides expand toggle, p
   );
   assert.match(previewSource, /openBuildButtonClass[\s\S]*?min-height:\s*3\.8rem;/);
   assert.match(previewSource, /fallbackLinkClass[\s\S]*?min-height:\s*3\.8rem;/);
+  // Accessible AA contrast (no low-contrast logoBlue on white/light backgrounds)
+  assert.doesNotMatch(previewSource, /Color\.logoBlue/);
+  assert.match(previewSource, /toggleInstructionButtonClass[^`]*`[^`]*color:\s*\$\{Color\.blue\(\)\};/);
+  assert.match(
+    previewSource,
+    /openBuildButtonClass[^`]*`[^`]*background:\s*\$\{Color\.blue\(\)\};[^`]*&:hover\s*\{\s*background:\s*\$\{Color\.darkerOceanBlue\(\)\};/
+  );
+  assert.match(previewSource, /fallbackLinkClass[^`]*`[^`]*color:\s*\$\{Color\.blue\(\)\};/);
+  // Readable mobile font sizes (>= 12px at 8px mobile root) and >= 44px touch targets
+  assert.match(
+    previewSource,
+    /previewClass[^`]*`[^`]*@media\s*\(max-width:\s*767px\)\s*\{[^`]*font-size:\s*1\.5rem;/
+  );
+  assert.match(
+    previewSource,
+    /metaClass[^`]*`[^`]*@media\s*\(max-width:\s*767px\)\s*\{[^`]*font-size:\s*1\.5rem;/
+  );
+  assert.match(
+    previewSource,
+    /toggleInstructionButtonClass[^`]*`[^`]*@media\s*\(max-width:\s*767px\)\s*\{[^`]*min-height:\s*max\(44px,\s*5\.5rem\);[^`]*font-size:\s*1\.5rem;/
+  );
+  assert.match(
+    previewSource,
+    /openBuildButtonClass[^`]*`[^`]*@media\s*\(max-width:\s*767px\)\s*\{[^`]*min-height:\s*max\(44px,\s*5\.5rem\);[^`]*font-size:\s*1\.6rem;/
+  );
+  assert.match(
+    previewSource,
+    /fallbackLinkClass[^`]*`[^`]*@media\s*\(max-width:\s*767px\)\s*\{[^`]*min-height:\s*max\(44px,\s*5\.5rem\);[^`]*font-size:\s*1\.5rem;/
+  );
 });

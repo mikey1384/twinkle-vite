@@ -119,6 +119,9 @@ const previewClass = css`
   background: #fff;
   color: #2f3747;
   font-size: 1.2rem;
+  @media (max-width: 767px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const headingClass = css`
@@ -143,6 +146,9 @@ const metaClass = css`
   margin: 0.3rem 0 0;
   color: #4c5767;
   font-size: 1.15rem;
+  @media (max-width: 767px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const instructionBoxClass = css`
@@ -179,7 +185,7 @@ const toggleInstructionButtonClass = css`
   min-height: 3.6rem;
   border: 0;
   background: transparent;
-  color: ${Color.logoBlue()};
+  color: ${Color.blue()};
   font-size: 1.15rem;
   font-weight: 600;
   cursor: pointer;
@@ -187,7 +193,8 @@ const toggleInstructionButtonClass = css`
     text-decoration: underline;
   }
   @media (max-width: 767px) {
-    min-height: 4.5rem;
+    min-height: max(44px, 5.5rem);
+    font-size: 1.5rem;
   }
 `;
 
@@ -205,17 +212,18 @@ const openBuildButtonClass = css`
   min-height: 3.8rem;
   padding: 0.75rem 1.25rem;
   border-radius: 999px;
-  background: ${Color.logoBlue()};
+  background: ${Color.blue()};
   color: #fff;
   font-size: 1.25rem;
   font-weight: 700;
   text-decoration: none;
   &:hover {
-    background: ${Color.logoBlue(0.88)};
+    background: ${Color.darkerOceanBlue()};
     color: #fff;
   }
   @media (max-width: 767px) {
-    min-height: 5rem;
+    min-height: max(44px, 5.5rem);
+    font-size: 1.6rem;
   }
 `;
 
@@ -227,7 +235,7 @@ const fallbackLinkClass = css`
   padding: 0.75rem 0.9rem;
   margin-left: -0.9rem;
   border-radius: 0.6rem;
-  color: ${Color.logoBlue()};
+  color: ${Color.blue()};
   font-size: 1.2rem;
   font-weight: 700;
   text-decoration: none;
@@ -235,6 +243,7 @@ const fallbackLinkClass = css`
     text-decoration: underline;
   }
   @media (max-width: 767px) {
-    min-height: 5rem;
+    min-height: max(44px, 5.5rem);
+    font-size: 1.5rem;
   }
 `;
