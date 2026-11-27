@@ -425,6 +425,10 @@ export interface ChatPanelProps {
     SetStateAction<BuildCommentFeedback[]>
   >;
   onDraftMessageChange: (value: string) => void;
+  // one plain line above the message box when the editor was opened with an
+  // unsent idea (e.g. "This one isn't free anymore, so nothing was sent.")
+  entryNotice?: string;
+  onDismissEntryNotice?: () => void;
   onSendMessage: (message: string) => Promise<boolean> | boolean;
   onContinueScopedPlan: () => void;
   onCancelScopedPlan: () => void;

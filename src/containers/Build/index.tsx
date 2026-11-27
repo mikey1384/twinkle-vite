@@ -7,6 +7,7 @@ import { lazyWithRetry } from '~/helpers/lazyImportHelpers';
 import { buildListTabRoutes } from './List/helpers/url';
 
 const BuildEditorRoute = lazyWithRetry(() => import('./EditorRoute'));
+const DomainCheckoutRoute = lazyWithRetry(() => import('./DomainCheckoutRoute'));
 const BuildList = lazyWithRetry(() => import('./List'));
 const New = lazyWithRetry(() => import('./New'));
 
@@ -30,6 +31,9 @@ export default function Build() {
                 element={<BuildList tab={tab} browseMode={browseMode} />}
               />
             ))}
+            {/* the own-web-address checkout, its own page (before the
+                branch route, which would read "domain" as a branch) */}
+            <Route path="/:buildId/domain" element={<DomainCheckoutRoute />} />
             <Route
               path="/:buildId/:branchNumber"
               element={<BuildEditorRoute />}

@@ -17,6 +17,7 @@ import {
   removeStoredItem,
   setStoredItem
 } from '~/helpers/userDataHelpers';
+import { normalizeHttpRequestError } from '~/helpers/errorMessageHelpers';
 import {
   createSessionStore,
   type AppSession,
@@ -26,6 +27,7 @@ import {
   askSignIn,
   hideAiBanner,
   mountBadge,
+  setHostFocusReturn,
   showAiBanner,
   showGuestHint,
   showReport,
@@ -34,6 +36,7 @@ import {
 } from '../ui';
 import AppAccountSheet from './AppAccountSheet';
 import { createGuestStore } from '../guestStore';
+import { installFrameFocusKeeper } from '../frameFocus';
 import { LITE_HOST_TEXT, liteHostLang } from '../text';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import {
@@ -111,6 +114,16 @@ function basicViewer(id: number, username: string): LiteHostViewer {
   };
 }
 
+function nextViewerForSession(
+  previous: LiteHostViewer | null,
+  next: AppSession | null
+): LiteHostViewer | null {
+  if (!next) return null;
+  return previous && previous.id === next.user.id
+    ? previous
+    : basicViewer(next.user.id, next.user.username);
+}
+
 function replayEarlyMessages() {
   const early = window.__lumineEarly || [];
   window.__lumineEarly = undefined;
@@ -173,7 +186,7 @@ async function start() {
   storeSessionCredentials(session.get());
 
   const requestHelpers = requestHelpersFactory((error) =>
-    Promise.reject(error)
+    Promise.reject(normalizeHttpRequestError(error))
   );
   const socketBinder = createLiteSocketBinder();
   const metaRef = createLiteFrameMetaRef(config.buildId);
@@ -357,6 +370,7 @@ async function start() {
       const unsubscribe = session.subscribe((next) => {
         storeSessionCredentials(next);
         setCurrent(next);
+        setViewer((previous) => nextViewerForSession(previous, next));
         void refreshAiBanner();
         reloadFrameForIdentity(next);
       });
@@ -603,7 +617,15 @@ async function start() {
         }
       })
   });
-  frame.focus();
+  // The app's keys: focus goes back into the frame whenever our UI is done
+  // with it (frameFocus.ts). Only focus immediately if the page (and its
+  // initial frame document) has already finished loading; otherwise the
+  // frame/window load listener focuses once the document is ready.
+  const focusKeeper = installFrameFocusKeeper(frame);
+  setHostFocusReturn(focusKeeper.focusApp);
+  if (document.readyState === 'complete') {
+    focusKeeper.focusApp();
+  }
 }
 
 if (document.readyState === 'loading') {

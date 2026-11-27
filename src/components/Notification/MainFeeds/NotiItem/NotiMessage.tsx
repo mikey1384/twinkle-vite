@@ -89,6 +89,8 @@ function NotiMessage({
   };
   targetObj: {
     reviewStatus?: string;
+    // domainVerify: the app the address belongs to
+    buildId?: number;
     content: string;
     contentType: string;
     id: number;
@@ -696,6 +698,35 @@ function NotiMessage({
                 {crewReview
                   ? 'Review the meetup'
                   : 'Review on the management page'}
+              </Link>
+            </>
+          )}
+        </>
+      );
+    }
+    // A bought web address still needs Name.com's email confirmed (days 1,
+    // 3, 7, 11 and 14; twinkle-api helpers/build/appHosting/
+    // domainVerification.ts). reviewStatus: days left, or 'verified'.
+    case 'domainVerify': {
+      const verified = targetObj.reviewStatus === 'verified';
+      const daysLeft = Number(targetObj.reviewStatus || 0);
+      const appPath = targetObj.buildId ? getBuildWorkspacePath({ id: targetObj.buildId }) : '';
+      return (
+        <>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
+            {verified ? 'says your web address is all set:' : 'says your web address has 1 step left:'}
+          </span>{' '}
+          <b>{targetObj.content || 'your address'}</b>
+          {verified
+            ? '. Your email is confirmed.'
+            : `. Check your email from Name.com and click Verify. ${
+                daysLeft > 0 ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left before the address is paused.` : 'Please do it today, or the address is paused.'
+              }`}
+          {appPath && !verified && (
+            <>
+              {' '}
+              <Link to={appPath} style={{ color: targetLinkColor, fontWeight: 'bold' }}>
+                Resend from your app
               </Link>
             </>
           )}

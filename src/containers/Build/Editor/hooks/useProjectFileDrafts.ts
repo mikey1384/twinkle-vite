@@ -69,6 +69,8 @@ interface BuildProjectFileDraftsApi {
     runType: 'copilot' | 'greeting';
   }): Promise<boolean>;
   ensureProjectFilesPersistedBeforePublish(): Promise<boolean>;
+  // before leaving the editor for another page (the web-address checkout)
+  ensureProjectFilesPersistedBeforeLeaving(): Promise<boolean>;
 }
 
 interface UseBuildProjectFileDraftsOptions {
@@ -460,6 +462,21 @@ export default function useProjectFileDrafts({
           savedMessage: 'Saved pending file edits before publish.',
           saveFailurePrefix: 'Unable to publish: ',
           pageFeedbackOnMissingRequestId: true
+        });
+      },
+
+      ensureProjectFilesPersistedBeforeLeaving() {
+        return ensureProjectFilesPersisted({
+          settleErrorMessage:
+            'Please wait for file save to finish before leaving the editor.',
+          draftChangedMessage:
+            'Your files kept changing while saving. Stop editing for a moment and try again.',
+          initialSaveMessage: 'Saving your files before leaving the editor...',
+          retrySaveMessage: 'Draft changed during save. Saving latest edits again...',
+          savedMessage: 'Saved pending file edits.',
+          saveFailurePrefix: 'Couldn’t save your files: ',
+          pageFeedbackOnMissingRequestId: true,
+          returnTrueOnEmptyDraft: true
         });
       }
     };

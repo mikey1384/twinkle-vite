@@ -61,6 +61,10 @@ export const greeterWrapClass = css`
   pointer-events: auto;
   padding-top: 15rem;
   animation: ${slideUp} 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* reduced motion: still, placed at once (review 11-26 #9) */
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
   @media (max-width: ${mobileMaxWidth}) {
     padding-top: 9.6rem;
   }
@@ -75,6 +79,10 @@ export const spriteClass = css`
   pointer-events: none;
   filter: drop-shadow(0 0.6rem 1.2rem rgba(0, 0, 0, 0.35));
   animation: ${rise} 0.55s 0.15s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* reduced motion: still, placed at once (review 11-26 #9) */
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
   &[data-side='left'] {
     left: 1.6rem;
   }
@@ -176,6 +184,10 @@ export const choiceButtonClass = css`
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.12s ease, background 0.12s ease;
+  /* reduced motion: still, placed at once (review 11-26 #9) */
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
   img {
     width: 3.6rem;
     height: 3.6rem;
@@ -274,6 +286,10 @@ export const tourPanelClass = css`
   box-shadow: 0 1.6rem 4rem rgba(5, 8, 24, 0.45);
   padding: 1.2rem 1.6rem 1.4rem;
   animation: ${slideUp} 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* reduced motion: still, placed at once (review 11-26 #9) */
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
   @media (max-width: ${mobileMaxWidth}) {
     margin-top: 5.2rem;
     padding: 1rem 1.2rem 1.2rem;
@@ -303,6 +319,8 @@ export const tourHeadClass = css`
   align-items: flex-start;
   gap: 0.8rem;
   padding-left: 8.4rem;
+  /* room for Skip tour in the corner */
+  padding-right: 7.6rem;
   min-height: 4.4rem;
   @media (max-width: ${mobileMaxWidth}) {
     padding-left: 7rem;
@@ -404,6 +422,10 @@ export const tourLineClass = css`
     margin-left: 0.1rem;
     color: var(--guide);
     animation: ${pulse} 0.9s ease-in-out infinite;
+    /* reduced motion: still, placed at once (review 11-26 #9) */
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.45rem;
@@ -472,6 +494,98 @@ export const primaryButtonClass = css`
   }
 `;
 
+// "Skip tour" (Close on the last screen), quiet, in the panel's corner
+export const skipTourClass = css`
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  border: none;
+  background: transparent;
+  color: ${MUTED};
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  &:hover {
+    background: ${PANEL_RAISED};
+    color: ${INK};
+  }
+  &:focus-visible {
+    outline: 2px solid ${INK};
+    outline-offset: 1px;
+  }
+`;
+
+const pop = keyframes`
+  0% { opacity: 0; transform: scale(0.4) rotate(-20deg); }
+  60% { opacity: 1; transform: scale(1.18) rotate(8deg); }
+  100% { opacity: 1; transform: none; }
+`;
+
+// the "You've seen it all!" moment: a small party horn that pops in
+export const celebrateClass = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--guide);
+  color: #fff;
+  font-size: 1.5rem;
+  animation: ${pop} 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* reduced motion: still, placed at once (review 11-26 #9) */
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+// the Lumine stop with the project Twinkle already made them
+export const projectCardClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--guide);
+  background: ${PANEL_RAISED};
+  .thumb {
+    flex-shrink: 0;
+    width: 4.4rem;
+    height: 4.4rem;
+    border-radius: 0.8rem;
+    background: #0d1229;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--guide);
+    font-size: 1.8rem;
+  }
+  .text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  b {
+    font-size: 1.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  small {
+    color: ${MUTED};
+    font-size: 1.15rem;
+  }
+  button {
+    flex-shrink: 0;
+  }
+`;
+
 export const skipButtonClass = css`
   border: none;
   background: transparent;
@@ -492,6 +606,10 @@ export const spotlightClass = css`
   border-radius: 1.2rem;
   box-shadow: 0 0 0 3px var(--guide), 0 0 0 9999px rgba(6, 9, 26, 0.42);
   transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+  /* reduced motion: still, placed at once (review 11-26 #9) */
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 // small cards and chips inside the panel
@@ -621,4 +739,17 @@ export const examGroupClass = css`
     font-size: 1.25rem;
     font-weight: 600;
   }
+`;
+
+// read by screen readers only
+export const srOnlyClass = css`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 `;
