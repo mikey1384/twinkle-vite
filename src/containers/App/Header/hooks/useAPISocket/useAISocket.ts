@@ -29,7 +29,6 @@ import {
 } from '~/constants/defaultValues';
 import { markChatUnreadActivity } from '~/helpers/chatUnreadActivity';
 import {
-  findWebsiteAgentElement,
   describeWebsiteAgentOverlays,
   performWebsiteAgentClick,
   performWebsiteAgentType,
@@ -560,19 +559,12 @@ export default function useAISocket({
                 assistant: toAgentAssistant(payload?.assistant)
               });
             } else if (kind === 'highlight') {
-              result = !findWebsiteAgentElement(String(payload?.ref || ''))
-                ? {
-                    ok: false,
-                    code: 'stale_page',
-                    error: 'Page changed; select a current ref from pageNow.',
-                    pageNow: readWebsiteAgentPage()
-                  }
-                : await showWebsiteAgentSpotlight({
-                    ref: String(payload?.ref || ''),
-                    caption: String(payload?.caption || ''),
-                    waitForUser: payload?.waitForUser === true,
-                    assistant: toAgentAssistant(payload?.assistant)
-                  });
+              result = await showWebsiteAgentSpotlight({
+                ref: String(payload?.ref || ''),
+                caption: String(payload?.caption || ''),
+                waitForUser: payload?.waitForUser === true,
+                assistant: toAgentAssistant(payload?.assistant)
+              });
             } else {
               result = { error: `Unknown request ${kind}.` };
             }

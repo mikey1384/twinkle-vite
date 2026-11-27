@@ -249,9 +249,14 @@ function describeKind(element: Element) {
   return 'clickable';
 }
 
+function isContentEditableElement(element: Element) {
+  const attr = element.getAttribute('contenteditable');
+  return attr === 'true' || attr === '';
+}
+
 function describeName(element: Element) {
   const input = element as HTMLInputElement;
-  const isContentEditable = element.getAttribute('contenteditable') === 'true';
+  const isContentEditable = isContentEditableElement(element);
   return collapse(
     element.getAttribute('aria-label') ||
       (isContentEditable ? '' : (element as HTMLElement).innerText) ||
@@ -287,13 +292,42 @@ const NEAR_SLOT = '\u0000near\u0000';
 const SHORT_NAME_CHARS = 14;
 const NEARBY_TEXT_CHARS = 50;
 const MAX_NEARBY_BLOCK_CHARS = 240;
+
+function readNearbyAncestorText(ancestor: Element) {
+  // Unlike <input>/<textarea>, a contenteditable element's typed text sits
+  // inside ancestor.innerText. Skip contenteditable subtrees when present so
+  // typing never mutates nearby fingerprints.
+  if (
+    !isContentEditableElement(ancestor) &&
+    !ancestor.querySelector('[contenteditable="true"], [contenteditable=""]')
+  ) {
+    return (ancestor as HTMLElement).innerText || '';
+  }
+  const parts: string[] = [];
+  const walk = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (node.textContent) parts.push(node.textContent);
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const el = node as Element;
+    if (isContentEditableElement(el)) return;
+    if (el.getAttribute('aria-hidden') === 'true') return;
+    if (el.hasAttribute(WEBSITE_AGENT_UI_ATTRIBUTE)) return;
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden') return;
+    el.childNodes.forEach(walk);
+  };
+  walk(ancestor);
+  return parts.join(' ');
+}
+
 function describeNearbyText(element: Element, name: string) {
   if (name.length > SHORT_NAME_CHARS) return '';
   let ancestor = element.parentElement;
   for (let depth = 0; ancestor && depth < 4; depth += 1) {
-    const around = ((ancestor as HTMLElement).innerText || '')
-      .split(name)
-      .join(' ');
+    const raw = readNearbyAncestorText(ancestor);
+    const around = name ? raw.split(name).join(' ') : raw;
     // Past a small block the text is the whole page, not its neighbours.
     if (around.length > MAX_NEARBY_BLOCK_CHARS) return '';
     const text = collapse(around, NEARBY_TEXT_CHARS);
@@ -305,9 +339,10 @@ function describeNearbyText(element: Element, name: string) {
 
 // Identity at the last read. Replaced nodes receive new refs; stale actions
 // return a fresh page instead of guessing by label or screen position.
-// `nearby` is recorded only when multiple elements on the page share the same
-// short label, so live text updates (timers, chat messages, badge counts) in
-// ancestor containers do not falsely invalidate unique controls.
+// `nearby` is recorded for duplicate short labels and consequential controls
+// so live text updates (timers, chat messages, badge counts) in ancestor
+// containers do not falsely invalidate unique non-consequential controls while
+// reused consequential buttons still detect in-place target swaps.
 interface RefFingerprint {
   element: Element;
   tag: string;
@@ -469,12 +504,16 @@ export function readWebsiteAgentPage() {
   }
   for (const { line, ref, element, name } of listed) {
     const duplicate = (nameCounts.get(name.toLowerCase()) || 0) > 1;
-    const near = duplicate ? describeNearbyText(element, name) : '';
-    if (duplicate) {
+    const trackNearby = duplicate || looksConsequential(element);
+    const near = trackNearby ? describeNearbyText(element, name) : '';
+    if (trackNearby) {
       const fingerprint = refFingerprints.get(ref);
       if (fingerprint) fingerprint.nearby = near;
     }
-    lines[line] = lines[line].replace(NEAR_SLOT, near ? ` near "${near}"` : '');
+    lines[line] = lines[line].replace(
+      NEAR_SLOT,
+      duplicate && near ? ` near "${near}"` : ''
+    );
   }
   // With a window open, its text is the page's text (only the window on
   // top: others mounted there are hidden, closing, or underneath).
@@ -564,16 +603,50 @@ export function findWebsiteAgentElement(ref: string) {
 const CONSEQUENTIAL_LABEL =
   /\b(send|post|submit|publish|delete|remove|save|confirm|buy|purchase|pay|claim|reward|upload|apply|approve|reject|decline|accept|join|leave|follow|unfollow|like|unlike|block|report|sell|bid|share|merge|create|update|transfer|invite|kick|ban|donate|gift|give|offer|spend|spin|roll|summon|burn|generate|upgrade|unlock|collect|reveal|redeem|challenge|vote|rate|subscribe|mint|trade|yes|ok|okay|done|continue|agree|check icon|paper plane icon|trash alt icon|trash icon)\b/i;
 
-function looksConsequential(element: Element) {
-  // Switching tabs or following a plain navigation link only changes the view.
-  if (isTab(element)) return false;
+// Only plain same-site path navigation links are view-only without label
+// checks: `#` fragments, `javascript:`, `mailto:`, `download`, external
+// origins, `target="_blank"`, and `role="button"` links can trigger actions
+// or leave the site and still go through consequential checks.
+function isPlainSameSiteNavigationLink(element: Element) {
   if (
-    element.tagName.toLowerCase() === 'a' &&
-    element.getAttribute('role') !== 'button'
+    element.tagName.toLowerCase() !== 'a' ||
+    element.getAttribute('role') === 'button' ||
+    element.hasAttribute('download')
   ) {
-    const href = (element.getAttribute('href') || '').trim();
-    if (href && !/^javascript:/i.test(href)) return false;
+    return false;
   }
+  const target = (element.getAttribute('target') || '').trim().toLowerCase();
+  if (target && target !== '_self') return false;
+  const href = (element.getAttribute('href') || '').trim();
+  if (!href || href.startsWith('#')) return false;
+  let resolved: URL;
+  try {
+    resolved = new URL(href, window.location.href);
+  } catch {
+    return false;
+  }
+  if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') {
+    return false;
+  }
+  if (resolved.origin !== window.location.origin) return false;
+  if (
+    resolved.pathname === window.location.pathname &&
+    resolved.search === window.location.search &&
+    Boolean(resolved.hash)
+  ) {
+    return false;
+  }
+  return true;
+}
+
+export function looksConsequential(element: Element) {
+  const submits =
+    (element as HTMLButtonElement).type === 'submit' &&
+    !!element.closest('form');
+  if (submits) return true;
+  // Switching tabs or following a plain same-site navigation link only changes
+  // the view.
+  if (isTab(element) || isPlainSameSiteNavigationLink(element)) return false;
   const label = [
     describeName(element),
     element.getAttribute('aria-label'),
@@ -582,10 +655,7 @@ function looksConsequential(element: Element) {
   ]
     .filter(Boolean)
     .join(' ');
-  const submits =
-    (element as HTMLButtonElement).type === 'submit' &&
-    !!element.closest('form');
-  return submits || CONSEQUENTIAL_LABEL.test(label);
+  return CONSEQUENTIAL_LABEL.test(label);
 }
 
 const CREDENTIAL_FIELD_SELECTOR =
@@ -643,9 +713,19 @@ const DISMISS_LABEL =
   /^(close|cancel|not now|no thanks|back|x|×|✕|xmark icon|times icon|circle xmark icon)$/i;
 
 // Switching tabs (Game / Rankings / Review) moves around an activity without
-// playing it.
+// playing it. Only the tab control itself counts: non-tab buttons or dropdowns
+// placed inside a FilterBar or tablist, or action buttons nested inside a tab,
+// are never treated as tabs.
 function isTab(element: Element) {
-  return !!element.closest('[data-agent-tabs], [role="tablist"], [role="tab"]');
+  if (element.getAttribute('role') === 'tab') return true;
+  if (element.matches('[data-agent-tabs] > nav')) return true;
+  if (
+    element.matches('[data-agent-tabs] > nav > a') &&
+    isPlainSameSiteNavigationLink(element)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function isDismissControl(element: Element) {
@@ -688,7 +768,7 @@ export async function performWebsiteAgentClick({
     element.closest(`[${WEBSITE_AGENT_GUIDE_ONLY_ATTRIBUTE}]`) &&
     (effect === 'change' ||
       !(
-        element.matches('a[href]') ||
+        isPlainSameSiteNavigationLink(element) ||
         isTab(element) ||
         isDismissControl(element)
       ))

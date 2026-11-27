@@ -65,6 +65,7 @@ export function showWebsiteAgentSpotlight({
   waitForUser: boolean;
   assistant?: 'Zero' | 'Ciel' | null;
 }): Promise<{
+  ok?: boolean;
   shown: boolean;
   userAction?: WebsiteAgentSpotlightAction;
   code?: string;
@@ -74,9 +75,10 @@ export function showWebsiteAgentSpotlight({
   const element = findWebsiteAgentElement(ref);
   if (!element || !element.isConnected) {
     return Promise.resolve({
+      ok: false,
       shown: false,
       code: 'stale_page',
-      error: 'That element is no longer on the page. Select a current ref from pageNow.',
+      error: 'Page changed; select a current ref from pageNow.',
       pageNow: readWebsiteAgentPage()
     });
   }
