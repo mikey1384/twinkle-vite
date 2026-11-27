@@ -47,6 +47,7 @@ import {
   type LiteHostViewer
 } from './LiteHost';
 import { createLiteSocketBinder } from './liteSocket';
+import { clearAppLifecycleFrameBackup } from '~/helpers/buildAppLifecycle';
 import type { PreviewFrameRetiredHandler } from '~/containers/Build/PreviewPanel/types';
 
 declare global {
@@ -193,11 +194,20 @@ async function start() {
   const retiredRef: { current: PreviewFrameRetiredHandler | null } = {
     current: null
   };
+  let identityReloadTimer: number | null = null;
+  let reloadingForIdentity = false;
+  let identityReloadDispatched = false;
   installLiteFrameReloadWatch({
     frame,
     buildId: config.buildId,
     metaRef,
-    retiredRef
+    retiredRef,
+    onNonceRequest: () => {
+      if (identityReloadDispatched) {
+        identityReloadDispatched = false;
+        reloadingForIdentity = false;
+      }
+    }
   });
 
   // Which accounts the app's players use (the owner's setting; twinkle-api
@@ -258,8 +268,18 @@ async function start() {
     if (next === frameIdentity) return;
     frameIdentity = next;
     if (appWatchesAuth) return;
+    reloadingForIdentity = true;
+    identityReloadDispatched = false;
+    // Prevent the departing viewer's frame from writing a pagehide backup
+    // tagged with the incoming viewer's lifecycleKey during the reload window.
+    clearAppLifecycleFrameBackup(config.buildId);
+    if (identityReloadTimer !== null) {
+      window.clearTimeout(identityReloadTimer);
+    }
     // after the bridge has the new viewer (this render and app-session/me)
-    window.setTimeout(() => {
+    identityReloadTimer = window.setTimeout(() => {
+      identityReloadTimer = null;
+      identityReloadDispatched = true;
       frame.setAttribute('src', frame.getAttribute('src') || config.frameSrc);
     }, 400);
   };
@@ -274,6 +294,7 @@ async function start() {
     markWatched: () => {
       appWatchesAuth = true;
     },
+    isReloadingForIdentity: () => reloadingForIdentity,
     async aiCoverage() {
       await accountModeReady;
       // an app on its own accounts only: no Twinkle account can help (G4)
@@ -369,10 +390,10 @@ async function start() {
     useEffect(() => {
       const unsubscribe = session.subscribe((next) => {
         storeSessionCredentials(next);
+        reloadFrameForIdentity(next);
         setCurrent(next);
         setViewer((previous) => nextViewerForSession(previous, next));
         void refreshAiBanner();
-        reloadFrameForIdentity(next);
       });
       void refreshAiBanner();
       return () => {
