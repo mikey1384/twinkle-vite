@@ -3625,7 +3625,12 @@ export default function contentRequestHelpers({
         return data as {
           success: boolean;
           id: number;
-          pictureDays: Array<{ questionId: number; picturePath: string }>;
+          pictureDays: Array<{
+            questionId: number;
+            responseId?: number | null;
+            picturePath: string;
+            pictureStyle?: string;
+          }>;
         };
       } catch (error) {
         return handleError(error);

@@ -126,7 +126,14 @@ export default function PictureDayScreen({
     if (job.picture) setPicture(job.picture);
     // Queue acknowledgement and other tracking updates must not undo a
     // member's choice among the pictures they have already made.
-    if (job.path && appliedJobPathRef.current !== job.path) {
+    if (
+      job.path &&
+      (!job.picture ||
+        job.picture.candidates.some(
+          (candidate) => candidate.path === job.path
+        )) &&
+      appliedJobPathRef.current !== job.path
+    ) {
       appliedJobPathRef.current = job.path;
       if (!memberSelectedPictureRef.current) setSelectedPath(job.path);
     }
@@ -143,6 +150,19 @@ export default function PictureDayScreen({
       if (requestedQuality) setQuality(requestedQuality.value);
     }
   }, [job]);
+
+  useEffect(() => {
+    if (
+      selectedPath &&
+      !picture.candidates.some((candidate) => candidate.path === selectedPath)
+    ) {
+      setSelectedPath(
+        picture.chosenPath ||
+          picture.candidates[picture.candidates.length - 1]?.path ||
+          ''
+      );
+    }
+  }, [picture.candidates, picture.chosenPath, selectedPath]);
 
   useEffect(() => {
     if (

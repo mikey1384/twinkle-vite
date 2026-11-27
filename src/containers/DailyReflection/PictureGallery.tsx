@@ -8,6 +8,7 @@ import {
   DeleteDailyPictureButton
 } from '~/components/DailyPictureViewer';
 import { useAppContext, useContentContext } from '~/contexts';
+import { dailyPictureJobs } from '~/helpers/dailyPictureJobs';
 import { mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import {
@@ -153,16 +154,11 @@ export default function PictureGallery() {
           <button
             type="button"
             className={paperSecondaryButtonCls}
-            onClick={() => loadPage(days.length ? nextBefore : null)}
+            onClick={() => loadPage(days.length || nextBefore ? nextBefore : null)}
           >
             Try again
           </button>
         </div>
-      ) : days.length === 0 ? (
-        <p className={noteCls}>
-          No pictures yet. On your next Picture Day, describe a picture and it
-          will be kept here.
-        </p>
       ) : nextBefore ? (
         <div className={moreCls}>
           <button
@@ -173,6 +169,11 @@ export default function PictureGallery() {
             Show older pictures
           </button>
         </div>
+      ) : days.length === 0 ? (
+        <p className={noteCls}>
+          No pictures yet. On your next Picture Day, describe a picture and it
+          will be kept here.
+        </p>
       ) : null}
 
       {viewing && viewingDay?.responseId ? (
@@ -275,6 +276,7 @@ export default function PictureGallery() {
         );
       }
       const picturePath: string = result.picturePath || '';
+      dailyPictureJobs.removePicture({ questionId: day.questionId, path });
       if (day.responseId) {
         onEditContent({
           contentType: 'dailyReflection',

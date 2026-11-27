@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
@@ -59,6 +59,8 @@ export default function ImageHistory({
   const [brokenIds, setBrokenIds] = useState<Record<number, true>>({});
   const [confirmingDelete, setConfirmingDelete] =
     useState<AIImageHistoryItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const deletingRef = useRef(false);
   const [deleteError, setDeleteError] = useState('');
 
   return (
@@ -71,6 +73,12 @@ export default function ImageHistory({
           </>
         )}
       </p>
+
+      {deleteError && (
+        <p role="alert" className={errorBannerCls}>
+          {deleteError}
+        </p>
+      )}
 
       {images.length > 0 && (
         <div className={gridCls}>
@@ -161,25 +169,24 @@ export default function ImageHistory({
                   <button
                     type="button"
                     className={deleteCls}
-                    aria-label="Delete image"
-                    onClick={() => {
+                    disabled={deleting}
+                    aria-label={`Delete "${image.prompt || 'this image'}"`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (deletingRef.current) return;
                       setDeleteError('');
                       setConfirmingDelete(image);
                     }}
                   >
-                    <Icon icon="trash-alt" />
+                    <span className={deleteBadgeCls} aria-hidden="true">
+                      <Icon icon="trash-alt" />
+                    </span>
                   </button>
                 )}
               </div>
             );
           })}
         </div>
-      )}
-
-      {deleteError && (
-        <p role="alert" className={noteCls} style={{ color: Color.rose() }}>
-          {deleteError}
-        </p>
       )}
 
       {confirmingDelete && onDelete && (
@@ -190,15 +197,30 @@ export default function ImageHistory({
           description={
             confirmingDelete.source === 'picture_day'
               ? 'It will be gone from your images and your Picture Day.'
-              : 'It will be gone from your images.'
+              : confirmingDelete.source === 'edit'
+                ? 'It will be gone from your images, and from Picture Day if you used it there.'
+                : 'It will be gone from your images.'
           }
           confirmButtonColor="red"
           confirmButtonLabel="Delete"
-          onHide={() => setConfirmingDelete(null)}
+          onHide={() => {
+            if (!deletingRef.current) setConfirmingDelete(null);
+          }}
           onConfirm={async () => {
-            const failure = await onDelete(confirmingDelete);
-            setConfirmingDelete(null);
-            if (failure) setDeleteError(failure);
+            if (deletingRef.current) return;
+            const target = confirmingDelete;
+            deletingRef.current = true;
+            setDeleting(true);
+            try {
+              const failure = await onDelete(target);
+              setConfirmingDelete((current) =>
+                current?.id === target.id ? null : current
+              );
+              if (failure) setDeleteError(failure);
+            } finally {
+              deletingRef.current = false;
+              setDeleting(false);
+            }
           }}
         />
       )}
@@ -212,11 +234,6 @@ export default function ImageHistory({
             Try again
           </button>
         </div>
-      ) : images.length === 0 ? (
-        <p className={noteCls}>
-          {emptyMessage ||
-            'Images you make will be kept here, even if you leave before they finish.'}
-        </p>
       ) : hasMore ? (
         <div className={noteCls}>
           <button
@@ -228,6 +245,11 @@ export default function ImageHistory({
             Show older images
           </button>
         </div>
+      ) : images.length === 0 ? (
+        <p className={noteCls}>
+          {emptyMessage ||
+            'Images you make will be kept here, even if you leave before they finish.'}
+        </p>
       ) : null}
     </div>
   );
@@ -294,32 +316,70 @@ const tileWrapCls = css`
   min-width: 0;
 `;
 
-// the tile's corner, opposite the picked check
+// the tile's corner, opposite the picked check; 44px touch target around the visual badge
 const deleteCls = css`
   position: absolute;
-  top: calc(8 * var(--px));
-  left: calc(8 * var(--px));
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: ${Color.darkerGray()};
+  cursor: pointer;
+  touch-action: manipulation;
+  &:hover:not(:disabled) {
+    color: ${Color.rose()};
+  }
+  &:focus-visible {
+    color: ${Color.rose()};
+    outline: 2px solid ${Color.rose()};
+    outline-offset: -4px;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`;
+
+const deleteBadgeCls = css`
   display: flex;
   align-items: center;
   justify-content: center;
   width: calc(30 * var(--px));
   height: calc(30 * var(--px));
-  padding: 0;
-  border: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.92);
-  color: ${Color.darkerGray()};
   font-size: calc(13 * var(--px));
-  cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  &:hover,
-  &:focus-visible {
-    color: ${Color.rose()};
-  }
   @media (max-width: ${mobileMaxWidth}) {
     width: 28px;
     height: 28px;
     font-size: 12px;
+  }
+`;
+
+const errorBannerCls = css`
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0;
+  padding: calc(8 * var(--px)) calc(12 * var(--px));
+  border-radius: calc(10 * var(--px));
+  background: #fff1f2;
+  border: 1px solid ${Color.rose(0.35)};
+  color: ${Color.rose()};
+  text-align: center;
+  font-size: calc(14 * var(--px));
+  font-weight: 600;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.2rem;
   }
 `;
 

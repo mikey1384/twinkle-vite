@@ -58,6 +58,7 @@ export interface DailyPictureResult {
   requestId?: string;
   isToday: boolean;
   path?: string;
+  deleted?: boolean;
   picture: PictureDayState;
   generationFailure?: { requestId: string; message: string };
 }
@@ -69,6 +70,7 @@ export interface DailyPictureJob {
   style: string;
   quality: string;
   startedAt: number;
+  completedAt?: number;
   status: 'painting' | 'checking' | 'unconfirmed' | 'ready' | 'failed';
   picture?: PictureDayState;
   path?: string;
@@ -301,6 +303,108 @@ export const dailyPictureJobs = {
         job.path
       ].slice(-24);
     update({ ...job, notified: true });
+  },
+  // Called after deleting a Picture Day picture (from My pictures, My Images,
+  // or the viewer) so returning to today's Picture Day never resurrects it
+  // from an in-memory 'ready' job.
+  removePicture({ questionId, path }: { questionId: number; path?: string }) {
+    const targetQuestionId = Number(questionId);
+    if (!targetQuestionId) return;
+    const normalizedPath = typeof path === 'string' && isPicturePath(path) ? path : '';
+    let changed = false;
+    if (normalizedPath && !seenPaths.includes(normalizedPath)) {
+      seenPaths = [...seenPaths, normalizedPath].slice(-24);
+      changed = true;
+    }
+    const nextJobs: DailyPictureJob[] = [];
+    for (const job of snapshot.jobs) {
+      if (job.questionId !== targetQuestionId) {
+        nextJobs.push(job);
+        continue;
+      }
+      if (normalizedPath) {
+        if (job.status === 'ready' && job.path === normalizedPath) {
+          changed = true;
+          continue;
+        }
+        if (job.picture) {
+          const filteredCandidates = job.picture.candidates.filter(
+            (candidate) => candidate.path !== normalizedPath
+          );
+          const nextChosenPath =
+            job.picture.chosenPath === normalizedPath ? '' : job.picture.chosenPath;
+          if (
+            filteredCandidates.length !== job.picture.candidates.length ||
+            nextChosenPath !== job.picture.chosenPath
+          ) {
+            changed = true;
+            nextJobs.push({
+              ...job,
+              picture: {
+                ...job.picture,
+                chosenPath: nextChosenPath,
+                candidates: filteredCandidates
+              }
+            });
+            continue;
+          }
+        }
+        nextJobs.push(job);
+      } else {
+        if (job.status === 'ready') {
+          changed = true;
+          continue;
+        }
+        if (job.picture) {
+          changed = true;
+          nextJobs.push({ ...job, picture: undefined });
+          continue;
+        }
+        nextJobs.push(job);
+      }
+    }
+    if (!changed) return;
+    snapshot = { ...snapshot, jobs: nextJobs };
+    persist();
+    emit();
+  },
+  // Reconciles cached ready jobs against a fresher server snapshot (e.g.
+  // after a delete in another tab before opening Picture Day).
+  reconcileServerState({
+    questionId,
+    picture,
+    fetchedAt
+  }: {
+    questionId: number;
+    picture: PictureDayState;
+    fetchedAt: number;
+  }) {
+    const targetQuestionId = Number(questionId);
+    if (!targetQuestionId) return;
+    const livePaths = new Set(picture.candidates.map((candidate) => candidate.path));
+    let changed = false;
+    const nextJobs: DailyPictureJob[] = [];
+    for (const job of snapshot.jobs) {
+      if (job.questionId !== targetQuestionId) {
+        nextJobs.push(job);
+        continue;
+      }
+      const settledAt = job.completedAt ?? job.startedAt;
+      if (job.status === 'ready' && settledAt <= fetchedAt) {
+        if (!job.path || !livePaths.has(job.path)) {
+          changed = true;
+          continue;
+        }
+        changed = true;
+        nextJobs.push({ ...job, picture });
+        continue;
+      }
+      nextJobs.push(job);
+    }
+    if (!changed) return;
+    snapshot = { ...snapshot, jobs: nextJobs };
+    persist();
+    emit();
   }
 };
 
@@ -324,6 +428,19 @@ function complete(requestId: string, result: DailyPictureResult) {
     (item) => item.requestId === requestId
   );
   if (!candidate || !isPicturePath(candidate.path)) {
+    if (result.deleted) {
+      update({
+        ...job,
+        picture: result.picture,
+        path: undefined,
+        isToday: result.isToday,
+        status: 'ready',
+        completedAt: Date.now(),
+        error: undefined,
+        notified: true
+      });
+      return true;
+    }
     if (result.generationFailure?.requestId !== requestId) return false;
     update({
       ...job,
@@ -340,6 +457,7 @@ function complete(requestId: string, result: DailyPictureResult) {
     path: candidate.path,
     isToday: result.isToday,
     status: 'ready',
+    completedAt: Date.now(),
     error: undefined,
     notified: job.notified || seenPaths.includes(candidate.path)
   });
@@ -403,14 +521,7 @@ function readSaved(userId: number): {
   return { jobs, seenPaths };
 }
 
-function update(job: DailyPictureJob) {
-  snapshot = {
-    ...snapshot,
-    jobs: [
-      job,
-      ...snapshot.jobs.filter((item) => item.requestId !== job.requestId)
-    ].slice(0, 24)
-  };
+function persist() {
   try {
     getLocalStorage()?.setItem(
       storageKey(snapshot.userId),
@@ -432,6 +543,17 @@ function update(job: DailyPictureJob) {
   } catch {
     /* blocked/full storage does not interrupt a running request */
   }
+}
+
+function update(job: DailyPictureJob) {
+  snapshot = {
+    ...snapshot,
+    jobs: [
+      job,
+      ...snapshot.jobs.filter((item) => item.requestId !== job.requestId)
+    ].slice(0, 24)
+  };
+  persist();
   emit();
 }
 
