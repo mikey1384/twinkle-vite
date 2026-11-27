@@ -22,6 +22,7 @@ import {
   createEmailCodeGuard,
   emptyOwnerDetails,
   ownerDetailsProblem,
+  shouldRefreshOrderProgress,
   splitRealName,
   type DnsRecordView,
   type DomainIdeaView,
@@ -373,9 +374,12 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
         if (!data?.order) throw new Error(t.orderLookupBody);
         failures = 0;
         setOrderLookupError('');
-        const changed =
-          (orderAttempt > 0 && !lastStatus) ||
-          (Boolean(lastStatus) && (lastStatus !== data.order.status || lastStage !== data.order.stage));
+        const changed = shouldRefreshOrderProgress({
+          orderAttempt,
+          lastStatus,
+          lastStage,
+          nextOrder: data.order
+        });
         lastStatus = data.order.status;
         lastStage = data.order.stage;
         setOrder(data.order);

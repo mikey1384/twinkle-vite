@@ -13,6 +13,7 @@ import {
   progressFraction,
   readScopedBuildData,
   shouldAutoVerifyCode,
+  shouldRefreshOrderProgress,
   type DomainProgressView
 } from '../src/components/Build/AppAddress/checkout/model';
 
@@ -462,6 +463,115 @@ test('progressFraction counts done steps plus half of an active step', () => {
   );
 });
 
+test('shouldRefreshOrderProgress refreshes on first settled order response and on later transitions', () => {
+  // Initial response past payment must refresh so a concurrent domain-progress
+  // poll that resolved null while paying cannot strand the screen.
+  for (const stage of ['setting_up', 'live', 'support', 'refunding'] as const) {
+    assert.equal(
+      shouldRefreshOrderProgress({
+        orderAttempt: 0,
+        lastStatus: '',
+        lastStage: '',
+        nextOrder: { status: stage, stage }
+      }),
+      true
+    );
+  }
+
+  // Initial response still paying, stopped, or refunded needs no refresh on mount.
+  for (const stage of ['paying', 'stopped', 'refunded'] as const) {
+    assert.equal(
+      shouldRefreshOrderProgress({
+        orderAttempt: 0,
+        lastStatus: '',
+        lastStage: '',
+        nextOrder: { status: stage, stage }
+      }),
+      false
+    );
+  }
+
+  // Manual retry ("Check again", orderAttempt > 0) refreshes on its first response.
+  assert.equal(
+    shouldRefreshOrderProgress({
+      orderAttempt: 1,
+      lastStatus: '',
+      lastStage: '',
+      nextOrder: { status: 'pending', stage: 'paying' }
+    }),
+    true
+  );
+
+  // Subsequent polls only refresh when status or stage changes.
+  assert.equal(
+    shouldRefreshOrderProgress({
+      orderAttempt: 0,
+      lastStatus: 'paid',
+      lastStage: 'setting_up',
+      nextOrder: { status: 'paid', stage: 'setting_up' }
+    }),
+    false
+  );
+  assert.equal(
+    shouldRefreshOrderProgress({
+      orderAttempt: 0,
+      lastStatus: 'paid',
+      lastStage: 'setting_up',
+      nextOrder: { status: 'registered', stage: 'setting_up' }
+    }),
+    true
+  );
+  assert.equal(
+    shouldRefreshOrderProgress({
+      orderAttempt: 0,
+      lastStatus: 'pending',
+      lastStage: 'paying',
+      nextOrder: { status: 'pending', stage: 'setting_up' }
+    }),
+    true
+  );
+});
+
+test('initial-poll race between domain-progress (null while paying) and first loadDomainOrder (live/setting_up) recovers via refresh', async () => {
+  const timers = makeFakeTimers();
+  let calls = 0;
+  const responses: Array<DomainProgressView | null> = [
+    null,
+    makeProgress({ stage: 'one_step_left' })
+  ];
+  const store = createDomainProgressStore({
+    isHidden: () => false,
+    setTimeoutFn: timers.setTimeoutFn,
+    clearTimeoutFn: timers.clearTimeoutFn
+  });
+  const loader = async () => ({ progress: responses[calls++] ?? null });
+
+  // Concurrent mount poll resolves first while order is still paying -> null, no timer
+  const unsub = store.subscribe(1, 42, loader, () => {});
+  await flushMicrotasks();
+  assert.equal(calls, 1);
+  assert.equal(store.getProgress(1, 42), null);
+  assert.equal(timers.scheduled.size, 0);
+
+  // First loadDomainOrder response returns stage: 'live' -> must trigger refresh
+  if (
+    shouldRefreshOrderProgress({
+      orderAttempt: 0,
+      lastStatus: '',
+      lastStage: '',
+      nextOrder: { status: 'live', stage: 'live' }
+    })
+  ) {
+    store.refresh(42);
+  }
+  await flushMicrotasks();
+  assert.equal(calls, 2);
+  assert.equal(store.getProgress(1, 42)?.stage, 'one_step_left');
+  assert.equal(store.getProgress(1, 42)?.verification?.state, 'pending');
+  assert.equal(timers.scheduled.size, 1);
+  unsub();
+});
+
 test('DomainCheckoutPage, AppAddress, and checkout steps wire both the progress tracker / email-code flow and the checkout page rework cleanly', () => {
   const model = readFileSync(new URL('../src/components/Build/AppAddress/checkout/model.ts', import.meta.url), 'utf8');
   const steps = readFileSync(new URL('../src/components/Build/AppAddress/checkout/steps.tsx', import.meta.url), 'utf8');
@@ -486,6 +596,7 @@ test('DomainCheckoutPage, AppAddress, and checkout steps wire both the progress 
   assert.match(page, /e\?\.code === 'email_unverified'/);
   assert.match(page, /<OwnerDetailsView[\s\S]*?emailCheck=\{emailCheck\}/);
   assert.match(page, /useDomainProgress\(buildId, Boolean\(orderId\)\)/);
+  assert.match(page, /shouldRefreshOrderProgress\(/);
   assert.match(page, /refreshDomainProgress\(buildId\)/);
   assert.match(page, /<OrderStatusView[\s\S]*?progress=\{progress && progress\.orderId === step\.orderId \? progress : null\}[\s\S]*?buildId=\{buildId\}/);
 

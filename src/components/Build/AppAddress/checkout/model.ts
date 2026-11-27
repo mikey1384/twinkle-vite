@@ -79,6 +79,35 @@ export function progressFraction(progress: DomainProgressView) {
   return Math.min(1, (done + current) / progress.steps.length);
 }
 
+const PROGRESS_TRACKED_ORDER_STAGES = new Set<DomainOrderView['stage']>([
+  'setting_up',
+  'live',
+  'support',
+  'refunding'
+]);
+
+// Whether a loadDomainOrder response should trigger refreshDomainProgress:
+// on the first response, refresh whenever the order is already past payment
+// (so an initial concurrent domain-progress poll that raced ahead and cached
+// null while still paying cannot strand the screen) or on a manual retry;
+// on later polls, refresh whenever status or stage changes.
+export function shouldRefreshOrderProgress({
+  orderAttempt,
+  lastStatus,
+  lastStage,
+  nextOrder
+}: {
+  orderAttempt: number;
+  lastStatus: string;
+  lastStage: string;
+  nextOrder: Pick<DomainOrderView, 'status' | 'stage'>;
+}): boolean {
+  if (!lastStatus && !lastStage) {
+    return orderAttempt > 0 || PROGRESS_TRACKED_ORDER_STAGES.has(nextOrder.stage);
+  }
+  return lastStatus !== nextOrder.status || lastStage !== nextOrder.stage;
+}
+
 // Auto-submit a 6-digit email confirmation code only when the user actually
 // changed the code to a new 6-digit value that hasn't already been submitted.
 export function shouldAutoVerifyCode(
