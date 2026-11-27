@@ -71,6 +71,7 @@ export interface DailyPictureJob {
   quality: string;
   startedAt: number;
   completedAt?: number;
+  pictureUpdatedAt?: number;
   status: 'painting' | 'checking' | 'unconfirmed' | 'ready' | 'failed';
   picture?: PictureDayState;
   path?: string;
@@ -191,13 +192,14 @@ export const dailyPictureJobs = {
       // A lost reply is not a failed generation. Only read here: never replay
       // the billable POST, and match the exact request rather than any new art.
       let fresh: DailyPictureResult | undefined;
+      const loadStartedAt = Date.now();
       try {
         fresh = await load(questionId);
       } catch {
         /* retry on reconnect */
       }
       if (session !== epoch || current(job).status === 'ready') return;
-      if (fresh && complete(job.requestId, fresh)) return;
+      if (fresh && complete(job.requestId, fresh, loadStartedAt)) return;
       if (
         fresh?.picture &&
         !error?.isTransportError &&
@@ -206,6 +208,8 @@ export const dailyPictureJobs = {
         update({
           ...current(job),
           picture: fresh.picture,
+          pictureUpdatedAt: loadStartedAt,
+          completedAt: Date.now(),
           isToday: fresh.isToday,
           status: 'failed',
           error:
@@ -230,15 +234,17 @@ export const dailyPictureJobs = {
       recoveryRequests.add(job.requestId);
       if (job.status === 'unconfirmed') update({ ...job, status: 'checking' });
       try {
+        const loadStartedAt = Date.now();
         const result = await load(job.questionId);
         if (session !== epoch) return;
         if (
-          !complete(job.requestId, result) &&
+          !complete(job.requestId, result, loadStartedAt) &&
           current(job).status !== 'ready'
         ) {
           update({
             ...current(job),
             picture: result.picture,
+            pictureUpdatedAt: loadStartedAt,
             status:
               Date.now() - job.startedAt >= RECOVERY_WINDOW_MS
                 ? 'unconfirmed'
@@ -368,8 +374,9 @@ export const dailyPictureJobs = {
     persist();
     emit();
   },
-  // Reconciles cached ready jobs against a fresher server snapshot (e.g.
-  // after a delete in another tab before opening Picture Day).
+  // Reconciles cached jobs (ready as well as failed/checking/unconfirmed with
+  // cached picture state) against a fresher server snapshot (e.g. after a
+  // delete in another tab before opening Picture Day).
   reconcileServerState({
     questionId,
     picture,
@@ -390,13 +397,23 @@ export const dailyPictureJobs = {
         continue;
       }
       const settledAt = job.completedAt ?? job.startedAt;
-      if (job.status === 'ready' && settledAt <= fetchedAt) {
-        if (!job.path || !livePaths.has(job.path)) {
+      if (job.status === 'ready') {
+        if (settledAt <= fetchedAt) {
+          if (!job.path || !livePaths.has(job.path)) {
+            changed = true;
+            continue;
+          }
           changed = true;
+          nextJobs.push({ ...job, picture, pictureUpdatedAt: fetchedAt });
           continue;
         }
+        nextJobs.push(job);
+        continue;
+      }
+      const pictureAt = job.pictureUpdatedAt ?? settledAt;
+      if (job.picture && pictureAt <= fetchedAt) {
         changed = true;
-        nextJobs.push({ ...job, picture });
+        nextJobs.push({ ...job, picture, pictureUpdatedAt: fetchedAt });
         continue;
       }
       nextJobs.push(job);
@@ -420,7 +437,11 @@ function current(job: DailyPictureJob) {
   return snapshot.jobs.find((item) => item.requestId === job.requestId) || job;
 }
 
-function complete(requestId: string, result: DailyPictureResult) {
+function complete(
+  requestId: string,
+  result: DailyPictureResult,
+  pictureUpdatedAt = Date.now()
+) {
   const job = snapshot.jobs.find((item) => item.requestId === requestId);
   if (!job || Number(result?.questionId) !== job.questionId || !result?.picture)
     return false;
@@ -432,6 +453,7 @@ function complete(requestId: string, result: DailyPictureResult) {
       update({
         ...job,
         picture: result.picture,
+        pictureUpdatedAt,
         path: undefined,
         isToday: result.isToday,
         status: 'ready',
@@ -445,6 +467,8 @@ function complete(requestId: string, result: DailyPictureResult) {
     update({
       ...job,
       picture: result.picture,
+      pictureUpdatedAt,
+      completedAt: Date.now(),
       isToday: result.isToday,
       status: 'failed',
       error: result.generationFailure.message
@@ -454,6 +478,7 @@ function complete(requestId: string, result: DailyPictureResult) {
   update({
     ...job,
     picture: result.picture,
+    pictureUpdatedAt,
     path: candidate.path,
     isToday: result.isToday,
     status: 'ready',
