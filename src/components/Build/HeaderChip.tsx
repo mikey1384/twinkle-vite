@@ -501,6 +501,12 @@ const linkRowClass = css`
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  && > a > span > span,
+  && > a > span > small {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 
 // Menu rows read left to right, one line each, with their icons in one
@@ -513,6 +519,12 @@ const menuListClass = css`
     white-space: nowrap;
   }
   && li > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  && li > span > span,
+  && li > span > small {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;

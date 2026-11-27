@@ -215,11 +215,12 @@ export const ADDRESS_TEXT = {
     // domains are their buyer's, whoever owns the app (ruling 11-26)
     ownedBy: (username: string) => `Owned by @${username}`,
     yourOtherAddresses: 'Your other addresses',
-    onApp: (title: string) => `on ${title}`,
+    onApp: (title: string) => (title ? `on ${title}` : 'on another app'),
     notInUse: 'not on any app',
-    removeFrom: (title: string) => `Remove it from ${title}`,
+    removeFrom: (title: string) => (title ? `Remove it from ${title}` : 'Remove it from that app'),
     removeFromConfirm: 'Tap again to remove (that app goes back to its free address)',
-    useHere: (domain: string) => `Use ${domain} on this app`
+    useHere: (domain: string) => `Use ${domain} on this app`,
+    actionFailed: 'That didn’t go through just now. Please try again.'
   },
   ko: {
     // the checkout (step by step)
@@ -412,11 +413,12 @@ export const ADDRESS_TEXT = {
     removeConfirm: '한 번 더 누르면 삭제돼요 (이 주소로 앱이 열리지 않아요)',
     ownedBy: (username: string) => `@${username} 님의 주소`,
     yourOtherAddresses: '내 다른 주소',
-    onApp: (title: string) => `${title}에 연결됨`,
+    onApp: (title: string) => (title ? `${title}에 연결됨` : '다른 앱에 연결됨'),
     notInUse: '연결된 앱 없음',
-    removeFrom: (title: string) => `${title}에서 빼기`,
+    removeFrom: (title: string) => (title ? `${title}에서 빼기` : '그 앱에서 빼기'),
     removeFromConfirm: '한 번 더 누르면 빠져요 (그 앱은 무료 주소로 돌아가요)',
-    useHere: (domain: string) => `${domain}을(를) 이 앱에 쓰기`
+    useHere: (domain: string) => `${domain}을(를) 이 앱에 쓰기`,
+    actionFailed: '지금은 처리하지 못했어요. 잠시 뒤 다시 해 주세요.'
   }
 };
 

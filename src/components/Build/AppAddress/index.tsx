@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Modal from '~/components/Modal';
+import Button from '~/components/Button';
 import AskAgentButton from '~/components/Buttons/AskAgentButton';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useUserAssistant } from '~/helpers/assistantVoice';
@@ -130,6 +131,7 @@ export default function AppAddress({
     status: 'waiting' | 'checking' | 'securing' | 'connected';
   } | null>(null);
   const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
   // Buying here: open for this member? who pays? (server decides)
   const [purchase, setPurchase] = useState<{ open: boolean; buyer?: 'self' | 'parent'; renews?: boolean } | null>(null);
   const [owner, setOwner] = useState<OwnerDetails>(() => emptyOwnerDetails(guessCountry()));
@@ -336,8 +338,25 @@ export default function AppAddress({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, buildId, orderAttempt]);
 
+  useEffect(() => {
+    if (step?.kind !== 'intro' || purchase || !isOwner || !info?.domainSalesEnabled) return;
+    let cancelled = false;
+    loadDomainPurchase({ buildId })
+      .then((data: any) => {
+        if (!cancelled) setPurchase(data || { open: false });
+      })
+      .catch(() => {
+        if (!cancelled) setPurchase({ open: false });
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step?.kind, buildId, isOwner, info?.domainSalesEnabled]);
+
   function openOwnFlow() {
     setError('');
+    setActionError('');
     setStep({ kind: 'intro' });
     if (purchase) return;
     loadDomainPurchase({ buildId })
@@ -532,40 +551,62 @@ export default function AppAddress({
   }
 
   async function removeDomain(domainId: number) {
+    const request = claimRequest('removeDomain');
+    if (!request) return;
     setError('');
+    setActionError('');
     try {
       await removeAppDomain({ buildId, domainId });
       const fresh = await loadAppAddress({ buildId }).catch(() => null);
       if (fresh) setInfo(fresh);
     } catch (e: any) {
-      setError(e?.message || '');
+      const message = e?.message || t.actionFailed;
+      setError(message);
+      if (!stepRef.current) setActionError(message);
+    } finally {
+      request.release();
     }
   }
 
   // a domain of yours on another app (one you gave away, say): take it off
   async function removeElsewhere(domain: OtherDomainView) {
+    const request = claimRequest('removeElsewhere');
+    if (!request) return;
     setError('');
+    setActionError('');
     try {
       await removeAppDomain({ buildId: domain.buildId, domainId: domain.domainId });
       const fresh = await loadAppAddress({ buildId }).catch(() => null);
       if (fresh) setInfo(fresh);
     } catch (e: any) {
-      setError(e?.message || '');
+      const message = e?.message || t.actionFailed;
+      setError(message);
+      if (!stepRef.current) setActionError(message);
+    } finally {
+      request.release();
     }
   }
 
   // a bought domain of yours that's on no app: put it on this one, then
   // follow it like a purchase being set up
   async function useHere(domain: OtherDomainView) {
+    const request = claimRequest('useHere');
+    if (!request) return;
     setError('');
+    setActionError('');
     try {
       const result = await attachAppDomainOrder({ buildId, orderId: domain.orderId });
       const fresh = await loadAppAddress({ buildId }).catch(() => null);
       if (fresh) setInfo(fresh);
+      if (!request.current()) return;
       if (result?.orderId) setStep({ kind: 'order', orderId: Number(result.orderId) });
     } catch (e: any) {
-      setError(e?.message || '');
-      setStep({ kind: 'intro' });
+      if (!request.current()) return;
+      const message = e?.message || t.actionFailed;
+      setError(message);
+      setActionError(message);
+    } finally {
+      request.release();
     }
   }
 
@@ -719,6 +760,33 @@ export default function AppAddress({
       {children}
       {isOwner && (
         <AppPlayers buildId={buildId} lang={pageLang()} initialMode={info.accountMode || 'twinkle'} />
+      )}
+      {actionError && !step && (
+        <Modal
+          modalKey="AppAddressError"
+          isOpen
+          onClose={() => setActionError('')}
+          size="sm"
+          title={t.introTitle}
+          closeOnBackdropClick
+          footer={
+            <Button color="logoBlue" onClick={() => setActionError('')}>
+              {t.close}
+            </Button>
+          }
+        >
+          <p
+            role="alert"
+            style={{
+              margin: 0,
+              fontSize: '1.5rem',
+              lineHeight: 1.6,
+              color: '#b42318'
+            }}
+          >
+            {actionError}
+          </p>
+        </Modal>
       )}
       {step?.kind === 'rename' && (
         <Modal modalKey="AppAddressRename" isOpen onClose={() => setStep(null)} size="md" title={t.renameTitle} closeOnBackdropClick>

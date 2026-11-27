@@ -31,6 +31,31 @@ const fine = css`
   font-size: 1rem;
 `;
 
+const stackedLabel = css`
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  > small {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+`;
+
+const wrapLabel = css`
+  white-space: normal;
+  overflow-wrap: anywhere;
+  overflow: visible;
+  line-height: 1.35;
+`;
+
 // The app's address as a chip in the Build header's strip; its menu holds
 // every address action (open, copy, share, change, remove an own domain,
 // get your own .com). A live own domain is the address the chip shows.
@@ -128,7 +153,7 @@ export function AddressMenuView({
         <>
           <Icon icon="external-link-alt" />
           {owner ? (
-            <span style={{ display: 'grid', gap: '0.2rem' }}>
+            <span className={stackedLabel}>
               <span>{host}</span>
               <small className={fine}>{owner}</small>
             </span>
@@ -146,7 +171,7 @@ export function AddressMenuView({
       label: (
         <>
           <Icon icon="clock" />
-          <span style={{ display: 'grid', gap: '0.2rem' }}>
+          <span className={stackedLabel}>
             <span>{domain.hostname}</span>
             {domain.statusLine ? <small className={fine}>{domain.statusLine}</small> : null}
             {ownerLine(t, domain) ? <small className={fine}>{ownerLine(t, domain)}</small> : null}
@@ -196,7 +221,9 @@ export function AddressMenuView({
         label: (
           <>
             <Icon icon="trash-alt" />
-            <span>{armed ? `${domain.hostname}: ${t.removeConfirm}` : `${t.remove} ${domain.hostname}`}</span>
+            <span className={armed ? wrapLabel : undefined}>
+              {armed ? `${domain.hostname}: ${t.removeConfirm}` : `${t.remove} ${domain.hostname}`}
+            </span>
           </>
         ),
         style: { color: armed ? '#b42318' : muted },
@@ -213,7 +240,7 @@ export function AddressMenuView({
     }
   }
   if (otherDomains?.length) {
-    items.push({ separator: true }, { label: <small className={fine}>{t.yourOtherAddresses}</small>, disabled: true });
+    items.push({ separator: true }, { label: <small className={fine}>{t.yourOtherAddresses}</small> });
     for (const domain of otherDomains) {
       // a bought one on no app: one row that puts it on this app
       if (!domain.domainId) {
@@ -222,7 +249,7 @@ export function AddressMenuView({
           label: (
             <>
               <Icon icon="plus" />
-              <span style={{ display: 'grid', gap: '0.2rem' }}>
+              <span className={stackedLabel}>
                 <span>{t.useHere(domain.hostname)}</span>
                 <small className={fine}>{t.notInUse}</small>
               </span>
@@ -239,7 +266,7 @@ export function AddressMenuView({
         label: (
           <>
             <Icon icon="globe" />
-            <span style={{ display: 'grid', gap: '0.2rem' }}>
+            <span className={stackedLabel}>
               <span>{domain.hostname}</span>
               <small className={fine}>
                 {domain.status === 'live' || !domain.statusLine
@@ -249,14 +276,16 @@ export function AddressMenuView({
             </span>
           </>
         ),
-        ...(domain.status === 'live' ? { href: `https://${domain.hostname}/` } : { disabled: true })
+        ...(domain.status === 'live' ? { href: `https://${domain.hostname}/` } : {})
       });
       if (onRemoveElsewhere) {
         items.push({
           label: (
             <>
               <Icon icon="trash-alt" />
-              <span>{armed ? t.removeFromConfirm : t.removeFrom(domain.appTitle)}</span>
+              <span className={armed ? wrapLabel : undefined}>
+                {armed ? t.removeFromConfirm : t.removeFrom(domain.appTitle)}
+              </span>
             </>
           ),
           style: { color: armed ? '#b42318' : muted },

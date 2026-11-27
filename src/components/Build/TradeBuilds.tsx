@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { css } from '@emotion/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
@@ -73,16 +73,21 @@ const listClass = css`
     text-decoration: none;
     border-radius: 0.5rem;
   }
-  a.app-preview::after {
+  a.app-open-link {
+    color: inherit;
+    text-decoration: none;
+    border-radius: 0.3rem;
+  }
+  a.app-open-link::after {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: inherit;
+    border-radius: 0.8rem;
   }
-  a.app-preview:hover strong {
+  a.app-open-link:hover strong {
     text-decoration: underline;
   }
-  a.app-preview:focus-visible {
+  a.app-open-link:focus-visible {
     outline: 2px solid var(--ui-border-strong, #315b91);
     outline-offset: 0.3rem;
   }
@@ -131,46 +136,59 @@ export default function TradeBuilds({
   embedded?: boolean;
 }) {
   const viewerId = Number(useKeyContext((v) => v.myState.userId) || 0);
+  const idPrefix = useId();
   return (
     <div className={listClass} data-embedded={embedded}>
       {builds.map((build) => {
         const canOpen = !build.unavailable && !!build.isPublic;
-        const Preview = canOpen ? 'a' : 'div';
+        const domains = build.domains || [];
+        const domainNoteIds = domains
+          .map((_, index) => `${idPrefix}-domain-${build.id}-${index}`)
+          .join(' ');
         return (
           <div key={build.id} data-selected={selectedIds.includes(build.id)}>
-            <Preview
-              className="app-preview"
-              {...(canOpen
-                ? {
-                    href: `/app/${build.id}`,
-                    target: '_blank',
-                    rel: 'noopener noreferrer',
-                    'aria-label': `Open ${build.title}`,
-                    onClick: (event: React.MouseEvent) => event.stopPropagation()
-                  }
-                : {})}
-            >
+            <div className="app-preview">
               {build.thumbnailUrl ? (
                 <img src={build.thumbnailUrl} alt="" />
               ) : (
                 <Icon icon="laptop-code" />
               )}
               <div className="app-title">
-                <strong>{build.title}</strong>
+                {canOpen ? (
+                  <a
+                    className="app-open-link"
+                    href={`/app/${build.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open ${build.title}`}
+                    aria-describedby={domainNoteIds || undefined}
+                    onClick={(event: React.MouseEvent) =>
+                      event.stopPropagation()
+                    }
+                  >
+                    <strong>{build.title}</strong>
+                  </a>
+                ) : (
+                  <strong>{build.title}</strong>
+                )}
                 {build.creatorUsername && (
                   <small>Created by {build.creatorUsername}</small>
                 )}
                 {!build.isPublic && !build.unavailable && (
                   <small>Private app · workspace included</small>
                 )}
-                {(build.domains || []).map((domain) => (
-                  <small className="app-domain" key={domain.hostname}>
+                {domains.map((domain, index) => (
+                  <small
+                    className="app-domain"
+                    id={`${idPrefix}-domain-${build.id}-${index}`}
+                    key={domain.hostname}
+                  >
                     <Icon icon="globe" />
                     <span>{appDomainNote(domain, viewerId)}</span>
                   </small>
                 ))}
               </div>
-            </Preview>
+            </div>
             {renderAction && (
               <div className="app-action">{renderAction(build)}</div>
             )}

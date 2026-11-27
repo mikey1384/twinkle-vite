@@ -126,6 +126,50 @@ export default function TransactionModal({
     Record<'offer' | 'want', number[]>
   >({ offer: [], want: [] });
 
+  // AppTransferModal loads initialBuild.domains asynchronously; merge them into
+  // the already-mounted composer/review state so the domain-ownership warning
+  // renders for non-owners and fast clicks.
+  useEffect(() => {
+    if (!initialBuild?.domains) return;
+    const patch = (list: TradeBuild[]) => {
+      let changed = false;
+      const next = list.map((item) => {
+        if (Number(item.id) === Number(initialBuild.id) && !item.domains) {
+          changed = true;
+          return { ...item, domains: initialBuild.domains };
+        }
+        return item;
+      });
+      return changed ? next : list;
+    };
+    setSelectedBuilds((current) => {
+      const offer = patch(current.offer);
+      const want = patch(current.want);
+      return offer === current.offer && want === current.want
+        ? current
+        : { offer, want };
+    });
+    setReview((current) => {
+      if (!current) return current;
+      const giveBuilds = patch(current.terms.give.builds);
+      const receiveBuilds = patch(current.terms.receive.builds);
+      if (
+        giveBuilds === current.terms.give.builds &&
+        receiveBuilds === current.terms.receive.builds
+      ) {
+        return current;
+      }
+      return {
+        ...current,
+        terms: {
+          ...current.terms,
+          give: { ...current.terms.give, builds: giveBuilds },
+          receive: { ...current.terms.receive, builds: receiveBuilds }
+        }
+      };
+    });
+  }, [initialBuild?.id, initialBuild?.domains]);
+
   useEffect(() => {
     if (!channelId) return;
     let cancelled = false;
