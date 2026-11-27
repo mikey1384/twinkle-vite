@@ -136,12 +136,14 @@ export function installLiteFrameReloadWatch({
   frame,
   buildId,
   metaRef,
-  retiredRef
+  retiredRef,
+  onNonceRequest
 }: {
   frame: HTMLIFrameElement;
   buildId: number;
   metaRef: LiteFrameMetaRef;
   retiredRef: { current: PreviewFrameRetiredHandler | null };
+  onNonceRequest?: () => void;
 }) {
   const onMessage = (event: MessageEvent) => {
     if (event.source !== frame.contentWindow) return;
@@ -152,6 +154,7 @@ export function installLiteFrameReloadWatch({
       data.type !== 'bridge:request-nonce'
     )
       return;
+    onNonceRequest?.();
     const meta = metaRef.current.primary;
     const stillOpen =
       meta.bridgeNonceRequestOpen &&

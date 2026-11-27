@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useRoleColor } from '~/theme/hooks/useRoleColor';
@@ -26,6 +27,9 @@ interface ImageHistoryProps {
   pickedIds?: number[];
   intro?: React.ReactNode;
   emptyMessage?: React.ReactNode;
+  // My Images only (Mikey 11-26): the owner deletes an image; resolves to an
+  // error message, or null once the server has deleted it
+  onDelete?: (image: AIImageHistoryItem) => Promise<string | null>;
 }
 
 // Every image the member made, newest first. Only they can see it.
@@ -43,7 +47,8 @@ export default function ImageHistory({
   onLoadFullImage,
   pickedIds,
   intro,
-  emptyMessage
+  emptyMessage,
+  onDelete
 }: ImageHistoryProps) {
   const themeRole = useRoleColor('button', {
     themeName: themeColor,
@@ -52,17 +57,28 @@ export default function ImageHistory({
   // CloudFront serves the stored image; if it cannot, the API sends it.
   const [fallbackSrc, setFallbackSrc] = useState<Record<number, string>>({});
   const [brokenIds, setBrokenIds] = useState<Record<number, true>>({});
+  const [confirmingDelete, setConfirmingDelete] =
+    useState<AIImageHistoryItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const deletingRef = useRef(false);
+  const [deleteError, setDeleteError] = useState('');
 
   return (
     <div className={wrapCls}>
       <p className={introCls}>
         {intro || (
           <>
-            <Icon icon="lock" /> Every image you&apos;ve made. Only you can
-            see these. Tap one to use it or keep editing it.
+            <Icon icon="lock" /> Every image you&apos;ve made. Only you can see
+            these. Tap one to use it or keep editing it.
           </>
         )}
       </p>
+
+      {deleteError && (
+        <p role="alert" className={errorBannerCls}>
+          {deleteError}
+        </p>
+      )}
 
       {images.length > 0 && (
         <div className={gridCls}>
@@ -75,83 +91,138 @@ export default function ImageHistory({
               fallbackSrc[image.id] ||
               (image.path ? `${cloudFrontURL}/${image.path}` : '');
             return (
-              <button
-                key={image.id}
-                type="button"
-                className={tileCls}
-                disabled={!finished || selectDisabled || isSelecting}
-                onClick={() => onSelect(image)}
-                aria-pressed={pickedIds ? isPicked : undefined}
-                style={
-                  isPicked
-                    ? {
-                        borderColor: themeRole.getColor(),
-                        boxShadow: `0 0 0 2px ${themeRole.getColor()}`
-                      }
-                    : undefined
-                }
-                aria-label={
-                  finished
-                    ? `Use "${image.prompt || 'this image'}"`
-                    : image.status === 'processing'
-                      ? 'Image still being made'
-                      : 'Image that did not finish'
-                }
-              >
-                <span className={frameCls}>
-                  {finished && !brokenIds[image.id] ? (
-                    <img
-                      src={src}
-                      alt={image.prompt || 'Your image'}
-                      loading="lazy"
-                      onError={() => handleImageError(image)}
-                    />
-                  ) : image.status === 'processing' ? (
-                    <span className={stateCls}>
-                      <span
-                        className={spinnerCls}
-                        style={{ borderTopColor: themeRole.getColor() }}
+              <div key={image.id} className={tileWrapCls}>
+                <button
+                  type="button"
+                  className={tileCls}
+                  disabled={!finished || selectDisabled || isSelecting}
+                  onClick={() => onSelect(image)}
+                  aria-pressed={pickedIds ? isPicked : undefined}
+                  style={
+                    isPicked
+                      ? {
+                          borderColor: themeRole.getColor(),
+                          boxShadow: `0 0 0 2px ${themeRole.getColor()}`
+                        }
+                      : undefined
+                  }
+                  aria-label={
+                    finished
+                      ? `Use "${image.prompt || 'this image'}"`
+                      : image.status === 'processing'
+                        ? 'Image still being made'
+                        : 'Image that did not finish'
+                  }
+                >
+                  <span className={frameCls}>
+                    {finished && !brokenIds[image.id] ? (
+                      <img
+                        src={src}
+                        alt={image.prompt || 'Your image'}
+                        loading="lazy"
+                        onError={() => handleImageError(image)}
                       />
-                      Still being made…
-                    </span>
-                  ) : (
-                    <span className={stateCls}>
-                      <Icon icon="image" />
-                      {finished
-                        ? 'Couldn’t show this one'
-                        : 'Didn’t finish. No AI Energy used.'}
-                    </span>
-                  )}
-                  {isPicked && (
-                    <span
-                      className={pickedCls}
-                      style={{ background: themeRole.getColor() }}
-                    >
-                      <Icon icon="check" />
-                    </span>
-                  )}
-                  {isSelecting && (
-                    <span className={selectingCls}>
+                    ) : image.status === 'processing' ? (
+                      <span className={stateCls}>
+                        <span
+                          className={spinnerCls}
+                          style={{ borderTopColor: themeRole.getColor() }}
+                        />
+                        Still being made…
+                      </span>
+                    ) : (
+                      <span className={stateCls}>
+                        <Icon icon="image" />
+                        {finished
+                          ? 'Couldn’t show this one'
+                          : 'Didn’t finish. No AI Energy used.'}
+                      </span>
+                    )}
+                    {isPicked && (
                       <span
-                        className={spinnerCls}
-                        style={{ borderTopColor: themeRole.getColor() }}
-                      />
+                        className={pickedCls}
+                        style={{ background: themeRole.getColor() }}
+                      >
+                        <Icon icon="check" />
+                      </span>
+                    )}
+                    {isSelecting && (
+                      <span className={selectingCls}>
+                        <span
+                          className={spinnerCls}
+                          style={{ borderTopColor: themeRole.getColor() }}
+                        />
+                      </span>
+                    )}
+                  </span>
+                  <span className={captionCls}>
+                    <span className="prompt">
+                      {image.prompt || 'Made before history began'}
                     </span>
-                  )}
-                </span>
-                <span className={captionCls}>
-                  <span className="prompt">
-                    {image.prompt || 'Made before history began'}
+                    <span className="meta">
+                      {source ? <span className="source">{source}</span> : null}
+                      {formatMadeAt(image.completedAt || image.createdAt)}
+                    </span>
                   </span>
-                  <span className="meta">
-                    {source ? <span className="source">{source}</span> : null}
-                    {formatMadeAt(image.completedAt || image.createdAt)}
-                  </span>
-                </span>
-              </button>
+                </button>
+                {onDelete && image.status !== 'processing' && (
+                  <button
+                    type="button"
+                    className={deleteCls}
+                    disabled={deleting}
+                    aria-label={`Delete "${image.prompt || 'this image'}"`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (deletingRef.current) return;
+                      setDeleteError('');
+                      setConfirmingDelete(image);
+                    }}
+                  >
+                    <span className={deleteBadgeCls} aria-hidden="true">
+                      <Icon icon="trash-alt" />
+                    </span>
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>
+      )}
+
+      {confirmingDelete && onDelete && (
+        <ConfirmModal
+          modalOverModal
+          title="Delete this image?"
+          descriptionFontSize="1.6rem"
+          description={
+            confirmingDelete.source === 'picture_day'
+              ? 'It will be gone from your images and your Picture Day.'
+              : confirmingDelete.source === 'edit'
+                ? 'It will be gone from your images, and from Picture Day if you used it there.'
+                : 'It will be gone from your images.'
+          }
+          confirmButtonColor="red"
+          confirmButtonLabel="Delete"
+          onHide={() => {
+            if (!deletingRef.current) setConfirmingDelete(null);
+          }}
+          onConfirm={async () => {
+            if (deletingRef.current) return;
+            const target = confirmingDelete;
+            deletingRef.current = true;
+            setDeleting(true);
+            try {
+              const failure = await onDelete(target);
+              setConfirmingDelete((current) =>
+                current?.id === target.id ? null : current
+              );
+              if (failure) setDeleteError(failure);
+            } finally {
+              deletingRef.current = false;
+              setDeleting(false);
+            }
+          }}
+        />
       )}
 
       {loading ? (
@@ -163,11 +234,6 @@ export default function ImageHistory({
             Try again
           </button>
         </div>
-      ) : images.length === 0 ? (
-        <p className={noteCls}>
-          {emptyMessage ||
-            'Images you make will be kept here, even if you leave before they finish.'}
-        </p>
       ) : hasMore ? (
         <div className={noteCls}>
           <button
@@ -179,6 +245,11 @@ export default function ImageHistory({
             Show older images
           </button>
         </div>
+      ) : images.length === 0 ? (
+        <p className={noteCls}>
+          {emptyMessage ||
+            'Images you make will be kept here, even if you leave before they finish.'}
+        </p>
       ) : null}
     </div>
   );
@@ -239,7 +310,81 @@ const gridCls = css`
   }
 `;
 
+const tileWrapCls = css`
+  position: relative;
+  display: flex;
+  min-width: 0;
+`;
+
+// the tile's corner, opposite the picked check; 44px touch target around the visual badge
+const deleteCls = css`
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: ${Color.darkerGray()};
+  cursor: pointer;
+  touch-action: manipulation;
+  &:hover:not(:disabled) {
+    color: ${Color.rose()};
+  }
+  &:focus-visible {
+    color: ${Color.rose()};
+    outline: 2px solid ${Color.rose()};
+    outline-offset: -4px;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`;
+
+const deleteBadgeCls = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(30 * var(--px));
+  height: calc(30 * var(--px));
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  font-size: calc(13 * var(--px));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  @media (max-width: ${mobileMaxWidth}) {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+`;
+
+const errorBannerCls = css`
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0;
+  padding: calc(8 * var(--px)) calc(12 * var(--px));
+  border-radius: calc(10 * var(--px));
+  background: #fff1f2;
+  border: 1px solid ${Color.rose(0.35)};
+  color: ${Color.rose()};
+  text-align: center;
+  font-size: calc(14 * var(--px));
+  font-weight: 600;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.2rem;
+  }
+`;
+
 const tileCls = css`
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
