@@ -12,8 +12,8 @@ import {
 // record (no duplicate requests). It polls while something is moving and backs
 // off: every 10 s while setting up (×1.5 each time, up to a minute), every 5
 // minutes while only the email confirmation is left, pauses while the tab is
-// hidden, clears on account switch or ownership change, and drops entries once
-// unmounted so SPA revisits fetch fresh.
+// hidden, clears on account switch, resets and re-polls active subscribers on
+// ownership change, and drops entries once unmounted so SPA revisits fetch fresh.
 
 let globalListenerCount = 0;
 

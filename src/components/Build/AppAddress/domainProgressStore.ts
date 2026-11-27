@@ -1,9 +1,10 @@
 import type { DomainProgressView } from './checkout/model';
 
 // Pure store for the shared domain-purchase progress poller and its per-build
-// hosting/domain-sales eligibility gate. Keyed by (userId, buildId) and wiped
-// on account switch or ownership transfer; paused when the tab is hidden;
-// entries are deleted once no surface is listening so SPA revisits fetch fresh.
+// hosting/domain-sales eligibility gate. Keyed by (userId, buildId[, orderId]);
+// wiped on account switch, reset and re-polled for live subscribers on
+// ownership transfer, paused when the tab is hidden; entries are deleted once
+// no surface is listening so SPA revisits fetch fresh.
 
 export type ProgressLoader = (input: {
   buildId: number;
@@ -34,6 +35,7 @@ interface Entry {
   failures: number;
   running: boolean;
   pendingRefresh: boolean;
+  generation: number;
   load: ProgressLoader | null;
 }
 
@@ -97,9 +99,11 @@ export function createDomainProgressStore(options: DomainProgressStoreOptions = 
     if (entries.get(entry.key) !== entry || !entry.load || !entry.listeners.size || entry.running) {
       return;
     }
+    const gen = entry.generation;
     entry.running = true;
     entry.pendingRefresh = false;
     let wait = 0;
+    let stale = false;
     try {
       const data = await entry.load(
         entry.orderId > 0
@@ -107,32 +111,42 @@ export function createDomainProgressStore(options: DomainProgressStoreOptions = 
           : { buildId: entry.buildId }
       );
       if (entries.get(entry.key) !== entry || !entry.listeners.size) return;
-      const prevStage = entry.progress?.stage;
-      entry.progress = data?.progress || null;
-      entry.loaded = true;
-      entry.failures = 0;
-      if (entry.progress?.stage !== prevStage) entry.delay = INITIAL_DELAY_MS;
-      wait = peekDelay(entry);
-      if (entry.progress?.stage === 'setting_up' || entry.progress?.stage === 'refunding') {
-        entry.delay = Math.min(MAX_ACTIVE_DELAY_MS, Math.round(entry.delay * 1.5));
+      if (entry.generation !== gen) {
+        stale = true;
+      } else {
+        const prevStage = entry.progress?.stage;
+        entry.progress = data?.progress || null;
+        entry.loaded = true;
+        entry.failures = 0;
+        if (entry.progress?.stage !== prevStage) entry.delay = INITIAL_DELAY_MS;
+        wait = peekDelay(entry);
+        if (entry.progress?.stage === 'setting_up' || entry.progress?.stage === 'refunding') {
+          entry.delay = Math.min(MAX_ACTIVE_DELAY_MS, Math.round(entry.delay * 1.5));
+        }
       }
     } catch (error: any) {
       if (entries.get(entry.key) !== entry || !entry.listeners.size) return;
-      const status = Number(error?.status || 0);
-      if (status === 403 || status === 404) {
-        entry.progress = null;
-        entry.loaded = true;
-        entry.failures = 0;
-        wait = 0;
+      if (entry.generation !== gen) {
+        stale = true;
       } else {
-        entry.failures += 1;
-        wait = Math.min(IDLE_WAIT_DELAY_MS, INITIAL_RETRY_MS * 2 ** (entry.failures - 1));
+        const status = Number(error?.status || 0);
+        if (status === 403 || status === 404) {
+          entry.progress = null;
+          entry.loaded = true;
+          entry.failures = 0;
+          wait = 0;
+        } else {
+          entry.failures += 1;
+          wait = Math.min(IDLE_WAIT_DELAY_MS, INITIAL_RETRY_MS * 2 ** (entry.failures - 1));
+        }
       }
     } finally {
       entry.running = false;
     }
     if (entries.get(entry.key) !== entry || !entry.listeners.size) return;
-    entry.listeners.forEach((listener) => listener());
+    if (!stale) {
+      entry.listeners.forEach((listener) => listener());
+    }
     if (entry.pendingRefresh) {
       if (!isHidden()) {
         entry.pendingRefresh = false;
@@ -173,6 +187,7 @@ export function createDomainProgressStore(options: DomainProgressStoreOptions = 
         failures: 0,
         running: false,
         pendingRefresh: false,
+        generation: 0,
         load
       };
       entries.set(key, entry);
@@ -217,11 +232,27 @@ export function createDomainProgressStore(options: DomainProgressStoreOptions = 
   }
 
   function clearBuild(buildId: number) {
-    for (const [key, entry] of entries.entries()) {
+    for (const [key, entry] of [...entries.entries()]) {
       if (entry.buildId !== buildId) continue;
       clearTimer(entry);
-      entries.delete(key);
-      entry.listeners.forEach((listener) => listener());
+      entry.generation += 1;
+      entry.progress = null;
+      entry.loaded = false;
+      entry.delay = INITIAL_DELAY_MS;
+      entry.failures = 0;
+      if (!entry.listeners.size) {
+        entries.delete(key);
+        continue;
+      }
+      for (const listener of [...entry.listeners]) {
+        listener();
+      }
+      if (entries.get(key) !== entry || !entry.listeners.size) continue;
+      if (entry.running || isHidden()) {
+        entry.pendingRefresh = true;
+      } else {
+        void poll(entry);
+      }
     }
   }
 

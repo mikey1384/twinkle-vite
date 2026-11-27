@@ -4,6 +4,7 @@ import { css } from '@emotion/css';
 import Modal from '~/components/Modal';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { BUILD_OWNERSHIP_CHANGED } from '~/helpers/buildOwnershipEvents';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
 import {
@@ -20,6 +21,7 @@ import {
   addressHost,
   RenameView,
   readScopedBuildData,
+  selectPendingOtherDomainFallback,
   type OtherDomainView,
   type OwnerDomainView,
   type ScopedBuildData
@@ -119,14 +121,9 @@ export default function AppAddress({
     setDomainProgressAllowed(buildId, domainProgressAllowed);
     return () => setDomainProgressAllowed(buildId, false);
   }, [buildId, domainProgressAllowed]);
-  const pendingOtherDomain =
-    (info?.yourOtherDomains || []).find(
-      (d) => d.verificationPending && d.orderId > 0 && Number(d.orderBuildId || d.buildId || 0) > 0
-    ) || null;
-  const fallbackBuildId = pendingOtherDomain
-    ? Number(pendingOtherDomain.orderBuildId || pendingOtherDomain.buildId || 0)
-    : 0;
-  const fallbackOrderId = pendingOtherDomain ? Number(pendingOtherDomain.orderId || 0) : 0;
+  const pendingOtherDomain = selectPendingOtherDomainFallback(info?.yourOtherDomains);
+  const fallbackBuildId = pendingOtherDomain?.buildId || 0;
+  const fallbackOrderId = pendingOtherDomain?.orderId || 0;
   useEffect(() => {
     setDomainProgressFallback(
       buildId,
@@ -247,19 +244,39 @@ export default function AppAddress({
 
   useEffect(() => {
     let cancelled = false;
+    let requestSeq = 0;
     if (hostingKnownOff) {
       setInfoState({ buildId, userId, data: { enabled: false } });
       return;
     }
     setInfoState(null);
-    loadAppAddress({ buildId })
-      .then((data: AddressInfo) => {
-        if (data && data.enabled === false) hostingKnownOff = true;
-        if (!cancelled) setInfoState({ buildId, userId, data });
-      })
-      .catch(() => !cancelled && setInfoState({ buildId, userId, data: { enabled: false } }));
+    function fetchInfo() {
+      const seq = ++requestSeq;
+      loadAppAddress({ buildId })
+        .then((data: AddressInfo) => {
+          if (data && data.enabled === false) hostingKnownOff = true;
+          if (!cancelled && seq === requestSeq) {
+            setInfoState({ buildId, userId, data });
+          }
+        })
+        .catch(() => {
+          if (!cancelled && seq === requestSeq) {
+            setInfoState({ buildId, userId, data: { enabled: false } });
+          }
+        });
+    }
+    function onOwnershipChanged(event: Event) {
+      const changedBuildId = Number(
+        (event as CustomEvent<{ buildId?: number }>).detail?.buildId || 0
+      );
+      if (!changedBuildId || hostingKnownOff) return;
+      fetchInfo();
+    }
+    fetchInfo();
+    window.addEventListener(BUILD_OWNERSHIP_CHANGED, onOwnershipChanged);
     return () => {
       cancelled = true;
+      window.removeEventListener(BUILD_OWNERSHIP_CHANGED, onOwnershipChanged);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildId, userId]);
@@ -556,19 +573,39 @@ export function DomainOwnerProgressBanner({
 
   useEffect(() => {
     let cancelled = false;
+    let requestSeq = 0;
     if (!userId || !buildId || hostingKnownOff) {
       setInfoState({ buildId, userId, data: { enabled: false } });
       return;
     }
     setInfoState(null);
-    loadAppAddress({ buildId })
-      .then((data: AddressInfo) => {
-        if (data && data.enabled === false) hostingKnownOff = true;
-        if (!cancelled) setInfoState({ buildId, userId, data });
-      })
-      .catch(() => !cancelled && setInfoState({ buildId, userId, data: { enabled: false } }));
+    function fetchInfo() {
+      const seq = ++requestSeq;
+      loadAppAddress({ buildId })
+        .then((data: AddressInfo) => {
+          if (data && data.enabled === false) hostingKnownOff = true;
+          if (!cancelled && seq === requestSeq) {
+            setInfoState({ buildId, userId, data });
+          }
+        })
+        .catch(() => {
+          if (!cancelled && seq === requestSeq) {
+            setInfoState({ buildId, userId, data: { enabled: false } });
+          }
+        });
+    }
+    function onOwnershipChanged(event: Event) {
+      const changedBuildId = Number(
+        (event as CustomEvent<{ buildId?: number }>).detail?.buildId || 0
+      );
+      if (!changedBuildId || hostingKnownOff) return;
+      fetchInfo();
+    }
+    fetchInfo();
+    window.addEventListener(BUILD_OWNERSHIP_CHANGED, onOwnershipChanged);
     return () => {
       cancelled = true;
+      window.removeEventListener(BUILD_OWNERSHIP_CHANGED, onOwnershipChanged);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildId, userId]);
@@ -579,14 +616,28 @@ export function DomainOwnerProgressBanner({
   const allowed = Boolean(
     userId && info?.enabled && ((info?.url && isOwner && info?.domainSalesEnabled) || ownsBoughtDomain)
   );
-  const progress = useDomainProgress(buildId, allowed);
-  if (!allowed || !progressShowing(progress)) return null;
+  const pendingOtherDomain = selectPendingOtherDomainFallback(info?.yourOtherDomains);
+  const fallbackBuildId = pendingOtherDomain?.buildId || 0;
+  const fallbackOrderId = pendingOtherDomain?.orderId || 0;
+  const ownProgress = useDomainProgress(buildId, allowed);
+  const hasOwn = allowed && progressShowing(ownProgress);
+  const fallbackEnabled = Boolean(
+    userId && info?.enabled && fallbackBuildId > 0 && fallbackOrderId > 0 && !hasOwn
+  );
+  const fallbackProgress = useDomainProgress(fallbackBuildId, fallbackEnabled, fallbackOrderId);
+  const progress = hasOwn
+    ? ownProgress
+    : fallbackEnabled && progressShowing(fallbackProgress)
+      ? fallbackProgress
+      : null;
+  const targetBuildId = hasOwn ? buildId : fallbackBuildId || buildId;
+  if (!progress) return null;
   return (
     <ProgressNotice
       t={t}
-      buildId={buildId}
+      buildId={targetBuildId}
       progress={progress}
-      onOpen={() => navigate(domainCheckoutPath(buildId, `?domainOrder=${progress.orderId}`))}
+      onOpen={() => navigate(domainCheckoutPath(targetBuildId, `?domainOrder=${progress.orderId}`))}
     />
   );
 }
