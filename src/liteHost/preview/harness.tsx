@@ -36,6 +36,9 @@ import { askSignIn, mountBadge, showAiBanner, showGuestHint } from '../ui';
 import { LITE_HOST_TEXT } from '../text';
 import AppAccountSheet from '../react/AppAccountSheet';
 import AppPlayers from '~/components/Build/AppAddress/AppPlayers';
+import { ChipProgressLabel, ProgressNotice, progressMenuItems, useResendVerification } from '~/components/Build/AppAddress/checkout/progress';
+import type { EmailCheck } from '~/components/Build/AppAddress/checkout/steps';
+import type { DomainProgressView } from '~/components/Build/AppAddress/checkout/model';
 import { draftFromPhone, type PhoneDraft } from '~/components/Build/AppAddress/checkout/phone';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faGlobe } from '@fortawesome/pro-solid-svg-icons/faGlobe';
@@ -342,6 +345,51 @@ function Harness() {
           </Page>
         </LiteHostProviders>
       );
+    // the purchase tracker: ?stage=setting_up|securing|one_step_left|support
+    case 'progress-header':
+      return (
+        <StubProviders>
+          <Page wide={params.get('wide') === '1'}>
+            <AppPageHeader>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                <ProgressChip />
+              </div>
+              <div style={{ marginTop: 14 }}>
+                <ProgressNotice t={t} buildId={2} progress={sampleProgress()} onOpen={noop} />
+              </div>
+            </AppPageHeader>
+          </Page>
+        </StubProviders>
+      );
+    case 'order-progress':
+    case 'order-securing':
+    case 'order-live-verify':
+    case 'order-live-verified': {
+      const live = screen.startsWith('order-live');
+      const progress = sampleProgress(live ? (screen === 'order-live-verified' ? 'done' : 'one_step_left') : screen === 'order-securing' ? 'securing' : 'setting_up');
+      return (
+        <StubProviders>
+          <Page wide={params.get('wide') === '1'}>
+            <OrderStatusView
+              t={t}
+              buildId={2}
+              progress={progress}
+              order={{ domain: 'redsquareadventure.com', priceCents: 1399, status: live ? 'live' : 'registered', stage: live ? 'live' : 'setting_up', failureReason: null }}
+              onOpen={noop}
+              onTryAgain={noop}
+              onClose={noop}
+            />
+          </Page>
+        </StubProviders>
+      );
+    }
+    // the Contact step's email confirmation: ?email=unsent|sent|confirmed
+    case 'owner-email':
+      return (
+        <Page wide={params.get('wide') === '1'}>
+          <OwnerEmailHarness />
+        </Page>
+      );
     case 'menu':
       return <BadgeMenu />;
     case 'host-sheet':
@@ -505,6 +553,85 @@ function WandHarness({ stage, place = 'dm' }: { stage: string; place?: 'dm' | 'a
       </AppContext.Provider>
     </MemoryRouter>
   );
+}
+
+function ProgressChip() {
+  const progress = sampleProgress();
+  const resend = useResendVerification(t, 2, progress);
+  return (
+    <AddressMenuView
+      t={t}
+      primaryUrl="https://star-catcher.lumine.app/"
+      freeUrl="https://star-catcher.lumine.app/"
+      domains={[]}
+      canGetOwn
+      copied={false}
+      onCopy={() => {}}
+      onShare={() => {}}
+      onGetOwn={() => {}}
+      onRename={() => {}}
+      chipLabel={<ChipProgressLabel t={t} progress={progress} />}
+      leadItems={progressMenuItems(t, progress, resend, () => {})}
+    />
+  );
+}
+
+function sampleProgress(stage = params.get('stage') || 'setting_up'): DomainProgressView {
+  const states: Record<string, Array<'done' | 'current' | 'todo' | 'problem'>> = {
+    setting_up: ['done', 'current', 'todo', 'todo', 'todo'],
+    securing: ['done', 'done', 'current', 'todo', 'todo'],
+    one_step_left: ['done', 'done', 'done', 'done', 'current'],
+    support: ['done', 'problem', 'todo', 'todo', 'todo'],
+    done: ['done', 'done', 'done', 'done', 'done']
+  };
+  const keys = ['paid', 'registered', 'secure', 'live', 'email'] as const;
+  const row = states[stage] || states.setting_up;
+  return {
+    orderId: 1,
+    domain: 'redsquareadventure.com',
+    stage: (stage === 'securing' ? 'setting_up' : stage) as DomainProgressView['stage'],
+    steps: keys.map((key, index) => ({ key, state: row[index] })),
+    verification:
+      stage === 'done'
+        ? { state: 'verified', verifiedAt: 1 }
+        : stage === 'one_step_left'
+          ? { state: 'pending', verifyBy: 0, daysLeft: 12, canResend: true, resendEligibleAt: 0 }
+          : null
+  };
+}
+
+// Stand-in request helpers for the tracker's Resend (nothing leaves the page).
+function StubProviders({ children }: { children: React.ReactNode }) {
+  const value = React.useMemo(
+    () => ({
+      user: { state: {}, actions: {} },
+      requestHelpers: new Proxy({}, { get: () => async () => ({ status: 'sent', nextEligibleAt: 0, progress: null }) })
+    }),
+    []
+  );
+  return (
+    <MemoryRouter>
+      <AppContext.Provider value={value as any}>{children}</AppContext.Provider>
+    </MemoryRouter>
+  );
+}
+
+function OwnerEmailHarness() {
+  const mode = params.get('email') || 'unsent';
+  const [details, setDetails] = useState<OwnerDetails>(mode === 'unsent' ? { ...FILLED_OWNER, email: 'lily.parent@example.com' } : FILLED_OWNER);
+  const [phone, setPhone] = useState<PhoneDraft>(() => draftFromPhone(details.phone, 'KR'));
+  const [sentTo, setSentTo] = useState(mode === 'sent' ? FILLED_OWNER.email : '');
+  const [verified, setVerified] = useState(mode === 'confirmed');
+  const check: EmailCheck = {
+    verified,
+    sentTo,
+    sending: false,
+    verifying: false,
+    problem: params.get('problem') === '1' ? 'That code isn’t right. Please check it and try again.' : '',
+    onSend: () => setSentTo(details.email.trim().toLowerCase()),
+    onVerify: () => setVerified(true)
+  };
+  return <OwnerDetailsView t={t} idea={RED_SQUARE} details={details} phoneDraft={phone} onPhoneDraft={setPhone} agreed={false} renews={false} busy={false} problem="" onDetails={setDetails} onAgree={() => {}} onPay={() => {}} onBack={() => {}} startPage={1} emailCheck={check} />;
 }
 
 function OwnerHarness({ filled, saved: savedStart = 'none' }: { filled: boolean; saved?: 'saved' | 'none' | 'forgotten' }) {

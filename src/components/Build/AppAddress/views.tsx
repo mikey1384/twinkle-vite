@@ -20,7 +20,8 @@ export {
   OrderStatusView,
   OwnerDetailsView,
   ParentRequestView,
-  orderStatusTitle
+  orderStatusTitle,
+  type EmailCheck
 } from './checkout/steps';
 
 const muted = '#5d5d6e';
@@ -56,7 +57,9 @@ export function AddressMenuView({
   onCopy,
   onShare,
   onGetOwn,
-  onRename
+  onRename,
+  chipLabel,
+  leadItems = []
 }: {
   t: AddressText;
   // the address to share (the server's choice: a live bought domain, else
@@ -78,6 +81,10 @@ export function AddressMenuView({
   onGetOwn: () => void;
   // owner only: change the free lumine.app address
   onRename?: () => void;
+  // owner only, while a purchase is under way: the chip says "Setting up…"
+  // (with its bar) or "1 step left", and the menu starts with its rows
+  chipLabel?: React.ReactNode;
+  leadItems?: HeaderMenuItem[];
 }) {
   const [confirming, setConfirming] = useState(0);
   // every address once (by hostname), the shared one first
@@ -87,7 +94,8 @@ export function AddressMenuView({
     if (host && !links.some((link) => link.host === host)) links.push({ host, href });
   }
   const shownHost = links[0]?.host || addressHost(primaryUrl);
-  const items: HeaderMenuItem[] = links.map(({ host, href }) => ({
+  const items: HeaderMenuItem[] = [...leadItems, ...(leadItems.length ? [{ separator: true }] : [])];
+  items.push(...links.map(({ host, href }) => ({
     label: (
       <>
         <Icon icon="external-link-alt" />
@@ -95,7 +103,7 @@ export function AddressMenuView({
       </>
     ),
     href
-  }));
+  })));
   for (const domain of ownerDomains || []) {
     if (domain.status === 'live') continue;
     items.push({
@@ -191,7 +199,7 @@ export function AddressMenuView({
           chip="address"
           icon="globe"
           tone="blue"
-          label={shownHost}
+          label={chipLabel || shownHost}
           title={shownHost}
           caret
           menuTrigger={triggerProps}

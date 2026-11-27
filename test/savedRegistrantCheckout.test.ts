@@ -95,27 +95,33 @@ test('ADDRESS_TEXT defines pending forgetting label in both English and Korean',
 });
 
 test('AppAddress avoids stale saved-registrant overwrites and Forget/Pay races', () => {
-  const indexSource = readFileSync(
-    new URL('../src/components/Build/AppAddress/index.tsx', import.meta.url),
+  const checkoutSource = readFileSync(
+    new URL('../src/components/Build/AppAddress/DomainCheckoutPage.tsx', import.meta.url),
     'utf8'
   );
 
-  // Finding 1: live refs + full typed check + savedDetailsRef guard inside loadSavedRegistrant().then()
-  assert.match(indexSource, /ownerRef\.current\s*=\s*owner/);
-  assert.match(indexSource, /ownerPhoneRef\.current\s*=\s*ownerPhone/);
-  assert.match(indexSource, /savedDetailsRef\.current\s*=\s*savedDetails/);
-  assert.match(indexSource, /hasTypedOwnerDetails\(currentOwner,\s*ownerPhoneRef\.current\.national\)/);
-  assert.match(indexSource, /savedDetailsRef\.current\s*!==\s*'none'/);
-  assert.match(indexSource, /normalizeOwnerDetails\(saved,\s*currentOwner\.country\)/);
-  assert.doesNotMatch(indexSource, /\.\.\.saved\b/);
+  // Finding 1: live refs + user-edit tracking + savedDetailsRef/in-flight forget guards inside loadSavedRegistrant().then()
+  assert.match(checkoutSource, /ownerRef\.current\s*=\s*owner/);
+  assert.match(checkoutSource, /ownerPhoneRef\.current\s*=\s*ownerPhone/);
+  assert.match(checkoutSource, /savedDetailsRef\.current\s*=\s*savedDetails/);
+  assert.match(checkoutSource, /function updateOwnerDetails\([^)]*\)\s*\{[\s\S]*?ownerEditedRef\.current\s*=\s*true;/);
+  assert.match(checkoutSource, /function updateOwnerPhone\([^)]*\)\s*\{[\s\S]*?ownerEditedRef\.current\s*=\s*true;/);
+  assert.match(
+    checkoutSource,
+    /loadSavedRegistrant\(\)[\s\S]*?ownerEditedRef\.current[\s\S]*?ownerPhoneRef\.current\.national\.trim\(\)\.length\s*>\s*0[\s\S]*?savedDetailsRef\.current\s*!==\s*'none'[\s\S]*?inFlightRef\.current\.forget/
+  );
+  assert.match(checkoutSource, /normalizeOwnerDetails\(saved,\s*ownerRef\.current\.country\)/);
+  assert.doesNotMatch(checkoutSource, /\.\.\.saved\b/);
 
   // Findings 2 & 3: mutual in-flight locking between forgetOrSkipSaved and payAsOwner, clearing ownerProblem, and forwarding forgetting state
-  assert.match(indexSource, /async function forgetOrSkipSaved\(\)[\s\S]*?if\s*\(inFlightRef\.current\.pay\s*\|\|\s*inFlightRef\.current\.forget\)\s*return;/);
-  assert.match(indexSource, /async function forgetOrSkipSaved\(\)[\s\S]*?setOwnerProblem\(''\)/);
-  assert.match(indexSource, /claimRequest\('forget'\)/);
-  assert.match(indexSource, /async function payAsOwner\([^)]*\)\s*\{[\s\S]*?if\s*\(inFlightRef\.current\.forget\)\s*return;/);
-  assert.match(indexSource, /saveDetails:\s*savedDetailsRef\.current\s*!==\s*'forgotten'/);
-  assert.match(indexSource, /<OwnerDetailsView[\s\S]*?\s+forgetting=\{forgettingSaved\}/);
+  assert.match(checkoutSource, /async function forgetOrSkipSaved\(\)[\s\S]*?if\s*\(inFlightRef\.current\.pay\s*\|\|\s*inFlightRef\.current\.forget\)\s*return;/);
+  assert.match(checkoutSource, /async function forgetOrSkipSaved\(\)[\s\S]*?setOwnerProblem\(''\)/);
+  assert.match(checkoutSource, /claimRequest\('forget'\)/);
+  assert.match(checkoutSource, /async function payAsOwner\([^)]*\)\s*\{[\s\S]*?if\s*\(inFlightRef\.current\.forget\)\s*return;/);
+  assert.match(checkoutSource, /saveDetails:\s*savedDetailsRef\.current\s*!==\s*'forgotten'/);
+  assert.match(checkoutSource, /<OwnerDetailsView[\s\S]*?\s+forgetting=\{forgettingSaved\}/);
+  assert.match(checkoutSource, /<OwnerDetailsView[\s\S]*?\s+onDetails=\{updateOwnerDetails\}/);
+  assert.match(checkoutSource, /<OwnerDetailsView[\s\S]*?\s+onPhoneDraft=\{updateOwnerPhone\}/);
 });
 
 test('OwnerDetailsView handles forgetting lock, accessible status/focus, mobile tap target, and late startPage', () => {
@@ -124,8 +130,8 @@ test('OwnerDetailsView handles forgetting lock, accessible status/focus, mobile 
     'utf8'
   );
 
-  // Finding 2: payment disabled during forgetting; Forget/Don't save disabled during busy or forgetting
-  assert.match(stepsSource, /const canPay\s*=\s*!missing\s*&&\s*agreed\s*&&\s*!busy\s*&&\s*!forgetting;/);
+  // Finding 2: payment disabled during forgetting or unverified email; Forget/Don't save disabled during busy or forgetting
+  assert.match(stepsSource, /const canPay\s*=\s*!missing\s*&&\s*agreed\s*&&\s*!busy\s*&&\s*!forgetting\s*&&\s*emailVerified;/);
   assert.match(stepsSource, /<button[\s\S]*?\s+ref=\{savedChoiceButtonRef\}[\s\S]*?\s+disabled=\{busy\s*\|\|\s*forgetting\}[\s\S]*?\s+aria-busy=\{forgetting\s*\|\|\s*undefined\}/);
 
   // Finding 4 / round-2 P3: live region status only on the status text span (not wrapping the button, no redundant aria-live), focus recovery + 44px coarse-pointer touch target

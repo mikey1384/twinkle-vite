@@ -11,10 +11,12 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import {
   useAppContext,
+  useContentContext,
   useKeyContext,
   useNotiContext,
   useViewContext
 } from '~/contexts';
+import { dailyPictureJobs } from '~/helpers/dailyPictureJobs';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import {
@@ -154,6 +156,7 @@ export default function ImageGenerator({
   const historyLoadingRef = useRef(false);
   const historyImagesRef = useRef<AIImageHistoryItem[]>([]);
   historyImagesRef.current = historyImages;
+  const deletedHistoryIdsRef = useRef<Set<number>>(new Set());
   const resumingHistoryItemRef = useRef<AIImageHistoryItem | null>(null);
   const generatedImageUrlRef = useRef<string | null>(null);
   const [model, setModel] = useState<OpenAiImageModel>(GPT_IMAGE_2_6_FLARE);
@@ -248,6 +251,7 @@ export default function ImageGenerator({
     };
   }, [onUseImageAvailabilityChange]);
 
+  const onEditContent = useContentContext((v) => v.actions.onEditContent);
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
   );
@@ -262,6 +266,9 @@ export default function ImageGenerator({
   );
   const loadAIImageHistoryImage = useAppContext(
     (v) => v.requestHelpers.loadAIImageHistoryImage
+  );
+  const deleteAIImageHistoryItem = useAppContext(
+    (v) => v.requestHelpers.deleteAIImageHistoryItem
   );
 
   const updateImageGenerationSettings = useAppContext(
@@ -522,6 +529,7 @@ export default function ImageGenerator({
   generatedImageUrlRef.current = generatedImageUrl;
 
   useEffect(() => {
+    deletedHistoryIdsRef.current.clear();
     if (!userId) return;
     let cancelled = false;
     void (async () => {
@@ -916,12 +924,13 @@ export default function ImageGenerator({
           themeColor={profileTheme}
           onLoadMore={() => loadOlderImageHistory()}
           onRetry={() =>
-            historyImages.length
+            historyImages.length || historyNextBefore
               ? loadOlderImageHistory()
               : refreshImageHistory()
           }
           onSelect={handleSelectHistoryImage}
           onLoadFullImage={loadHistoryImageUrl}
+          onDelete={handleDeleteHistoryImage}
         />
       )}
 
@@ -1460,7 +1469,9 @@ export default function ImageGenerator({
     if (firstLoad) setHistoryLoading(true);
     try {
       const data = await loadAIImageHistory({ limit: HISTORY_PAGE_SIZE });
-      const firstPage: AIImageHistoryItem[] = data?.images || [];
+      const firstPage: AIImageHistoryItem[] = (data?.images || []).filter(
+        (item: AIImageHistoryItem) => !deletedHistoryIdsRef.current.has(item.id)
+      );
       const olderPagesLoaded =
         historyImagesRef.current.length > HISTORY_PAGE_SIZE;
       setHistoryImages((current) =>
@@ -1481,7 +1492,7 @@ export default function ImageGenerator({
 
   async function loadOlderImageHistory() {
     if (historyLoadingRef.current) return;
-    const before = historyImagesRef.current.length ? historyNextBefore : null;
+    const before = historyNextBefore;
     historyLoadingRef.current = true;
     setHistoryLoading(true);
     setHistoryFailed(false);
@@ -1490,9 +1501,11 @@ export default function ImageGenerator({
         before,
         limit: HISTORY_PAGE_SIZE
       });
-      const page: AIImageHistoryItem[] = data?.images || [];
+      const page: AIImageHistoryItem[] = (data?.images || []).filter(
+        (item: AIImageHistoryItem) => !deletedHistoryIdsRef.current.has(item.id)
+      );
       setHistoryImages((current) =>
-        before ? mergeAIImageHistoryPages(current, page) : page
+        current.length ? mergeAIImageHistoryPages(current, page) : page
       );
       setHistoryNextBefore(data?.nextBefore || null);
     } catch (err) {
@@ -1600,6 +1613,44 @@ export default function ImageGenerator({
       setError("Couldn't open that image. Please try again.");
     } finally {
       setHistorySelectingId(null);
+    }
+  }
+
+  // Deleted on the server first (also from its Picture Day); the list then
+  // drops it, and any affected Picture Day reflection/job state stays in sync.
+  async function handleDeleteHistoryImage(
+    image: AIImageHistoryItem
+  ): Promise<string | null> {
+    try {
+      const result = await deleteAIImageHistoryItem(image.id);
+      if (!result?.success) {
+        return "Couldn't delete this image. Please try again.";
+      }
+      deletedHistoryIdsRef.current.add(image.id);
+      setHistoryImages((current) =>
+        current.filter((item) => item.id !== image.id)
+      );
+      for (const day of result.pictureDays || []) {
+        if (day.responseId) {
+          onEditContent({
+            contentType: 'dailyReflection',
+            contentId: day.responseId,
+            data: {
+              picturePath: day.picturePath || '',
+              pictureStyle: day.pictureStyle || ''
+            }
+          });
+        }
+        if (day.questionId) {
+          dailyPictureJobs.removePicture({
+            questionId: day.questionId,
+            path: image.path || undefined
+          });
+        }
+      }
+      return null;
+    } catch (error: any) {
+      return error?.message || "Couldn't delete this image. Please try again.";
     }
   }
 

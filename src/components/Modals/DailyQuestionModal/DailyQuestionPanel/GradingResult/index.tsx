@@ -52,6 +52,7 @@ export default function GradingResult({
   initialReusableCurrentFocusSelection,
   isAdultUser = false,
   mode = 'classic',
+  onPictureChange,
   onClose
 }: {
   question: string;
@@ -81,6 +82,10 @@ export default function GradingResult({
   initialReusableCurrentFocusSelection?: string | null;
   isAdultUser?: boolean;
   mode?: 'classic' | 'training';
+  onPictureChange?: (change: {
+    picturePath: string;
+    pictureStyle: string;
+  }) => void;
   onClose: () => void;
 }) {
   const shareDailyQuestionResponse = useAppContext(
@@ -113,7 +118,8 @@ export default function GradingResult({
     picturePath,
     responseId,
     ownerId: Number(userId) || null,
-    surface: 'result'
+    surface: 'result',
+    onPictureChange
   });
 
   const [sharing, setSharing] = useState(false);

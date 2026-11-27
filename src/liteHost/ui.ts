@@ -24,6 +24,14 @@ let openSheet: HTMLElement | null = null;
 // report) always takes over from it: one overlay owns keys and focus.
 let dismissMenu: (() => void) | null = null;
 
+// Where focus goes when one of our overlays hands it back: into the app's
+// frame (frameFocus.ts), so the app's keys work again. Unset (the preview
+// harness): the ✦ button, as before.
+let focusReturn: (() => void) | null = null;
+export function setHostFocusReturn(fn: (() => void) | null) {
+  focusReturn = fn;
+}
+
 export function closeSheet() {
   openSheet?.remove();
   openSheet = null;
@@ -425,6 +433,7 @@ export function mountBadge({
   document.body.append(badge);
   let menu: { layer: HTMLElement; card: HTMLElement } | null = null;
   let closingLayer: HTMLElement | null = null;
+  let sheetObserver: MutationObserver | null = null;
   // The badge tucks into the edge after a few seconds, but never moves away
   // from its open menu: then it waits until the menu closes.
   let compactWaiting = false;
@@ -472,22 +481,38 @@ export function mountBadge({
         )
         .finished.then(remove, remove);
     }
-    if (restoreFocus) badge.focus({ preventScroll: true });
+    if (restoreFocus) {
+      if (focusReturn) {
+        if (document.activeElement === badge) badge.blur();
+        focusReturn();
+      } else {
+        badge.focus({ preventScroll: true });
+      }
+    }
   }
   // A sheet taking over: the menu goes; the sheet owns focus from here.
   const dismiss = () => closeMenu({ restoreFocus: false });
 
   // After a sheet opened from the menu (sign-in, report) goes away, focus
-  // comes back to the ✦ instead of being lost on the page.
+  // goes back to the app (or the ✦) instead of being lost on the page.
   function returnFocusAfterSheet() {
+    sheetObserver?.disconnect();
+    sheetObserver = null;
+    if (typeof MutationObserver !== 'function') return;
     const observer = new MutationObserver(() => {
       if (document.querySelector('.lh-backdrop')) return;
       observer.disconnect();
-      if (!menu && (!document.activeElement || document.activeElement === document.body)) {
-        badge.focus({ preventScroll: true });
+      if (sheetObserver === observer) sheetObserver = null;
+      const active = document.activeElement;
+      if (!menu && (!active || active === document.body || active === document.documentElement)) {
+        if (focusReturn) focusReturn();
+        else badge.focus({ preventScroll: true });
       }
     });
+    sheetObserver = observer;
     observer.observe(document.body, { childList: true });
+    const hostRoot = document.getElementById('lumine-host-root');
+    if (hostRoot) observer.observe(hostRoot, { childList: true, subtree: true });
   }
 
   function onViewportChange() {

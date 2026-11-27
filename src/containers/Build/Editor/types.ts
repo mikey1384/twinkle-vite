@@ -554,6 +554,9 @@ export interface BuildEditorProps {
   initialPrompt?: string;
   initialPromptContext?: string;
   forceInitialPrompt?: boolean;
+  // prefilled, never sent by itself; and a plain line above the box
+  initialDraft?: string;
+  initialNotice?: string;
   seedGreeting?: boolean;
   onUpdateBuild: (build: Build) => void;
   onUpdateChatMessages: (messages: ChatMessage[]) => void;
