@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // The host side of Twinkle.app.lifecycle: what an app may store, the key, and
 // the unload handshake. (No IndexedDB here; storing is exercised end to end.)
@@ -33,8 +36,13 @@ test('an unload waits for a fresh snapshot, but not for an app that cannot give 
   lifecycle.forgetRunningApp(77);
 });
 
-function createFakeIndexedDb() {
+function createFakeIndexedDb(
+  initialSnapshots: Record<string, unknown> = {},
+  options: { deferReads?: boolean } = {}
+) {
   const writes: Array<{ store: string; key: string; value: unknown }> = [];
+  const data = new Map<string, unknown>(Object.entries(initialSnapshots));
+  const pendingReads: Array<() => void> = [];
   let txCount = 0;
   let openDb: any = null;
   const fakeDb = {
@@ -45,7 +53,7 @@ function createFakeIndexedDb() {
     close() {
       this.onclose?.();
     },
-    transaction(_stores: string[], _mode: string) {
+    transaction(_stores: string[], mode: string) {
       txCount += 1;
       const tx: any = {
         oncomplete: null as null | (() => void),
@@ -55,13 +63,17 @@ function createFakeIndexedDb() {
           return {
             put(value: unknown, key: string) {
               writes.push({ store, key, value });
+              if (store === 'snapshots') data.set(key, value);
               return { result: key };
             },
-            delete() {
+            delete(key: string) {
+              if (store === 'snapshots') data.delete(key);
               return { result: undefined };
             },
-            get() {
-              return { result: undefined };
+            get(key: string) {
+              return {
+                result: store === 'snapshots' ? data.get(key) : undefined
+              };
             },
             openCursor() {
               return { onsuccess: null, result: null };
@@ -72,7 +84,11 @@ function createFakeIndexedDb() {
           };
         }
       };
-      queueMicrotask(() => tx.oncomplete?.());
+      if (options.deferReads && mode === 'readonly') {
+        pendingReads.push(() => tx.oncomplete?.());
+      } else {
+        queueMicrotask(() => tx.oncomplete?.());
+      }
       return tx;
     }
   };
@@ -96,6 +112,10 @@ function createFakeIndexedDb() {
     writes,
     getTxCount: () => txCount,
     snapshotWrites: () => writes.filter((entry) => entry.store === 'snapshots'),
+    flushReads() {
+      const queued = pendingReads.splice(0, pendingReads.length);
+      for (const finish of queued) finish();
+    },
     install() {
       (globalThis as any).indexedDB = fakeIndexedDB;
     },
@@ -388,4 +408,443 @@ test('the owner trace says what kind of start it was, without contents', () => {
   const legacy = { state: { scrollY: 1 }, savedAt: now - 20 * 3600_000, reason: 'hidden' } as any;
   assert.deepEqual(describe(legacy, null, { now, visit: 'tab-a' }), { kind: 'none', stored: true, ageMs: 20 * 3600_000, sameTab: null, work: null, keys: 0 });
   assert.ok(!JSON.stringify(describe(snap, back, { now, visit: 'tab-a' })).includes('secret'));
+});
+
+test('init backup validation enforces scope, size, timestamps, and closed runs', () => {
+  const now = 1_800_000_000_000;
+  const key = '5:2:published:app';
+  const valid = lifecycle.normalizeAppLifecycleBackup(
+    {
+      key,
+      visit: 'tab-a',
+      runId: 'run-ok',
+      state: { level: 5 },
+      savedAt: now - 5_000,
+      reason: 'pagehide',
+      work: ['level']
+    },
+    { expectedKey: key, now }
+  );
+  assert.deepEqual(valid, {
+    state: { level: 5 },
+    savedAt: now - 5_000,
+    reason: 'pagehide',
+    visit: 'tab-a',
+    work: ['level']
+  });
+
+  // Wrong key (different user/build/source/mount) is rejected
+  assert.equal(
+    lifecycle.normalizeAppLifecycleBackup(
+      { key: '6:2:published:app', visit: 'tab-a', state: { level: 5 }, savedAt: now - 1000 },
+      { expectedKey: key, now }
+    ),
+    null
+  );
+  // Missing visit, oversized state, expired or future timestamps are rejected
+  assert.equal(
+    lifecycle.normalizeAppLifecycleBackup(
+      { key, state: { level: 5 }, savedAt: now - 1000 },
+      { expectedKey: key, now }
+    ),
+    null
+  );
+  assert.equal(
+    lifecycle.normalizeAppLifecycleBackup(
+      { key, visit: 'tab-a', state: { big: 'x'.repeat(1_200_000) }, savedAt: now - 1000 },
+      { expectedKey: key, now }
+    ),
+    null
+  );
+  assert.equal(
+    lifecycle.normalizeAppLifecycleBackup(
+      { key, visit: 'tab-a', state: { level: 5 }, savedAt: now + 60_000 },
+      { expectedKey: key, now }
+    ),
+    null
+  );
+  assert.equal(
+    lifecycle.normalizeAppLifecycleBackup(
+      { key, visit: 'tab-a', state: { level: 5 }, savedAt: now - 8 * 24 * 3600_000 },
+      { expectedKey: key, now }
+    ),
+    null
+  );
+});
+
+test('pickNewerAppLifecycleSnapshot chooses whichever valid snapshot is newer', () => {
+  const now = 1_800_000_000_000;
+  const older = { state: { level: 2 }, savedAt: now - 10_000, reason: 'autosave', visit: 'tab-a' };
+  const newer = { state: { level: 5 }, savedAt: now - 1_000, reason: 'pagehide', visit: 'tab-a' };
+
+  assert.deepEqual(lifecycle.pickNewerAppLifecycleSnapshot(older, newer, { now }), {
+    snapshot: newer,
+    source: 'backup'
+  });
+  assert.deepEqual(lifecycle.pickNewerAppLifecycleSnapshot(newer, older, { now }), {
+    snapshot: newer,
+    source: 'stored'
+  });
+  // Ties prefer the already-stored host snapshot
+  assert.deepEqual(lifecycle.pickNewerAppLifecycleSnapshot(newer, { ...newer }, { now }), {
+    snapshot: newer,
+    source: 'stored'
+  });
+  assert.deepEqual(lifecycle.pickNewerAppLifecycleSnapshot(null, newer, { now }), {
+    snapshot: newer,
+    source: 'backup'
+  });
+  // Future/invalid backup cannot beat a valid stored snapshot
+  const future = { state: { level: 99 }, savedAt: now + 60_000, reason: 'pagehide', visit: 'tab-a' };
+  assert.deepEqual(lifecycle.pickNewerAppLifecycleSnapshot(older, future, { now }), {
+    snapshot: older,
+    source: 'stored'
+  });
+});
+
+test('loadAppLifecycleSnapshot merges newer init backup into IndexedDB, keeps newer host snapshot, and rejects closed runs', async () => {
+  const key = '5:91:published:app';
+  const sessionStore = new Map<string, string>();
+  const localStore = new Map<string, string>();
+  (globalThis as any).sessionStorage = {
+    getItem: (k: string) => sessionStore.get(k) ?? null,
+    setItem: (k: string, v: string) => sessionStore.set(k, v)
+  };
+  (globalThis as any).localStorage = {
+    getItem: (k: string) => localStore.get(k) ?? null,
+    setItem: (k: string, v: string) => localStore.set(k, v),
+    removeItem: (k: string) => localStore.delete(k)
+  };
+  const visit = lifecycle.getAppVisitId();
+  const now = Date.now();
+  const idb = createFakeIndexedDb({
+    [key]: { state: { level: 2 }, savedAt: now - 10_000, reason: 'autosave', visit }
+  });
+  idb.install();
+  try {
+    // 1. Newer frame backup wins and is persisted to IndexedDB.
+    const newerBackup = {
+      key,
+      visit,
+      runId: 'run-newer',
+      state: { level: 5 },
+      savedAt: now - 1_000,
+      reason: 'pagehide'
+    };
+    const resumedNewer = await lifecycle.loadAppLifecycleSnapshot(key, undefined, {
+      backup: newerBackup
+    });
+    assert.equal(resumedNewer?.kind, 'return');
+    assert.deepEqual(resumedNewer?.state, { level: 5 });
+    assert.equal(idb.snapshotWrites().length, 1);
+    assert.deepEqual((idb.snapshotWrites()[0].value as any).state, { level: 5 });
+
+    // 2. Older backup loses to the newer IndexedDB snapshot (no write).
+    const olderBackup = {
+      key,
+      visit,
+      runId: 'run-older',
+      state: { level: 3 },
+      savedAt: now - 20_000,
+      reason: 'pagehide'
+    };
+    const resumedStored = await lifecycle.loadAppLifecycleSnapshot(key, undefined, {
+      backup: olderBackup
+    });
+    assert.equal(resumedStored?.kind, 'return');
+    assert.deepEqual(resumedStored?.state, { level: 5 });
+    assert.equal(idb.snapshotWrites().length, 1);
+
+    // 3. New tab with backup carrying work keys resumes as new_visit with only work keys.
+    const otherTabKey = '5:92:published:app';
+    const workBackup = {
+      key: otherTabKey,
+      visit: 'other-tab',
+      runId: 'run-work',
+      state: { scrollY: 400, run: { score: 88 } },
+      savedAt: now - 2_000,
+      reason: 'pagehide',
+      work: ['run']
+    };
+    const resumedWork = await lifecycle.loadAppLifecycleSnapshot(otherTabKey, undefined, {
+      backup: workBackup
+    });
+    assert.equal(resumedWork?.kind, 'new_visit');
+    assert.deepEqual(resumedWork?.state, { run: { score: 88 } });
+
+    // 4. Explicit Close app triggers clearBackup and rejects a late pagehide backup from that run.
+    let clearedCount = 0;
+    const closedKey = '5:93:published:app';
+    const off = lifecycle.registerAppLifecycleFrame(
+      93,
+      () => {},
+      () => {
+        clearedCount += 1;
+      }
+    );
+    const closedRunId = lifecycle.beginAppLifecycleRun(93);
+    lifecycle.markAppClosed(93);
+    assert.equal(clearedCount, 1);
+    assert.equal(lifecycle.isAppLifecycleRunClosed(closedRunId), true);
+    const rejected = await lifecycle.loadAppLifecycleSnapshot(closedKey, undefined, {
+      backup: {
+        key: closedKey,
+        visit,
+        runId: closedRunId,
+        state: { level: 10 },
+        savedAt: now - 500,
+        reason: 'pagehide'
+      }
+    });
+    assert.equal(rejected, null);
+    off();
+    lifecycle.forgetRunningApp(93);
+    lifecycle.noteAppStarted(93);
+  } finally {
+    idb.teardown();
+    delete (globalThis as any).sessionStorage;
+    delete (globalThis as any).localStorage;
+  }
+});
+
+test('loadAppLifecycleSnapshot does not resurrect a backup if Close app runs while IndexedDB read is pending', async () => {
+  const sessionStore = new Map<string, string>();
+  const localStore = new Map<string, string>();
+  (globalThis as any).sessionStorage = {
+    getItem: (k: string) => sessionStore.get(k) ?? null,
+    setItem: (k: string, v: string) => sessionStore.set(k, v)
+  };
+  (globalThis as any).localStorage = {
+    getItem: (k: string) => localStore.get(k) ?? null,
+    setItem: (k: string, v: string) => localStore.set(k, v),
+    removeItem: (k: string) => localStore.delete(k)
+  };
+  const visit = lifecycle.getAppVisitId();
+  const now = Date.now();
+  const idb = createFakeIndexedDb({}, { deferReads: true });
+  idb.install();
+  try {
+    // 1. App is closed mid-init while IndexedDB read is still awaiting.
+    const key94 = '5:94:published:app';
+    const runId94 = lifecycle.beginAppLifecycleRun(94);
+    const load94 = lifecycle.loadAppLifecycleSnapshot(key94, undefined, {
+      backup: {
+        key: key94,
+        visit,
+        runId: 'run-prev-94',
+        state: { level: 7 },
+        savedAt: now - 500,
+        reason: 'pagehide'
+      },
+      buildId: 94,
+      runId: runId94
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    lifecycle.markAppClosed(94, { userId: 5 });
+    lifecycle.forgetRunningApp(94);
+    idb.flushReads();
+    assert.equal(await load94, null);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(idb.snapshotWrites().length, 0);
+
+    // 2. App is closed mid-init and immediately reopened before the old load resolves:
+    // closed runId still prevents the stale init from writing the backup back to IndexedDB.
+    const key95 = '5:95:published:app';
+    const oldRunId95 = lifecycle.beginAppLifecycleRun(95);
+    const load95 = lifecycle.loadAppLifecycleSnapshot(key95, undefined, {
+      backup: {
+        key: key95,
+        visit,
+        runId: 'run-prev-95',
+        state: { level: 8 },
+        savedAt: now - 500,
+        reason: 'pagehide'
+      },
+      buildId: 95,
+      runId: oldRunId95
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    lifecycle.markAppClosed(95, { userId: 5 });
+    lifecycle.forgetRunningApp(95);
+    lifecycle.beginAppLifecycleRun(95);
+    idb.flushReads();
+    assert.equal(await load95, null);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(idb.snapshotWrites().length, 0);
+  } finally {
+    lifecycle.forgetRunningApp(94);
+    lifecycle.forgetRunningApp(95);
+    lifecycle.noteAppStarted(94);
+    lifecycle.noteAppStarted(95);
+    idb.teardown();
+    delete (globalThis as any).sessionStorage;
+    delete (globalThis as any).localStorage;
+  }
+});
+
+test('pre-init Close app records per-viewer closedAt and rejects older backups without a runId', async () => {
+  const sessionStore = new Map<string, string>();
+  const localStore = new Map<string, string>();
+  (globalThis as any).sessionStorage = {
+    getItem: (k: string) => sessionStore.get(k) ?? null,
+    setItem: (k: string, v: string) => sessionStore.set(k, v)
+  };
+  (globalThis as any).localStorage = {
+    getItem: (k: string) => localStore.get(k) ?? null,
+    setItem: (k: string, v: string) => localStore.set(k, v),
+    removeItem: (k: string) => localStore.delete(k)
+  };
+  const visit = lifecycle.getAppVisitId();
+  const now = Date.now();
+  const viewerAKey = '5:96:published:app';
+  const viewerBKey = '9:96:published:app';
+  const idb = createFakeIndexedDb();
+  idb.install();
+  try {
+    // Viewer A closes app 96 before init ever ran (no runId registered).
+    lifecycle.markAppClosed(96, { userId: 5, now: now - 1_000 });
+    lifecycle.forgetRunningApp(96);
+
+    // Reopening starts a new run, but the pre-close backup from Tab 1 is still rejected.
+    const nextRunId = lifecycle.beginAppLifecycleRun(96);
+    const rejected = await lifecycle.loadAppLifecycleSnapshot(viewerAKey, undefined, {
+      backup: {
+        key: viewerAKey,
+        visit,
+        runId: 'tab-1-run',
+        state: { level: 4 },
+        savedAt: now - 2_000,
+        reason: 'pagehide'
+      },
+      buildId: 96,
+      runId: nextRunId
+    });
+    assert.equal(rejected, null);
+    assert.equal(idb.snapshotWrites().length, 0);
+
+    // Another viewer's backup for the same build is unaffected by Viewer A's close.
+    const viewerBResume = await lifecycle.loadAppLifecycleSnapshot(viewerBKey, undefined, {
+      backup: {
+        key: viewerBKey,
+        visit,
+        runId: 'viewer-b-run',
+        state: { level: 9 },
+        savedAt: now - 2_000,
+        reason: 'pagehide'
+      },
+      buildId: 96
+    });
+    assert.equal(viewerBResume?.kind, 'return');
+    assert.deepEqual(viewerBResume?.state, { level: 9 });
+
+    // A fresh backup saved by Viewer A after the close timestamp is accepted.
+    const viewerAFresh = await lifecycle.loadAppLifecycleSnapshot(viewerAKey, undefined, {
+      backup: {
+        key: viewerAKey,
+        visit,
+        runId: 'tab-3-run',
+        state: { level: 6 },
+        savedAt: now - 500,
+        reason: 'pagehide'
+      },
+      buildId: 96,
+      runId: nextRunId
+    });
+    assert.equal(viewerAFresh?.kind, 'return');
+    assert.deepEqual(viewerAFresh?.state, { level: 6 });
+
+    // clearAppLifecycleFrameBackup clears the frame backup without marking the app closed.
+    let frameCleared = 0;
+    const off97 = lifecycle.registerAppLifecycleFrame(
+      97,
+      () => {},
+      () => {
+        frameCleared += 1;
+      }
+    );
+    lifecycle.clearAppLifecycleFrameBackup(97);
+    assert.equal(frameCleared, 1);
+    assert.equal(lifecycle.isAppClosed(97), false);
+    assert.equal(lifecycle.getAppLifecycleClosedAt('5:97:published:app'), 0);
+    off97();
+    lifecycle.forgetRunningApp(97);
+  } finally {
+    lifecycle.forgetRunningApp(96);
+    lifecycle.noteAppStarted(96);
+    idb.teardown();
+    delete (globalThis as any).sessionStorage;
+    delete (globalThis as any).localStorage;
+  }
+});
+
+test('host bridge and lite host isolate lifecycle keys across identity reload, mount updates, and explicit close', () => {
+  const testDir = path.dirname(fileURLToPath(import.meta.url));
+  const useHostBridgeSource = fs.readFileSync(
+    path.resolve(
+      testDir,
+      '../src/containers/Build/PreviewPanel/hooks/useHostBridge.ts'
+    ),
+    'utf8'
+  );
+  const liteMainSource = fs.readFileSync(
+    path.resolve(testDir, '../src/liteHost/react/main.tsx'),
+    'utf8'
+  );
+  const keepAliveSource = fs.readFileSync(
+    path.resolve(testDir, '../src/containers/Build/Runtime/KeepAliveHost.tsx'),
+    'utf8'
+  );
+
+  // Finding 1: LiteHost clears the departing frame backup and suppresses lifecycleKey
+  // updates/snapshots while reloading the iframe for an identity change.
+  assert.match(
+    liteMainSource,
+    /reloadFrameForIdentity[\s\S]*?reloadingForIdentity = true;[\s\S]*?clearAppLifecycleFrameBackup\(config\.buildId\);/m
+  );
+  assert.match(
+    liteMainSource,
+    /session\.subscribe\(\(next\) => \{[\s\S]*?reloadFrameForIdentity\(next\);[\s\S]*?setViewer\(/m
+  );
+  assert.match(
+    useHostBridgeSource,
+    /const reloadingForIdentity = Boolean\(\s*authHostRef\?\.current\?\.isReloadingForIdentity\?\.\(\)\s*\);[\s\S]*?!reloadingForIdentity &&[\s\S]*?type: 'viewer:update'/m
+  );
+  assert.match(
+    useHostBridgeSource,
+    /case 'lifecycle:snapshot':[\s\S]*?authHostRef\?\.current\?\.isReloadingForIdentity\?\.\(\)/m
+  );
+
+  // Finding 2: mount:update forwards the recomputed lifecycleKey for in-place mount changes.
+  assert.match(
+    useHostBridgeSource,
+    /mount: mountContext[\s\S]*?type: 'mount:update',[\s\S]*?mount: mountContext,[\s\S]*?\.\.\.\(lifecycleKey \? \{ lifecycleKey \} : \{\}\)/m
+  );
+
+  // Finding 3: KeepAliveHost passes currentUserId to markAppClosed and init passes runId/buildId.
+  assert.match(
+    keepAliveSource,
+    /markAppClosed\(killBuildId, \{ userId: currentUserId \}\);/
+  );
+  assert.match(
+    useHostBridgeSource,
+    /loadAppLifecycleSnapshot\([\s\S]*?backup: payload\?\.lifecycleBackup,[\s\S]*?buildId: activeBuild\.id,[\s\S]*?runId[\s\S]*?isAppLifecycleRunClosed\(runId\)/m
+  );
+
+  // Round-2 Finding 1: KeepAliveHost reconciles background auth teardown in useLayoutEffect
+  // (before child viewer:update passive effects run) and clears frame backups on auth changes.
+  assert.match(
+    keepAliveSource,
+    /useLayoutEffect\(\(\) => \{\s*if \(!isRuntimeRoute \|\| !activeBuildId\) return;[\s\S]*?existingForAuth\.userId !== currentUserId[\s\S]*?clearAppLifecycleFrameBackup\(existingForAuth\.buildId\);/m
+  );
+  assert.match(
+    keepAliveSource,
+    /useLayoutEffect\(\(\) => \{\s*for \(const s of sessionsRef\.current\) \{[\s\S]*?s\.userId && \(!currentUserId \|\| s\.userId !== currentUserId\)[\s\S]*?clearAppLifecycleFrameBackup\(s\.buildId\);[\s\S]*?setSessions\(\(current\) => \{[\s\S]*?\[activeBuildId, currentUserId, isRuntimeRoute\]\);/m
+  );
+
+  // Round-2 Finding 2: init recomputes lifecycleKey from live refs after awaiting IndexedDB
+  // and discards stale resume state if viewer, source, or mount changed mid-init.
+  assert.match(
+    useHostBridgeSource,
+    /isAppLifecycleRunClosed\(runId\)[\s\S]*?!appLifecycleSourceRef\.current \|\|\s*captureScratchRef\.current[\s\S]*?const currentLifecycleKey = appLifecycleKey\(\{\s*userId: userIdForLifecycleRef\.current,\s*buildId: activeBuild\.id,\s*source: appLifecycleSourceRef\.current,\s*mount: mountContextRef\.current\s*\}\);[\s\S]*?if \(currentLifecycleKey !== lifecycleKey\) \{\s*lifecycleResume = null;\s*lifecycleContext = \{\s*\.\.\.lifecycleContext,\s*key: currentLifecycleKey\s*\};/m
+  );
 });

@@ -820,6 +820,7 @@ export default function DailyQuestionPanel({
 
     async function loadDailyQuestion() {
       try {
+        const loadStartedAt = Date.now();
         const data = await getDailyQuestionRef.current();
 
         if (!isMountedRef.current || currentRequestRef.cancelled) return;
@@ -857,7 +858,17 @@ export default function DailyQuestionPanel({
         setIsAdviceDay(!!data.isKeywordDay && !!data.isAdviceDay);
         setDayAdvicePrompt(data.advicePrompt || '');
         setIsPictureDay(!!data.isPictureDay);
-        setDayPicture(data.isPictureDay ? normalizePictureDay(data.picture) : null);
+        const normalizedPicture = data.isPictureDay
+          ? normalizePictureDay(data.picture)
+          : null;
+        if (normalizedPicture && data.questionId) {
+          dailyPictureJobs.reconcileServerState({
+            questionId: Number(data.questionId),
+            picture: normalizedPicture,
+            fetchedAt: loadStartedAt
+          });
+        }
+        setDayPicture(normalizedPicture);
         setPictureSubmitError(null);
 
         const pendingSubmission = loadPendingDailyQuestionSubmission(
@@ -1721,6 +1732,17 @@ export default function DailyQuestionPanel({
           initialReusableCurrentFocusSelection={reusableCurrentFocusSelection}
           isAdultUser={isAdultUser}
           mode={mode}
+          onPictureChange={({ picturePath: nextPath, pictureStyle: nextStyle }) =>
+            setDayPicture((current) =>
+              current
+                ? {
+                    ...current,
+                    chosenPath: nextPath,
+                    ...(nextStyle ? { style: nextStyle } : {})
+                  }
+                : current
+            )
+          }
           onClose={onClose}
         />
       </ErrorBoundary>

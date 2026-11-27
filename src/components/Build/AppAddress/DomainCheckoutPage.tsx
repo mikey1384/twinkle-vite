@@ -5,7 +5,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { useUserAssistant } from '~/helpers/assistantVoice';
 import { CheckoutSurface } from './checkout/ui';
 import { guessCountry, stateOrCity } from './checkout/countries';
-import type { PhoneDraft } from './checkout/phone';
+import { draftFromPhone, type PhoneDraft } from './checkout/phone';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import { refreshDomainProgress, useDomainProgress } from './useDomainProgress';
 import {
@@ -21,6 +21,7 @@ import {
   orderStatusTitle,
   createEmailCodeGuard,
   emptyOwnerDetails,
+  normalizeOwnerDetails,
   ownerDetailsProblem,
   shouldRefreshOrderProgress,
   splitRealName,
@@ -74,6 +75,8 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
   const startDomainOrder = useAppContext((v) => v.requestHelpers.startDomainOrder);
   const loadDomainPurchase = useAppContext((v) => v.requestHelpers.loadDomainPurchase);
   const startSelfDomainOrder = useAppContext((v) => v.requestHelpers.startSelfDomainOrder);
+  const loadSavedRegistrant = useAppContext((v) => v.requestHelpers.loadSavedRegistrant);
+  const forgetSavedRegistrant = useAppContext((v) => v.requestHelpers.forgetSavedRegistrant);
   const loadDomainOrder = useAppContext((v) => v.requestHelpers.loadDomainOrder);
   const loadDomainStatus = useAppContext((v) => v.requestHelpers.loadDomainStatus);
   const addAppDomain = useAppContext((v) => v.requestHelpers.addAppDomain);
@@ -116,6 +119,17 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
   // the phone as typed; owner.phone is the E.164 number made from it
   const [ownerPhone, setOwnerPhone] = useState<PhoneDraft>(() => ({ country: owner.country, national: '' }));
   const [ownerAgreed, setOwnerAgreed] = useState(false);
+  // the member's saved details (their own, from their last purchase)
+  const [savedDetails, setSavedDetails] = useState<'saved' | 'none' | 'forgotten'>('none');
+  const savedAskedRef = useRef(false);
+  const ownerRef = useRef(owner);
+  ownerRef.current = owner;
+  const ownerPhoneRef = useRef(ownerPhone);
+  ownerPhoneRef.current = ownerPhone;
+  const savedDetailsRef = useRef(savedDetails);
+  savedDetailsRef.current = savedDetails;
+  const ownerEditedRef = useRef(false);
+  const [forgettingSaved, setForgettingSaved] = useState(false);
   const [paying, setPaying] = useState(false);
   const [ownerProblem, setOwnerProblem] = useState('');
   const [order, setOrder] = useState<DomainOrderView | null>(null);
@@ -131,10 +145,11 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
 
   // An adult buying for their own app: their name and verified email from
   // their Twinkle profile start filled in (they can change them). Only
-  // empty fields are filled, once the profile is known. Never on the
-  // parent's page (a different person).
+  // empty fields are filled, once the profile is known. Saved details take
+  // precedence when present. Never on the parent's page (a different person).
   useEffect(() => {
     if (!realName && !verifiedEmail) return;
+    if (ownerEditedRef.current || savedDetailsRef.current === 'saved') return;
     setOwner((prev) => {
       const names = splitRealName(String(realName || ''));
       const next = {
@@ -143,7 +158,11 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
         lastName: prev.firstName || prev.lastName ? prev.lastName : names.lastName,
         email: prev.email || String(verifiedEmail || '').trim()
       };
-      return next.firstName === prev.firstName && next.lastName === prev.lastName && next.email === prev.email ? prev : next;
+      if (next.firstName === prev.firstName && next.lastName === prev.lastName && next.email === prev.email) {
+        return prev;
+      }
+      ownerRef.current = next;
+      return next;
     });
   }, [realName, verifiedEmail]);
 
@@ -412,7 +431,85 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
       .catch(() => setPurchase({ open: false }));
   }
 
+  // An adult buyer's saved details prefill every step once, taking precedence
+  // over profile prefill when present (never over what they already typed in
+  // this checkout, or after choosing Don't save).
+  useEffect(() => {
+    if (purchase?.buyer !== 'self' || savedAskedRef.current) return;
+    let cancelled = false;
+    savedAskedRef.current = true;
+    loadSavedRegistrant()
+      .then((data: any) => {
+        if (cancelled) return;
+        const saved = data?.saved?.registrant;
+        if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return;
+        if (
+          ownerEditedRef.current ||
+          ownerPhoneRef.current.national.trim().length > 0 ||
+          savedDetailsRef.current !== 'none' ||
+          inFlightRef.current.forget
+        ) {
+          return;
+        }
+        const filled = normalizeOwnerDetails(saved, ownerRef.current.country);
+        const phoneDraft = draftFromPhone(filled.phone, filled.country);
+        ownerRef.current = filled;
+        ownerPhoneRef.current = phoneDraft;
+        savedDetailsRef.current = 'saved';
+        setOwner(filled);
+        setOwnerPhone(phoneDraft);
+        setSavedDetails('saved');
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      if (savedDetailsRef.current === 'none') savedAskedRef.current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchase?.buyer]);
+
+  function updateOwnerDetails(next: React.SetStateAction<OwnerDetails>) {
+    ownerEditedRef.current = true;
+    setOwner((prev) => {
+      const resolved = typeof next === 'function' ? next(prev) : next;
+      ownerRef.current = resolved;
+      return resolved;
+    });
+  }
+
+  function updateOwnerPhone(next: PhoneDraft) {
+    ownerEditedRef.current = true;
+    ownerPhoneRef.current = next;
+    setOwnerPhone(next);
+  }
+
+  async function forgetOrSkipSaved() {
+    if (inFlightRef.current.pay || inFlightRef.current.forget) return;
+    setOwnerProblem('');
+    if (savedDetailsRef.current === 'saved') {
+      const request = claimRequest('forget');
+      if (!request) return;
+      setForgettingSaved(true);
+      try {
+        await forgetSavedRegistrant();
+        savedDetailsRef.current = 'forgotten';
+        setSavedDetails('forgotten');
+        if (request.current()) setOwnerProblem('');
+      } catch {
+        if (request.current()) setOwnerProblem(t.forgetFailed);
+        return;
+      } finally {
+        request.release();
+        setForgettingSaved(false);
+      }
+      return;
+    }
+    savedDetailsRef.current = 'forgotten';
+    setSavedDetails('forgotten');
+  }
+
   async function payAsOwner(idea: DomainIdeaView) {
+    if (inFlightRef.current.forget) return;
     const problem = ownerDetailsProblem(t, owner);
     if (problem) {
       setOwnerProblem(problem);
@@ -432,6 +529,7 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
         registrant,
         agreed: ownerAgreed,
         priceCents: idea.priceCents,
+        saveDetails: savedDetailsRef.current !== 'forgotten',
         emailToken: emailToken && emailToken.email === typedEmail ? emailToken.token : undefined
       });
       // Leaving the check screen (Back, leaving the page) cancels the
@@ -525,26 +623,34 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
     }
   };
 
-  // The verified Twinkle email, once, when the owner's steps open: it
-  // prefills an empty email box (never over what was typed). Transient
-  // failures leave accountEmail undefined so reopening retries.
+  // The verified Twinkle email, once, when adult buying or the owner's steps
+  // open: it prefills an empty email box (never over saved details or what
+  // was typed) and lets the saved-details fast path know the email is already
+  // confirmed. Transient failures leave accountEmail undefined so reopening retries.
   const needsAccountEmail = accountEmail === undefined;
   useEffect(() => {
-    if (step?.kind !== 'owner' || !needsAccountEmail) return;
+    if ((step?.kind !== 'owner' && purchase?.buyer !== 'self') || !needsAccountEmail) return;
     let cancelled = false;
     loadPurchaseAccountEmail()
       .then((data: any) => {
         if (cancelled) return;
         const email = typeof data?.email === 'string' ? data.email.trim().toLowerCase() : null;
         setAccountEmail(email);
-        if (email) setOwner((prev) => (prev.email.trim() ? prev : { ...prev, email }));
+        if (email) {
+          setOwner((prev) => {
+            if (prev.email.trim()) return prev;
+            const next = { ...prev, email };
+            ownerRef.current = next;
+            return next;
+          });
+        }
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step?.kind, userId, needsAccountEmail]);
+  }, [step?.kind, purchase?.buyer, userId, needsAccountEmail]);
 
   async function loadIdeas({ more = false, hint = '' } = {}) {
     setLoading(true);
@@ -783,14 +889,19 @@ export default function DomainCheckoutPage({ buildId }: { buildId: number }) {
           agreed={ownerAgreed}
           renews={Boolean(purchase?.renews)}
           busy={paying}
+          forgetting={forgettingSaved}
           problem={ownerProblem}
-          onDetails={setOwner}
+          onDetails={updateOwnerDetails}
           phoneDraft={ownerPhone}
-          onPhoneDraft={setOwnerPhone}
+          onPhoneDraft={updateOwnerPhone}
           onAgree={setOwnerAgreed}
           onPay={() => void payAsOwner(step.idea)}
           emailCheck={emailCheck}
           onBack={() => setStep({ kind: 'find' })}
+          // saved details: straight to the check screen, Edit links (once email is confirmed)
+          startPage={savedDetails === 'saved' && !ownerDetailsProblem(t, owner) && emailCheck.verified ? 3 : 0}
+          saved={savedDetails}
+          onSavedChoice={() => void forgetOrSkipSaved()}
         />
       )}
       {step?.kind === 'order' &&
