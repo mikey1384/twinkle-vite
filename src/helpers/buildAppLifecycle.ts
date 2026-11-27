@@ -45,6 +45,8 @@ export const APP_RETURN_WINDOW_MS = 30 * 60 * 1000;
 // The tab's session: sessionStorage survives reloads and the phone killing
 // and reloading the tab, but not a new tab or a new browser session.
 const VISIT_KEY = 'twinkle:app-visit';
+const CLOSED_RUNS_KEY = 'twinkle:app-closed-runs';
+const MAX_CLOSED_RUNS = 32;
 const MAX_WORK_KEYS = 100;
 
 export interface AppLifecycleSnapshot {
@@ -55,6 +57,16 @@ export interface AppLifecycleSnapshot {
   visit?: string;
   /** Top-level keys of state that are unfinished work, or true for all of it. */
   work?: string[] | true;
+}
+
+export interface AppLifecycleBackupInput {
+  key?: unknown;
+  visit?: unknown;
+  runId?: unknown;
+  state?: unknown;
+  savedAt?: unknown;
+  reason?: unknown;
+  work?: unknown;
 }
 
 /** What the app's getResumeState() gets. */
@@ -175,6 +187,75 @@ export function normalizeAppLifecycleState(state: unknown) {
   } catch {
     return null;
   }
+}
+
+function isUsableSnapshot(
+  snapshot: AppLifecycleSnapshot | null | undefined,
+  now: number
+): snapshot is AppLifecycleSnapshot {
+  if (!snapshot || typeof snapshot !== 'object' || !snapshot.state) return false;
+  if (typeof snapshot.state !== 'object' || Array.isArray(snapshot.state)) return false;
+  const savedAt = Number(snapshot.savedAt);
+  const ageMs = now - savedAt;
+  return Number.isFinite(savedAt) && ageMs >= 0 && ageMs < MAX_AGE_MS;
+}
+
+/**
+ * Validate a backup snapshot that the frame wrote synchronously to its own
+ * localStorage on pagehide and sent with init. Rejects wrong-scope backups,
+ * explicitly closed runs, invalid/oversized states, and expired or future clocks.
+ */
+export function normalizeAppLifecycleBackup(
+  raw: unknown,
+  { expectedKey, now }: { expectedKey: string; now: number }
+): AppLifecycleSnapshot | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const input = raw as AppLifecycleBackupInput;
+  if (typeof input.key !== 'string' || input.key !== expectedKey) return null;
+  if (typeof input.visit !== 'string' || !input.visit || input.visit.length > 128) {
+    return null;
+  }
+  const runId = typeof input.runId === 'string' ? input.runId.trim() : '';
+  if (runId && isAppLifecycleRunClosed(runId)) return null;
+  const savedAt = Number(input.savedAt);
+  const ageMs = now - savedAt;
+  if (!(Number.isFinite(savedAt) && ageMs >= 0 && ageMs < MAX_AGE_MS)) return null;
+  const state = normalizeAppLifecycleState(input.state);
+  if (!state) return null;
+  const work = normalizeAppLifecycleWork(input.work);
+  return {
+    state,
+    savedAt,
+    reason: String(input.reason || 'pagehide').slice(0, 40),
+    visit: input.visit,
+    ...(work ? { work } : {})
+  };
+}
+
+/**
+ * Choose whichever usable snapshot (host IndexedDB vs frame pagehide backup)
+ * is newer. Ties prefer the host-stored snapshot.
+ */
+export function pickNewerAppLifecycleSnapshot(
+  stored: AppLifecycleSnapshot | null | undefined,
+  backup: AppLifecycleSnapshot | null | undefined,
+  { now }: { now: number }
+): { snapshot: AppLifecycleSnapshot | null; source: 'stored' | 'backup' | 'none' } {
+  const validStored = isUsableSnapshot(stored, now) ? stored : null;
+  const validBackup = isUsableSnapshot(backup, now) ? backup : null;
+  if (!validStored && !validBackup) {
+    return { snapshot: null, source: 'none' };
+  }
+  if (!validStored) {
+    return { snapshot: validBackup, source: 'backup' };
+  }
+  if (!validBackup) {
+    return { snapshot: validStored, source: 'stored' };
+  }
+  if (Number(validBackup.savedAt) > Number(validStored.savedAt)) {
+    return { snapshot: validBackup, source: 'backup' };
+  }
+  return { snapshot: validStored, source: 'stored' };
 }
 
 let dbPromise: Promise<IDBDatabase | null> | null = null;
@@ -322,10 +403,11 @@ export function describeAppLifecycleStart(
 
 export async function loadAppLifecycleSnapshot(
   key: string,
-  onStart?: (info: AppLifecycleStartInfo) => void
+  onStart?: (info: AppLifecycleStartInfo) => void,
+  options?: { backup?: unknown }
 ): Promise<AppLifecycleResume | null> {
   let timedOut = false;
-  const value = await Promise.race([
+  const stored = await Promise.race([
     run<AppLifecycleSnapshot>('readonly', ({ snapshots }) => snapshots.get(key)),
     new Promise<null>((resolve) =>
       window.setTimeout(() => {
@@ -342,16 +424,31 @@ export async function loadAppLifecycleSnapshot(
   }
   const now = Date.now();
   const visit = getAppVisitId();
-  const resume = value ? resolveAppLifecycleResume(value, { now, visit }) : null;
+  const backup = normalizeAppLifecycleBackup(options?.backup, {
+    expectedKey: key,
+    now
+  });
+  const picked = pickNewerAppLifecycleSnapshot(stored, backup, { now });
+  const chosen = picked.snapshot;
+  const resume = chosen ? resolveAppLifecycleResume(chosen, { now, visit }) : null;
   try {
-    onStart?.(describeAppLifecycleStart(value, resume, { now, visit }));
+    onStart?.(describeAppLifecycleStart(chosen, resume, { now, visit }));
   } catch {
     // tracing never blocks a start
   }
-  if (!value) return null;
+  if (!chosen) {
+    if (stored) void forgetAppLifecycleSnapshot(key);
+    return null;
+  }
   // Nothing in it is for this start (too old, or a new visit with no
   // unfinished work): it would never be for a later one either.
-  if (!resume) void forgetAppLifecycleSnapshot(key);
+  if (!resume) {
+    if (stored) void forgetAppLifecycleSnapshot(key);
+    return null;
+  }
+  if (picked.source === 'backup') {
+    void saveAppLifecycleSnapshot(key, chosen);
+  }
   return resume;
 }
 
@@ -403,6 +500,8 @@ interface RunningApp {
   pendingSave: { key: string; snapshot: AppLifecycleSnapshot } | null;
   pendingTimer: number | null;
   requestSuspend: ((reason: string) => void) | null;
+  clearBackup: (() => void) | null;
+  runId: string | null;
   waiters: Array<(saved: boolean) => void>;
   urgentLeaveBudget: boolean;
 }
@@ -412,14 +511,73 @@ const listeners = new Set<() => void>();
 // Apps the viewer closed: a last snapshot still on its way must not bring the
 // old place back. Cleared when the app starts again.
 const closedApps = new Set<number>();
+// Run ids of explicitly closed apps: even if the unmounting frame wrote a
+// pagehide backup before hearing lifecycle:clear, the next init ignores it.
+const closedRunIds = new Set<string>();
 // The page is unloading (noteAppPageLeaving): snapshots are written at once.
 let pageLeaving = false;
 let pageLeavingTimer: number | null = null;
 
+function readStoredClosedRunIds(): string[] {
+  try {
+    if (typeof localStorage === 'undefined') return [];
+    const raw = localStorage.getItem(CLOSED_RUNS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === 'string' && id.length > 0)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberClosedRunId(runId: string) {
+  if (!runId) return;
+  closedRunIds.add(runId);
+  while (closedRunIds.size > MAX_CLOSED_RUNS) {
+    const oldest = closedRunIds.values().next().value;
+    if (typeof oldest !== 'string') break;
+    closedRunIds.delete(oldest);
+  }
+  try {
+    if (typeof localStorage === 'undefined') return;
+    const next = Array.from(new Set([...readStoredClosedRunIds(), runId])).slice(
+      -MAX_CLOSED_RUNS
+    );
+    localStorage.setItem(CLOSED_RUNS_KEY, JSON.stringify(next));
+  } catch {
+    // best effort when storage is unavailable
+  }
+}
+
+export function isAppLifecycleRunClosed(runId: string) {
+  if (!runId) return false;
+  if (closedRunIds.has(runId)) return true;
+  const stored = readStoredClosedRunIds();
+  if (stored.includes(runId)) {
+    closedRunIds.add(runId);
+    return true;
+  }
+  return false;
+}
+
+/** Start a fresh lifecycle run for this app and return its run id. */
+export function beginAppLifecycleRun(buildId: number) {
+  noteAppStarted(buildId);
+  const runId = newVisitId();
+  entry(buildId).runId = runId;
+  return runId;
+}
+
 export function markAppClosed(buildId: number) {
   closedApps.add(buildId);
   const app = running.get(buildId);
-  if (app) app.pendingSave = null;
+  if (app) {
+    app.pendingSave = null;
+    if (app.runId) rememberClosedRunId(app.runId);
+    app.clearBackup?.();
+  }
 }
 
 export function noteAppStarted(buildId: number) {
@@ -439,6 +597,8 @@ function entry(buildId: number) {
       pendingSave: null,
       pendingTimer: null,
       requestSuspend: null,
+      clearBackup: null,
+      runId: null,
       waiters: [],
       urgentLeaveBudget: false
     };
@@ -474,15 +634,18 @@ export function subscribeAppLifecycleStatus(listener: () => void) {
   };
 }
 
-/** The app's frame registers how to ask it for a snapshot. */
+/** The app's frame registers how to ask it for a snapshot (and clear its backup on close). */
 export function registerAppLifecycleFrame(
   buildId: number,
-  requestSuspend: (reason: string) => void
+  requestSuspend: (reason: string) => void,
+  clearBackup?: () => void
 ) {
   const app = entry(buildId);
   app.requestSuspend = requestSuspend;
+  app.clearBackup = clearBackup || null;
   return () => {
     if (app.requestSuspend === requestSuspend) app.requestSuspend = null;
+    if (clearBackup && app.clearBackup === clearBackup) app.clearBackup = null;
   };
 }
 

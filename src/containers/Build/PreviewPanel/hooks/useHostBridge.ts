@@ -132,14 +132,15 @@ import { recordOwnerTrace } from '~/helpers/ownerTrace';
 import {
   acceptAppLifecycleSnapshot,
   appLifecycleKey,
+  beginAppLifecycleRun,
   getAppVisitId,
   isAppClosed,
   loadAppLifecycleSnapshot,
   normalizeAppLifecycleState,
   normalizeAppLifecycleWork,
-  noteAppStarted,
   registerAppLifecycleFrame,
-  setAppLifecycleStatus
+  setAppLifecycleStatus,
+  type AppLifecycleResume
 } from '~/helpers/buildAppLifecycle';
 
 interface ActiveAiImageStatusTarget {
@@ -421,6 +422,18 @@ export function useHostBridge({
     ) {
       resetWorldSessionsRef.current?.('viewer-changed');
     }
+    const activeLifecycleBuildId = Number(buildId) || 0;
+    const lifecycleKey =
+      !captureScratchRef.current &&
+      appLifecycleSourceRef.current &&
+      activeLifecycleBuildId
+        ? appLifecycleKey({
+            userId,
+            buildId: activeLifecycleBuildId,
+            source: appLifecycleSourceRef.current,
+            mount: mountContextRef.current
+          })
+        : null;
     postToPreviewFrames(
       primaryIframeRef,
       secondaryIframeRef,
@@ -428,7 +441,8 @@ export function useHostBridge({
       {
         source: 'twinkle-parent',
         type: 'viewer:update',
-        viewer
+        viewer,
+        ...(lifecycleKey ? { lifecycleKey } : {})
       }
     );
   }, [
@@ -476,16 +490,26 @@ export function useHostBridge({
     );
   }, [mountContext, previewFrameMetaRef, primaryIframeRef, secondaryIframeRef]);
 
-  // KeepAliveHost asks this app for a fresh snapshot before unloading it.
+  // KeepAliveHost asks this app for a fresh snapshot before unloading it,
+  // and tells it to clear its local pagehide backup on explicit close.
   useEffect(() => {
     if (!appLifecycleSource || !buildId) return;
-    return registerAppLifecycleFrame(Number(buildId), (reason) => {
-      postToPreviewFrames(primaryIframeRef, secondaryIframeRef, previewFrameMetaRef, {
-        source: 'twinkle-parent',
-        type: 'lifecycle:suspend',
-        payload: { reason }
-      });
-    });
+    return registerAppLifecycleFrame(
+      Number(buildId),
+      (reason) => {
+        postToPreviewFrames(primaryIframeRef, secondaryIframeRef, previewFrameMetaRef, {
+          source: 'twinkle-parent',
+          type: 'lifecycle:suspend',
+          payload: { reason }
+        });
+      },
+      () => {
+        postToPreviewFrames(primaryIframeRef, secondaryIframeRef, previewFrameMetaRef, {
+          source: 'twinkle-parent',
+          type: 'lifecycle:clear'
+        });
+      }
+    );
   }, [appLifecycleSource, buildId, previewFrameMetaRef, primaryIframeRef, secondaryIframeRef]);
 
   useEffect(() => {
@@ -2687,8 +2711,38 @@ export function useHostBridge({
             break;
           }
 
-          case 'init':
-            if (appLifecycleSourceRef.current) noteAppStarted(activeBuild.id);
+          case 'init': {
+            let lifecycleResume: AppLifecycleResume | null = null;
+            let lifecycleContext: {
+              key: string;
+              visit: string;
+              runId: string;
+            } | null = null;
+            if (captureScratchStore) {
+              lifecycleResume = captureScratchStore.lifecycleResume();
+            } else if (appLifecycleSourceRef.current) {
+              const lifecycleKey = appLifecycleKey({
+                userId,
+                buildId: activeBuild.id,
+                source: appLifecycleSourceRef.current,
+                mount: mountContextRef.current
+              });
+              const runId = beginAppLifecycleRun(activeBuild.id);
+              lifecycleContext = {
+                key: lifecycleKey,
+                visit: getAppVisitId(),
+                runId
+              };
+              lifecycleResume = await loadAppLifecycleSnapshot(
+                lifecycleKey,
+                (info) =>
+                  recordOwnerTrace('app-resume', {
+                    buildId: activeBuild.id,
+                    ...info
+                  }),
+                { backup: payload?.lifecycleBackup }
+              );
+            }
             response = {
               id: activeBuild.id,
               title: activeBuild.title,
@@ -2712,25 +2766,11 @@ export function useHostBridge({
               // the Build editor, reward proposal player and thumbnail
               // capture start fresh, so other code never meets this state.
               // A Lumine capture resumes from its own session's snapshot.
-              lifecycleResume: captureScratchStore
-                ? captureScratchStore.lifecycleResume()
-                : appLifecycleSourceRef.current
-                ? await loadAppLifecycleSnapshot(
-                    appLifecycleKey({
-                      userId,
-                      buildId: activeBuild.id,
-                      source: appLifecycleSourceRef.current,
-                      mount: mountContextRef.current
-                    }),
-                    (info) =>
-                      recordOwnerTrace('app-resume', {
-                        buildId: activeBuild.id,
-                        ...info
-                      })
-                  )
-                : null
+              lifecycleResume,
+              ...(lifecycleContext ? { lifecycleContext } : {})
             };
             break;
+          }
 
           case 'lifecycle:snapshot': {
             if (captureScratchStore) {

@@ -33,8 +33,11 @@ test('an unload waits for a fresh snapshot, but not for an app that cannot give 
   lifecycle.forgetRunningApp(77);
 });
 
-function createFakeIndexedDb() {
+function createFakeIndexedDb(
+  initialSnapshots: Record<string, unknown> = {}
+) {
   const writes: Array<{ store: string; key: string; value: unknown }> = [];
+  const data = new Map<string, unknown>(Object.entries(initialSnapshots));
   let txCount = 0;
   let openDb: any = null;
   const fakeDb = {
@@ -55,13 +58,17 @@ function createFakeIndexedDb() {
           return {
             put(value: unknown, key: string) {
               writes.push({ store, key, value });
+              if (store === 'snapshots') data.set(key, value);
               return { result: key };
             },
-            delete() {
+            delete(key: string) {
+              if (store === 'snapshots') data.delete(key);
               return { result: undefined };
             },
-            get() {
-              return { result: undefined };
+            get(key: string) {
+              return {
+                result: store === 'snapshots' ? data.get(key) : undefined
+              };
             },
             openCursor() {
               return { onsuccess: null, result: null };
@@ -388,4 +395,201 @@ test('the owner trace says what kind of start it was, without contents', () => {
   const legacy = { state: { scrollY: 1 }, savedAt: now - 20 * 3600_000, reason: 'hidden' } as any;
   assert.deepEqual(describe(legacy, null, { now, visit: 'tab-a' }), { kind: 'none', stored: true, ageMs: 20 * 3600_000, sameTab: null, work: null, keys: 0 });
   assert.ok(!JSON.stringify(describe(snap, back, { now, visit: 'tab-a' })).includes('secret'));
+});
+
+test('init backup validation enforces scope, size, timestamps, and closed runs', () => {
+  const now = 1_800_000_000_000;
+  const key = '5:2:published:app';
+  const valid = lifecycle.normalizeAppLifecycleBackup(
+    {
+      key,
+      visit: 'tab-a',
+      runId: 'run-ok',
+      state: { level: 5 },
+      savedAt: now - 5_000,
+      reason: 'pagehide',
+      work: ['level']
+    },
+    { expectedKey: key, now }
+  );
+  assert.deepEqual(valid, {
+    state: { level: 5 },
+    savedAt: now - 5_000,
+    reason: 'pagehide',
+    visit: 'tab-a',
+    work: ['level']
+  });
+
+  // Wrong key (different user/build/source/mount) is rejected
+  assert.equal(
+    lifecycle.normalizeAppLifecycleBackup(
+      { key: '6:2:published:app', visit: 'tab-a', state: { level: 5 }, savedAt: now - 1000 },
+      { expectedKey: key, now }
+    ),
+    null
+  );
+  // Missing visit, oversized state, expired or future timestamps are rejected
+  assert.equal(
+    lifecycle.normalizeAppLifecycleBackup(
+      { key, state: { level: 5 }, savedAt: now - 1000 },
+      { expectedKey: key, now }
+    ),
+    null
+  );
+  assert.equal(
+    lifecycle.normalizeAppLifecycleBackup(
+      { key, visit: 'tab-a', state: { big: 'x'.repeat(1_200_000) }, savedAt: now - 1000 },
+      { expectedKey: key, now }
+    ),
+    null
+  );
+  assert.equal(
+    lifecycle.normalizeAppLifecycleBackup(
+      { key, visit: 'tab-a', state: { level: 5 }, savedAt: now + 60_000 },
+      { expectedKey: key, now }
+    ),
+    null
+  );
+  assert.equal(
+    lifecycle.normalizeAppLifecycleBackup(
+      { key, visit: 'tab-a', state: { level: 5 }, savedAt: now - 8 * 24 * 3600_000 },
+      { expectedKey: key, now }
+    ),
+    null
+  );
+});
+
+test('pickNewerAppLifecycleSnapshot chooses whichever valid snapshot is newer', () => {
+  const now = 1_800_000_000_000;
+  const older = { state: { level: 2 }, savedAt: now - 10_000, reason: 'autosave', visit: 'tab-a' };
+  const newer = { state: { level: 5 }, savedAt: now - 1_000, reason: 'pagehide', visit: 'tab-a' };
+
+  assert.deepEqual(lifecycle.pickNewerAppLifecycleSnapshot(older, newer, { now }), {
+    snapshot: newer,
+    source: 'backup'
+  });
+  assert.deepEqual(lifecycle.pickNewerAppLifecycleSnapshot(newer, older, { now }), {
+    snapshot: newer,
+    source: 'stored'
+  });
+  // Ties prefer the already-stored host snapshot
+  assert.deepEqual(lifecycle.pickNewerAppLifecycleSnapshot(newer, { ...newer }, { now }), {
+    snapshot: newer,
+    source: 'stored'
+  });
+  assert.deepEqual(lifecycle.pickNewerAppLifecycleSnapshot(null, newer, { now }), {
+    snapshot: newer,
+    source: 'backup'
+  });
+  // Future/invalid backup cannot beat a valid stored snapshot
+  const future = { state: { level: 99 }, savedAt: now + 60_000, reason: 'pagehide', visit: 'tab-a' };
+  assert.deepEqual(lifecycle.pickNewerAppLifecycleSnapshot(older, future, { now }), {
+    snapshot: older,
+    source: 'stored'
+  });
+});
+
+test('loadAppLifecycleSnapshot merges newer init backup into IndexedDB, keeps newer host snapshot, and rejects closed runs', async () => {
+  const key = '5:91:published:app';
+  const sessionStore = new Map<string, string>();
+  const localStore = new Map<string, string>();
+  (globalThis as any).sessionStorage = {
+    getItem: (k: string) => sessionStore.get(k) ?? null,
+    setItem: (k: string, v: string) => sessionStore.set(k, v)
+  };
+  (globalThis as any).localStorage = {
+    getItem: (k: string) => localStore.get(k) ?? null,
+    setItem: (k: string, v: string) => localStore.set(k, v),
+    removeItem: (k: string) => localStore.delete(k)
+  };
+  const visit = lifecycle.getAppVisitId();
+  const now = Date.now();
+  const idb = createFakeIndexedDb({
+    [key]: { state: { level: 2 }, savedAt: now - 10_000, reason: 'autosave', visit }
+  });
+  idb.install();
+  try {
+    // 1. Newer frame backup wins and is persisted to IndexedDB.
+    const newerBackup = {
+      key,
+      visit,
+      runId: 'run-newer',
+      state: { level: 5 },
+      savedAt: now - 1_000,
+      reason: 'pagehide'
+    };
+    const resumedNewer = await lifecycle.loadAppLifecycleSnapshot(key, undefined, {
+      backup: newerBackup
+    });
+    assert.equal(resumedNewer?.kind, 'return');
+    assert.deepEqual(resumedNewer?.state, { level: 5 });
+    assert.equal(idb.snapshotWrites().length, 1);
+    assert.deepEqual((idb.snapshotWrites()[0].value as any).state, { level: 5 });
+
+    // 2. Older backup loses to the newer IndexedDB snapshot (no write).
+    const olderBackup = {
+      key,
+      visit,
+      runId: 'run-older',
+      state: { level: 3 },
+      savedAt: now - 20_000,
+      reason: 'pagehide'
+    };
+    const resumedStored = await lifecycle.loadAppLifecycleSnapshot(key, undefined, {
+      backup: olderBackup
+    });
+    assert.equal(resumedStored?.kind, 'return');
+    assert.deepEqual(resumedStored?.state, { level: 5 });
+    assert.equal(idb.snapshotWrites().length, 1);
+
+    // 3. New tab with backup carrying work keys resumes as new_visit with only work keys.
+    const otherTabKey = '5:92:published:app';
+    const workBackup = {
+      key: otherTabKey,
+      visit: 'other-tab',
+      runId: 'run-work',
+      state: { scrollY: 400, run: { score: 88 } },
+      savedAt: now - 2_000,
+      reason: 'pagehide',
+      work: ['run']
+    };
+    const resumedWork = await lifecycle.loadAppLifecycleSnapshot(otherTabKey, undefined, {
+      backup: workBackup
+    });
+    assert.equal(resumedWork?.kind, 'new_visit');
+    assert.deepEqual(resumedWork?.state, { run: { score: 88 } });
+
+    // 4. Explicit Close app triggers clearBackup and rejects a late pagehide backup from that run.
+    let clearedCount = 0;
+    const closedKey = '5:93:published:app';
+    const off = lifecycle.registerAppLifecycleFrame(
+      93,
+      () => {},
+      () => {
+        clearedCount += 1;
+      }
+    );
+    const closedRunId = lifecycle.beginAppLifecycleRun(93);
+    lifecycle.markAppClosed(93);
+    assert.equal(clearedCount, 1);
+    assert.equal(lifecycle.isAppLifecycleRunClosed(closedRunId), true);
+    const rejected = await lifecycle.loadAppLifecycleSnapshot(closedKey, undefined, {
+      backup: {
+        key: closedKey,
+        visit,
+        runId: closedRunId,
+        state: { level: 10 },
+        savedAt: now - 500,
+        reason: 'pagehide'
+      }
+    });
+    assert.equal(rejected, null);
+    off();
+    lifecycle.forgetRunningApp(93);
+    lifecycle.noteAppStarted(93);
+  } finally {
+    idb.teardown();
+    delete (globalThis as any).sessionStorage;
+    delete (globalThis as any).localStorage;
+  }
 });
