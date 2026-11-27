@@ -23,6 +23,7 @@ import {
   RenameView,
   orderStatusTitle,
   emptyOwnerDetails,
+  hasTypedOwnerDetails,
   ownerDetailsProblem,
   type DnsRecordView,
   type DomainIdeaView,
@@ -134,6 +135,14 @@ export default function AppAddress({
   // the member's saved details (their own, from their last purchase)
   const [savedDetails, setSavedDetails] = useState<'saved' | 'none' | 'forgotten'>('none');
   const savedAskedRef = useRef(false);
+  const ownerRef = useRef(owner);
+  ownerRef.current = owner;
+  const ownerPhoneRef = useRef(ownerPhone);
+  ownerPhoneRef.current = ownerPhone;
+  const savedDetailsRef = useRef(savedDetails);
+  savedDetailsRef.current = savedDetails;
+  const ownerEditedRef = useRef(false);
+  const [forgettingSaved, setForgettingSaved] = useState(false);
   const [paying, setPaying] = useState(false);
   const [ownerProblem, setOwnerProblem] = useState('');
   const [order, setOrder] = useState<DomainOrderView | null>(null);
@@ -344,7 +353,7 @@ export default function AppAddress({
   }
 
   // An adult buyer's saved details prefill every step once (never over what
-  // they already typed in this checkout).
+  // they already typed in this checkout, or after choosing Don't save).
   useEffect(() => {
     if (purchase?.buyer !== 'self' || savedAskedRef.current) return;
     savedAskedRef.current = true;
@@ -352,30 +361,67 @@ export default function AppAddress({
       .then((data: any) => {
         const saved = data?.saved?.registrant;
         if (!saved) return;
-        const typed = ['firstName', 'lastName', 'address1', 'city', 'zip'].some((key) => String((owner as any)[key] || '').trim());
-        if (typed) return;
-        const filled: OwnerDetails = { ...emptyOwnerDetails(saved.country || owner.country), ...saved };
+        const currentOwner = ownerRef.current;
+        if (
+          ownerEditedRef.current ||
+          hasTypedOwnerDetails(currentOwner, ownerPhoneRef.current.national) ||
+          savedDetailsRef.current !== 'none' ||
+          inFlightRef.current.forget
+        ) {
+          return;
+        }
+        const filled: OwnerDetails = { ...emptyOwnerDetails(saved.country || currentOwner.country), ...saved };
+        const phoneDraft = draftFromPhone(filled.phone, filled.country);
+        ownerRef.current = filled;
+        ownerPhoneRef.current = phoneDraft;
+        savedDetailsRef.current = 'saved';
         setOwner(filled);
-        setOwnerPhone(draftFromPhone(filled.phone, filled.country));
+        setOwnerPhone(phoneDraft);
         setSavedDetails('saved');
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [purchase?.buyer]);
 
+  function updateOwnerDetails(next: OwnerDetails) {
+    ownerEditedRef.current = true;
+    ownerRef.current = next;
+    setOwner(next);
+  }
+
+  function updateOwnerPhone(next: PhoneDraft) {
+    ownerEditedRef.current = true;
+    ownerPhoneRef.current = next;
+    setOwnerPhone(next);
+  }
+
   async function forgetOrSkipSaved() {
-    if (savedDetails === 'saved') {
+    if (inFlightRef.current.pay || inFlightRef.current.forget) return;
+    setOwnerProblem('');
+    if (savedDetailsRef.current === 'saved') {
+      const request = claimRequest('forget');
+      if (!request) return;
+      setForgettingSaved(true);
       try {
         await forgetSavedRegistrant();
+        savedDetailsRef.current = 'forgotten';
+        setSavedDetails('forgotten');
+        if (request.current()) setOwnerProblem('');
       } catch {
-        setOwnerProblem(t.forgetFailed);
+        if (request.current()) setOwnerProblem(t.forgetFailed);
         return;
+      } finally {
+        request.release();
+        setForgettingSaved(false);
       }
+      return;
     }
+    savedDetailsRef.current = 'forgotten';
     setSavedDetails('forgotten');
   }
 
   async function payAsOwner(idea: DomainIdeaView) {
+    if (inFlightRef.current.forget) return;
     const problem = ownerDetailsProblem(t, owner);
     if (problem) {
       setOwnerProblem(problem);
@@ -394,7 +440,7 @@ export default function AppAddress({
         registrant,
         agreed: ownerAgreed,
         priceCents: idea.priceCents,
-        saveDetails: savedDetails !== 'forgotten'
+        saveDetails: savedDetailsRef.current !== 'forgotten'
       });
       // Leaving the check screen (Back, closing) cancels the hand-off; the
       // same server order opens again from Continue to payment.
@@ -821,10 +867,11 @@ export default function AppAddress({
               agreed={ownerAgreed}
               renews={Boolean(purchase?.renews)}
               busy={paying}
+              forgetting={forgettingSaved}
               problem={ownerProblem}
-              onDetails={setOwner}
+              onDetails={updateOwnerDetails}
               phoneDraft={ownerPhone}
-              onPhoneDraft={setOwnerPhone}
+              onPhoneDraft={updateOwnerPhone}
               onAgree={setOwnerAgreed}
               onPay={() => void payAsOwner(step.idea)}
               onBack={() => setStep({ kind: 'find' })}

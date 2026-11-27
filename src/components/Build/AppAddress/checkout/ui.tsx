@@ -1355,8 +1355,12 @@ export const textButtonClass = css`
   font-weight: 700;
   cursor: pointer;
   text-align: left;
-  &:hover {
+  &:hover:not(:disabled) {
     color: ${T.blueDeep};
+  }
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
   }
   &:focus-visible {
     outline: 3px solid rgba(47, 123, 224, 0.35);

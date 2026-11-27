@@ -39,6 +39,24 @@ export function emptyOwnerDetails(country = 'KR'): OwnerDetails {
   return { firstName: '', lastName: '', email: '', phone: '', address1: '', city: '', state: '', zip: '', country };
 }
 
+const OWNER_TEXT_KEYS: Array<keyof OwnerDetails> = [
+  'firstName',
+  'lastName',
+  'email',
+  'phone',
+  'address1',
+  'city',
+  'state',
+  'zip'
+];
+
+export function hasTypedOwnerDetails(details: OwnerDetails, phoneNational = '') {
+  return (
+    OWNER_TEXT_KEYS.some((key) => String(details[key] || '').trim().length > 0) ||
+    String(phoneNational || '').trim().length > 0
+  );
+}
+
 export function ownerDetailsProblem(t: AddressText, details: OwnerDetails) {
   const required: Array<keyof OwnerDetails> = ['firstName', 'lastName', 'email', 'phone', 'address1', 'city', 'state', 'zip', 'country'];
   if (required.some((key) => !details[key].trim())) return t.fillAll;

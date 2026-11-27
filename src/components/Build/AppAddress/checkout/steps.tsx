@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css, keyframes } from '@emotion/css';
 import LumineAtWork from '~/containers/Build/PreviewPanel/LumineAtWork';
 import Confetti from '~/containers/Build/Editor/ChatPanel/Roadmap/Confetti';
@@ -386,6 +386,7 @@ export function OwnerDetailsView({
   onPhoneDraft,
   startPage = 0,
   saved = 'none',
+  forgetting = false,
   onSavedChoice
 }: StepBase & {
   idea: DomainIdeaView;
@@ -394,6 +395,7 @@ export function OwnerDetailsView({
   // purchase), 'none' (these will be saved after paying), 'forgotten'
   // (not kept); onSavedChoice: Forget / Don't save
   saved?: 'saved' | 'none' | 'forgotten';
+  forgetting?: boolean;
   onSavedChoice?: () => void;
   // the phone as typed (calling code + number); details.phone is its E.164
   phoneDraft: PhoneDraft;
@@ -410,7 +412,39 @@ export function OwnerDetailsView({
 }) {
   const [page, setPage] = useState<OwnerPage>(startPage);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
-  const set = (key: keyof OwnerDetails) => (value: string) => onDetails({ ...details, [key]: value });
+  const autoJumpedRef = useRef(startPage === 3);
+  const userInteractedRef = useRef(false);
+  const savedNoteRef = useRef<HTMLParagraphElement>(null);
+  const savedChoiceButtonRef = useRef<HTMLButtonElement>(null);
+  const savedChoicePendingFocusRef = useRef(false);
+  const prevForgettingRef = useRef(forgetting);
+
+  useEffect(() => {
+    if (!autoJumpedRef.current && !userInteractedRef.current && page === 0 && startPage === 3) {
+      autoJumpedRef.current = true;
+      setPage(3);
+    }
+  }, [page, startPage]);
+
+  useEffect(() => {
+    const wasForgetting = prevForgettingRef.current;
+    prevForgettingRef.current = forgetting;
+    if (!savedChoicePendingFocusRef.current) return;
+    const active = typeof document !== 'undefined' ? document.activeElement : null;
+    const focusDropped = !active || active === document.body || Boolean(savedNoteRef.current?.contains(active));
+    if (saved === 'forgotten') {
+      savedChoicePendingFocusRef.current = false;
+      if (focusDropped) savedNoteRef.current?.focus({ preventScroll: true });
+    } else if (wasForgetting && !forgetting) {
+      savedChoicePendingFocusRef.current = false;
+      if (focusDropped) savedChoiceButtonRef.current?.focus({ preventScroll: true });
+    }
+  }, [saved, forgetting]);
+
+  const set = (key: keyof OwnerDetails) => (value: string) => {
+    userInteractedRef.current = true;
+    onDetails({ ...details, [key]: value });
+  };
   const required = (key: keyof OwnerDetails) => (details[key].trim() ? '' : t.fieldRequired);
   const pageErrors: Record<OwnerPage, Partial<Record<keyof OwnerDetails, string>>> = {
     0: { firstName: required('firstName'), lastName: required('lastName') },
@@ -431,9 +465,10 @@ export function OwnerDetailsView({
   const errors = errorsFor(page);
   const pageValid = (target: OwnerPage) => Object.values(pageErrors[target]).every((value) => !value);
   const missing = ownerDetailsProblem(t, details);
-  const canPay = !missing && agreed && !busy;
+  const canPay = !missing && agreed && !busy && !forgetting;
 
   function next() {
+    userInteractedRef.current = true;
     if (!pageValid(page)) {
       setChecked((prev) => ({ ...prev, [page]: true }));
       focusFirstInvalid();
@@ -442,6 +477,7 @@ export function OwnerDetailsView({
     setPage((page + 1) as OwnerPage);
   }
   function back() {
+    userInteractedRef.current = true;
     if (page === 0) onBack();
     else setPage((page - 1) as OwnerPage);
   }
@@ -494,6 +530,7 @@ export function OwnerDetailsView({
               dialLabel={t.dialCode}
               draft={phoneDraft}
               onChange={(draft) => {
+                userInteractedRef.current = true;
                 onPhoneDraft(draft);
                 onDetails({ ...details, phone: toE164(draft) });
               }}
@@ -530,19 +567,36 @@ export function OwnerDetailsView({
                 <div key={row.label}>
                   <dt>{row.label}</dt>
                   <dd>{row.value}</dd>
-                  <button type="button" className={textButtonClass} onClick={() => setPage(row.page)}>
+                  <button
+                    type="button"
+                    className={textButtonClass}
+                    onClick={() => {
+                      userInteractedRef.current = true;
+                      setPage(row.page);
+                    }}
+                  >
                     {t.edit}
                   </button>
                 </div>
               ))}
             </dl>
-            <p className={savedNoteClass} data-saved={saved}>
+            <p ref={savedNoteRef} tabIndex={-1} className={savedNoteClass} data-saved={saved} role="status" aria-live="polite">
               <span>{saved === 'saved' ? t.savedNote : saved === 'none' ? t.saveNextNote : t.notSavedNote}</span>
               {saved !== 'forgotten' && onSavedChoice && (
                 <>
                   <span aria-hidden="true">·</span>
-                  <button type="button" className={textButtonClass} onClick={onSavedChoice}>
-                    {saved === 'saved' ? t.savedForget : t.dontSave}
+                  <button
+                    ref={savedChoiceButtonRef}
+                    type="button"
+                    className={textButtonClass}
+                    disabled={busy || forgetting}
+                    aria-busy={forgetting || undefined}
+                    onClick={() => {
+                      savedChoicePendingFocusRef.current = true;
+                      onSavedChoice();
+                    }}
+                  >
+                    {forgetting ? t.forgetting : saved === 'saved' ? t.savedForget : t.dontSave}
                   </button>
                 </>
               )}
@@ -1456,9 +1510,19 @@ const savedNoteClass = css`
   color: ${T.muted};
   font-size: 14px;
   line-height: 1.5;
+  &:focus {
+    outline: none;
+  }
   button {
     min-height: 32px;
     font-size: 14px;
+  }
+  @media (pointer: coarse) {
+    button {
+      min-height: 44px;
+      padding: 0 6px;
+      margin: -6px -6px;
+    }
   }
 `;
 const payNoteClass = css`
