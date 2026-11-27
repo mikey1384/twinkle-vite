@@ -3614,6 +3614,28 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    // The owner deletes an image from My Images (also from its Picture Day
+    // when it is one of those pictures)
+    async deleteAIImageHistoryItem(id: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/content/image/ai/history/${id}`,
+          auth()
+        );
+        return data as {
+          success: boolean;
+          id: number;
+          pictureDays: Array<{
+            questionId: number;
+            responseId?: number | null;
+            picturePath: string;
+            pictureStyle?: string;
+          }>;
+        };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadAIImageHistoryItem(id: number) {
       try {
         const { data } = await request.get(
@@ -4120,6 +4142,32 @@ export default function contentRequestHelpers({
         const { data } = await request.post(
           `${URL}/content/daily-question/picture/use`,
           { responseId, editRequestId, path, surface },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    // The owner deletes one of their own Picture Day pictures (by the day
+    // in the gallery, or by the reflection on its post)
+    async deleteDailyPicture({
+      questionId,
+      responseId,
+      path
+    }: {
+      questionId?: number | null;
+      responseId?: number | null;
+      path: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/picture/delete`,
+          {
+            path,
+            ...(questionId ? { questionId } : {}),
+            ...(responseId && !questionId ? { responseId } : {})
+          },
           auth()
         );
         return data;

@@ -13,7 +13,7 @@ export default function RewardOffer({ offer, compact = false, length }: { offer:
   const reduced = offer.freshPoints != null && offer.totalPoints != null && offer.freshPoints < offer.totalPoints;
   return <div className={offerCls} aria-label="Exam reward target">
     {offer.mastery && <MasteryProgress progress={offer.mastery} />}
-    {offer.nextPaperAvailable === false && <p role="status">Your next different paper is being prepared. Previous results stay available for review.</p>}
+    {offer.nextPaperAvailable === false && <p role="status">A new paper is being prepared. Previous results stay available for review.</p>}
     <strong>Reward target: {offer.target} / {offer.max} <span className={lineNoteCls}>· earns XP and Coins</span></strong>
     {offer.winAt != null && <strong>Win: {offer.winAt}+{full && <span className={lineNoteCls}> · counts for Arena Basic ({offer.mastery?.solo ? 'a solo mastery clear always earns Excellence' : 'Excellence at your age level or higher'})</span>}</strong>}
     {!!offer.requirements?.length && (compact
