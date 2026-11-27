@@ -32,6 +32,9 @@ export const LITE_HOST_TEXT = {
     handoffGuestBody: (title: string) =>
       `Save guest progress from ${title}’s old address to your signed-in account? Existing saves won’t be overwritten.`,
     handoffGuestConfirm: 'Save to my account',
+    handoffGuestLocalBody: (title: string) =>
+      `Keep guest progress from ${title}’s old address on this device? Existing saves won’t be overwritten.`,
+    handoffGuestLocalConfirm: 'Keep guest progress',
     openOnTwinkleSub: 'Play with your Twinkle account',
     makeYourOwnSub: 'Build one free with Lumine',
     signInSub: 'Save progress and play with friends',
@@ -156,6 +159,9 @@ export const LITE_HOST_TEXT = {
     handoffGuestBody: (title: string) =>
       `${title}의 예전 주소에 있던 게스트 기록을 지금 로그인한 계정으로 옮길까요? 이미 저장된 기록은 덮어쓰지 않아요.`,
     handoffGuestConfirm: '내 계정으로 옮기기',
+    handoffGuestLocalBody: (title: string) =>
+      `${title}의 예전 주소에 있던 게스트 기록을 이 기기로 옮길까요? 이미 저장된 기록은 덮어쓰지 않아요.`,
+    handoffGuestLocalConfirm: '기록 옮기기',
     openOnTwinkleSub: '내 트윈클 계정으로 플레이해요',
     makeYourOwnSub: 'Lumine과 함께 무료로 만들어 보세요',
     signInSub: '기록을 저장하고 친구와 함께 즐겨요',

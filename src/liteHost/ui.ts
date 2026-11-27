@@ -337,19 +337,21 @@ export function confirmOriginHandoffSignIn({
   });
 }
 
-// Explicit confirmation before importing old-origin guest progress into an
-// already signed-in account, so a third-party #lumine_handoff=<code> link
-// cannot poison a signed-in player's private storage.
+// Explicit confirmation before importing old-origin guest progress (into an
+// already signed-in account or into local guest storage), so a third-party
+// #lumine_handoff=<code> link cannot poison private storage.
 export function confirmOriginHandoffGuest({
   t,
-  title
+  title,
+  signedIn = true
 }: {
   t: LiteHostText;
   title: string;
+  signedIn?: boolean;
 }): Promise<boolean> {
   return new Promise((resolve) => {
     const confirm = el('button', { class: 'lh-primary', type: 'button' }, [
-      t.handoffGuestConfirm
+      signedIn ? t.handoffGuestConfirm : t.handoffGuestLocalConfirm
     ]);
     const cancel = el('button', { class: 'lh-secondary', type: 'button' }, [
       t.linkCancel
@@ -357,7 +359,9 @@ export function confirmOriginHandoffGuest({
     sheet(
       [
         el('h2', {}, [t.handoffGuestTitle]),
-        el('p', {}, [t.handoffGuestBody(title)]),
+        el('p', {}, [
+          signedIn ? t.handoffGuestBody(title) : t.handoffGuestLocalBody(title)
+        ]),
         el('div', { class: 'lh-actions' }, [confirm, cancel])
       ],
       { onDismiss: () => resolve(false), kind: 'handoff-guest' }

@@ -194,8 +194,12 @@ async function start() {
         title: config.title,
         username: user.username
       }),
-    confirmGuestCarryover: () =>
-      confirmOriginHandoffGuest({ t, title: config.title })
+    confirmGuestCarryover: (options) =>
+      confirmOriginHandoffGuest({
+        t,
+        title: config.title,
+        signedIn: options?.signedIn ?? true
+      })
   });
   await session.completeRedirect();
   if (session.get()) await session.accessToken();
@@ -221,6 +225,7 @@ async function start() {
   // Existing players keep the sign-in path they joined with when the maker
   // changes mode (audit D2/G8).
   let accountMode: 'twinkle' | 'app' | 'both' = 'twinkle';
+  let accountModeLoaded = false;
   let hasAppAccounts = false;
   let hasTwinklePlayers = false;
   const accountModeReady = fetch(
@@ -228,9 +233,13 @@ async function start() {
   )
     .then((response) => (response.ok ? response.json() : null))
     .then((data) => {
-      if (data?.accountMode === 'app' || data?.accountMode === 'both') accountMode = data.accountMode;
-      hasAppAccounts = Boolean(data?.hasAppAccounts);
-      hasTwinklePlayers = Boolean(data?.hasTwinklePlayers);
+      if (!data) return;
+      if (data.accountMode === 'app' || data.accountMode === 'both' || data.accountMode === 'twinkle') {
+        accountMode = data.accountMode;
+        accountModeLoaded = true;
+      }
+      hasAppAccounts = Boolean(data.hasAppAccounts);
+      hasTwinklePlayers = Boolean(data.hasTwinklePlayers);
     })
     .catch(() => {});
   type SheetView = 'signin' | 'birth' | 'reset' | 'email';
@@ -248,14 +257,29 @@ async function start() {
     }
     return token;
   })();
+  let accountSheetOpen = Boolean(resetToken && !session.get());
   let sheetClosed: Array<() => void> = [];
+  const waitForAccountSheetClose = () =>
+    new Promise<void>((resolve) => {
+      if (!accountSheetOpen) {
+        resolve();
+        return;
+      }
+      sheetClosed.push(resolve);
+    });
   const onAccountSheetClosed = () => {
+    accountSheetOpen = false;
     const waiting = sheetClosed;
     sheetClosed = [];
     waiting.forEach((resolve) => resolve());
   };
   const openAccountSheet = (view: SheetView = 'signin') =>
     new Promise<void>((resolve) => {
+      if (view !== 'email' && session.get()) {
+        resolve();
+        return;
+      }
+      accountSheetOpen = true;
       sheetClosed.push(resolve);
       accountSheetListeners.forEach((listener) => listener(view));
     });
@@ -263,6 +287,10 @@ async function start() {
   // own accounts. Resolves when it closes.
   const openSignIn = (view: SheetView = 'signin') =>
     accountModeReady.then(async () => {
+      if (accountSheetOpen) {
+        await waitForAccountSheetClose();
+        return;
+      }
       if (accountMode === 'twinkle') {
         let handedOffToAppAccount = false;
         await askSignIn({
@@ -272,6 +300,7 @@ async function start() {
           onAppAccountSignIn: hasAppAccounts
             ? () => {
                 handedOffToAppAccount = true;
+                accountSheetOpen = true;
               }
             : undefined
         });
@@ -545,6 +574,16 @@ async function start() {
         accountSheetListeners.delete(setAccountSheetView);
       };
     }, []);
+    const isAccountSheetMounted = Boolean(
+      accountSheetView && (!current || accountSheetView === 'email')
+    );
+    useEffect(() => {
+      if (isAccountSheetMounted) {
+        accountSheetOpen = true;
+      } else if (accountSheetOpen) {
+        onAccountSheetClosed();
+      }
+    }, [isAccountSheetMounted, accountSheetView]);
     const accountKind = !current
       ? null
       : current.appPlayer?.kind === 'app'
@@ -575,7 +614,7 @@ async function start() {
             onReady={replayEarlyMessages}
           />
         ) : null}
-        {accountSheetView && (!current || accountSheetView === 'email') ? (
+        {isAccountSheetMounted && accountSheetView ? (
           <AppAccountSheet
             initialView={accountSheetView}
             resetToken={resetToken}
@@ -621,7 +660,7 @@ async function start() {
         iconName: 'mail',
         label: t.menuResetEmail,
         sub: t.menuResetEmailSub,
-        onClick: () => accountSheetListeners.forEach((listener) => listener('email'))
+        onClick: () => void openAccountSheet('email')
       };
       if (player.linked) {
         return [
@@ -641,7 +680,7 @@ async function start() {
           }
         ];
       }
-      return accountMode !== 'app'
+      return accountModeLoaded && accountMode !== 'app'
         ? [emailItem, { iconName: 'link', label: t.linkTwinkle, sub: t.linkTwinkleSub, onClick: () => void linkTwinkle() }]
         : [emailItem];
     },

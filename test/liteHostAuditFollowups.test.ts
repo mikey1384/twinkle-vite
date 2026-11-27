@@ -202,7 +202,22 @@ test('G10: session.completeOriginHandoff claims #lumine_handoff, strips hash, ad
       const prevFetch = globalThis.fetch;
       const calls: Array<{ url: string; body: any }> = [];
       globalThis.fetch = (async (input: any, init: any) => {
-        calls.push({ url: String(input), body: JSON.parse(String(init?.body || '{}')) });
+        const body = JSON.parse(String(init?.body || '{}'));
+        calls.push({ url: String(input), body });
+        if (body.preview) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              preview: true,
+              sourceOrigin: 'https://old-game.lumine.app',
+              hasSession: true,
+              userId: 9,
+              username: 'alice',
+              hasGuestRecord: true
+            })
+          } as any;
+        }
         return {
           ok: true,
           status: 200,
@@ -256,9 +271,15 @@ test('G10: session.completeOriginHandoff claims #lumine_handoff, strips hash, ad
           }
         });
 
-        assert.equal(calls.length, 1);
+        assert.equal(calls.length, 2);
         assert.equal(calls[0].url, 'https://api.twinkle.network/build/app-session/handoff/claim');
-        assert.deepEqual(calls[0].body, { buildId: 42, code: 'handoff-code-xyz' });
+        assert.deepEqual(calls[0].body, {
+          buildId: 42,
+          code: 'handoff-code-xyz',
+          preview: true
+        });
+        assert.equal(calls[1].url, 'https://api.twinkle.network/build/app-session/handoff/claim');
+        assert.deepEqual(calls[1].body, { buildId: 42, code: 'handoff-code-xyz' });
         assert.equal(replacedUrls[0], 'https://new-game.lumine.app/stage-2?a=1#view=map');
         assert.deepEqual(confirmed, [{ user: { id: 9, username: 'alice' }, hasGuestRecord: true }]);
         assert.equal(adopted?.accessToken, 'new-access-jwt');
