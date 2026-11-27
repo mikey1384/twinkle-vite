@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createDomainProgressStore } from '../src/components/Build/AppAddress/domainProgressStore';
 import {
   RESEND_COOLDOWN_MS,
@@ -9,6 +10,7 @@ import {
 } from '../src/components/Build/AppAddress/checkout/resendStore';
 import {
   createEmailCodeGuard,
+  progressFraction,
   readScopedBuildData,
   shouldAutoVerifyCode,
   type DomainProgressView
@@ -439,4 +441,64 @@ test('createEmailCodeGuard invalidates in-flight verify when sending a new code'
   // Email or account switch invalidates everything in-flight
   guard.invalidate();
   assert.equal(guard.isCurrent(freshVerify!), false);
+});
+
+test('progressFraction counts done steps plus half of an active step', () => {
+  assert.equal(progressFraction(makeProgress({ steps: [] })), 0);
+  assert.equal(progressFraction(makeProgress()), 0.9);
+  assert.equal(
+    progressFraction(
+      makeProgress({
+        steps: [
+          { key: 'paid', state: 'done' },
+          { key: 'registered', state: 'done' },
+          { key: 'secure', state: 'done' },
+          { key: 'live', state: 'done' },
+          { key: 'email', state: 'done' }
+        ]
+      })
+    ),
+    1
+  );
+});
+
+test('DomainCheckoutPage, AppAddress, and checkout steps wire both the progress tracker / email-code flow and the checkout page rework cleanly', () => {
+  const model = readFileSync(new URL('../src/components/Build/AppAddress/checkout/model.ts', import.meta.url), 'utf8');
+  const steps = readFileSync(new URL('../src/components/Build/AppAddress/checkout/steps.tsx', import.meta.url), 'utf8');
+  const chip = readFileSync(new URL('../src/components/Build/AppAddress/index.tsx', import.meta.url), 'utf8');
+  const page = readFileSync(new URL('../src/components/Build/AppAddress/DomainCheckoutPage.tsx', import.meta.url), 'utf8');
+
+  for (const [name, source] of [
+    ['model.ts', model],
+    ['steps.tsx', steps],
+    ['index.tsx', chip],
+    ['DomainCheckoutPage.tsx', page]
+  ]) {
+    assert.doesNotMatch(source, /^(<{7}|={7}|>{7})/m, `${name} must not have merge conflict markers`);
+  }
+
+  // DomainCheckoutPage wires email-code verification, progress polling, and OrderStatusView tracker props
+  assert.match(page, /loadPurchaseAccountEmail/);
+  assert.match(page, /requestPurchaseEmailCode/);
+  assert.match(page, /verifyPurchaseEmailCode/);
+  assert.match(page, /createEmailCodeGuard/);
+  assert.match(page, /emailToken:\s*emailToken && emailToken\.email === typedEmail \? emailToken\.token : undefined/);
+  assert.match(page, /e\?\.code === 'email_unverified'/);
+  assert.match(page, /<OwnerDetailsView[\s\S]*?emailCheck=\{emailCheck\}/);
+  assert.match(page, /useDomainProgress\(buildId, Boolean\(orderId\)\)/);
+  assert.match(page, /refreshDomainProgress\(buildId\)/);
+  assert.match(page, /<OrderStatusView[\s\S]*?progress=\{progress && progress\.orderId === step\.orderId \? progress : null\}[\s\S]*?buildId=\{buildId\}/);
+
+  // AppAddress keeps the progress chip/menu/notice and opens order progress on the checkout page (no overlay)
+  assert.match(chip, /export function AppAddressProgressNotice/);
+  assert.match(chip, /setDomainProgressAllowed\(buildId, domainProgressAllowed\)/);
+  assert.match(chip, /openCheckoutRef\.current\(`\?domainOrder=\$\{detail\.orderId\}`\)/);
+  assert.match(chip, /openCheckout\(`\?domainOrder=\$\{tracking\.orderId\}`\)/);
+  assert.doesNotMatch(chip, /CheckoutSurface|appAddressCheckout/);
+
+  // OwnerDetailsView keeps both autofill-safe state updates + name="email" and the email-code box
+  assert.match(steps, /const set = \(key: keyof OwnerDetails\) => \(value: string\) => onDetails\(\(prev\) => \(\{ \.\.\.prev, \[key\]: value \}\)\);/);
+  assert.match(steps, /countryInStateField\(value, \{ autofilled: isAutofillChange\(event\) \}\)/);
+  assert.match(steps, /<TextField label=\{t\.email\} name="email"/);
+  assert.match(steps, /shouldAutoVerifyCode\(/);
 });

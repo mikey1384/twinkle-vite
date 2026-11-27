@@ -4,6 +4,9 @@
 export type WelcomeTourGuide = 'zero' | 'ciel';
 export type WelcomeTourVariant = 'student' | 'teacher';
 export type WelcomeTourExtra = 'make' | 'apps' | 'arena_exams';
+// where a tour was started from (telemetry): the welcome card's "Start the
+// tour" button, the greeter banner, the "Show me around Twinkle" chip
+export type WelcomeTourSource = 'card' | 'banner' | 'chip';
 
 export interface WelcomeTourStop {
   key: string;
@@ -28,13 +31,26 @@ export interface MakeChoiceQuestion {
 
 export interface WelcomeTourData {
   banner: { show: boolean; reason: string };
-  state: { status: string | null; guide: WelcomeTourGuide | null; stopKey: string };
+  state: WelcomeTourServerState & { guide: WelcomeTourGuide | null };
+  // the server takes runs and Skip tour (an older API: neither)
+  features?: { runs?: boolean };
+  // what the Lumine stop offers (an older API: missing; the stop stays
+  // read-only then, so it can never make a second project)
+  lumineStop?:
+    | { kind: 'project'; project: WelcomeTourProject }
+    | { kind: 'card_waiting'; requestId: number }
+    | { kind: 'card_in_progress'; requestId: number }
+    | { kind: 'make' }
+    | { kind: 'unavailable' };
+  welcomeCardPathId?: number;
   tour: {
     variant: WelcomeTourVariant;
     greeting: {
       line: string;
       afterVideoLine: string;
       finishLine: Record<WelcomeTourGuide, string>;
+      // a finish with stops skipped (an older API: missing, finishLine then)
+      partialFinishLine?: Record<WelcomeTourGuide, string>;
     };
     stops: WelcomeTourStop[];
     makeChoices: MakeChoiceQuestion;
@@ -42,9 +58,21 @@ export interface WelcomeTourData {
     apps: { pinnedBuildId: number; extra: number };
   };
   welcomeCard: { requestId: number; persona: WelcomeTourGuide } | null;
+  // the project Twinkle already made them (the welcome card's or the tour's
+  // first build): the Lumine stop opens it instead of offering another
+  firstProject?: WelcomeTourProject | null;
   // what Twinkle pays for on this member's first tour (server-decided)
   // talk: free talk with the guide (text or voice call) on the first tour
   free: { build: boolean; card: boolean; talk: 'free' | 'low' | 'none' };
+}
+
+export interface WelcomeTourProject {
+  buildId: number;
+  title: string;
+  // what Lumine gets on the first open (the editor sends it only while the
+  // project has no chat yet), and whether that may happen by itself
+  idea?: string;
+  autoStart?: boolean;
 }
 
 export interface SurfaceState {
@@ -116,10 +144,16 @@ export function welcomeGreetingLine(
 
 // Chat comes first, unless the member started the tour while already on
 // Chat: then it moves to the end, so the tour opens on something new and
-// Chat is still in the strip to revisit.
-export function orderWelcomeStops(stops: WelcomeTourStop[], startPathname: string) {
+// Chat is still in the strip to revisit. The welcome card's "Start the tour"
+// keeps the tour's own order (Mikey 11-26: Chat, then Lumine with their new
+// project, then the rest), although the card sits in a chat.
+export function orderWelcomeStops(
+  stops: WelcomeTourStop[],
+  startPathname: string,
+  { keepOrder = false }: { keepOrder?: boolean } = {}
+) {
   const onChat = /^\/chat(\/|$)/.test(startPathname || '');
-  if (!onChat) return stops;
+  if (!onChat || keepOrder) return stops;
   const chat = stops.filter((stop) => stop.key === 'chat');
   return [...stops.filter((stop) => stop.key !== 'chat'), ...chat];
 }
@@ -171,4 +205,89 @@ export function makeTitleFor({ labels, own }: { labels: string[]; own: string })
   if (words) return words.length > 40 ? `${words.slice(0, 39)}…` : words;
   const top = (labels[0] || 'project').toLowerCase();
   return `My first ${top}`;
+}
+
+// Where "Start the tour" picks up: the stop they were on when they left
+// (closed it, skipped the rest, reloaded), or the start once they finished.
+export function welcomeTourResumeKey(state: WelcomeTourServerState | null | undefined) {
+  if (!state) return '';
+  // runs (review 11-26): the run's own status, apart from the banner's
+  if (state.runStatus) return state.runStatus === 'finished' ? '' : state.stopKey || '';
+  if (state.status === 'finished') return '';
+  return state.stopKey || '';
+}
+
+// The tour state as the server confirmed it (GET /user/welcome-tour, or the
+// answer to a step). runId and runSeq order them: a later run, or a later
+// step of the same run, is newer.
+export interface WelcomeTourServerState {
+  status: string | null;
+  stopKey: string;
+  runId?: number;
+  runSeq?: number;
+  runStatus?: string;
+  visited?: string[];
+}
+
+// The newer of the server's state and this tab's last confirmed one, which
+// only counts for the account that made it.
+export function newerWelcomeTourState(
+  server: WelcomeTourServerState | null,
+  local: (WelcomeTourServerState & { userId: number }) | null,
+  userId: number
+): WelcomeTourServerState | null {
+  if (!local || !(userId > 0) || local.userId !== userId) return server;
+  if (!server) return local;
+  const serverRun = Number(server.runId || 0);
+  const localRun = Number(local.runId || 0);
+  if (localRun !== serverRun) return localRun > serverRun ? local : server;
+  return Number(local.runSeq || 0) >= Number(server.runSeq || 0) ? local : server;
+}
+
+// What opening a Twinkle-made project sends Lumine (helpers/sponsoredHelp.ts).
+export { projectOpenNavState, projectOpenPrompt } from '../../../helpers/sponsoredHelp';
+
+// The welcome card's tour button: "Start the tour with Zero", or "Continue"
+// with how far they got once they're partway through.
+export function welcomeTourButton({
+  guideName,
+  stops,
+  resumeKey
+}: {
+  guideName: string;
+  stops: { key: string }[];
+  resumeKey: string;
+}) {
+  const at = resumeKey ? stops.findIndex((stop) => stop.key === resumeKey) : -1;
+  if (at > 0) {
+    return { label: `Continue the tour with ${guideName}`, progress: `${at + 1} of ${stops.length}` };
+  }
+  return { label: `Start the tour with ${guideName}`, progress: '' };
+}
+
+// The Build editor, where a project opened from the tour lives (the tour
+// waits there and moves on when the member comes back).
+export function isBuildEditorPath(pathname: string) {
+  return /^\/build\/(preview\/|\d)/.test(pathname || '');
+}
+
+// A run's id for its start request (a retried start sends the same one).
+export function newWelcomeRunKey(random: () => number = Math.random) {
+  let key = 'r';
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  while (key.length < 16) key += chars[Math.floor(random() * chars.length)];
+  return key;
+}
+
+// What the Lumine stop offers on this website: the server's answer, or, on
+// an older API without one, the project the welcome card handed over, and
+// otherwise nothing to press (so it can never make a second project).
+export function lumineStopFor(
+  data: Pick<WelcomeTourData, 'lumineStop' | 'firstProject'>,
+  hint: WelcomeTourProject | null
+): NonNullable<WelcomeTourData['lumineStop']> | { kind: 'readonly' } {
+  if (data.lumineStop) return data.lumineStop;
+  const project = data.firstProject || hint;
+  if (project) return { kind: 'project', project: { ...project, autoStart: false } };
+  return { kind: 'readonly' };
 }

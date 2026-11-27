@@ -1,5 +1,5 @@
 import type { AddressText } from '../text';
-import { isKnownCountry } from './countries';
+import { STATE_OPTIONAL, isKnownCountry } from './countries';
 
 // The app-address flow's data shapes and plain helpers (shared by the
 // checkout screens, the address menu and the parent's page).
@@ -41,7 +41,8 @@ export function emptyOwnerDetails(country = 'KR'): OwnerDetails {
 
 export function ownerDetailsProblem(t: AddressText, details: OwnerDetails) {
   const required: Array<keyof OwnerDetails> = ['firstName', 'lastName', 'email', 'phone', 'address1', 'city', 'state', 'zip', 'country'];
-  if (required.some((key) => !details[key].trim())) return t.fillAll;
+  const needed = STATE_OPTIONAL.has(details.country.toUpperCase()) ? required.filter((key) => key !== 'state') : required;
+  if (needed.some((key) => !details[key].trim())) return t.fillAll;
   if (!/^\+[1-9][\d\s.\-()]{7,20}$/.test(details.phone.trim())) return t.phoneNeedsPlus;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email.trim())) return t.fillAll;
   if (!isKnownCountry(details.country)) return t.fillAll;
@@ -149,4 +150,30 @@ export function createEmailCodeGuard() {
       return gen === token;
     }
   };
+}
+
+// Two-syllable Korean family names. Only a four-syllable name is read this
+// way ("남궁민수" -> 남궁 + 민수); three syllables stay one + two, since
+// "황보람" or "선우진" are as often 황 + 보람, 선 + 우진.
+const KOREAN_COMPOUND_SURNAMES = new Set(['남궁', '황보', '제갈', '선우', '독고', '사공', '서문', '동방', '어금', '망절', '소봉', '장곡']);
+
+// The member's profile real name as registrant first / last name: Hangul
+// names put the family name first ("김민아" -> 김 + 민아, "김 민아" too);
+// other names put it last ("Mikey Lee", "Mary Ann Smith" -> Mary Ann +
+// Smith). One word is a first name. They can change either.
+export function splitRealName(realName: string): { firstName: string; lastName: string } {
+  const name = String(realName || '').trim().replace(/\s+/g, ' ');
+  if (!name) return { firstName: '', lastName: '' };
+  if (/^[\uAC00-\uD7A3 ]+$/.test(name)) {
+    const parts = name.split(' ');
+    if (parts.length > 1) return { lastName: parts[0], firstName: parts.slice(1).join(' ') };
+    if (name.length < 2) return { firstName: name, lastName: '' };
+    if (name.length === 4 && KOREAN_COMPOUND_SURNAMES.has(name.slice(0, 2))) {
+      return { lastName: name.slice(0, 2), firstName: name.slice(2) };
+    }
+    return { lastName: name.slice(0, 1), firstName: name.slice(1) };
+  }
+  const parts = name.split(' ');
+  if (parts.length === 1) return { firstName: name, lastName: '' };
+  return { firstName: parts.slice(0, -1).join(' '), lastName: parts[parts.length - 1] };
 }

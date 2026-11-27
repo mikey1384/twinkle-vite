@@ -178,11 +178,12 @@ export function normalizeAppLifecycleState(state: unknown) {
 }
 
 let dbPromise: Promise<IDBDatabase | null> | null = null;
+let cachedDb: IDBDatabase | null = null;
 function openDb() {
   if (dbPromise) return dbPromise;
+  if (typeof indexedDB === 'undefined') return Promise.resolve(null);
   dbPromise = new Promise((resolve) => {
     try {
-      if (typeof indexedDB === 'undefined') return resolve(null);
       const request = indexedDB.open(DB_NAME, 2);
       request.onupgradeneeded = () => {
         const db = request.result;
@@ -190,9 +191,25 @@ function openDb() {
         if (!db.objectStoreNames.contains(META)) db.createObjectStore(META);
       };
       request.onsuccess = () => {
-        resolve(request.result);
+        const db = request.result;
+        cachedDb = db;
+        db.onclose = () => {
+          if (cachedDb === db) {
+            cachedDb = null;
+            dbPromise = null;
+          }
+        };
+        db.onversionchange = () => {
+          db.close();
+          if (cachedDb === db) {
+            cachedDb = null;
+            dbPromise = null;
+          }
+        };
+        resolve(db);
         // Later, so it never queues in front of an app's first read.
-        window.setTimeout(() => pruneSnapshots(request.result), PRUNE_DELAY_MS);
+        const pruneTimer = window.setTimeout(() => pruneSnapshots(db), PRUNE_DELAY_MS);
+        (pruneTimer as unknown as { unref?: () => void })?.unref?.();
       };
       request.onerror = () => resolve(null);
       request.onblocked = () => resolve(null);
@@ -237,25 +254,35 @@ export function warmAppLifecycleStore() {
   void openDb();
 }
 
+function runWithDb<T>(
+  db: IDBDatabase | null,
+  mode: IDBTransactionMode,
+  action: (stores: { snapshots: IDBObjectStore; meta: IDBObjectStore }) => IDBRequest<T> | void
+): Promise<T | null> {
+  return new Promise<T | null>((resolve) => {
+    if (!db) return resolve(null);
+    try {
+      const tx = db.transaction([STORE, META], mode);
+      const request = action({ snapshots: tx.objectStore(STORE), meta: tx.objectStore(META) });
+      tx.oncomplete = () => resolve(request ? (request.result as T) : null);
+      tx.onerror = () => resolve(null);
+      tx.onabort = () => resolve(null);
+    } catch (error: any) {
+      if (db === cachedDb && error?.name === 'InvalidStateError') {
+        cachedDb = null;
+        dbPromise = null;
+      }
+      resolve(null);
+    }
+  });
+}
+
 function run<T>(
   mode: IDBTransactionMode,
   action: (stores: { snapshots: IDBObjectStore; meta: IDBObjectStore }) => IDBRequest<T> | void
 ): Promise<T | null> {
-  return openDb().then(
-    (db) =>
-      new Promise<T | null>((resolve) => {
-        if (!db) return resolve(null);
-        try {
-          const tx = db.transaction([STORE, META], mode);
-          const request = action({ snapshots: tx.objectStore(STORE), meta: tx.objectStore(META) });
-          tx.oncomplete = () => resolve(request ? (request.result as T) : null);
-          tx.onerror = () => resolve(null);
-          tx.onabort = () => resolve(null);
-        } catch {
-          resolve(null);
-        }
-      })
-  );
+  if (cachedDb) return runWithDb(cachedDb, mode, action);
+  return openDb().then((db) => runWithDb(db, mode, action));
 }
 
 /**
@@ -309,7 +336,10 @@ export async function loadAppLifecycleSnapshot(
   ]);
   // The store hung (WebKit's IndexedDB open that never settles): give up on
   // it for this page so later app starts don't each wait the full guard.
-  if (timedOut) dbPromise = Promise.resolve(null);
+  if (timedOut) {
+    cachedDb = null;
+    dbPromise = Promise.resolve(null);
+  }
   const now = Date.now();
   const visit = getAppVisitId();
   const resume = value ? resolveAppLifecycleResume(value, { now, visit }) : null;
@@ -374,6 +404,7 @@ interface RunningApp {
   pendingTimer: number | null;
   requestSuspend: ((reason: string) => void) | null;
   waiters: Array<(saved: boolean) => void>;
+  urgentLeaveBudget: boolean;
 }
 
 const running = new Map<number, RunningApp>();
@@ -381,6 +412,9 @@ const listeners = new Set<() => void>();
 // Apps the viewer closed: a last snapshot still on its way must not bring the
 // old place back. Cleared when the app starts again.
 const closedApps = new Set<number>();
+// The page is unloading (noteAppPageLeaving): snapshots are written at once.
+let pageLeaving = false;
+let pageLeavingTimer: number | null = null;
 
 export function markAppClosed(buildId: number) {
   closedApps.add(buildId);
@@ -405,7 +439,8 @@ function entry(buildId: number) {
       pendingSave: null,
       pendingTimer: null,
       requestSuspend: null,
-      waiters: []
+      waiters: [],
+      urgentLeaveBudget: false
     };
     running.set(buildId, app);
   }
@@ -468,10 +503,13 @@ export function acceptAppLifecycleSnapshot(
   waiters.forEach((resolve) => resolve(true));
   app.pendingSave = { key, snapshot };
   const wait = Math.max(0, app.lastSnapshotAt + MIN_SNAPSHOT_GAP_MS - Date.now());
-  const urgent =
-    waiters.length > 0 ||
-    (typeof document !== 'undefined' && document.visibilityState === 'hidden');
+  const requested = waiters.length > 0;
+  const leaveUrgent = pageLeaving && app.urgentLeaveBudget;
+  const hiddenUrgent =
+    typeof document !== 'undefined' && document.visibilityState === 'hidden';
+  const urgent = requested || leaveUrgent || hiddenUrgent;
   if (wait === 0 || urgent) {
+    if (leaveUrgent) app.urgentLeaveBudget = false;
     if (app.pendingTimer !== null) window.clearTimeout(app.pendingTimer);
     app.pendingTimer = null;
     flushPendingSave(buildId, app);
@@ -516,7 +554,108 @@ export function requestAppLifecycleSnapshot(
   });
 }
 
+// ---- the page going away -------------------------------------------------
+//
+// A reload or a closed tab unloads this page and the app's frame together.
+// The SDK's own pagehide snapshot is posted as the frame unloads, after
+// this page has stopped handling messages, so it never arrives; and a
+// snapshot still waiting out the one-per-second gap is lost with the page
+// (11-26, Mikey on redsquareadventure.com: every reload came back to an old
+// place). beforeunload comes first, while this page still runs until the
+// next one arrives: ask each app for its place then, write it at once, and
+// write anything queued. pagehide writes whatever is queued as a last try.
+
+/** Write every queued snapshot now. */
+export function flushAppLifecycleSaves() {
+  running.forEach((app, buildId) => {
+    if (app.pendingTimer !== null) window.clearTimeout(app.pendingTimer);
+    app.pendingTimer = null;
+    flushPendingSave(buildId, app);
+  });
+}
+
+/** End the leaving-page window (e.g. bfcache restore or teardown). */
+export function clearAppPageLeaving() {
+  pageLeaving = false;
+  if (pageLeavingTimer !== null) {
+    window.clearTimeout(pageLeavingTimer);
+    pageLeavingTimer = null;
+  }
+  running.forEach((app) => {
+    app.urgentLeaveBudget = false;
+  });
+}
+
+/**
+ * The page is about to unload: at most one unrequested snapshot per app is
+ * written without waiting out the one-per-second gap, queued ones are written
+ * synchronously now, and every app that saves its place is asked for a fresh one.
+ */
+export function noteAppPageLeaving(reason = 'unload') {
+  pageLeaving = true;
+  running.forEach((app) => {
+    app.urgentLeaveBudget = true;
+  });
+  // A leave the viewer called off (another beforeunload handler, a
+  // download link) leaves the page running: back to normal after a while.
+  if (pageLeavingTimer !== null) window.clearTimeout(pageLeavingTimer);
+  pageLeavingTimer = window.setTimeout(() => {
+    clearAppPageLeaving();
+  }, 5000);
+  flushAppLifecycleSaves();
+  running.forEach((_app, buildId) => {
+    void requestAppLifecycleSnapshot(buildId, reason);
+  });
+}
+
+/** Ask for and keep each app's place when this page unloads or hides. */
+export function watchAppPageUnload() {
+  warmAppLifecycleStore();
+  const onBeforeUnload = () => noteAppPageLeaving('unload');
+  const onPageHide = () => {
+    if (pageLeaving) flushAppLifecycleSaves();
+    else noteAppPageLeaving('unload');
+  };
+  const onVisibilityChange = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+      flushAppLifecycleSaves();
+      if (!pageLeaving) {
+        running.forEach((_app, buildId) => {
+          void requestAppLifecycleSnapshot(buildId, 'hidden');
+        });
+      }
+    }
+  };
+  const onPageShow = () => {
+    clearAppPageLeaving();
+  };
+  window.addEventListener('beforeunload', onBeforeUnload);
+  window.addEventListener('pagehide', onPageHide);
+  window.addEventListener('pageshow', onPageShow);
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', onVisibilityChange);
+  }
+  return () => {
+    window.removeEventListener('beforeunload', onBeforeUnload);
+    window.removeEventListener('pagehide', onPageHide);
+    window.removeEventListener('pageshow', onPageShow);
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    }
+    clearAppPageLeaving();
+  };
+}
+
 export function forgetRunningApp(buildId: number) {
+  const app = running.get(buildId);
+  if (app) {
+    if (app.pendingTimer !== null) window.clearTimeout(app.pendingTimer);
+    app.pendingTimer = null;
+    flushPendingSave(buildId, app);
+    const waiters = app.waiters;
+    app.waiters = [];
+    waiters.forEach((resolve) => resolve(false));
+  }
   running.delete(buildId);
   listeners.forEach((listener) => listener());
 }
