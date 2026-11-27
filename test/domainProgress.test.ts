@@ -601,29 +601,45 @@ test('DomainCheckoutPage, AppAddress, and checkout steps wire both the progress 
   assert.match(page, /emailToken:\s*emailToken && emailToken\.email === typedEmail \? emailToken\.token : undefined/);
   assert.match(page, /e\?\.code === 'email_unverified'/);
   assert.match(page, /<OwnerDetailsView[\s\S]*?emailCheck=\{emailCheck\}/);
-  assert.match(page, /useDomainProgress\(buildId, Boolean\(orderId\)\)/);
+  assert.match(page, /useDomainProgress\(buildId, Boolean\(orderId\), orderId\)/);
   assert.match(page, /shouldRefreshOrderProgress\(/);
-  assert.match(page, /refreshDomainProgress\(buildId\)/);
+  assert.match(page, /refreshDomainProgress\(buildId, orderId\)/);
   assert.match(page, /<OrderStatusView[\s\S]*?progress=\{progress && progress\.orderId === step\.orderId \? progress : null\}[\s\S]*?buildId=\{buildId\}/);
 
   // AppAddress keeps the progress chip/menu/notice (for app owner and post-transfer domain owner),
   // domain ownership controls (detach/reattach), and opens order progress on the checkout page (no overlay)
   assert.match(chip, /export function AppAddressProgressNotice/);
+  assert.match(chip, /export function DomainOwnerProgressBanner/);
   assert.match(chip, /ownsBoughtDomain/);
+  assert.match(chip, /info\?\.hasOwnedDomainOrder/);
   assert.match(chip, /setDomainProgressAllowed\(buildId, domainProgressAllowed\)/);
   assert.match(chip, /attachAppDomainOrder/);
   assert.match(chip, /removeElsewhere/);
   assert.match(chip, /useHere/);
-  assert.match(chip, /openCheckoutRef\.current\(`\?domainOrder=\$\{detail\.orderId\}`\)/);
-  assert.match(chip, /openCheckout\(`\?domainOrder=\$\{tracking\.orderId\}`\)/);
+  assert.match(chip, /removeAppDomain\(\{ buildId: action\.targetBuildId, domainId \}\);\s+refreshDomainProgress\(action\.targetBuildId\);/);
+  assert.match(chip, /attachAppDomainOrder\(\{ buildId: action\.targetBuildId, orderId: domain\.orderId \}\);\s+refreshDomainProgress\(action\.targetBuildId\);/);
+  assert.match(chip, /openCheckoutRef\.current\(`\?domainOrder=\$\{detail\.orderId\}`, detail\.targetBuildId \|\| buildId\)/);
+  assert.match(chip, /openCheckout\(`\?domainOrder=\$\{tracking\.orderId\}`, trackingBuildId\)/);
   assert.doesNotMatch(chip, /CheckoutSurface|appAddressCheckout/);
 
-  // Header renders AppAddressProgressNotice for public non-branch apps so a post-transfer domain owner sees it too
+  // Header renders AppAddressProgressNotice for public non-branch apps and DomainOwnerProgressBanner for unpublished non-branch apps
   assert.match(header, /build\.isPublic && contributionStatus === 'none' \?[\s\S]{0,120}<AppAddressProgressNotice\s+buildId=\{Number\(build\.id\)\}/);
+  assert.match(header, /contributionStatus === 'none' \?[\s\S]{0,120}<DomainOwnerProgressBanner\s+buildId=\{Number\(build\.id\)\}/);
 
-  // AddressMenuView keeps both leadItems (progress) and ownerLine ("Owned by @x")
+  // BuildRuntime, EditorRoute unavailable screen, and domainVerify notifications keep post-transfer verification reachable
+  const runtime = readFileSync(new URL('../src/containers/Build/Runtime/index.tsx', import.meta.url), 'utf8');
+  const editorRoute = readFileSync(new URL('../src/containers/Build/EditorRoute.tsx', import.meta.url), 'utf8');
+  const notiMessage = readFileSync(new URL('../src/components/Notification/MainFeeds/NotiItem/NotiMessage.tsx', import.meta.url), 'utf8');
+  assert.match(runtime, /<DomainOwnerProgressBanner\s+buildId=\{numericBuildId\}\s*\/>/);
+  assert.match(runtime, /<DomainOwnerProgressBanner\s+buildId=\{Number\(build\.id\)\}\s+isOwner=\{Boolean\(isBuildOwner\)\}\s*\/>/);
+  assert.match(editorRoute, /<DomainOwnerProgressBanner\s+buildId=\{numericBuildId\}\s*\/>/);
+  assert.match(notiMessage, /\/build\/\$\{targetObj\.buildId\}\/domain\?domainOrder=\$\{orderId\}/);
+
+  // AddressMenuView keeps leadItems (progress), ownerLine ("Owned by @x"), and verification reminders on otherDomains
   assert.match(views, /\[\.\.\.leadItems, \.\.\.\(leadItems\.length \? \[\{ separator: true \}\] : \[\]\)\]/);
   assert.match(views, /const owner = ownerLine\(t, byHost\.get\(host\)\);/);
+  assert.match(views, /domain\.verificationPending/);
+  assert.match(views, /onOpenOrder\(targetBuildId, domain\.orderId\)/);
 
   // OwnerDetailsView keeps both autofill-safe state updates + name="email" and the email-code box
   assert.match(steps, /const set = \(key: keyof OwnerDetails\) => \(value: string\) => onDetails\(\(prev\) => \(\{ \.\.\.prev, \[key\]: value \}\)\);/);
@@ -669,4 +685,77 @@ test('saved registrant details coexist with profile prefill, email verification,
   // Preview harness keeps both email-code and saved-registrant previews
   assert.match(harness, /function OwnerEmailHarness\(\)/);
   assert.match(harness, /function OwnerHarness\(\{ filled, saved: savedStart = 'none' \}/);
+});
+
+test('domainProgressStore scopes entries by orderId when provided and manages fallback targets', async () => {
+  const timers = makeFakeTimers();
+  const seenCalls: Array<{ buildId: number; orderId?: number }> = [];
+  const store = createDomainProgressStore({
+    isHidden: () => false,
+    setTimeoutFn: timers.setTimeoutFn,
+    clearTimeoutFn: timers.clearTimeoutFn
+  });
+  const loader = async ({ buildId, orderId }: { buildId: number; orderId?: number }) => {
+    seenCalls.push({ buildId, orderId });
+    if (orderId === 10) {
+      return { progress: makeProgress({ orderId: 10, domain: 'alpha.com', stage: 'one_step_left' }) };
+    }
+    if (orderId === 30) {
+      return { progress: makeProgress({ orderId: 30, domain: 'gamma.com', stage: 'done' }) };
+    }
+    return { progress: makeProgress({ orderId: 20, domain: 'beta.com', stage: 'done' }) };
+  };
+
+  // Build 200 has newer order 20 as latest, while checkout page inspects older reattached order 10.
+  const unsubLatest = store.subscribe(1, 200, loader, () => {});
+  const unsubOrder10 = store.subscribe(1, 200, loader, () => {}, 10);
+  const unsubOrder30 = store.subscribe(1, 200, loader, () => {}, 30);
+  await flushMicrotasks();
+
+  assert.deepEqual(seenCalls, [
+    { buildId: 200, orderId: undefined },
+    { buildId: 200, orderId: 10 },
+    { buildId: 200, orderId: 30 }
+  ]);
+  assert.equal(store.getProgress(1, 200)?.orderId, 20);
+  assert.equal(store.getProgress(1, 200, 10)?.orderId, 10);
+  assert.equal(store.getProgress(1, 200, 10)?.domain, 'alpha.com');
+  assert.equal(store.getProgress(1, 200, 30)?.orderId, 30);
+
+  // Scoped refresh(200, 10) refreshes latest and order 10, leaving unrelated order 30 untouched.
+  seenCalls.length = 0;
+  store.refresh(200, 10);
+  await flushMicrotasks();
+  assert.deepEqual(seenCalls, [
+    { buildId: 200, orderId: undefined },
+    { buildId: 200, orderId: 10 }
+  ]);
+
+  // Build-wide refresh(200) refreshes every active subscription on build 200.
+  seenCalls.length = 0;
+  store.refresh(200);
+  await flushMicrotasks();
+  assert.equal(seenCalls.length, 3);
+
+  unsubLatest();
+  unsubOrder10();
+  unsubOrder30();
+  assert.equal(store.entryCount(), 0);
+
+  // Fallback target for cross-app verification reminders notifies subscribers on change.
+  let fallbackTicks = 0;
+  const unsubFallback = store.subscribeFallbackTarget(200, () => {
+    fallbackTicks += 1;
+  });
+  assert.equal(store.getFallbackTarget(200), null);
+  store.setFallbackTarget(200, { buildId: 100, orderId: 10 });
+  assert.deepEqual(store.getFallbackTarget(200), { buildId: 100, orderId: 10 });
+  assert.equal(fallbackTicks, 1);
+  // Setting the identical target does not re-notify.
+  store.setFallbackTarget(200, { buildId: 100, orderId: 10 });
+  assert.equal(fallbackTicks, 1);
+  store.setFallbackTarget(200, null);
+  assert.equal(store.getFallbackTarget(200), null);
+  assert.equal(fallbackTicks, 2);
+  unsubFallback();
 });

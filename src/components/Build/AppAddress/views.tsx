@@ -83,6 +83,7 @@ export interface OwnerDomainView {
 export interface OtherDomainView {
   domainId: number;
   orderId: number;
+  orderBuildId?: number;
   hostname: string;
   source: string;
   status: string;
@@ -90,6 +91,8 @@ export interface OtherDomainView {
   buildId: number;
   appTitle: string;
   appIsYours: boolean;
+  verificationPending?: boolean;
+  verifyDaysLeft?: number | null;
 }
 
 // "Owned by @x" under an address someone else owns
@@ -107,6 +110,7 @@ export function AddressMenuView({
   otherDomains,
   onRemoveElsewhere,
   onUseHere,
+  onOpenOrder,
   canGetOwn,
   copied,
   onCopy,
@@ -132,6 +136,7 @@ export function AddressMenuView({
   otherDomains?: OtherDomainView[];
   onRemoveElsewhere?: (domain: OtherDomainView) => void;
   onUseHere?: (domain: OtherDomainView) => void;
+  onOpenOrder?: (buildId: number, orderId: number) => void;
   canGetOwn: boolean;
   copied: boolean;
   onCopy: () => void;
@@ -251,23 +256,62 @@ export function AddressMenuView({
   }
   if (otherDomains?.length) {
     items.push({ separator: true }, { label: <small className={fine}>{t.yourOtherAddresses}</small> });
+    const pushVerificationItem = (domain: OtherDomainView) => {
+      const targetBuildId = Number(domain.orderBuildId || domain.buildId || 0);
+      if (!domain.verificationPending || !domain.orderId || !targetBuildId || !onOpenOrder) return;
+      items.push({
+        label: (
+          <>
+            <Icon icon="clock" />
+            <span className={stackedLabel}>
+              <span>{t.oneStepTitle}</span>
+              <small className={fine}>
+                {typeof domain.verifyDaysLeft === 'number'
+                  ? domain.verifyDaysLeft > 0
+                    ? t.verifyNudge(domain.verifyDaysLeft)
+                    : t.verifyNudgeToday
+                  : domain.hostname}
+              </small>
+            </span>
+          </>
+        ),
+        style: { color: '#b45309', fontWeight: 700 },
+        onClick: () => onOpenOrder(targetBuildId, domain.orderId)
+      });
+    };
     for (const domain of otherDomains) {
-      // a bought one on no app: one row that puts it on this app
+      // a bought one on no app: one row that puts it on this app (plus its
+      // pending email-verification action when Name.com confirmation is open)
       if (!domain.domainId) {
-        if (!onUseHere) continue;
-        items.push({
-          label: (
-            <>
-              <Icon icon="plus" />
-              <span className={stackedLabel}>
-                <span>{t.useHere(domain.hostname)}</span>
-                <small className={fine}>{t.notInUse}</small>
-              </span>
-            </>
-          ),
-          style: { color: accent, fontWeight: 700 },
-          onClick: () => onUseHere(domain)
-        });
+        const detachedNote = domain.verificationPending ? `${t.notInUse} · ${t.chipOneStep}` : t.notInUse;
+        if (onUseHere) {
+          items.push({
+            label: (
+              <>
+                <Icon icon="plus" />
+                <span className={stackedLabel}>
+                  <span>{t.useHere(domain.hostname)}</span>
+                  <small className={fine}>{detachedNote}</small>
+                </span>
+              </>
+            ),
+            style: { color: accent, fontWeight: 700 },
+            onClick: () => onUseHere(domain)
+          });
+        } else if (domain.verificationPending) {
+          items.push({
+            label: (
+              <>
+                <Icon icon="globe" />
+                <span className={stackedLabel}>
+                  <span>{domain.hostname}</span>
+                  <small className={fine}>{detachedNote}</small>
+                </span>
+              </>
+            )
+          });
+        }
+        pushVerificationItem(domain);
         continue;
       }
       const key = `d${domain.domainId}`;
@@ -279,15 +323,18 @@ export function AddressMenuView({
             <span className={stackedLabel}>
               <span>{domain.hostname}</span>
               <small className={fine}>
-                {domain.status === 'live' || !domain.statusLine
-                  ? t.onApp(domain.appTitle)
-                  : `${t.onApp(domain.appTitle)} · ${domain.statusLine}`}
+                {domain.verificationPending
+                  ? `${t.onApp(domain.appTitle)} · ${t.chipOneStep}`
+                  : domain.status === 'live' || !domain.statusLine
+                    ? t.onApp(domain.appTitle)
+                    : `${t.onApp(domain.appTitle)} · ${domain.statusLine}`}
               </small>
             </span>
           </>
         ),
         ...(domain.status === 'live' ? { href: `https://${domain.hostname}/` } : {})
       });
+      pushVerificationItem(domain);
       if (onRemoveElsewhere) {
         items.push({
           label: (

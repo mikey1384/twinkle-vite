@@ -7,9 +7,12 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { ADDRESS_TEXT, type AddressLang } from './text';
 import AppPlayers from './AppPlayers';
 import {
+  refreshDomainProgress,
   setDomainProgressAllowed,
+  setDomainProgressFallback,
   useDomainProgress,
-  useDomainProgressAllowed
+  useDomainProgressAllowed,
+  useDomainProgressFallback
 } from './useDomainProgress';
 import { ChipProgressLabel, ProgressNotice, progressMenuItems, progressShowing, useResendVerification } from './checkout/progress';
 import {
@@ -40,6 +43,7 @@ interface AddressInfo {
   lumineUrl?: string | null;
   customDomainsEnabled?: boolean;
   domainSalesEnabled?: boolean;
+  hasOwnedDomainOrder?: boolean;
   // each domain is its buyer's or connector's (ownedByYou), whoever owns the
   // app; canRemove: this viewer may take it off this app
   domains?: OwnerDomainView[];
@@ -103,17 +107,48 @@ export default function AppAddress({
   const t = ADDRESS_TEXT[pageLang()];
   // the purchase tracker (shared with the Build header's notice): shown to
   // the app owner while buying is open, and to the buyer of a bought domain
-  // on this app even after an app transfer (standing ruling 11-26)
-  const ownsBoughtDomain = Boolean((info?.domains || []).some((d) => d.ownedByYou && d.source === 'bought'));
+  // or order on this app even before app_domains exists or after an app
+  // transfer (standing ruling 11-26)
+  const ownsBoughtDomain = Boolean(
+    info?.hasOwnedDomainOrder || (info?.domains || []).some((d) => d.ownedByYou && d.source === 'bought')
+  );
   const domainProgressAllowed = Boolean(
-    info?.enabled && info?.url && ((isOwner && info?.domainSalesEnabled) || ownsBoughtDomain)
+    info?.enabled && ((info?.url && isOwner && info?.domainSalesEnabled) || ownsBoughtDomain)
   );
   useEffect(() => {
     setDomainProgressAllowed(buildId, domainProgressAllowed);
     return () => setDomainProgressAllowed(buildId, false);
   }, [buildId, domainProgressAllowed]);
-  const progress = useDomainProgress(buildId, domainProgressAllowed);
-  const resend = useResendVerification(t, buildId, progress);
+  const pendingOtherDomain =
+    (info?.yourOtherDomains || []).find(
+      (d) => d.verificationPending && d.orderId > 0 && Number(d.orderBuildId || d.buildId || 0) > 0
+    ) || null;
+  const fallbackBuildId = pendingOtherDomain
+    ? Number(pendingOtherDomain.orderBuildId || pendingOtherDomain.buildId || 0)
+    : 0;
+  const fallbackOrderId = pendingOtherDomain ? Number(pendingOtherDomain.orderId || 0) : 0;
+  useEffect(() => {
+    setDomainProgressFallback(
+      buildId,
+      fallbackBuildId > 0 && fallbackOrderId > 0
+        ? { buildId: fallbackBuildId, orderId: fallbackOrderId }
+        : null
+    );
+    return () => setDomainProgressFallback(buildId, null);
+  }, [buildId, fallbackBuildId, fallbackOrderId]);
+  const ownProgress = useDomainProgress(buildId, domainProgressAllowed);
+  const hasOwnTracking = domainProgressAllowed && progressShowing(ownProgress);
+  const fallbackEnabled = Boolean(
+    info?.enabled && fallbackBuildId > 0 && fallbackOrderId > 0 && !hasOwnTracking
+  );
+  const fallbackProgress = useDomainProgress(fallbackBuildId, fallbackEnabled, fallbackOrderId);
+  const tracking = hasOwnTracking
+    ? ownProgress
+    : fallbackEnabled && progressShowing(fallbackProgress)
+      ? fallbackProgress
+      : null;
+  const trackingBuildId = hasOwnTracking ? buildId : fallbackBuildId || buildId;
+  const resend = useResendVerification(t, trackingBuildId, tracking);
 
   // A wand plan (?appAddress=…) for the owner or Stripe's return / receipt
   // link (?domainOrder=…) for the buyer goes to the checkout page with its query.
@@ -171,7 +206,7 @@ export default function AppAddress({
     };
   }
 
-  async function openCheckout(search = '') {
+  async function openCheckout(search = '', targetBuildId = buildId) {
     if (leaving) return;
     setLeaveError('');
     // the checkout is its own page: unsaved editor work is saved first
@@ -193,8 +228,8 @@ export default function AppAddress({
         return;
       }
     }
-    if (!search) navigate(domainCheckoutPath(buildId));
-    else navigate(domainCheckoutPath(buildId, search));
+    if (!search && targetBuildId === buildId) navigate(domainCheckoutPath(buildId));
+    else navigate(domainCheckoutPath(targetBuildId, search));
   }
 
   // the header notice's "See progress" opens the order screen on the checkout page
@@ -202,9 +237,9 @@ export default function AppAddress({
   openCheckoutRef.current = openCheckout;
   useEffect(() => {
     function onOpen(event: Event) {
-      const detail = (event as CustomEvent<{ buildId: number; orderId: number }>).detail;
+      const detail = (event as CustomEvent<{ buildId: number; targetBuildId?: number; orderId: number }>).detail;
       if (detail?.buildId !== buildId || !detail.orderId) return;
-      void openCheckoutRef.current(`?domainOrder=${detail.orderId}`);
+      void openCheckoutRef.current(`?domainOrder=${detail.orderId}`, detail.targetBuildId || buildId);
     }
     window.addEventListener(OPEN_PROGRESS_EVENT, onOpen);
     return () => window.removeEventListener(OPEN_PROGRESS_EVENT, onOpen);
@@ -235,6 +270,7 @@ export default function AppAddress({
     setLeaveError('');
     try {
       await removeAppDomain({ buildId: action.targetBuildId, domainId });
+      refreshDomainProgress(action.targetBuildId);
       if (!action.sameScope()) return;
       const fresh = await loadAppAddress({ buildId: action.targetBuildId }).catch(() => null);
       if (fresh && action.sameScope()) {
@@ -258,6 +294,7 @@ export default function AppAddress({
     setLeaveError('');
     try {
       await removeAppDomain({ buildId: domain.buildId, domainId: domain.domainId });
+      refreshDomainProgress(domain.buildId);
       if (!action.sameScope()) return;
       const fresh = await loadAppAddress({ buildId: action.targetBuildId }).catch(() => null);
       if (fresh && action.sameScope()) {
@@ -282,6 +319,7 @@ export default function AppAddress({
     setLeaveError('');
     try {
       const result = await attachAppDomainOrder({ buildId: action.targetBuildId, orderId: domain.orderId });
+      refreshDomainProgress(action.targetBuildId);
       if (!action.sameScope()) return;
       const fresh = await loadAppAddress({ buildId: action.targetBuildId }).catch(() => null);
       if (fresh && action.sameScope()) {
@@ -379,9 +417,10 @@ export default function AppAddress({
   // the chip shows (and Copy / Share hand out) the server's shared address
   const shownUrl = info.url;
 
-  const tracking = domainProgressAllowed && progressShowing(progress) ? progress : null;
   const progressItems = tracking
-    ? progressMenuItems(t, tracking, resend, () => void openCheckout(`?domainOrder=${tracking.orderId}`))
+    ? progressMenuItems(t, tracking, resend, () =>
+        void openCheckout(`?domainOrder=${tracking.orderId}`, trackingBuildId)
+      )
     : [];
 
   return (
@@ -395,9 +434,12 @@ export default function AppAddress({
         domains={liveDomains}
         ownerDomains={isOwner || (info.domains || []).some((d) => d.ownedByYou) ? info.domains : undefined}
         onRemoveDomain={(domainId) => void removeDomain(domainId)}
-        otherDomains={isOwner ? info.yourOtherDomains : undefined}
+        otherDomains={isOwner || ownsBoughtDomain ? info.yourOtherDomains : undefined}
         onRemoveElsewhere={(domain) => void removeElsewhere(domain)}
-        onUseHere={(domain) => void useHere(domain)}
+        onUseHere={isOwner ? (domain) => void useHere(domain) : undefined}
+        onOpenOrder={(targetBuildId, targetOrderId) =>
+          void openCheckout(`?domainOrder=${targetOrderId}`, targetBuildId)
+        }
         canGetOwn={isOwner && Boolean(info.customDomainsEnabled || info.domainSalesEnabled)}
         copied={copied}
         onCopy={() => {
@@ -461,15 +503,90 @@ export default function AppAddress({
 const OPEN_PROGRESS_EVENT = 'app-address:open-progress';
 export function AppAddressProgressNotice({ buildId }: { buildId: number; isOwner?: boolean }) {
   const allowed = useDomainProgressAllowed(buildId);
-  const progress = useDomainProgress(buildId, allowed);
+  const fallback = useDomainProgressFallback(buildId);
+  const ownProgress = useDomainProgress(buildId, allowed);
+  const hasOwn = allowed && progressShowing(ownProgress);
+  const fallbackEnabled = Boolean(fallback && !hasOwn);
+  const fallbackProgress = useDomainProgress(
+    fallback?.buildId || 0,
+    fallbackEnabled,
+    fallback?.orderId || 0
+  );
+  const progress = hasOwn
+    ? ownProgress
+    : fallbackEnabled && progressShowing(fallbackProgress)
+      ? fallbackProgress
+      : null;
+  const targetBuildId = hasOwn ? buildId : fallback?.buildId || buildId;
   const t = ADDRESS_TEXT[pageLang()];
+  if (!progress) return null;
+  return (
+    <ProgressNotice
+      t={t}
+      buildId={targetBuildId}
+      progress={progress}
+      onOpen={() =>
+        window.dispatchEvent(
+          new CustomEvent(OPEN_PROGRESS_EVENT, {
+            detail: { buildId, targetBuildId, orderId: progress.orderId }
+          })
+        )
+      }
+    />
+  );
+}
+
+// Self-contained progress/verification notice for surfaces where AppAddress
+// is not mounted (BuildRuntime /app/:id, unpublished/deleted fallback pages,
+// and unpublished editor headers), so a post-transfer domain buyer can always
+// see Name.com's 15-day confirmation reminder and Resend.
+export function DomainOwnerProgressBanner({
+  buildId,
+  isOwner = false
+}: {
+  buildId: number;
+  isOwner?: boolean;
+}) {
+  const loadAppAddress = useAppContext((v) => v.requestHelpers.loadAppAddress);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const navigate = useNavigate();
+  const [infoState, setInfoState] = useState<ScopedBuildData<AddressInfo> | null>(null);
+  const info = readScopedBuildData(infoState, buildId, userId);
+  const t = ADDRESS_TEXT[pageLang()];
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!userId || !buildId || hostingKnownOff) {
+      setInfoState({ buildId, userId, data: { enabled: false } });
+      return;
+    }
+    setInfoState(null);
+    loadAppAddress({ buildId })
+      .then((data: AddressInfo) => {
+        if (data && data.enabled === false) hostingKnownOff = true;
+        if (!cancelled) setInfoState({ buildId, userId, data });
+      })
+      .catch(() => !cancelled && setInfoState({ buildId, userId, data: { enabled: false } }));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildId, userId]);
+
+  const ownsBoughtDomain = Boolean(
+    info?.hasOwnedDomainOrder || (info?.domains || []).some((d) => d.ownedByYou && d.source === 'bought')
+  );
+  const allowed = Boolean(
+    userId && info?.enabled && ((info?.url && isOwner && info?.domainSalesEnabled) || ownsBoughtDomain)
+  );
+  const progress = useDomainProgress(buildId, allowed);
   if (!allowed || !progressShowing(progress)) return null;
   return (
     <ProgressNotice
       t={t}
       buildId={buildId}
       progress={progress}
-      onOpen={() => window.dispatchEvent(new CustomEvent(OPEN_PROGRESS_EVENT, { detail: { buildId, orderId: progress.orderId } }))}
+      onOpen={() => navigate(domainCheckoutPath(buildId, `?domainOrder=${progress.orderId}`))}
     />
   );
 }

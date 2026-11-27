@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { BUILD_OWNERSHIP_CHANGED } from '~/helpers/buildOwnershipEvents';
 import type { DomainProgressView } from './checkout/model';
-import { domainProgressStore } from './domainProgressStore';
+import {
+  domainProgressStore,
+  type DomainProgressFallbackTarget
+} from './domainProgressStore';
 
 // One shared poller per (user, build) for the purchase progress tracker: the
 // address chip, the Build header notice and the order screen read the same
@@ -45,9 +48,9 @@ function detachGlobalListeners() {
   }
 }
 
-// Read again now (after Resend, or when the order screen sees a change).
-export function refreshDomainProgress(buildId: number) {
-  domainProgressStore.refresh(buildId);
+// Read again now (after Resend, detach/reattach, or when the order screen sees a change).
+export function refreshDomainProgress(buildId: number, orderId?: number) {
+  domainProgressStore.refresh(buildId, orderId);
 }
 
 // Shared hosting + domain-sales gate published by AppAddress so
@@ -65,10 +68,35 @@ export function useDomainProgressAllowed(buildId: number): boolean {
   return domainProgressStore.isAllowed(buildId);
 }
 
-export function useDomainProgress(buildId: number, enabled: boolean): DomainProgressView | null {
+export function setDomainProgressFallback(
+  buildId: number,
+  target: DomainProgressFallbackTarget | null
+) {
+  domainProgressStore.setFallbackTarget(buildId, target);
+}
+
+export function useDomainProgressFallback(
+  buildId: number
+): DomainProgressFallbackTarget | null {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!buildId) return;
+    return domainProgressStore.subscribeFallbackTarget(buildId, () =>
+      setTick((value) => value + 1)
+    );
+  }, [buildId]);
+  return domainProgressStore.getFallbackTarget(buildId);
+}
+
+export function useDomainProgress(
+  buildId: number,
+  enabled: boolean,
+  orderId = 0
+): DomainProgressView | null {
   const loadDomainProgress = useAppContext((v) => v.requestHelpers.loadDomainProgress);
   const rawUserId = useKeyContext((v) => v.myState.userId);
   const userId = Number(rawUserId || 0);
+  const normalizedOrderId = Number(orderId || 0) > 0 ? Number(orderId) : 0;
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -78,16 +106,20 @@ export function useDomainProgress(buildId: number, enabled: boolean): DomainProg
   useEffect(() => {
     if (!enabled || !buildId || !userId) return;
     attachGlobalListeners();
-    const unsubscribe = domainProgressStore.subscribe(userId, buildId, loadDomainProgress, () =>
-      setTick((value) => value + 1)
+    const unsubscribe = domainProgressStore.subscribe(
+      userId,
+      buildId,
+      loadDomainProgress,
+      () => setTick((value) => value + 1),
+      normalizedOrderId
     );
     return () => {
       unsubscribe();
       detachGlobalListeners();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, buildId, enabled]);
+  }, [userId, buildId, enabled, normalizedOrderId]);
 
   if (!enabled || !buildId || !userId) return null;
-  return domainProgressStore.getProgress(userId, buildId);
+  return domainProgressStore.getProgress(userId, buildId, normalizedOrderId);
 }
