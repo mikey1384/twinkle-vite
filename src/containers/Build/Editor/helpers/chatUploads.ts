@@ -112,14 +112,18 @@ const CODE_FILE_EXTENSIONS = [
 // on the server.
 export function getReferenceDocumentUploadMimeType(file?: File | null) {
   const mimeType = String(file?.type || '').trim();
+  const normalizedMime = mimeType.toLowerCase();
   const normalizedName = String(file?.name || '').toLowerCase();
   if (normalizedName.endsWith('.zip')) {
-    return mimeType || 'application/zip';
+    return normalizedMime === 'application/zip' ||
+      normalizedMime === 'application/x-zip-compressed'
+      ? normalizedMime
+      : 'application/zip';
   }
   if (
     CODE_FILE_EXTENSIONS.some((extension) => normalizedName.endsWith(extension))
   ) {
-    return mimeType.startsWith('text/') ? mimeType : 'text/plain';
+    return normalizedMime.startsWith('text/') ? mimeType : 'text/plain';
   }
   return mimeType || null;
 }

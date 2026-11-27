@@ -15,8 +15,16 @@ function fakeFile(name: string, type = ''): File {
 test('Build chat client classifies code files and zip archives as reference documents while keeping images separate', () => {
   for (const [name, type, expectedMime] of [
     ['project.zip', 'application/zip', 'application/zip'],
+    [
+      'project.zip',
+      'application/x-zip-compressed',
+      'application/x-zip-compressed'
+    ],
+    ['project.zip', 'application/octet-stream', 'application/zip'],
+    ['project.zip', 'application/x-zip', 'application/zip'],
     ['project.zip', '', 'application/zip'],
     ['main.ts', '', 'text/plain'],
+    ['main.ts', 'video/mp2t', 'text/plain'],
     ['App.tsx', 'application/typescript', 'text/plain'],
     ['game.js', 'application/javascript', 'text/plain'],
     ['styles.css', '', 'text/plain'],
