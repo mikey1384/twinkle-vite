@@ -88,6 +88,7 @@ registerMethods('build', [
   'loadAppDomainConnect',
   'removeAppDomain',
   'setAppDomainAutoRenew',
+  'openAppDomainBilling',
   'requestDomainManageLink',
   'startDomainManageSession',
   'loadManagedDomains',

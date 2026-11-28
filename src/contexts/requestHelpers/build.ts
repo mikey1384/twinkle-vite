@@ -586,9 +586,10 @@ export default function buildRequestHelpers({
     // the app's lumine.app address, sign-in on that address, the member's
     // own domains and buying a domain (parent-approved). A 4xx throws the
     // server's plain message with .status and .code for the screen to show.
-    async loadAppAddress({ buildId }: { buildId: number; }) {
+    // billingReturn: back from Stripe's card page, so the card shown is fresh
+    async loadAppAddress({ buildId, billingReturn }: { buildId: number; billingReturn?: boolean; }) {
       try {
-        const { data } = await request.get(`${URL}/build/${buildId}/app-address`, auth());
+        const { data } = await request.get(`${URL}/build/${buildId}/app-address`, { ...auth(), params: billingReturn ? { billingReturn: 1 } : undefined });
         return data;
       } catch (error: any) {
         return throwLumineAppHostingError(error, handleError);
@@ -737,6 +738,15 @@ export default function buildRequestHelpers({
     async removeAppDomain({ buildId, domainId }: { buildId: number; domainId: number; }) {
       try {
         const { data } = await request.delete(`${URL}/build/${buildId}/app-domains/${domainId}`, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    // the payer's card and receipts (Stripe's page; payer only)
+    async openAppDomainBilling({ buildId, domainId }: { buildId: number; domainId: number; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-domains/${domainId}/billing`, {}, auth());
         return data;
       } catch (error: any) {
         return throwLumineAppHostingError(error, handleError);

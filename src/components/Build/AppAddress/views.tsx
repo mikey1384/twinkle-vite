@@ -87,6 +87,8 @@ export interface DomainRenewalView {
   autoRenew: boolean;
   nextChargeDate: string | null;
   expiresDate?: string | null;
+  // the viewer pays for it (card and receipts are theirs)
+  youPay?: boolean;
   price: number;
   currency: string;
   cardLast4: string | null;
@@ -122,6 +124,8 @@ export function AddressMenuView({
   onRemoveDomain,
   onAutoRenew,
   savingRenewal = 0,
+  onBilling,
+  openingBilling = 0,
   otherDomains,
   onRemoveElsewhere,
   onUseHere,
@@ -151,6 +155,9 @@ export function AddressMenuView({
   onAutoRenew?: (domainId: number, autoRenew: boolean) => void;
   // the domain whose auto-renew is being saved
   savingRenewal?: number;
+  // the payer opens Stripe's card and receipts page
+  onBilling?: (domainId: number) => void;
+  openingBilling?: number;
   // on the viewer's own app: their domains that aren't on it (ruling 11-26)
   otherDomains?: OtherDomainView[];
   onRemoveElsewhere?: (domain: OtherDomainView) => void;
@@ -220,8 +227,8 @@ export function AddressMenuView({
     if (!renewal) continue;
     const until = renewalDateLabel(renewal.expiresDate || null);
     const saving = savingRenewal === domain.id;
-    // one auto-renew save at a time across every row
-    const busy = savingRenewal !== 0;
+    // one auto-renew save (or card page) at a time across every row
+    const busy = savingRenewal !== 0 || openingBilling !== 0;
     const armKey = `renew-${domain.id}`;
     const armed = confirming === armKey;
     const stacked = (title: React.ReactNode, line: React.ReactNode) => (
@@ -285,6 +292,17 @@ export function AddressMenuView({
         ),
         style: onAutoRenew ? { color: accent, fontWeight: 700 } : undefined,
         onClick: onAutoRenew && !busy ? () => onAutoRenew(domain.id, true) : undefined
+      });
+    }
+    if (renewal.youPay && onBilling) {
+      items.push({
+        label: (
+          <>
+            <Icon icon="credit-card" />
+            <span>{openingBilling === domain.id ? t.changeCardOpening : t.changeCard}</span>
+          </>
+        ),
+        onClick: busy ? undefined : () => onBilling(domain.id)
       });
     }
   }

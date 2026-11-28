@@ -251,6 +251,8 @@ export const ADDRESS_TEXT = {
     autoRenewCardLine: (host: string, date: string | null) =>
       `Nothing was charged for ${host}. We’ll try again tomorrow.${date ? ` It’s safe until ${date}.` : ''}`,
     autoRenewSaving: 'Saving…',
+    changeCard: 'Change card · Receipts',
+    changeCardOpening: 'Opening…',
     renewsCheckout: (date: string, price: string) =>
       `Your domain renews automatically once a year, on ${date}, for ${price}, with the card you pay with. We’ll email you 30 days, 7 days and 1 day before. You can turn auto-renew off anytime in your app’s address settings.`,
     // domains are their buyer's, whoever owns the app (ruling 11-26)
@@ -522,6 +524,8 @@ export const ADDRESS_TEXT = {
     autoRenewCardLine: (host: string, date: string | null) =>
       `${host} 요금은 결제되지 않았어요. 내일 다시 시도할게요.${date ? ` ${date}까지는 안전해요.` : ''}`,
     autoRenewSaving: '저장 중…',
+    changeCard: '카드 바꾸기 · 영수증',
+    changeCardOpening: '여는 중…',
     renewsCheckout: (date: string, price: string) =>
       `도메인은 1년에 한 번, ${date}에 ${price}로 결제하는 카드로 자동 갱신돼요. 30일, 7일, 1일 전에 이메일로 알려 드려요. 앱 주소 설정에서 언제든 자동 갱신을 끌 수 있어요.`,
     ownedBy: (username: string) => `@${username} 님의 주소`,

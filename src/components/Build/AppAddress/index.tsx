@@ -83,6 +83,7 @@ export default function AppAddress({
   const loadAppAddress = useAppContext((v) => v.requestHelpers.loadAppAddress);
   const removeAppDomain = useAppContext((v) => v.requestHelpers.removeAppDomain);
   const setAppDomainAutoRenew = useAppContext((v) => v.requestHelpers.setAppDomainAutoRenew);
+  const openAppDomainBilling = useAppContext((v) => v.requestHelpers.openAppDomainBilling);
   const attachAppDomainOrder = useAppContext((v) => v.requestHelpers.attachAppDomainOrder);
   const checkAppAddressSlug = useAppContext((v) => v.requestHelpers.checkAppAddressSlug);
   const renameAppAddress = useAppContext((v) => v.requestHelpers.renameAppAddress);
@@ -99,6 +100,7 @@ export default function AppAddress({
   const [leaving, setLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState('');
   const [savingRenewal, setSavingRenewal] = useState(0);
+  const [openingBilling, setOpeningBilling] = useState(0);
   const info = readScopedBuildData(infoState, buildId, userId);
   // Maker settings on twin-kle.com stay in English (audit D7).
   const t = ADDRESS_TEXT.en;
@@ -179,7 +181,10 @@ export default function AppAddress({
     setLeaveError('');
   }, [buildId]);
   // a save from another app or account never leaves a row on "Saving…"
-  useEffect(() => setSavingRenewal(0), [buildId, userId]);
+  useEffect(() => {
+    setSavingRenewal(0);
+    setOpeningBilling(0);
+  }, [buildId, userId]);
 
   function claimAction(name: string) {
     if (actionInFlightRef.current[name]) return null;
@@ -249,7 +254,9 @@ export default function AppAddress({
     setInfoState(null);
     function fetchInfo() {
       const seq = ++requestSeq;
-      loadAppAddress({ buildId })
+      // back from Stripe's card page (?billingReturn=1): the card shown is fresh
+      const billingReturn = new URLSearchParams(window.location.search).get('billingReturn') === '1';
+      loadAppAddress({ buildId, billingReturn })
         .then((data: AddressInfo) => {
           if (data && data.enabled === false) hostingKnownOff = true;
           if (!cancelled && seq === requestSeq) {
@@ -330,6 +337,27 @@ export default function AppAddress({
       if (action.sameScope()) setLeaveError(e?.message || t.actionFailed);
     } finally {
       if (action.sameScope()) setSavingRenewal(0);
+      action.release();
+    }
+  }
+
+  // the payer's card and receipts: Stripe's own page, back here afterwards
+  async function openBilling(domainId: number) {
+    const action = claimAction('billing');
+    if (!action) return;
+    setLeaveError('');
+    setOpeningBilling(domainId);
+    try {
+      const result = await openAppDomainBilling({ buildId: action.targetBuildId, domainId });
+      if (result?.url && action.sameScope()) {
+        window.location.assign(result.url);
+        return;
+      }
+      if (action.sameScope()) setLeaveError(t.actionFailed);
+    } catch (e: any) {
+      if (action.sameScope()) setLeaveError(e?.message || t.actionFailed);
+    } finally {
+      if (action.sameScope()) setOpeningBilling(0);
       action.release();
     }
   }
@@ -483,6 +511,8 @@ export default function AppAddress({
         onRemoveDomain={(domainId) => void removeDomain(domainId)}
         onAutoRenew={(domainId, autoRenew) => void changeAutoRenew(domainId, autoRenew)}
         savingRenewal={savingRenewal}
+        onBilling={(domainId) => void openBilling(domainId)}
+        openingBilling={openingBilling}
         otherDomains={isOwner || ownsBoughtDomain ? info.yourOtherDomains : undefined}
         onRemoveElsewhere={(domain) => void removeElsewhere(domain)}
         onUseHere={isOwner ? (domain) => void useHere(domain) : undefined}
