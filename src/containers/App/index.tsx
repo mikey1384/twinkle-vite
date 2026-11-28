@@ -153,6 +153,7 @@ const BuildThumbnailCaptureHost = lazyWithRetry(
 const Chat = lazyWithRetry(() => import('~/containers/Chat'));
 const CliDeviceAuth = lazyWithRetry(() => import('~/containers/CliDeviceAuth'));
 const LumineAppSignIn = lazyWithRetry(() => import('~/containers/LumineAppSignIn'));
+const DomainManage = lazyWithRetry(() => import('~/containers/DomainManage'));
 const DomainParentConsent = lazyWithRetry(
   () => import('~/containers/DomainParentConsent')
 );
@@ -1627,6 +1628,7 @@ export default function App() {
                 <Route path="/cli" element={<CliDeviceAuth />} />
                 <Route path="/lumine-app/signin" element={<LumineAppSignIn />} />
                 <Route path="/domain/parent" element={<DomainParentConsent />} />
+                <Route path="/domains/manage" element={<DomainManage />} />
                 <Route
                   path="/chat/*"
                   element={<Chat onFileUpload={handleFileUploadOnChat} />}

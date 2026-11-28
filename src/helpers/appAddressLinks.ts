@@ -18,5 +18,5 @@ export function appAddressIntentPath(pathname: string, search: string, hash = ''
 // back, so the site's header (top on desktop, bottom nav on phones) is
 // hidden there: no second logo, no nav over the checkout's buttons.
 export function isCheckoutPagePath(pathname: string) {
-  return /^\/build\/\d+\/domain\/?$/.test(String(pathname || '')) || /^\/domain\/parent\/?$/.test(String(pathname || ''));
+  return /^\/build\/\d+\/domain\/?$/.test(String(pathname || '')) || /^\/domain\/parent\/?$/.test(String(pathname || '')) || /^\/domains\/manage\/?$/.test(String(pathname || ''));
 }

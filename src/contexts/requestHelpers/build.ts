@@ -742,6 +742,51 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    // /domains/manage (the payer, signed in by email; no Twinkle login).
+    // The manage session goes to these routes only, never with auth().
+    async requestDomainManageLink({ email, lang }: { email: string; lang?: string; }) {
+      try {
+        const { data } = await request.post(`${URL}/domain-manage/link`, { email, lang });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async startDomainManageSession({ token }: { token: string; }) {
+      try {
+        const { data } = await request.post(`${URL}/domain-manage/session`, { token });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async loadManagedDomains({ sessionToken, billingReturn }: { sessionToken: string; billingReturn?: boolean; }) {
+      try {
+        const { data } = await request.get(`${URL}/domain-manage/domains`, {
+          headers: { Authorization: `Bearer ${sessionToken}` },
+          params: billingReturn ? { billingReturn: 1 } : undefined
+        });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async setManagedDomainAutoRenew({ sessionToken, orderId, autoRenew }: { sessionToken: string; orderId: number; autoRenew: boolean; }) {
+      try {
+        const { data } = await request.post(`${URL}/domain-manage/domains/${orderId}/auto-renew`, { autoRenew }, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
+    async openManagedDomainBilling({ sessionToken, orderId }: { sessionToken: string; orderId: number; }) {
+      try {
+        const { data } = await request.post(`${URL}/domain-manage/domains/${orderId}/billing`, {}, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     // a bought domain's yearly auto-renew: off (owner or payer) or back on (payer only)
     async setAppDomainAutoRenew({ buildId, domainId, autoRenew }: { buildId: number; domainId: number; autoRenew: boolean; }) {
       try {
