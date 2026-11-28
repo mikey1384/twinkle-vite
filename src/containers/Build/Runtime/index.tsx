@@ -536,6 +536,33 @@ const headerTitleStackClass = css`
   }
 `;
 
+// Tablets stack like phones: the title keeps line one and the visits (plus the
+// app's address) get the whole column width on line two, instead of the visit
+// count being sheared mid-word beside a long title.
+const headerTitleStackTwoLineClass = css`
+  @media (max-width: 1100px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+`;
+
+// A phone gives the title column a little more room when there's an address
+// to read: the action row already scrolls sideways, the address can't.
+const headerTitleLineWithAddressClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    min-width: min(13rem, 42vw);
+  }
+`;
+
+// The address is the priority on tight toolbars (Mikey 11-28): the eye icon
+// keeps the visit count's meaning, so the word goes before the address shrinks.
+const headerVisitsUnitWithAddressClass = css`
+  @media (max-width: 1100px) {
+    display: none;
+  }
+`;
+
 const headerMetaInlineClass = css`
   display: inline-flex;
   align-items: center;
@@ -582,6 +609,52 @@ const headerVisitsUnitClass = css`
 // phrase ("No visits yet"), nor a count so long it outgrows the column on its
 // own. Ellipsise rather than shearing a glyph in half.
 const headerVisitsValueClass = css`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+// Visits and the app's own address share one quiet row: inline after the
+// byline on wide screens, the second line of the stacked title on a phone.
+const headerSubRowClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
+`;
+
+// The app's official address (Mikey 11-28): a bought domain when it is live,
+// else the free lumine.app one. It yields first when the row runs out of room
+// (ellipsis, never a sheared glyph), and a bought domain reads a touch
+// stronger than the free address because it is the maker's own name.
+const headerAddressClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 1.1rem;
+  line-height: 1.15;
+  color: inherit;
+  opacity: 0.72;
+  text-decoration: none;
+  white-space: nowrap;
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    text-decoration: underline;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 0.95rem;
+  }
+`;
+
+const headerAddressOwnClass = css`
+  opacity: 0.9;
+  font-weight: 600;
+`;
+
+const headerAddressHostClass = css`
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2481,20 +2554,53 @@ export default function BuildRuntime({
             inert={toolbarHidden}
           >
             {/* left: app icon + title + compact inline meta */}
-            <div className={headerTitleLineClass}>
+            <div
+              className={`${headerTitleLineClass}${
+                build.publicAddress?.host
+                  ? ` ${headerTitleLineWithAddressClass}`
+                  : ''
+              }`}
+            >
               <Icon className={headerAppIconClass} icon="laptop-code" />
-              <div className={headerTitleStackClass}>
+              <div
+                className={`${headerTitleStackClass} ${headerTitleStackTwoLineClass}`}
+              >
                 <h1 className={titleClass}>{build.title}</h1>
                 <span className={headerMetaInlineClass}>
                   <BuildAttribution build={build} />
                 </span>
-                <ViewCount
-                  className={headerVisitsClass}
-                  unitClassName={headerVisitsUnitClass}
-                  valueClassName={headerVisitsValueClass}
-                  count={build.viewCount}
-                  unit="visits"
-                />
+                <span className={headerSubRowClass}>
+                  <ViewCount
+                    className={headerVisitsClass}
+                    unitClassName={`${headerVisitsUnitClass}${
+                      build.publicAddress?.host
+                        ? ` ${headerVisitsUnitWithAddressClass}`
+                        : ''
+                    }`}
+                    valueClassName={headerVisitsValueClass}
+                    count={build.viewCount}
+                    unit="visits"
+                  />
+                  {build.publicAddress?.host ? (
+                    <a
+                      className={`${headerAddressClass}${
+                        build.publicAddress.kind === 'domain'
+                          ? ` ${headerAddressOwnClass}`
+                          : ''
+                      }`}
+                      href={build.publicAddress.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Open ${build.publicAddress.host}`}
+                      aria-label={`This app's address: ${build.publicAddress.host} (opens in a new tab)`}
+                    >
+                      <Icon icon="globe" />
+                      <span className={headerAddressHostClass}>
+                        {build.publicAddress.host}
+                      </span>
+                    </a>
+                  ) : null}
+                </span>
               </div>
             </div>
             {/* centre: collapse toggles + battery, parked in the free space */}

@@ -12,6 +12,9 @@ export interface RuntimeBuild {
   description: string | null;
   code: string | null;
   viewCount?: number;
+  // The app's official public address: a live bought/connected domain first,
+  // else its free lumine.app address; null when nothing is publicly live.
+  publicAddress?: { kind: 'domain' | 'free'; host: string; url: string } | null;
   numComments?: number;
   pinnedCommentId?: number | null;
   primaryArtifactId?: number | null;
