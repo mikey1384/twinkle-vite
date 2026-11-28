@@ -63,6 +63,10 @@ export interface AiUsagePolicy {
   energyCharged?: number;
   energyOverflow?: number;
   energyRemaining?: number;
+  // recharge opens under rechargeBelowPercent (5%), not only at empty
+  canRecharge?: boolean;
+  rechargeBelowUnits?: number;
+  rechargeBelowPercent?: number;
   energyPercent?: number;
   energySegments?: number;
   energySegmentsRemaining?: number;

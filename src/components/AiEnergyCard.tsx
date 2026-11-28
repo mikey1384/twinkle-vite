@@ -387,9 +387,12 @@ export default function AiEnergyCard({
         {resetNeeded && !isInline && (
           <div className={rechargeSectionCls}>
             <div className={rechargeMessageCls}>
-              {resetPurchaseNumber
-                ? `Battery is empty. Recharge #${resetPurchaseNumber} restores one full battery for today.`
-                : 'Battery is empty. Recharge to restore one full battery for today.'}
+              {typeof energyPolicy?.energyRemaining === 'number' &&
+              energyPolicy.energyRemaining > 0
+                ? "Battery low. Recharging adds a full battery, and you keep what's left."
+                : resetPurchaseNumber
+                  ? `Battery is empty. Recharge #${resetPurchaseNumber} adds a full battery for today.`
+                  : 'Battery is empty. Recharge to add a full battery for today.'}
             </div>
             {onRecharge && (
               <GameCTAButton

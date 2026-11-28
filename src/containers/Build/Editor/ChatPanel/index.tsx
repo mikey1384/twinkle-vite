@@ -472,11 +472,15 @@ export default function ChatPanel({
         ) || 0
       )
     );
+    // Recharge opens under 5% (Mikey 11-28): the "not enough Energy for one
+    // step" notice says Recharge, so the button must be there below empty too.
     const quotaMaxed =
-      typeof aiUsagePolicy.energyRemaining === 'number'
-        ? aiUsagePolicy.energyRemaining <= 0
-        : Number(aiUsagePolicy.generationRequestsPerDay || 0) > 0 &&
-          Number(aiUsagePolicy.generationRequestsRemaining || 0) <= 0;
+      typeof aiUsagePolicy.canRecharge === 'boolean'
+        ? aiUsagePolicy.canRecharge
+        : typeof aiUsagePolicy.energyRemaining === 'number'
+          ? aiUsagePolicy.energyRemaining <= 0
+          : Number(aiUsagePolicy.generationRequestsPerDay || 0) > 0 &&
+            Number(aiUsagePolicy.generationRequestsRemaining || 0) <= 0;
     if (!quotaMaxed || generating || resetCost < 1) {
       return null;
     }
