@@ -495,6 +495,8 @@ export function mountBadge({
   onSignIn,
   extraItems,
   playerKindLabel,
+  signInLabel,
+  openOnTwinkleSub,
   viewerPicture
 }: {
   config: LiteHostConfig;
@@ -510,6 +512,11 @@ export function mountBadge({
   extraItems?: () => MenuExtra[];
   // what kind of account the signed-in player has ("Twinkle member", ...)
   playerKindLabel?: () => string | null;
+  // the signed-out menu row's words, by how the app signs people in
+  // (Twinkle, its own player accounts, or both); default Twinkle's
+  signInLabel?: () => { label: string; sub: string } | null;
+  // an app on its own accounts only can't be played with a Twinkle account
+  openOnTwinkleSub?: () => string | null;
 }) {
   const badge = el('button', {
     class: 'lh-badge',
@@ -730,7 +737,7 @@ export function mountBadge({
       row({
         iconName: 'open',
         label: t.openOnTwinkle,
-        sub: t.openOnTwinkleSub,
+        sub: openOnTwinkleSub?.() || t.openOnTwinkleSub,
         href: `${config.siteOrigin}/app/${config.buildId}`
       }),
       row({
@@ -764,11 +771,12 @@ export function mountBadge({
         signOut
       ]);
     } else {
+      const words = signInLabel?.() || { label: t.signIn, sub: t.signInSub };
       const signIn = el('button', { class: 'lh-pop-signin', role: 'menuitem', type: 'button' }, [
         el('span', { class: 'lh-pop-signin-mark', 'aria-hidden': 'true' }, [icon('star', 'lh-star')]),
         el('span', { class: 'lh-row-text' }, [
-          el('span', { class: 'lh-pop-signin-label' }, [t.signIn]),
-          el('span', { class: 'lh-pop-signin-sub' }, [t.signInSub])
+          el('span', { class: 'lh-pop-signin-label' }, [words.label]),
+          el('span', { class: 'lh-pop-signin-sub' }, [words.sub])
         ])
       ]);
       signIn.addEventListener('click', async () => {
