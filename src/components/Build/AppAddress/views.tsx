@@ -6,6 +6,7 @@ import ModalFooter from '~/components/Modal/Footer';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { HeaderChip, HeaderMenu, type HeaderMenuItem } from '~/components/Build/HeaderChip';
 import type { AddressText } from './text';
+import { renewalDateLabel, renewalPrice } from './renewalDates';
 
 // The app address's own views: the header chip with its menu, and the
 // small rename dialog (a standard Modal). The own-web-address checkout lives
@@ -78,6 +79,18 @@ export interface OwnerDomainView {
   ownedByYou?: boolean;
   ownerUsername?: string | null;
   canRemove?: boolean;
+  // bought domains, for their owner or payer, while auto-renew exists
+  renewal?: DomainRenewalView;
+}
+
+export interface DomainRenewalView {
+  autoRenew: boolean;
+  nextChargeDate: string | null;
+  expiresDate?: string | null;
+  price: number;
+  currency: string;
+  cardLast4: string | null;
+  status: 'active' | 'off' | 'canceled_price_rise' | 'past_due';
 }
 
 export interface OtherDomainView {
@@ -107,6 +120,8 @@ export function AddressMenuView({
   domains,
   ownerDomains,
   onRemoveDomain,
+  onAutoRenew,
+  savingRenewal = 0,
   otherDomains,
   onRemoveElsewhere,
   onUseHere,
@@ -132,6 +147,10 @@ export function AddressMenuView({
   // the server says which this viewer may remove (canRemove)
   ownerDomains?: OwnerDomainView[];
   onRemoveDomain?: (domainId: number) => void;
+  // turn a bought domain's auto-renew off (after a confirm tap) or back on
+  onAutoRenew?: (domainId: number, autoRenew: boolean) => void;
+  // the domain whose auto-renew is being saved
+  savingRenewal?: number;
   // on the viewer's own app: their domains that aren't on it (ruling 11-26)
   otherDomains?: OtherDomainView[];
   onRemoveElsewhere?: (domain: OtherDomainView) => void;
@@ -150,6 +169,7 @@ export function AddressMenuView({
   leadItems?: HeaderMenuItem[];
 }) {
   const [confirming, setConfirming] = useState<number | string>(0);
+  const freeHost = addressHost(freeUrl);
   const byHost = new Map((ownerDomains || []).map((domain) => [domain.hostname, domain]));
   // every address once (by hostname), the shared one first
   const links: Array<{ host: string; href: string }> = [];
@@ -194,6 +214,78 @@ export function AddressMenuView({
         </>
       )
     });
+  }
+  for (const domain of ownerDomains || []) {
+    const renewal = domain.renewal;
+    if (!renewal) continue;
+    const until = renewalDateLabel(renewal.expiresDate || null);
+    const saving = savingRenewal === domain.id;
+    const armKey = `renew-${domain.id}`;
+    const armed = confirming === armKey;
+    const stacked = (title: React.ReactNode, line: React.ReactNode) => (
+      <span className={stackedLabel}>
+        <span className={wrapLabel}>{title}</span>
+        <small className={`${fine} ${wrapLabel}`}>{line}</small>
+      </span>
+    );
+    if (renewal.status === 'active' && renewal.autoRenew) {
+      const next = renewalDateLabel(renewal.nextChargeDate) || until || '';
+      items.push({
+        label: (
+          <>
+            <Icon icon="sync" />
+            {saving
+              ? stacked(t.autoRenewOnTitle, t.autoRenewSaving)
+              : armed
+                ? stacked(t.autoRenewOffConfirm, t.autoRenewOffConfirmHint(next))
+                : stacked(t.autoRenewOnTitle, t.autoRenewOnLine(domain.hostname, next, renewalPrice(renewal.price, renewal.currency), renewal.cardLast4))}
+          </>
+        ),
+        style: armed ? { color: '#b42318' } : undefined,
+        keepOpen: !armed,
+        onClick: () => {
+          if (!onAutoRenew || saving) return;
+          if (armed) {
+            setConfirming(0);
+            onAutoRenew(domain.id, false);
+          } else {
+            setConfirming(armKey);
+          }
+        }
+      });
+    } else if (renewal.status === 'past_due') {
+      items.push({
+        label: (
+          <>
+            <Icon icon="credit-card" />
+            {stacked(t.autoRenewCardTitle, t.autoRenewCardLine(domain.hostname, until))}
+          </>
+        ),
+        style: { color: '#b45309' }
+      });
+    } else if (renewal.status === 'canceled_price_rise') {
+      items.push({
+        label: (
+          <>
+            <Icon icon="info-circle" />
+            {stacked(t.autoRenewPriceTitle, t.autoRenewPriceLine(domain.hostname, until))}
+          </>
+        )
+      });
+    } else {
+      // off: turning it back on needs the card saved at purchase (the server
+      // says so if there isn't one)
+      items.push({
+        label: (
+          <>
+            <Icon icon="sync" />
+            {stacked(saving ? t.autoRenewSaving : onAutoRenew ? t.autoRenewTurnOn : t.autoRenewOffTitle, t.autoRenewOffLine(domain.hostname, until, freeHost))}
+          </>
+        ),
+        style: onAutoRenew ? { color: accent, fontWeight: 700 } : undefined,
+        onClick: onAutoRenew && !saving ? () => onAutoRenew(domain.id, true) : undefined
+      });
+    }
   }
   items.push(
     { separator: true },

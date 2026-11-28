@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { css, keyframes } from '@emotion/css';
 import LumineAtWork from '~/containers/Build/PreviewPanel/LumineAtWork';
 import Confetti from '~/containers/Build/Editor/ChatPanel/Roadmap/Confetti';
-import type { AddressText } from '../text';
+import { ADDRESS_TEXT, type AddressText } from '../text';
+import { firstRenewalLabel } from '../renewalDates';
 import { toE164, type PhoneDraft } from './phone';
 import { STATE_OPTIONAL, countryInStateField, isAutofillChange, guessCountry, isKnownCountry } from './countries';
 import {
@@ -752,6 +753,7 @@ export function OwnerDetailsView({
                 </>
               )}
             </p>
+            {renews && <Notice>{t.renewsCheckout(firstRenewalLabel(t === ADDRESS_TEXT.ko ? 'ko' : 'en'), usd(idea.priceCents))}</Notice>}
             <Notice>{t.cheaperElsewhere}</Notice>
             <label className={consentClass}>
               <input type="checkbox" checked={agreed} onChange={(event) => onAgree(event.target.checked)} />

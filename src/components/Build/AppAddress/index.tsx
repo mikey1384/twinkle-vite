@@ -82,6 +82,7 @@ export default function AppAddress({
 }) {
   const loadAppAddress = useAppContext((v) => v.requestHelpers.loadAppAddress);
   const removeAppDomain = useAppContext((v) => v.requestHelpers.removeAppDomain);
+  const setAppDomainAutoRenew = useAppContext((v) => v.requestHelpers.setAppDomainAutoRenew);
   const attachAppDomainOrder = useAppContext((v) => v.requestHelpers.attachAppDomainOrder);
   const checkAppAddressSlug = useAppContext((v) => v.requestHelpers.checkAppAddressSlug);
   const renameAppAddress = useAppContext((v) => v.requestHelpers.renameAppAddress);
@@ -97,6 +98,7 @@ export default function AppAddress({
   const [copied, setCopied] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState('');
+  const [savingRenewal, setSavingRenewal] = useState(0);
   const info = readScopedBuildData(infoState, buildId, userId);
   // Maker settings on twin-kle.com stay in English (audit D7).
   const t = ADDRESS_TEXT.en;
@@ -297,6 +299,39 @@ export default function AppAddress({
     }
   }
 
+  // a bought domain's auto-renew, off or back on; the server answers with the
+  // new renewal line (the paid-until day stays what the address said)
+  async function changeAutoRenew(domainId: number, autoRenew: boolean) {
+    const action = claimAction('autoRenew');
+    if (!action) return;
+    setLeaveError('');
+    setSavingRenewal(domainId);
+    try {
+      const result = await setAppDomainAutoRenew({ buildId: action.targetBuildId, domainId, autoRenew });
+      if (!action.sameScope() || !result?.renewal) return;
+      setInfoState((prev) =>
+        prev && prev.buildId === action.targetBuildId && prev.userId === action.targetUserId && prev.data
+          ? {
+              ...prev,
+              data: {
+                ...prev.data,
+                domains: (prev.data.domains || []).map((domain: OwnerDomainView) =>
+                  domain.id === domainId && domain.renewal
+                    ? { ...domain, renewal: { ...domain.renewal, ...result.renewal } }
+                    : domain
+                )
+              }
+            }
+          : prev
+      );
+    } catch (e: any) {
+      if (action.sameScope()) setLeaveError(e?.message || t.actionFailed);
+    } finally {
+      if (action.sameScope()) setSavingRenewal(0);
+      action.release();
+    }
+  }
+
   // a domain of yours on another app (one you gave away, say): take it off
   async function removeElsewhere(domain: OtherDomainView) {
     const action = claimAction('removeElsewhere');
@@ -444,6 +479,8 @@ export default function AppAddress({
         domains={liveDomains}
         ownerDomains={isOwner || (info.domains || []).some((d) => d.ownedByYou) ? info.domains : undefined}
         onRemoveDomain={(domainId) => void removeDomain(domainId)}
+        onAutoRenew={(domainId, autoRenew) => void changeAutoRenew(domainId, autoRenew)}
+        savingRenewal={savingRenewal}
         otherDomains={isOwner || ownsBoughtDomain ? info.yourOtherDomains : undefined}
         onRemoveElsewhere={(domain) => void removeElsewhere(domain)}
         onUseHere={isOwner ? (domain) => void useHere(domain) : undefined}

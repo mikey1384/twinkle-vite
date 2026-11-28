@@ -742,6 +742,15 @@ export default function buildRequestHelpers({
         return throwLumineAppHostingError(error, handleError);
       }
     },
+    // a bought domain's yearly auto-renew: off (owner or payer) or back on (payer only)
+    async setAppDomainAutoRenew({ buildId, domainId, autoRenew }: { buildId: number; domainId: number; autoRenew: boolean; }) {
+      try {
+        const { data } = await request.post(`${URL}/build/${buildId}/app-domains/${domainId}/auto-renew`, { autoRenew }, auth());
+        return data;
+      } catch (error: any) {
+        return throwLumineAppHostingError(error, handleError);
+      }
+    },
     // a bought domain not on any app, onto one of the buyer's own apps
     async attachAppDomainOrder({ buildId, orderId }: { buildId: number; orderId: number; }) {
       try {

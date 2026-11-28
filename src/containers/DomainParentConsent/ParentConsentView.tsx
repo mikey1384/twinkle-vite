@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { PARENT_TEXT } from '~/components/Build/AppAddress/text';
 import { usd, krw } from '~/components/Build/AppAddress/checkout/model';
+import { firstRenewalLabel } from '~/components/Build/AppAddress/renewalDates';
 import { draftFromPhone, toE164, type PhoneDraft } from '~/components/Build/AppAddress/checkout/phone';
 import { STATE_OPTIONAL, countryInStateField, isAutofillChange, guessCountry, isKnownCountry, stateOrCity } from '~/components/Build/AppAddress/checkout/countries';
 import {
@@ -37,6 +38,8 @@ export interface ParentOrderView {
   breakdown: { registryCents: number; cardFeeCents: number; twinkleCents: number };
   approxKrw: number | null;
   status: string;
+  // yearly auto-renew is on for new purchases
+  renews?: boolean;
 }
 
 export interface RegistrantInput {
@@ -178,7 +181,7 @@ export default function ParentConsentView({
       price={usd(order.priceCents)}
       period={main.perYearShort}
       approx={approx(langs[0])}
-      checks={[main.noAutoRenew, main.includedSetup, main.includedPrivacy, main.includedOwner, main.includedFree]}
+      checks={[order.renews ? main.autoRenewShort : main.noAutoRenew, main.includedSetup, main.includedPrivacy, main.includedOwner, main.includedFree]}
       reveal={{
         label: main.whatsInPrice,
         body: langs.map((lang) => (
@@ -196,7 +199,7 @@ export default function ParentConsentView({
   const mobileSummary = (
     <MobileSummary domain={order.domain} price={usd(order.priceCents)}>
       <ul className={mobileChecksClass}>
-        {[main.noAutoRenew, main.includedSetup, main.includedPrivacy, main.includedOwner].map((line) => (
+        {[order.renews ? main.autoRenewShort : main.noAutoRenew, main.includedSetup, main.includedPrivacy, main.includedOwner].map((line) => (
           <li key={line}>
             <CheckIcon size={14} />
             {line}
@@ -339,7 +342,11 @@ export default function ParentConsentView({
               ))}
             </dl>
             <ul className={promiseListClass}>
-              {[(t: ParentText) => t.renewal, (t: ParentText) => t.ownership, (t: ParentText) => t.refund].map((pick, index) => (
+              {[
+                (t: ParentText) => (order.renews ? t.renewalAuto(firstRenewalLabel(t === PARENT_TEXT.ko ? 'ko' : 'en'), usd(order.priceCents)) : t.renewal),
+                (t: ParentText) => t.ownership,
+                (t: ParentText) => t.refund
+              ].map((pick, index) => (
                 <li key={index}>
                   <CheckIcon size={15} />
                   <span>{both(pick)}</span>

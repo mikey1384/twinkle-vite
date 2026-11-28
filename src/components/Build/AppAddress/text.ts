@@ -177,7 +177,7 @@ export const ADDRESS_TEXT = {
     ownerPrivate: 'Privacy protection is on, so these details aren’t shown publicly.',
     priceForYear: (price: string) => `${price} for one year`,
     oneYearLine: 'It pays for one year. You’ll be able to renew before it ends.',
-    renewsLine: (price: string) => `Renews yearly for ${price}. You can cancel anytime.`,
+    renewsLine: (price: string) => `Renews automatically each year for ${price}. Turn it off anytime.`,
     cheaperElsewhere:
       'Other sites like Cloudflare, Namecheap or Porkbun often sell domains for less. Buying here costs a bit more because we register it and connect it to your app for you.',
     firstName: 'First name',
@@ -231,6 +231,27 @@ export const ADDRESS_TEXT = {
     supportTitle: (domain: string) => `We’re looking into ${domain}`,
     supportBody: 'Your payment went through and something needs a person’s look before your address is ready. We’re on it; your free address keeps working meanwhile.',
     removeConfirm: 'Tap again to remove (the app stops opening there)',
+    // auto-renew (Stripe yearly renewal; wording: domain-renewal-wording.md)
+    autoRenewOnTitle: 'Auto-renew is on',
+    autoRenewOnLine: (host: string, date: string, price: string, last4: string | null) =>
+      `${host} renews on ${date} for ${price}${last4 ? ` (card ending ${last4})` : ''}`,
+    autoRenewOffConfirm: 'Turn off auto-renew?',
+    autoRenewOffConfirmHint: (date: string) => `Nothing changes until ${date}. Tap again to turn it off; you can turn it back on anytime before then.`,
+    autoRenewTurnOn: 'Turn auto-renew back on',
+    autoRenewOffLine: (host: string, date: string | null, freeHost: string) =>
+      date
+        ? `Auto-renew is off. ${host} stays yours until ${date}. After that your app goes back to ${freeHost}.`
+        : `Auto-renew is off. When ${host}’s year ends, your app goes back to ${freeHost}.`,
+    autoRenewOffTitle: 'Auto-renew is off',
+    autoRenewPriceTitle: 'The renewal price changed',
+    autoRenewPriceLine: (host: string, date: string | null) =>
+      `We won’t charge the new price without asking. ${date ? `${host} stays yours until ${date}.` : ''}`.trim(),
+    autoRenewCardTitle: 'Your card didn’t go through',
+    autoRenewCardLine: (host: string, date: string | null) =>
+      `Nothing was charged for ${host}. We’ll try again tomorrow.${date ? ` It’s safe until ${date}.` : ''}`,
+    autoRenewSaving: 'Saving…',
+    renewsCheckout: (date: string, price: string) =>
+      `Your domain renews automatically once a year, on ${date}, for ${price}, with the card you pay with. We’ll email you 30 days, 7 days and 1 day before. You can turn auto-renew off anytime in your app’s address settings.`,
     // domains are their buyer's, whoever owns the app (ruling 11-26)
     ownedBy: (username: string) => `Owned by @${username}`,
     yourOtherAddresses: 'Your other addresses',
@@ -428,7 +449,7 @@ export const ADDRESS_TEXT = {
     ownerPrivate: '개인정보 보호가 켜져 있어서 이 정보는 공개되지 않아요.',
     priceForYear: (price: string) => `1년 ${price}`,
     oneYearLine: '1년 동안 쓸 수 있고, 저절로 갱신되지 않아요.',
-    renewsLine: (price: string) => `매년 ${price}에 갱신돼요. 언제든 취소할 수 있어요.`,
+    renewsLine: (price: string) => `매년 ${price}로 자동 갱신돼요. 언제든 끌 수 있어요.`,
     cheaperElsewhere:
       'Cloudflare, Namecheap, Porkbun 같은 다른 사이트가 더 저렴한 경우가 많아요. 여기서 사면 조금 더 비싼 대신, 등록과 앱 연결을 저희가 다 해 드려요.',
     firstName: '이름',
@@ -481,6 +502,26 @@ export const ADDRESS_TEXT = {
     supportTitle: (domain: string) => `${domain}을(를) 확인하고 있어요`,
     supportBody: '결제는 끝났고, 주소가 준비되기 전에 사람이 한 번 확인해야 할 일이 생겼어요. 처리하고 있으니 그동안 무료 주소는 계속 쓸 수 있어요.',
     removeConfirm: '한 번 더 누르면 삭제돼요 (이 주소로 앱이 열리지 않아요)',
+    autoRenewOnTitle: '자동 갱신 켜짐',
+    autoRenewOnLine: (host: string, date: string, price: string, last4: string | null) =>
+      `${host}: ${date}에 ${price}로 갱신돼요${last4 ? ` (카드 끝자리 ${last4})` : ''}`,
+    autoRenewOffConfirm: '자동 갱신을 끌까요?',
+    autoRenewOffConfirmHint: (date: string) => `${date}까지는 바뀌는 게 없어요. 한 번 더 누르면 꺼지고, 그 전까지 언제든 다시 켤 수 있어요.`,
+    autoRenewTurnOn: '자동 갱신 다시 켜기',
+    autoRenewOffLine: (host: string, date: string | null, freeHost: string) =>
+      date
+        ? `자동 갱신이 꺼져 있어요. ${host}은(는) ${date}까지 내 주소예요. 그 뒤에는 앱이 ${freeHost}로 돌아가요.`
+        : `자동 갱신이 꺼져 있어요. ${host}의 1년이 끝나면 앱이 ${freeHost}로 돌아가요.`,
+    autoRenewOffTitle: '자동 갱신 꺼짐',
+    autoRenewPriceTitle: '갱신 가격이 바뀌었어요',
+    autoRenewPriceLine: (host: string, date: string | null) =>
+      `물어보지 않고 오른 가격을 결제하지 않아요. ${date ? `${host}은(는) ${date}까지 내 주소예요.` : ''}`.trim(),
+    autoRenewCardTitle: '카드 결제가 되지 않았어요',
+    autoRenewCardLine: (host: string, date: string | null) =>
+      `${host} 요금은 결제되지 않았어요. 내일 다시 시도할게요.${date ? ` ${date}까지는 안전해요.` : ''}`,
+    autoRenewSaving: '저장 중…',
+    renewsCheckout: (date: string, price: string) =>
+      `도메인은 1년에 한 번, ${date}에 ${price}로 결제하는 카드로 자동 갱신돼요. 30일, 7일, 1일 전에 이메일로 알려 드려요. 앱 주소 설정에서 언제든 자동 갱신을 끌 수 있어요.`,
     ownedBy: (username: string) => `@${username} 님의 주소`,
     yourOtherAddresses: '내 다른 주소',
     onApp: (title: string) => (title ? `${title}에 연결됨` : '다른 앱에 연결됨'),
@@ -543,6 +584,9 @@ export const PARENT_TEXT = {
     summaryHeading: '자녀가 원하는 주소',
     perYearShort: '1년',
     noAutoRenew: '1년 포함',
+    autoRenewShort: '매년 자동 갱신 · 언제든 끌 수 있어요',
+    renewalAuto: (date: string, price: string) =>
+      `1년 단위로, 매년 ${date}에 ${price}로 이번에 결제하시는 카드로 자동 갱신돼요. 갱신 30일, 7일, 1일 전에 이메일로 미리 알려 드리고, 원하지 않으시면 언제든 자동 갱신을 끄실 수 있어요. 끄셔도 앱은 무료 lumine.app 주소로 계속 열려요.`,
     includedSetup: '설정은 트윈클이 바로 해 드려요',
     includedPrivacy: '개인정보 보호 기본 적용',
     includedOwner: '법적 소유자는 보호자님',
@@ -624,6 +668,9 @@ export const PARENT_TEXT = {
     summaryHeading: 'The address they’d like',
     perYearShort: 'for 1 year',
     noAutoRenew: '1 year included',
+    autoRenewShort: 'Renews yearly · turn it off anytime',
+    renewalAuto: (date: string, price: string) =>
+      `It renews automatically once a year, on ${date}, for ${price}, on the card you pay with. We’ll email you 30 days, 7 days and 1 day before, and you can turn auto-renew off anytime. If it’s off, the app keeps opening at its free lumine.app address.`,
     includedSetup: 'Twinkle sets it up instantly',
     includedPrivacy: 'Privacy protection on',
     includedOwner: 'You are the legal owner',
