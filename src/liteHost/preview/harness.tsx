@@ -434,6 +434,14 @@ function BadgeMenu() {
       session: fakeSession,
       onReport: () => {},
       onSignIn: () => {},
+      signInLabel: () => {
+        const t = LITE_HOST_TEXT[lang];
+        const accounts = params.get('accounts');
+        if (accounts === 'app') return { label: t.signInPlain, sub: t.signInAppSub };
+        if (accounts === 'both') return { label: t.signInPlain, sub: t.signInBothSub };
+        return null;
+      },
+      openOnTwinkleSub: () => (params.get('accounts') === 'app' ? LITE_HOST_TEXT[lang].openOnTwinkleSubApp : null),
       playerKindLabel: () => {
         const t = LITE_HOST_TEXT[lang];
         if (!signed) return null;

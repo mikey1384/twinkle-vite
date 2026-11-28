@@ -669,6 +669,15 @@ async function start() {
     t,
     session,
     onSignIn: () => void openSignIn(),
+    // G14: an app with its own player accounts never says "with Twinkle";
+    // until the mode is known, the plain "Sign in" fits every mode
+    signInLabel: () => {
+      if (!accountModeLoaded) return { label: t.signInPlain, sub: t.signInSub };
+      if (accountMode === 'app') return { label: t.signInPlain, sub: t.signInAppSub };
+      if (accountMode === 'both') return { label: t.signInPlain, sub: t.signInBothSub };
+      return null;
+    },
+    openOnTwinkleSub: () => (accountModeLoaded && accountMode === 'app' ? t.openOnTwinkleSubApp : null),
     playerKindLabel: () => {
       const player = session.get()?.appPlayer;
       if (!session.get()) return null;
