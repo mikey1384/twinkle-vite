@@ -204,10 +204,27 @@ test('bridge and lite host wiring preserve decision error contract, guest image 
     liteMainSource,
     /requestHelpersFactory\(\(error\) =>\s*Promise\.reject\(normalizeHttpRequestError\(error\)\)\s*\)/
   );
-  const subscribeBlock = liteMainSource.slice(
-    liteMainSource.indexOf('const unsubscribe = session.subscribe((next) => {'),
-    liteMainSource.indexOf('reloadFrameForIdentity(next);')
+  const subscribeStart = liteMainSource.indexOf(
+    'const unsubscribe = session.subscribe((next) => {'
   );
+  assert.notEqual(subscribeStart, -1);
+  const bodyStart = liteMainSource.indexOf('{', subscribeStart);
+  assert.notEqual(bodyStart, -1);
+  let depth = 0;
+  let subscribeEnd = -1;
+  for (let i = bodyStart; i < liteMainSource.length; i += 1) {
+    const ch = liteMainSource[i];
+    if (ch === '{') depth += 1;
+    else if (ch === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        subscribeEnd = i + 1;
+        break;
+      }
+    }
+  }
+  assert.notEqual(subscribeEnd, -1);
+  const subscribeBlock = liteMainSource.slice(subscribeStart, subscribeEnd);
   assert.match(
     subscribeBlock,
     /setViewer\(\(previous\) => nextViewerForSession\(previous, next\)\);/
