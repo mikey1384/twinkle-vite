@@ -178,6 +178,8 @@ export default function AppAddress({
     setLeaving(false);
     setLeaveError('');
   }, [buildId]);
+  // a save from another app or account never leaves a row on "Saving…"
+  useEffect(() => setSavingRenewal(0), [buildId, userId]);
 
   function claimAction(name: string) {
     if (actionInFlightRef.current[name]) return null;
@@ -477,7 +479,7 @@ export default function AppAddress({
         primaryUrl={info.url}
         freeUrl={freeUrl}
         domains={liveDomains}
-        ownerDomains={isOwner || (info.domains || []).some((d) => d.ownedByYou) ? info.domains : undefined}
+        ownerDomains={isOwner || (info.domains || []).some((d) => d.ownedByYou || d.renewal) ? info.domains : undefined}
         onRemoveDomain={(domainId) => void removeDomain(domainId)}
         onAutoRenew={(domainId, autoRenew) => void changeAutoRenew(domainId, autoRenew)}
         savingRenewal={savingRenewal}

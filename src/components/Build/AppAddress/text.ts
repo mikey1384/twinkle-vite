@@ -233,10 +233,11 @@ export const ADDRESS_TEXT = {
     removeConfirm: 'Tap again to remove (the app stops opening there)',
     // auto-renew (Stripe yearly renewal; wording: domain-renewal-wording.md)
     autoRenewOnTitle: 'Auto-renew is on',
-    autoRenewOnLine: (host: string, date: string, price: string, last4: string | null) =>
-      `${host} renews on ${date} for ${price}${last4 ? ` (card ending ${last4})` : ''}`,
+    autoRenewOnLine: (host: string, date: string | null, price: string, last4: string | null) =>
+      `${host} renews${date ? ` on ${date}` : ' yearly'} for ${price}${last4 ? ` (card ending ${last4})` : ''}`,
     autoRenewOffConfirm: 'Turn off auto-renew?',
-    autoRenewOffConfirmHint: (date: string) => `Nothing changes until ${date}. Tap again to turn it off; you can turn it back on anytime before then.`,
+    autoRenewOffConfirmHint: (date: string | null) =>
+      `${date ? `Nothing changes until ${date}. ` : 'Nothing changes this year. '}Tap again to turn it off; you can turn it back on anytime before then.`,
     autoRenewTurnOn: 'Turn auto-renew back on',
     autoRenewOffLine: (host: string, date: string | null, freeHost: string) =>
       date
@@ -503,10 +504,11 @@ export const ADDRESS_TEXT = {
     supportBody: '결제는 끝났고, 주소가 준비되기 전에 사람이 한 번 확인해야 할 일이 생겼어요. 처리하고 있으니 그동안 무료 주소는 계속 쓸 수 있어요.',
     removeConfirm: '한 번 더 누르면 삭제돼요 (이 주소로 앱이 열리지 않아요)',
     autoRenewOnTitle: '자동 갱신 켜짐',
-    autoRenewOnLine: (host: string, date: string, price: string, last4: string | null) =>
-      `${host}: ${date}에 ${price}로 갱신돼요${last4 ? ` (카드 끝자리 ${last4})` : ''}`,
+    autoRenewOnLine: (host: string, date: string | null, price: string, last4: string | null) =>
+      `${host}: ${date ? `${date}에 ` : '매년 '}${price}로 갱신돼요${last4 ? ` (카드 끝자리 ${last4})` : ''}`,
     autoRenewOffConfirm: '자동 갱신을 끌까요?',
-    autoRenewOffConfirmHint: (date: string) => `${date}까지는 바뀌는 게 없어요. 한 번 더 누르면 꺼지고, 그 전까지 언제든 다시 켤 수 있어요.`,
+    autoRenewOffConfirmHint: (date: string | null) =>
+      `${date ? `${date}까지는` : '올해는'} 바뀌는 게 없어요. 한 번 더 누르면 꺼지고, 그 전까지 언제든 다시 켤 수 있어요.`,
     autoRenewTurnOn: '자동 갱신 다시 켜기',
     autoRenewOffLine: (host: string, date: string | null, freeHost: string) =>
       date

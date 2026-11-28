@@ -220,6 +220,8 @@ export function AddressMenuView({
     if (!renewal) continue;
     const until = renewalDateLabel(renewal.expiresDate || null);
     const saving = savingRenewal === domain.id;
+    // one auto-renew save at a time across every row
+    const busy = savingRenewal !== 0;
     const armKey = `renew-${domain.id}`;
     const armed = confirming === armKey;
     const stacked = (title: React.ReactNode, line: React.ReactNode) => (
@@ -229,7 +231,7 @@ export function AddressMenuView({
       </span>
     );
     if (renewal.status === 'active' && renewal.autoRenew) {
-      const next = renewalDateLabel(renewal.nextChargeDate) || until || '';
+      const next = renewalDateLabel(renewal.nextChargeDate) || until;
       items.push({
         label: (
           <>
@@ -243,8 +245,7 @@ export function AddressMenuView({
         ),
         style: armed ? { color: '#b42318' } : undefined,
         keepOpen: !armed,
-        onClick: () => {
-          if (!onAutoRenew || saving) return;
+        onClick: !onAutoRenew || busy ? undefined : () => {
           if (armed) {
             setConfirming(0);
             onAutoRenew(domain.id, false);
@@ -283,7 +284,7 @@ export function AddressMenuView({
           </>
         ),
         style: onAutoRenew ? { color: accent, fontWeight: 700 } : undefined,
-        onClick: onAutoRenew && !saving ? () => onAutoRenew(domain.id, true) : undefined
+        onClick: onAutoRenew && !busy ? () => onAutoRenew(domain.id, true) : undefined
       });
     }
   }
