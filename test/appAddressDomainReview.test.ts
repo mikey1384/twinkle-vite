@@ -33,7 +33,7 @@ test('AppAddress keys on build.id in Header and guards async mutations against b
   );
 });
 
-test('removeDomain, removeElsewhere, and useHere isolate errors from checkout and surface failures during Rename', () => {
+test('removeDomain, changeAutoRenew, removeElsewhere, and useHere isolate errors from checkout and surface failures during Rename', () => {
   const appAddress = readSrc('components/Build/AppAddress/index.tsx');
   const menuActions = appAddress.slice(
     appAddress.indexOf('async function removeDomain('),
@@ -43,7 +43,7 @@ test('removeDomain, removeElsewhere, and useHere isolate errors from checkout an
   assert.doesNotMatch(menuActions, /\bsetError\(/);
   assert.equal(
     (menuActions.match(/if\s*\(action\.sameScope\(\)\)\s*setLeaveError\(e\?\.message\s*\|\|\s*t\.actionFailed\);/g) || []).length,
-    3
+    4
   );
   assert.match(
     appAddress,
