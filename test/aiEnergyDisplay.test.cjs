@@ -48,7 +48,10 @@ test('invalid numbers cannot leak NaN, negative or over-full percentages', () =>
     assert.equal(getAiEnergyDisplay({ energyRemaining: value, baseEnergyUnitsPerDay: 850000 }).label, '—');
   }
   assert.equal(getAiEnergyDisplay({ energyRemaining: -5, energyPercent: 40 }).label, '0%');
-  assert.equal(getAiEnergyDisplay({ energyRemaining: 900000, baseEnergyUnitsPerDay: 850000 }).label, '100%');
+  // Over one battery is real since 11-28 (a recharge under 5% keeps the leftover):
+  // the bars stay full and the label says how far.
+  assert.equal(getAiEnergyDisplay({ energyRemaining: 900000, baseEnergyUnitsPerDay: 850000 }).label, '105%');
+  assert.equal(getAiEnergyDisplay({ energyRemaining: 900000, baseEnergyUnitsPerDay: 850000 }).percent, 100);
   assert.equal(getAiEnergyDisplay({ energyRemaining: 3, baseEnergyUnitsPerDay: 0, energyPercent: 0 }).label, 'Less than 1%');
 });
 

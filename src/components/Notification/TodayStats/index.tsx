@@ -213,6 +213,8 @@ const aiEnergyPanelButtonWrapCls = css`
 
 interface AiUsagePolicy {
   dayIndex?: number;
+  // recharge opens under 5% (Mikey 11-28)
+  canRecharge?: boolean;
   energyPercent?: number;
   energySegments?: number;
   energyRemaining?: number;
@@ -299,7 +301,11 @@ export default function TodayStats({
     1,
     Number(aiUsagePolicy?.resetCost || FULL_RECHARGE_COST)
   );
-  const energyIsEmpty = Number(aiUsagePolicy?.energyRemaining || 0) <= 0;
+  // Charge shows under 5% (Mikey 11-28); an older API keeps empty-only.
+  const energyIsEmpty =
+    typeof aiUsagePolicy?.canRecharge === 'boolean'
+      ? aiUsagePolicy.canRecharge
+      : Number(aiUsagePolicy?.energyRemaining || 0) <= 0;
   const communityChargeAvailable = isCommunityFundRechargeAvailable({
     aiUsagePolicy,
     communityFunds,

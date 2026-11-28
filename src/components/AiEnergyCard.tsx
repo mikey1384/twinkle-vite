@@ -377,7 +377,11 @@ export default function AiEnergyCard({
           />
         )}
 
-        {resetNeeded && (
+        {resetNeeded &&
+          !(
+            typeof energyPolicy?.energyRemaining === 'number' &&
+            energyPolicy.energyRemaining > 0
+          ) && (
           <LumineRescueEntry
             eventType="aiEnergy"
             active

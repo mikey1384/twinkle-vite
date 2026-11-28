@@ -66,6 +66,8 @@ interface AiUsageRequirement {
 }
 
 interface AiUsagePolicy {
+  // recharge opens under 5% (Mikey 11-28)
+  canRecharge?: boolean;
   dayIndex?: number;
   hasVerifiedEmail: boolean;
   identityType?: 'verified_email' | 'separate_verified_email' | 'user';
@@ -1141,9 +1143,12 @@ export default function MessageInput({
         </div>
       );
     }
+    // Charge shows under 5% (Mikey 11-28); an older API keeps empty-only.
     const resetNeeded =
-      typeof aiUsagePolicy.energyRemaining === 'number' &&
-      aiUsagePolicy.energyRemaining <= 0;
+      typeof aiUsagePolicy.canRecharge === 'boolean'
+        ? aiUsagePolicy.canRecharge
+        : typeof aiUsagePolicy.energyRemaining === 'number' &&
+          aiUsagePolicy.energyRemaining <= 0;
     const communityEligibility =
       aiUsagePolicy.communityFundResetEligibility || null;
     const communityFundsChargeAvailable = isCommunityFundRechargeAvailable({

@@ -35,15 +35,14 @@ export function getAiEnergyDisplay(
     percent !== null &&
     ((percent > 0 && percent < 1) ||
       (percent === 0 && hasRemaining && remaining > 0));
-  // Battery received from another member can take today's battery past one
-  // full battery: the bars stay full and the label says how far (e.g. 140%).
-  // Recharges never do this (they are bought only when the battery is empty).
+  // Battery received from another member, or a recharge bought under 5% (the
+  // leftover is kept, Mikey 11-28), can take today's battery past one full
+  // battery: the bars stay full and the label says how far (e.g. 104%).
   const beyondFull =
     percent === 100 &&
     hasRemaining &&
     typeof base === 'number' &&
     base > 0 &&
-    Number(policy?.batteryReceivedUnits) > 0 &&
     remaining > base
       ? Math.floor((remaining / base) * 100)
       : null;

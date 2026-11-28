@@ -224,10 +224,7 @@ export default function AiEnergyDashboardModal({
       : 'Max Mode'
     : 'Unavailable';
   let overviewDescription = 'Battery and sponsored recharges.';
-  if (canRecharge && !energyDepleted && !freeChargeAvailable) {
-    overviewDescription =
-      "Battery low. Recharging adds a full battery, and you keep what's left.";
-  } else if (freeChargeAvailable) {
+  if (freeChargeAvailable) {
     overviewDescription = communityFundBalanceKnown
       ? `${batteryState} A free sponsored recharge is ready now.`
       : `${batteryState} Sponsored recharge is available and the fund balance is syncing.`;
@@ -252,6 +249,9 @@ export default function AiEnergyDashboardModal({
   ) {
     overviewDescription =
       `${batteryState} Community tasks are done, but the shared fund is too low right now.`;
+  } else if (canRecharge && !energyDepleted) {
+    overviewDescription =
+      "Battery low. Recharging adds a full battery, and you keep what's left.";
   } else if (!communityFundHasEnoughCoins) {
     overviewDescription =
       'Community fund needs more coins before another sponsored recharge is available.';
