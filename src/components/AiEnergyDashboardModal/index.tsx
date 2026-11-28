@@ -165,8 +165,15 @@ export default function AiEnergyDashboardModal({
   const energyDepleted =
     typeof aiUsagePolicy?.energyRemaining === 'number' &&
     aiUsagePolicy.energyRemaining <= 0;
+  // Recharging opens under 5% (Mikey 11-28), not only at empty; an older API
+  // without the field keeps the old empty-only rule.
+  const canRecharge =
+    typeof aiUsagePolicy?.canRecharge === 'boolean'
+      ? aiUsagePolicy.canRecharge
+      : energyDepleted;
+  const batteryState = energyDepleted ? 'Battery empty.' : 'Battery low.';
   const freeChargeAvailable =
-    energyDepleted && shouldUseCommunityFundsForCharge;
+    canRecharge && shouldUseCommunityFundsForCharge;
   const chargeButtonVariant = freeChargeAvailable ? 'gold' : 'orange';
   let chargeButtonMeta = `${formattedRechargeCost} coins`;
   if (freeChargeAvailable) {
@@ -174,7 +181,7 @@ export default function AiEnergyDashboardModal({
       ? 'Free now via community fund.'
       : 'Community fund balance is syncing. Sponsored recharge will be tried first.';
   } else if (
-    energyDepleted &&
+    canRecharge &&
     communityRequirementsComplete &&
     !communitySponsoredChargeUnlocked
   ) {
@@ -183,7 +190,7 @@ export default function AiEnergyDashboardModal({
         ? `Today's sponsored recharges are already used. Paid recharge: ${formattedRechargeCost} coins.`
         : `Today's sponsored recharges are already used. You have ${addCommasToNumber(availableCoins)} coins.`;
   } else if (
-    energyDepleted &&
+    canRecharge &&
     communitySponsoredChargeUnlocked &&
     !communityDailyCapAvailable
   ) {
@@ -192,7 +199,7 @@ export default function AiEnergyDashboardModal({
         ? `Sponsored limit used up today. Paid recharge: ${formattedRechargeCost} coins.`
         : `Sponsored limit used up today. You have ${addCommasToNumber(availableCoins)} coins.`;
   } else if (
-    energyDepleted &&
+    canRecharge &&
     !communityFundHasEnoughCoins
   ) {
     chargeButtonMeta =
@@ -200,7 +207,7 @@ export default function AiEnergyDashboardModal({
         ? `Community fund is below ${formattedRechargeCost} coins right now. Paid recharge: ${formattedRechargeCost} coins.`
         : `Community fund is below ${formattedRechargeCost} coins right now. You have ${addCommasToNumber(availableCoins)} coins.`;
   } else if (
-    energyDepleted &&
+    canRecharge &&
     requirementCount > 0 &&
     !communityRequirementsComplete
   ) {
@@ -217,37 +224,40 @@ export default function AiEnergyDashboardModal({
       : 'Max Mode'
     : 'Unavailable';
   let overviewDescription = 'Battery and sponsored recharges.';
-  if (freeChargeAvailable) {
+  if (canRecharge && !energyDepleted && !freeChargeAvailable) {
+    overviewDescription =
+      "Battery low. Recharging adds a full battery, and you keep what's left.";
+  } else if (freeChargeAvailable) {
     overviewDescription = communityFundBalanceKnown
-      ? 'Battery empty. A free sponsored recharge is ready now.'
-      : 'Battery empty. Sponsored recharge is available and the fund balance is syncing.';
+      ? `${batteryState} A free sponsored recharge is ready now.`
+      : `${batteryState} Sponsored recharge is available and the fund balance is syncing.`;
   } else if (
-    energyDepleted &&
+    canRecharge &&
     communityRequirementsComplete &&
     !communitySponsoredChargeUnlocked
   ) {
     overviewDescription =
-      "Battery empty. Today's sponsored recharges are already used.";
+      `${batteryState} Today's sponsored recharges are already used.`;
   } else if (
-    energyDepleted &&
+    canRecharge &&
     communitySponsoredChargeUnlocked &&
     !communityDailyCapAvailable
   ) {
     overviewDescription =
-      "Battery empty. Today's sponsored recharge limit is already used up.";
+      `${batteryState} Today's sponsored recharge limit is already used up.`;
   } else if (
-    energyDepleted &&
+    canRecharge &&
     communitySponsoredChargeUnlocked &&
     !communityFundHasEnoughCoins
   ) {
     overviewDescription =
-      'Battery empty. Community tasks are done, but the shared fund is too low right now.';
+      `${batteryState} Community tasks are done, but the shared fund is too low right now.`;
   } else if (!communityFundHasEnoughCoins) {
     overviewDescription =
       'Community fund needs more coins before another sponsored recharge is available.';
   } else if (communityRechargeReady) {
     overviewDescription =
-      'You still have AI Energy. A sponsored recharge is ready when it runs out.';
+      'You still have AI Energy. A sponsored recharge is ready when it drops under 5%.';
   }
   const communityStatusLabel =
     requirementCount > 0
@@ -272,7 +282,7 @@ export default function AiEnergyDashboardModal({
           mode: currentModeLabel,
           status: overviewDescription,
           resetCost: rechargeCost,
-          rechargeButton: energyDepleted
+          rechargeButton: canRecharge
             ? { free: freeChargeAvailable, note: chargeButtonMeta }
             : null,
           paidRechargeAffordable: availableCoins >= rechargeCost,
@@ -503,7 +513,7 @@ export default function AiEnergyDashboardModal({
                   chargeButtonShiny={freeChargeAvailable}
                   chargeButtonVariant={chargeButtonVariant}
                   onCharge={handleChargeClick}
-                  showChargeButton={energyDepleted}
+                  showChargeButton={canRecharge}
                   chargeError={chargeError}
                   currentModeLabel={currentModeLabel}
                   energyAccentColor={energyAccentColor}
@@ -643,7 +653,7 @@ export default function AiEnergyDashboardModal({
   }
 
   function handleChargeClick() {
-    if (!energyDepleted || chargeLoading || refillRefreshLoading) return;
+    if (!canRecharge || chargeLoading || refillRefreshLoading) return;
     setChargeError('');
     if (shouldUseCommunityFundsForCharge || rechargeCost <= 0) {
       void handleCharge();
@@ -670,7 +680,7 @@ export default function AiEnergyDashboardModal({
   }
 
   async function handleCharge() {
-    if (!energyDepleted || chargeLoading || refillRefreshLoading) return;
+    if (!canRecharge || chargeLoading || refillRefreshLoading) return;
     setChargeError('');
     setChargeLoading(true);
     try {
